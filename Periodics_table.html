@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Periodic Table</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 10px;
+      margin: 0;
+      text-align: center;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      font-weight: bold;
+      color: red;
+      margin-top: 20px;
+      margin-bottom: 5px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    h4 {
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: 500;
+      color: #34495e;
+      margin: 5px 0 10px 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    h3 {
+      text-align: center;
+      font-size: 2em;
+      font-weight: 400;
+      color: #2980b9;
+      margin-bottom: 10px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      background-color: #fffff0;
+      border-radius: 20px;
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+
+    .element-info1, .atom-view1 {
+      flex: 1 1 300px;
+      min-width: 300px;
+      max-width: 500px;
+      height: auto;
+      background-color: #ffffff;
+      text-align: center;
+      padding: 15px;
+      line-height: 20px;
+      border: 1px solid #aaa;
+      border-radius: 20px;
+    }
+
+    #atom-view {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #FFFFFF;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    #elementName122 {
+      display: block;
+      visibility: visible;
+      position: relative;
+      z-index: 2;
+      margin-top: 10px;
+      font-size: 16px;
+      color: blue;
+    }
+
+    .table {
+      display: grid;
+      grid-template-columns: repeat(18, minmax(30px, 1fr));
+      grid-gap: 6px;
+      justify-content: center;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .element {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .element:hover {
+      background: #388e3c;
+    }
+
+    .empty {
+      background: transparent;
+      pointer-events: none;
+    }
+
+    /* Color Customization */
+    .group-1, .group-2 {
+      background-color: #FF8C00;
+    }
+
+    .group-18 {
+      background-color: #00BFFF;
+    }
+
+    .non-metal {
+      background-color: #FF6347;
+    }
+
+    .lanthanide, .actinide {
+      background-color: #8A2BE2;
+    }
+
+    .metal {
+      background-color: #FFD700;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .table {
+        grid-template-columns: repeat(9, minmax(30px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+
+   <h1>Regional Science Centre and Planetarium, Calicut</h1>
+ <h4>Innovation Hub</h4>
+  <h3>Interactive Periodic Table</h3>
+
+
+
+	<div class="container">
+ 		 <div id="element-info1" class="element-info1">
+		 <h2 id="elementName12">Select an element</h2>
+		  <h5 id="elementName122" style="margin-top: 10px; color: blue;"></h5>
+	
+<div id="element-info121" class="element-info121"></div></div>
+
+ 	 <div id="atom-view1" class="atom-view1">
+     <canvas id="atomCanvas1" width="500" height="400"></canvas>
+</div>
+
+  <div class="table">
+    <!-- Periodic Table Elements -->
+   <button class="element group-1" onclick="showInfo(1)">H</button>
+    <div class="empty" style="grid-column: span 16;"></div>
+
+
+    <button class="element group-18" onclick="showInfo(2)">He</button>
+
+    <!-- Row 2 -->
+    <button class="element group-1" onclick="showInfo(3)">Li</button>
+    <button class="element group-1" onclick="showInfo(4)">Be</button>
+    <div class="empty" style="grid-column: span 10;"></div>
+    <button class="element non-metal" onclick="showInfo(5)">B</button>
+    <button class="element non-metal" onclick="showInfo(6)">C</button>
+    <button class="element non-metal" onclick="showInfo(7)">N</button>
+    <button class="element non-metal" onclick="showInfo(8)">O</button>
+    <button class="element non-metal" onclick="showInfo(9)">F</button>
+    <button class="element group-18" onclick="showInfo(10)">Ne</button>
+<!-- Row 3 -->
+    <button class="element group-1" onclick="showInfo(11)">Na</button>
+    <button class="element group-2" onclick="showInfo(12)">Mg</button>
+    <div class="empty" style="grid-column: span 10;"></div>
+    <button class="element metalloid" onclick="showInfo(13)">Al</button>
+    <button class="element non-metal" onclick="showInfo(14)">Si</button>
+    <button class="element non-metal" onclick="showInfo(15)">P</button>
+    <button class="element non-metal" onclick="showInfo(16)">S</button>
+    <button class="element non-metal" onclick="showInfo(17)">Cl</button>
+    <button class="element group-18" onclick="showInfo(18)">Ar</button>
+
+    <!-- Row 4 -->
+    <button class="element group-1" onclick="showInfo(19)">K</button>
+    <button class="element group-2" onclick="showInfo(20)">Ca</button>
+    <button class="element group-3" onclick="showInfo(21)">Sc</button>
+    <button class="element group-4" onclick="showInfo(22)">Ti</button>
+    <button class="element group-5" onclick="showInfo(23)">V</button>
+    <button class="element group-6" onclick="showInfo(24)">Cr</button>
+    <button class="element group-7" onclick="showInfo(25)">Mn</button>
+    <button class="element group-8" onclick="showInfo(26)">Fe</button>
+    <button class="element group-9" onclick="showInfo(27)">Co</button>
+    <button class="element group-10" onclick="showInfo(28)">Ni</button>
+    <button class="element group-11" onclick="showInfo(29)">Cu</button>
+    <button class="element group-12" onclick="showInfo(30)">Zn</button>
+    <button class="element metalloid" onclick="showInfo(31)">Ga</button>
+    <button class="element metalloid" onclick="showInfo(32)">Ge</button>
+    <button class="element non-metal" onclick="showInfo(33)">As</button>
+    <button class="element non-metal" onclick="showInfo(34)">Se</button>
+    <button class="element non-metal" onclick="showInfo(35)">Br</button>
+    <button class="element group-18" onclick="showInfo(36)">Kr</button>
+
+    <!-- Row 5 -->
+    <button class="element group-1" onclick="showInfo(37)">Rb</button>
+    <button class="element group-2" onclick="showInfo(38)">Sr</button>
+    <button class="element group-3" onclick="showInfo(39)">Y</button>
+    <button class="element group-4" onclick="showInfo(40)">Zr</button>
+    <button class="element group-5" onclick="showInfo(41)">Nb</button>
+    <button class="element group-6" onclick="showInfo(42)">Mo</button>
+    <button class="element group-7" onclick="showInfo(43)">Tc</button>
+    <button class="element group-8" onclick="showInfo(44)">Ru</button>
+    <button class="element group-9" onclick="showInfo(45)">Rh</button>
+    <button class="element group-10" onclick="showInfo(46)">Pd</button>
+    <button class="element group-11" onclick="showInfo(47)">Ag</button>
+    <button class="element group-12" onclick="showInfo(48)">Cd</button>
+    <button class="element metalloid" onclick="showInfo(49)">In</button>
+    <button class="element metalloid" onclick="showInfo(50)">Sn</button>
+    <button class="element metalloid" onclick="showInfo(51)">Sb</button>
+    <button class="element non-metal" onclick="showInfo(52)">Te</button>
+    <button class="element non-metal" onclick="showInfo(53)">I</button>
+    <button class="element group-18" onclick="showInfo(54)">Xe</button>
+<!-- Row 6 -->
+<button class="element group-1" onclick="showInfo(55)">Cs</button>
+<button class="element group-2" onclick="showInfo(56)">Ba</button>
+
+<button class="element transition-metal" onclick="showInfo(57)">La</button>
+<!-- Row 6 (Transition Metals) -->
+<button class="element transition-metal" onclick="showInfo(72)">Hf</button>
+<button class="element transition-metal" onclick="showInfo(73)">Ta</button>
+<button class="element transition-metal" onclick="showInfo(74)">W</button>
+<button class="element transition-metal" onclick="showInfo(75)">Re</button>
+<button class="element transition-metal" onclick="showInfo(76)">Os</button>
+<button class="element transition-metal" onclick="showInfo(77)">Ir</button>
+<button class="element transition-metal" onclick="showInfo(78)">Pt</button>
+<button class="element transition-metal" onclick="showInfo(79)">Au</button>
+<button class="element transition-metal" onclick="showInfo(80)">Hg</button>
+<button class="element transition-metal" onclick="showInfo(81)">Tl</button>
+<button class="element transition-metal" onclick="showInfo(82)">Pb</button>
+<button class="element transition-metal" onclick="showInfo(83)">Bi</button>
+<button class="element metalloid" onclick="showInfo(84)">Po</button>
+<button class="element non-metal" onclick="showInfo(85)">At</button>
+<button class="element group-18" onclick="showInfo(86)">Rn</button>
+
+
+<!-- Row 7 -->
+
+<button class="element group-1" onclick="showInfo(87)">Fr</button>
+<button class="element group-2" onclick="showInfo(88)">Ra</button>
+<button class="element metalloid" onclick="showInfo(89)">Ac</button>
+<!-- Row 7 (Actinides and Beyond) -->
+<button class="element metalloid" onclick="showInfo(104)">Rf</button>
+<button class="element metalloid" onclick="showInfo(105)">Db</button>
+<button class="element metalloid" onclick="showInfo(106)">Sg</button>
+<button class="element metalloid" onclick="showInfo(107)">Bh</button>
+<button class="element metalloid" onclick="showInfo(108)">Hs</button>
+<button class="element metalloid" onclick="showInfo(109)">Mt</button>
+<button class="element metalloid" onclick="showInfo(110)">Ds</button>
+<button class="element metalloid" onclick="showInfo(111)">Rg</button>
+<button class="element metalloid" onclick="showInfo(112)">Cn</button>
+<button class="element metalloid" onclick="showInfo(113)">Nh</button>
+<button class="element metalloid" onclick="showInfo(114)">Fl</button>
+<button class="element metalloid" onclick="showInfo(115)">Mc</button>
+<button class="element metalloid" onclick="showInfo(116)">Lv</button>
+<button class="element metalloid" onclick="showInfo(117)">Ts</button>
+<button class="element group-18" onclick="showInfo(118)">Og</button>
+
+
+<!-- Skip a row (blank row) -->
+<div class="empty" style="grid-column: span 18;"></div>
+<!-- Skip a row (blank row) -->
+<div class="empty" style="grid-column: span 18;"></div>
+
+    <!-- Lanthanides -->
+    <div class="empty" style="grid-column: span 2;"></div>
+
+    <button class="element lanthanide" onclick="showInfo(58)">Ce</button>
+    <button class="element lanthanide" onclick="showInfo(59)">Pr</button>
+    <button class="element lanthanide" onclick="showInfo(60)">Nd</button>
+    <button class="element lanthanide" onclick="showInfo(61)">Pm</button>
+    <button class="element lanthanide" onclick="showInfo(62)">Sm</button>
+    <button class="element lanthanide" onclick="showInfo(63)">Eu</button>
+    <button class="element lanthanide" onclick="showInfo(64)">Gd</button>
+    <button class="element lanthanide" onclick="showInfo(65)">Tb</button>
+    <button class="element lanthanide" onclick="showInfo(66)">Dy</button>
+   
+    <button class="element lanthanide" onclick="showInfo(67)">Ho</button>
+    <button class="element lanthanide" onclick="showInfo(68)">Er</button>
+    <button class="element lanthanide" onclick="showInfo(69)">Tm</button>
+    <button class="element lanthanide" onclick="showInfo(70)">Yb</button>
+    <button class="element lanthanide" onclick="showInfo(71)">Lu</button>
+<!-- Skip a row (blank row) -->
+<div class="empty" style="grid-column: span 18;"></div>
+    <!-- Actinides -->
+
+ <div class="empty" style="grid-column: span 2;"></div>
+    <button class="element actinide" onclick="showInfo(90)">Th</button>
+    <button class="element actinide" onclick="showInfo(91)">Pa</button>
+    <button class="element actinide" onclick="showInfo(92)">U</button>
+    <button class="element actinide" onclick="showInfo(93)">Np</button>
+    <button class="element actinide" onclick="showInfo(94)">Pu</button>
+    <button class="element actinide" onclick="showInfo(95)">Am</button>
+    <button class="element actinide" onclick="showInfo(96)">Cm</button>
+    <button class="element actinide" onclick="showInfo(97)">Bk</button>
+    <button class="element actinide" onclick="showInfo(98)">Cf</button>
+    <button class="element actinide" onclick="showInfo(99)">Es</button>
+    <button class="element actinide" onclick="showInfo(100)">Fm</button>
+    <button class="element actinide" onclick="showInfo(101)">Md</button>
+    <button class="element actinide" onclick="showInfo(102)">No</button>
+    <button class="element actinide" onclick="showInfo(103)">Lr</button>
+  
+   
+ 
+  </div>
+
+  </body>
+  
+
+  <script>
+    const elements = [
+   { number: 1, name: 'Hydrogen', symbol: 'H', electrons: 1, protons: 1, neutrons: 0 },
+  { number: 2, name: 'Helium', symbol: 'He', electrons: 2, protons: 2, neutrons: 2 },
+  { number: 3, name: 'Lithium', symbol: 'Li', electrons: 3, protons: 3, neutrons: 4 },
+  { number: 4, name: 'Beryllium', symbol: 'Be', electrons: 4, protons: 4, neutrons: 5 },
+  { number: 5, name: 'Boron', symbol: 'B', electrons: 5, protons: 5, neutrons: 6 },
+  { number: 6, name: 'Carbon', symbol: 'C', electrons: 6, protons: 6, neutrons: 6 },
+  { number: 7, name: 'Nitrogen', symbol: 'N', electrons: 7, protons: 7, neutrons: 7 },
+  { number: 8, name: 'Oxygen', symbol: 'O', electrons: 8, protons: 8, neutrons: 8 },
+  { number: 9, name: 'Fluorine', symbol: 'F', electrons: 9, protons: 9, neutrons: 10 },
+  { number: 10, name: 'Neon', symbol: 'Ne', electrons: 10, protons: 10, neutrons: 10 },
+  { number: 11, name: 'Sodium', symbol: 'Na', electrons: 11, protons: 11, neutrons: 12 },
+  { number: 12, name: 'Magnesium', symbol: 'Mg', electrons: 12, protons: 12, neutrons: 12 },
+  { number: 13, name: 'Aluminum', symbol: 'Al', electrons: 13, protons: 13, neutrons: 14 },
+  { number: 14, name: 'Silicon', symbol: 'Si', electrons: 14, protons: 14, neutrons: 14 },
+  { number: 15, name: 'Phosphorus', symbol: 'P', electrons: 15, protons: 15, neutrons: 16 },
+  { number: 16, name: 'Sulfur', symbol: 'S', electrons: 16, protons: 16, neutrons: 16 },
+  { number: 17, name: 'Chlorine', symbol: 'Cl', electrons: 17, protons: 17, neutrons: 18 },
+  { number: 18, name: 'Argon', symbol: 'Ar', electrons: 18, protons: 18, neutrons: 22 },
+  { number: 19, name: 'Potassium', symbol: 'K', electrons: 19, protons: 19, neutrons: 20 },
+  { number: 20, name: 'Calcium', symbol: 'Ca', electrons: 20, protons: 20, neutrons: 20 },
+  { number: 21, name: 'Scandium', symbol: 'Sc', electrons: 21, protons: 21, neutrons: 24 },
+  { number: 22, name: 'Titanium', symbol: 'Ti', electrons: 22, protons: 22, neutrons: 26 },
+  { number: 23, name: 'Vanadium', symbol: 'V', electrons: 23, protons: 23, neutrons: 28 },
+  { number: 24, name: 'Chromium', symbol: 'Cr', electrons: 24, protons: 24, neutrons: 28 },
+  { number: 25, name: 'Manganese', symbol: 'Mn', electrons: 25, protons: 25, neutrons: 30 },
+  { number: 26, name: 'Iron', symbol: 'Fe', electrons: 26, protons: 26, neutrons: 30 },
+  { number: 27, name: 'Cobalt', symbol: 'Co', electrons: 27, protons: 27, neutrons: 32 },
+  { number: 28, name: 'Nickel', symbol: 'Ni', electrons: 28, protons: 28, neutrons: 31 },
+  { number: 29, name: 'Copper', symbol: 'Cu', electrons: 29, protons: 29, neutrons: 35 },
+  { number: 30, name: 'Zinc', symbol: 'Zn', electrons: 30, protons: 30, neutrons: 35 },
+  { number: 31, name: 'Gallium', symbol: 'Ga', electrons: 31, protons: 31, neutrons: 39 },
+  { number: 32, name: 'Germanium', symbol: 'Ge', electrons: 32, protons: 32, neutrons: 41 },
+  { number: 33, name: 'Arsenic', symbol: 'As', electrons: 33, protons: 33, neutrons: 42 },
+  { number: 34, name: 'Selenium', symbol: 'Se', electrons: 34, protons: 34, neutrons: 45 },
+  { number: 35, name: 'Bromine', symbol: 'Br', electrons: 35, protons: 35, neutrons: 45 },
+  { number: 36, name: 'Krypton', symbol: 'Kr', electrons: 36, protons: 36, neutrons: 48 },
+  { number: 37, name: 'Rubidium', symbol: 'Rb', electrons: 37, protons: 37, neutrons: 48 },
+  { number: 38, name: 'Strontium', symbol: 'Sr', electrons: 38, protons: 38, neutrons: 50 },
+  { number: 39, name: 'Yttrium', symbol: 'Y', electrons: 39, protons: 39, neutrons: 50 },
+  { number: 40, name: 'Zirconium', symbol: 'Zr', electrons: 40, protons: 40, neutrons: 51 },
+  { number: 41, name: 'Niobium', symbol: 'Nb', electrons: 41, protons: 41, neutrons: 52 },
+  { number: 42, name: 'Molybdenum', symbol: 'Mo', electrons: 42, protons: 42, neutrons: 54 },
+  { number: 43, name: 'Technetium', symbol: 'Tc', electrons: 43, protons: 43, neutrons: 55 },
+  { number: 44, name: 'Ruthenium', symbol: 'Ru', electrons: 44, protons: 44, neutrons: 57 },
+  { number: 45, name: 'Rhodium', symbol: 'Rh', electrons: 45, protons: 45, neutrons: 58 },
+  { number: 46, name: 'Palladium', symbol: 'Pd', electrons: 46, protons: 46, neutrons: 60 },
+  { number: 47, name: 'Silver', symbol: 'Ag', electrons: 47, protons: 47, neutrons: 60 },
+  { number: 48, name: 'Cadmium', symbol: 'Cd', electrons: 48, protons: 48, neutrons: 64 },
+  { number: 49, name: 'Indium', symbol: 'In', electrons: 49, protons: 49, neutrons: 66 },
+  { number: 50, name: 'Tin', symbol: 'Sn', electrons: 50, protons: 50, neutrons: 69 },
+  { number: 51, name: 'Antimony', symbol: 'Sb', electrons: 51, protons: 51, neutrons: 71 },
+  { number: 52, name: 'Tellurium', symbol: 'Te', electrons: 52, protons: 52, neutrons: 76 },
+  { number: 53, name: 'Iodine', symbol: 'I', electrons: 53, protons: 53, neutrons: 74 },
+  { number: 54, name: 'Xenon', symbol: 'Xe', electrons: 54, protons: 54, neutrons: 77 },
+  { number: 55, name: 'Cesium', symbol: 'Cs', electrons: 55, protons: 55, neutrons: 78 },
+  { number: 56, name: 'Barium', symbol: 'Ba', electrons: 56, protons: 56, neutrons: 81 },
+  { number: 57, name: 'Lanthanum', symbol: 'La', electrons: 57, protons: 57, neutrons: 82 },
+  { number: 58, name: 'Cerium', symbol: 'Ce', electrons: 58, protons: 58, neutrons: 82 },
+  { number: 59, name: 'Praseodymium', symbol: 'Pr', electrons: 59, protons: 59, neutrons: 82 },
+  { number: 60, name: 'Neodymium', symbol: 'Nd', electrons: 60, protons: 60, neutrons: 84 },
+  { number: 61, name: 'Promethium', symbol: 'Pm', electrons: 61, protons: 61, neutrons: 84 },
+  { number: 62, name: 'Samarium', symbol: 'Sm', electrons: 62, protons: 62, neutrons: 88 },
+  { number: 63, name: 'Europium', symbol: 'Eu', electrons: 63, protons: 63, neutrons: 91 },
+  { number: 64, name: 'Gadolinium', symbol: 'Gd', electrons: 64, protons: 64, neutrons: 94 },
+  { number: 65, name: 'Terbium', symbol: 'Tb', electrons: 65, protons: 65, neutrons: 94 },
+  { number: 66, name: 'Dysprosium', symbol: 'Dy', electrons: 66, protons: 66, neutrons: 98 },
+  { number: 67, name: 'Holmium', symbol: 'Ho', electrons: 67, protons: 67, neutrons: 98 },
+  { number: 68, name: 'Erbium', symbol: 'Er', electrons: 68, protons: 68, neutrons: 102 },
+  { number: 69, name: 'Thulium', symbol: 'Tm', electrons: 69, protons: 69, neutrons: 102 },
+  { number: 70, name: 'Ytterbium', symbol: 'Yb', electrons: 70, protons: 70, neutrons: 103 },
+  { number: 71, name: 'Lutetium', symbol: 'Lu', electrons: 71, protons: 71, neutrons: 106 },
+  { number: 72, name: 'Hafnium', symbol: 'Hf', electrons: 72, protons: 72, neutrons: 106 },
+  { number: 73, name: 'Tantalum', symbol: 'Ta', electrons: 73, protons: 73, neutrons: 108 },
+  { number: 74, name: 'Tungsten', symbol: 'W', electrons: 74, protons: 74, neutrons: 110 },
+  { number: 75, name: 'Rhenium', symbol: 'Re', electrons: 75, protons: 75, neutrons: 111 },
+  { number: 76, name: 'Osmium', symbol: 'Os', electrons: 76, protons: 76, neutrons: 114 },
+  { number: 77, name: 'Iridium', symbol: 'Ir', electrons: 77, protons: 77, neutrons: 115 },
+  { number: 78, name: 'Platinum', symbol: 'Pt', electrons: 78, protons: 78, neutrons: 117 },
+  { number: 79, name: 'Gold', symbol: 'Au', electrons: 79, protons: 79, neutrons: 118 },
+  { number: 80, name: 'Mercury', symbol: 'Hg', electrons: 80, protons: 80, neutrons: 121 },
+  { number: 81, name: 'Thallium', symbol: 'Tl', electrons: 81, protons: 81, neutrons: 123 },
+  { number: 82, name: 'Lead', symbol: 'Pb', electrons: 82, protons: 82, neutrons: 126 },
+  { number: 83, name: 'Bismuth', symbol: 'Bi', electrons: 83, protons: 83, neutrons: 126 },
+  { number: 84, name: 'Polonium', symbol: 'Po', electrons: 84, protons: 84, neutrons: 125 },
+  { number: 85, name: 'Astatine', symbol: 'At', electrons: 85, protons: 85, neutrons: 125 },
+  { number: 86, name: 'Radon', symbol: 'Rn', electrons: 86, protons: 86, neutrons: 136 },
+  { number: 87, name: 'Francium', symbol: 'Fr', electrons: 87, protons: 87, neutrons: 137 },
+  { number: 88, name: 'Radium', symbol: 'Ra', electrons: 88, protons: 88, neutrons: 138 },
+  { number: 89, name: 'Actinium', symbol: 'Ac', electrons: 89, protons: 89, neutrons: 138 },
+  { number: 90, name: 'Thorium', symbol: 'Th', electrons: 90, protons: 90, neutrons: 144 },
+  { number: 91, name: 'Protactinium', symbol: 'Pa', electrons: 91, protons: 91, neutrons: 140 },
+  { number: 92, name: 'Uranium', symbol: 'U', electrons: 92, protons: 92, neutrons: 146 },
+  { number: 93, name: 'Neptunium', symbol: 'Np', electrons: 93, protons: 93, neutrons: 150 },
+  { number: 94, name: 'Plutonium', symbol: 'Pu', electrons: 94, protons: 94, neutrons: 150 },
+  { number: 95, name: 'Americium', symbol: 'Am', electrons: 95, protons: 95, neutrons: 152 },
+  { number: 96, name: 'Curium', symbol: 'Cm', electrons: 96, protons: 96, neutrons: 152 },
+  { number: 97, name: 'Berkelium', symbol: 'Bk', electrons: 97, protons: 97, neutrons: 153 },
+  { number: 98, name: 'Californium', symbol: 'Cf', electrons: 98, protons: 98, neutrons: 157 },
+  { number: 99, name: 'Einsteinium', symbol: 'Es', electrons: 99, protons: 99, neutrons: 157 },
+  { number: 100, name: 'Fermium', symbol: 'Fm', electrons: 100, protons: 100, neutrons: 157 },
+  { number: 101, name: 'Mendelevium', symbol: 'Md', electrons: 101, protons: 101, neutrons: 158 },
+  { number: 102, name: 'Nobelium', symbol: 'No', electrons: 102, protons: 102, neutrons: 159 },
+  { number: 103, name: 'Lawrencium', symbol: 'Lr', electrons: 103, protons: 103, neutrons: 160 },
+  { number: 104, name: 'Rutherfordium', symbol: 'Rf', electrons: 104, protons: 104, neutrons: 157 },
+  { number: 105, name: 'Dubnium', symbol: 'Db', electrons: 105, protons: 105, neutrons: 157 },
+  { number: 106, name: 'Seaborgium', symbol: 'Sg', electrons: 106, protons: 106, neutrons: 157 },
+  { number: 107, name: 'Bohrium', symbol: 'Bh', electrons: 107, protons: 107, neutrons: 160 },
+  { number: 108, name: 'Hassium', symbol: 'Hs', electrons: 108, protons: 108, neutrons: 161 },
+  { number: 109, name: 'Meitnerium', symbol: 'Mt', electrons: 109, protons: 109, neutrons: 162 },
+  { number: 110, name: 'Darmstadtium', symbol: 'Ds', electrons: 110, protons: 110, neutrons: 163 },
+  { number: 111, name: 'Roentgenium', symbol: 'Rg', electrons: 111, protons: 111, neutrons: 165 },
+  { number: 112, name: 'Copernicium', symbol: 'Cn', electrons: 112, protons: 112, neutrons: 165 },
+  { number: 113, name: 'Nihonium', symbol: 'Nh', electrons: 113, protons: 113, neutrons: 166 },
+  { number: 114, name: 'Flerovium', symbol: 'Fl', electrons: 114, protons: 114, neutrons: 170 },
+  { number: 115, name: 'Moscovium', symbol: 'Mc', electrons: 115, protons: 115, neutrons: 171 },
+  { number: 116, name: 'Livermorium', symbol: 'Lv', electrons: 116, protons: 116, neutrons: 172 },
+  { number: 117, name: 'Tennessine', symbol: 'Ts', electrons: 117, protons: 117, neutrons: 173 },
+  { number: 118, name: 'Oganesson', symbol: 'Og', electrons: 118, protons: 118, neutrons: 176 }
+ 
+];
+
+    function showInfo(elementNumber) {
+
+
+
+      const element = elements.find(el => el.number === elementNumber);
+      if (element) {
+//showAtom1(element);
+let shellsValue = showAtom1(element);
+//alert(shellsValue);
+        document.getElementById('element-info1').innerHTML = `
+          <h2>${element.name} (${element.symbol})</h2>
+          <p>Atomic Number: ${element.number}</p>
+          <p>Protons: ${element.protons}</p>
+          <p>Neutrons: ${element.neutrons}</p>
+          <p>Electrons: ${element.electrons}</p>
+   <p>Distrubution: ${shellsValue}</p>
+	 
+        `;       
+
+      }
+ 
+    }
+
+
+
+
+
+function showAtom1(elee){
+//alert(elee.name+""+elee.symbol+" "+elee.number+" "+ elee.electrons);
+//document.getElementById('elementName12').innerText = elee.name;
+const totalElectrons = elee.electrons; // total number of electrons
+const shellLimits = [2, 8, 18, 32, 50, 72, 98]; // Max electrons for each shell (1st shell, 2nd shell, etc.)
+let shells = [];  // Array to hold the electrons in each shell
+let remainingElectrons = totalElectrons;
+
+for (let i = 0; i < shellLimits.length; i++) {
+    if (remainingElectrons <= 0) break;
+    
+    // Determine how many electrons fit into the current shell
+    let electronsInShell = Math.min(remainingElectrons, shellLimits[i]);
+    shells.push(electronsInShell);
+    
+    // Subtract the electrons from the remaining count
+    remainingElectrons -= electronsInShell;
+}
+
+
+
+//document.getElementById('elementName122').innerText = shells;
+
+
+
+const canvas = document.getElementById('atomCanvas1');
+const ctx = canvas.getContext('2d');
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+ctx.fillStyle = 'red';
+ctx.beginPath();
+ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+ctx.fill();
+
+
+let radius = 30;
+shells.forEach((count, shellIndex) => {
+    ctx.strokeStyle = 'gray';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        ctx.fillStyle = 'blue';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    radius += 30;
+});
+
+ return shells;
+}
+
+
+
+  </script>
+
+
+</html>
