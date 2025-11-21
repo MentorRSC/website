@@ -25,6 +25,8 @@
             --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             --danger: #e74c3c;
             --success: #2ecc71;
+            --highlight: #9c27b0;
+            --scan: #2196f3;
         }
 
         body {
@@ -152,6 +154,25 @@
             margin: 0 auto;
         }
 
+        .fullscreen-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+            transition: background-color 0.3s;
+        }
+
+        .fullscreen-toggle:hover {
+            background: #0d5bbb;
+        }
+
         .stats {
             display: flex;
             justify-content: space-between;
@@ -205,7 +226,7 @@
             color: white;
             cursor: pointer;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            transition: all 0.5s ease;
             position: relative;
             overflow: hidden;
             user-select: none;
@@ -230,6 +251,27 @@
 
         .card.revealed::before {
             display: none;
+        }
+
+        /* Autoplay specific card states */
+        .card.scanning {
+            background: linear-gradient(145deg, var(--scan), #1976d2);
+            animation: pulse-scan 1s infinite;
+        }
+
+        .card.comparing {
+            background: linear-gradient(145deg, var(--accent), #e6a800);
+            animation: pulse-compare 0.8s infinite;
+        }
+
+        .card.swapping {
+            background: linear-gradient(145deg, var(--highlight), #7b1fa2);
+            animation: pulse-swap 0.5s infinite;
+        }
+
+        .card.sorted {
+            background: linear-gradient(145deg, var(--success), #27ae60);
+            transform: scale(1.05);
         }
 
         .comparison {
@@ -483,6 +525,41 @@
             opacity: 1;
         }
 
+        .autoplay-status {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--primary);
+            min-height: 24px;
+        }
+
+        .algorithm-info {
+            background-color: rgba(33, 150, 243, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--scan);
+        }
+
+        /* Autoplay animations */
+        @keyframes pulse-scan {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+        }
+
+        @keyframes pulse-compare {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 188, 4, 0.7); }
+            50% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(251, 188, 4, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 188, 4, 0); }
+        }
+
+        @keyframes pulse-swap {
+            0% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.7); }
+            50% { transform: translateX(5px); box-shadow: 0 0 0 12px rgba(156, 39, 176, 0); }
+            100% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(156, 39, 176, 0); }
+        }
+
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -587,6 +664,10 @@
 
             <!-- Game Container -->
             <section class="game-container">
+                <button class="fullscreen-toggle" id="fullscreen-toggle" title="Toggle Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+
                 <div class="stats">
                     <div class="stat-item">
                         <div class="stat-label">Moves</div>
@@ -610,8 +691,10 @@
                     <button class="btn btn-primary" id="switch-btn">Switch</button>
                     <button class="btn btn-blue" id="flip-all-btn">Flip All</button>
                     <button class="btn btn-danger" id="restart-btn">Restart</button>
-                    <button class="btn btn-success" id="fullscreen-btn">Full Screen</button>
+                    <button class="btn btn-success" id="autoplay-btn">Autoplay</button>
                 </div>
+                
+                <div class="autoplay-status" id="autoplay-status"></div>
                 
                 <div class="card-options">
                     <div class="card-option active" data-cards="4">4 Cards</div>
@@ -619,6 +702,10 @@
                     <div class="card-option" data-cards="6">6 Cards</div>
                     <div class="card-option" data-cards="7">7 Cards</div>
                     <div class="card-option" data-cards="8">8 Cards</div>
+                </div>
+
+                <div class="algorithm-info" id="algorithm-info">
+                    <strong>Bubble Sort Algorithm:</strong> The autoplay uses the Bubble Sort algorithm which repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.
                 </div>
             </section>
             
@@ -629,7 +716,18 @@
                     <li>If you want to exchange the selected card, press the [Switch] button.</li>
                     <li>If you think all the cards are in order, press the [Flip All] button to confirm.</li>
                     <li>Try to complete with a minimum number of moves.</li>
+                    <li>Use Autoplay to watch the computer solve the puzzle automatically.</li>
                 </ol>
+                
+                <div style="margin-top: 15px; padding: 10px; background: rgba(251, 188, 4, 0.1); border-radius: 5px;">
+                    <strong>Autoplay Colors:</strong>
+                    <ul style="margin-top: 5px; margin-left: 20px;">
+                        <li><span style="color: #2196f3;">Blue</span>: Scanning through cards</li>
+                        <li><span style="color: #fbbc04;">Yellow</span>: Comparing two cards</li>
+                        <li><span style="color: #9c27b0;">Purple</span>: Swapping cards</li>
+                        <li><span style="color: #2ecc71;">Green</span>: Cards in correct position</li>
+                    </ul>
+                </div>
             </section>
         </div>
     </main>
@@ -710,7 +808,11 @@
                 moves: 0,
                 cardCount: 4,
                 isRevealed: false,
-                bestScores: {}
+                bestScores: {},
+                autoplayActive: false,
+                autoplayInterval: null,
+                currentScanIndex: 0,
+                sortedIndex: 0
             };
             
             // DOM elements
@@ -722,8 +824,11 @@
             const switchBtn = document.getElementById('switch-btn');
             const flipAllBtn = document.getElementById('flip-all-btn');
             const restartBtn = document.getElementById('restart-btn');
-            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const autoplayBtn = document.getElementById('autoplay-btn');
+            const fullscreenBtn = document.getElementById('fullscreen-toggle');
             const cardOptions = document.querySelectorAll('.card-option');
+            const autoplayStatus = document.getElementById('autoplay-status');
+            const algorithmInfo = document.getElementById('algorithm-info');
             
             // Initialize game
             initGame();
@@ -732,6 +837,7 @@
             switchBtn.addEventListener('click', switchCards);
             flipAllBtn.addEventListener('click', flipAllCards);
             restartBtn.addEventListener('click', initGame);
+            autoplayBtn.addEventListener('click', toggleAutoplay);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             
             cardOptions.forEach(option => {
@@ -743,13 +849,22 @@
             
             // Initialize the game
             function initGame() {
+                // Stop autoplay if active
+                if (gameState.autoplayActive) {
+                    toggleAutoplay();
+                }
+                
                 gameState.moves = 0;
                 gameState.selectedCards = [];
                 gameState.isRevealed = false;
+                gameState.currentScanIndex = 0;
+                gameState.sortedIndex = 0;
                 
                 movesElement.textContent = gameState.moves;
                 comparisonElement.textContent = '';
                 comparisonElement.style.color = 'var(--text)';
+                autoplayStatus.textContent = '';
+                algorithmInfo.style.display = 'block';
                 
                 generateCards();
                 updateBestScore();
@@ -776,7 +891,8 @@
                     gameState.cards.push({
                         value: numbers[i],
                         selected: false,
-                        revealed: false
+                        revealed: false,
+                        state: 'normal' // normal, scanning, comparing, swapping, sorted
                     });
                 }
             }
@@ -789,7 +905,16 @@
                     const cardElement = document.createElement('div');
                     cardElement.className = 'card';
                     
-                    if (card.selected) {
+                    // Apply state-based styling
+                    if (card.state === 'scanning') {
+                        cardElement.classList.add('scanning');
+                    } else if (card.state === 'comparing') {
+                        cardElement.classList.add('comparing');
+                    } else if (card.state === 'swapping') {
+                        cardElement.classList.add('swapping');
+                    } else if (card.state === 'sorted') {
+                        cardElement.classList.add('sorted');
+                    } else if (card.selected) {
                         cardElement.classList.add('selected');
                     }
                     
@@ -815,7 +940,7 @@
             
             // Select a card
             function selectCard(index) {
-                if (gameState.isRevealed) return;
+                if (gameState.isRevealed || gameState.autoplayActive) return;
                 
                 const card = gameState.cards[index];
                 
@@ -935,6 +1060,13 @@
                 comparisonElement.textContent = '';
                 
                 renderCards();
+                
+                // Check if sorted after switch
+                if (checkIfSorted()) {
+                    gameState.isRevealed = true;
+                    comparisonElement.innerHTML = '<div class="win-message">Congratulations! You sorted the cards!</div>';
+                    updateBestScore();
+                }
             }
             
             // Flip all cards to reveal their values
@@ -944,7 +1076,7 @@
                 gameState.isRevealed = true;
                 gameState.selectedCards = [];
                 
-                // Reveal all cards
+                // Reveal all cards - THIS IS THE FIX
                 gameState.cards.forEach(card => {
                     card.revealed = true;
                     card.selected = false;
@@ -1008,16 +1140,126 @@
                 }
             }
             
+            // Toggle autoplay mode
+            function toggleAutoplay() {
+                if (gameState.autoplayActive) {
+                    // Stop autoplay
+                    clearInterval(gameState.autoplayInterval);
+                    gameState.autoplayActive = false;
+                    autoplayBtn.textContent = 'Autoplay';
+                    autoplayBtn.classList.remove('btn-danger');
+                    autoplayBtn.classList.add('btn-success');
+                    autoplayStatus.textContent = '';
+                    comparisonElement.textContent = 'Autoplay stopped';
+                    algorithmInfo.style.display = 'block';
+                    
+                    // Reset card states
+                    gameState.cards.forEach(card => {
+                        card.state = 'normal';
+                    });
+                    renderCards();
+                } else {
+                    // Start autoplay
+                    gameState.autoplayActive = true;
+                    gameState.currentScanIndex = 0;
+                    gameState.sortedIndex = gameState.cards.length;
+                    autoplayBtn.textContent = 'Stop Autoplay';
+                    autoplayBtn.classList.remove('btn-success');
+                    autoplayBtn.classList.add('btn-danger');
+                    autoplayStatus.textContent = 'Starting Bubble Sort Algorithm...';
+                    comparisonElement.textContent = 'Autoplay started - watching algorithm solve the puzzle';
+                    algorithmInfo.style.display = 'none';
+                    
+                    // Start the autoplay interval
+                    gameState.autoplayInterval = setInterval(autoplayStep, 1500);
+                }
+            }
+            
+            // Autoplay logic - one step of the algorithm
+            function autoplayStep() {
+                if (gameState.isRevealed) {
+                    // Puzzle is solved, stop autoplay
+                    toggleAutoplay();
+                    return;
+                }
+                
+                // Reset all card states to normal first
+                gameState.cards.forEach(card => {
+                    card.state = 'normal';
+                });
+                
+                // Mark already sorted cards
+                for (let i = gameState.sortedIndex; i < gameState.cards.length; i++) {
+                    gameState.cards[i].state = 'sorted';
+                }
+                
+                // Highlight the current scanning position
+                if (gameState.currentScanIndex < gameState.sortedIndex - 1) {
+                    gameState.cards[gameState.currentScanIndex].state = 'scanning';
+                    gameState.cards[gameState.currentScanIndex + 1].state = 'scanning';
+                    
+                    autoplayStatus.textContent = `Scanning positions ${gameState.currentScanIndex + 1} and ${gameState.currentScanIndex + 2}`;
+                    
+                    // Check if we need to swap
+                    if (gameState.cards[gameState.currentScanIndex].value > gameState.cards[gameState.currentScanIndex + 1].value) {
+                        // Highlight for comparison
+                        gameState.cards[gameState.currentScanIndex].state = 'comparing';
+                        gameState.cards[gameState.currentScanIndex + 1].state = 'comparing';
+                        
+                        autoplayStatus.textContent = `Comparing ${gameState.cards[gameState.currentScanIndex].value} and ${gameState.cards[gameState.currentScanIndex + 1].value} - need to swap`;
+                        
+                        // Swap them
+                        [gameState.cards[gameState.currentScanIndex].value, gameState.cards[gameState.currentScanIndex + 1].value] = 
+                        [gameState.cards[gameState.currentScanIndex + 1].value, gameState.cards[gameState.currentScanIndex].value];
+                        
+                        // Highlight as swapping
+                        gameState.cards[gameState.currentScanIndex].state = 'swapping';
+                        gameState.cards[gameState.currentScanIndex + 1].state = 'swapping';
+                        
+                        // Increment moves
+                        gameState.moves++;
+                        movesElement.textContent = gameState.moves;
+                    }
+                    
+                    gameState.currentScanIndex++;
+                } else {
+                    // Finished a pass, reset for next pass
+                    gameState.sortedIndex--;
+                    gameState.currentScanIndex = 0;
+                    autoplayStatus.textContent = `Completed pass. ${gameState.sortedIndex} items remaining to sort.`;
+                    
+                    // If no more passes needed, we're done
+                    if (gameState.sortedIndex <= 1) {
+                        gameState.isRevealed = true;
+                        autoplayStatus.textContent = 'Puzzle solved!';
+                        comparisonElement.innerHTML = '<div class="win-message">Autoplay completed the puzzle!</div>';
+                        updateBestScore();
+                        
+                        // Mark all as sorted AND revealed - THIS IS THE FIX
+                        gameState.cards.forEach(card => {
+                            card.state = 'sorted';
+                            card.revealed = true; // Make sure cards are revealed
+                        });
+                        
+                        toggleAutoplay();
+                    }
+                }
+                
+                renderCards();
+            }
+            
             // Toggle fullscreen mode
             function toggleFullscreen() {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(err => {
                         console.error(`Error attempting to enable fullscreen: ${err.message}`);
                     });
+                    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
                 } else {
                     if (document.exitFullscreen) {
                         document.exitFullscreen();
                     }
+                    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
                 }
             }
         });
