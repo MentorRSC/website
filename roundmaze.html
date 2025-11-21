@@ -1,357 +1,1082 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-  <title>Round Maze — Wooden Puzzle (Web Version)</title>
-  <style>
-    :root{--bg:#111;--panel:#0f1720;--accent:#f59e0b;--muted:#9ca3af}
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial}
-    body{background:linear-gradient(180deg,#071028 0%, #08121a 60%);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:12px}
-    .app{width:100%;max-width:900px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(2,6,23,0.7)}
-    header{display:flex;align-items:center;gap:12px}
-    h1{font-size:18px;margin:0}
-    .row{display:flex;gap:10px;align-items:center}
-    #gamewrap{position:relative;margin-top:12px;background:radial-gradient(circle at 50% 40%, rgba(255,255,255,0.02), transparent 30%);border-radius:10px;padding:10px}
-    canvas{display:block;width:100%;height:calc(100vw - 80px);max-height:640px;border-radius:8px;background:transparent}
-    .hud{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
-    button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);padding:8px 12px;border-radius:8px;font-weight:600}
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);display:flex;gap:8px;align-items:center}
-    .muted{color:var(--muted);font-size:13px}
-    .controls{margin-left:auto;display:flex;gap:8px}
-    .small{font-size:13px;padding:6px 8px}
-    .footer{margin-top:8px;color:var(--muted);font-size:13px}
-    .hint{font-size:13px;color:var(--muted)}
-    /* simple on-screen joystick */
-    #joystick{position:absolute;right:14px;bottom:14px;width:120px;height:120px;border-radius:60px;display:none;align-items:center;justify-content:center}
-    #joypad{width:80px;height:80px;border-radius:40px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center}
-    #stick{width:36px;height:36px;border-radius:18px;background:linear-gradient(180deg,#ffd89b,#ffb347);box-shadow:0 6px 14px rgba(0,0,0,0.5)}
-    @media (max-width:640px){canvas{height:70vh} #joystick{display:flex}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round Maze Ball | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Your CSS Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --danger: #e74c3c;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #0d5bbb;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        /* Game Container Styles */
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .game-container h2 {
+            color: var(--dark);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+
+        /* Round Maze Game Styles */
+        .maze-game {
+            margin-top: 20px;
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 500;
+        }
+
+        .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 1rem;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .btn-start {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-start:hover {
+            background-color: #0d5bbb;
+        }
+
+        .btn-reset {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-reset:hover {
+            background-color: #c0392b;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background-color: var(--light);
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        /* Maze Container */
+        .maze-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: radial-gradient(circle at center, #2c3e50, #1a252f);
+        }
+
+        #maze-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .game-instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .game-instructions h3 {
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .game-instructions p {
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .tilt-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f4fd;
+            border-radius: 8px;
+        }
+
+        .tilt-controls i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 30px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 60px 0 20px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background-color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bbb;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            nav ul {
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav ul li {
+                margin: 5px 10px;
+            }
+
+            .mobile-menu {
+                display: block;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+
+            .nav-menu.active {
+                display: block;
+            }
+
+            .game-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .maze-container {
+                max-width: 350px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .maze-container {
+                max-width: 300px;
+            }
+            
+            .game-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .stat {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        /* Game Over Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="app" role="application">
+    <!-- Header Section -->
     <header>
-      <div>
-        <h1>SIGNAMIO — Round Maze (Web)</h1>
-        <div class="muted">Play the wooden round-maze puzzle in your phone browser — tilt or touch to move the ball.</div>
-      </div>
-      <div class="controls">
-        <button id="restart">Restart</button>
-        <button id="newlevel" class="small">New Maze</button>
-      </div>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Parent</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
 
-    <div id="gamewrap">
-      <canvas id="c"></canvas>
-      <div id="joystick">
-        <div id="joypad">
-          <div id="stick"></div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Game Section -->
+            <section class="game-container">
+                <h2>Round Maze Ball Game</h2>
+                <p>Tilt your device to navigate the ball through the maze and reach the goal!</p>
+                
+                <div class="maze-game">
+                    <div class="game-controls">
+                        <div class="control-group">
+                            <label for="maze-level">Level:</label>
+                            <select id="maze-level">
+                                <option value="1">Easy</option>
+                                <option value="2" selected>Medium</option>
+                                <option value="3">Hard</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <button id="start-maze-btn" class="btn btn-start">Start Game</button>
+                            <button id="reset-maze-btn" class="btn btn-reset">Reset</button>
+                        </div>
+                    </div>
+                    
+                    <div class="game-stats">
+                        <div class="stat">
+                            <div class="stat-value" id="time-taken">00:00</div>
+                            <div class="stat-label">Time</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="level-display">2</div>
+                            <div class="stat-label">Level</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="attempts-count">0</div>
+                            <div class="stat-label">Attempts</div>
+                        </div>
+                    </div>
+                    
+                    <div class="maze-container">
+                        <canvas id="maze-canvas"></canvas>
+                    </div>
+                    
+                    <div class="game-instructions">
+                        <h3>How to Play</h3>
+                        <p>Tilt your mobile device to roll the ball through the maze. Avoid the walls and reach the goal area to complete the level.</p>
+                        <div class="tilt-controls">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Tilt your device to control the ball</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Game Info -->
+            <section class="card">
+                <h2>About the Game</h2>
+                
+                <div class="instructions">
+                    <h3>Game Features</h3>
+                    <ul>
+                        <li>Gyroscope/tilt controls optimized for mobile devices</li>
+                        <li>Three difficulty levels with increasingly complex mazes</li>
+                        <li>Time tracking and attempt counting</li>
+                        <li>Physics-based ball movement</li>
+                        <li>Visual feedback for collisions and success</li>
+                    </ul>
+                    
+                    <h3>How It Works</h3>
+                    <p>This game uses your device's motion sensors to detect tilt movements. The ball responds to gravity based on how you tilt your device, allowing you to navigate through the circular maze.</p>
+                    
+                    <h3>Tips for Success</h3>
+                    <ul>
+                        <li>Make small, gentle movements for better control</li>
+                        <li>Plan your path before moving the ball</li>
+                        <li>Use walls to your advantage by bouncing off them</li>
+                        <li>Take your time - rushing often leads to mistakes</li>
+                    </ul>
+                </div>
+            </section>
         </div>
-      </div>
+    </main>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <h2>Level Complete!</h2>
+            <p id="completion-message">You finished the level in <span id="completion-time">00:00</span> with <span id="completion-attempts">0</span> attempts!</p>
+            <div class="modal-buttons">
+                <button id="next-level-btn" class="btn btn-start">Next Level</button>
+                <button id="play-again-btn" class="btn">Play Again</button>
+                <button id="close-modal-btn" class="btn btn-reset">Close</button>
+            </div>
+        </div>
     </div>
 
-    <div class="hud">
-      <div class="panel">Time: <strong id="time">0.00</strong>s</div>
-      <div class="panel">Moves: <strong id="moves">0</strong></div>
-      <div class="panel muted">Goal: reach the center hole</div>
-    </div>
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and collaborative spaces.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Innovation Tracks</h3>
+                    <ul>
+                        <li><a href="#">Tech Innovation</a></li>
+                        <li><a href="#">Social Innovation</a></li>
+                        <li><a href="#">Product Design</a></li>
+                        <li><a href="#">Sustainable Tech</a></li>
+                        <li><a href="#">Health Innovation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentor2hubrsc@gmail.com</li>
+                        <li><i class="fas fa-clock"></i> TUESDAY - SUNDAY: 11AM-4PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
-    <div class="footer">
-      <div class="hint">Tip: On mobile allow motion permissions when prompted to use tilt controls. Use the joystick if unavailable.</div>
-    </div>
-  </div>
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            mobileMenu.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.header-container')) {
+                    navMenu.classList.remove('active');
+                }
+            });
 
-<script>
-/*
-  Circular maze with polar cell grid and simple physics.
-  - Maze generation: recursive backtracker across polar cells (rings x arcs)
-  - Rendering: walls drawn as arcs and radial lines
-  - Ball movement: using deviceorientation or on-screen joystick
-  - Collision: movement allowed only between cells with no wall between them
-*/
+            // Round Maze Ball Game
+            const canvas = document.getElementById('maze-canvas');
+            const ctx = canvas.getContext('2d');
+            const mazeLevelSelect = document.getElementById('maze-level');
+            const startMazeBtn = document.getElementById('start-maze-btn');
+            const resetMazeBtn = document.getElementById('reset-maze-btn');
+            const timeTakenElement = document.getElementById('time-taken');
+            const levelDisplayElement = document.getElementById('level-display');
+            const attemptsCountElement = document.getElementById('attempts-count');
+            const gameOverModal = document.getElementById('game-over-modal');
+            const completionTimeElement = document.getElementById('completion-time');
+            const completionAttemptsElement = document.getElementById('completion-attempts');
+            const nextLevelBtn = document.getElementById('next-level-btn');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
 
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-let W, H, cx, cy, radius;
-function resize(){
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = Math.max(800, Math.floor(rect.width * devicePixelRatio));
-  canvas.height = Math.max(800, Math.floor(Math.min(rect.width, window.innerHeight*0.6) * devicePixelRatio));
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = (Math.min(rect.width, window.innerHeight*0.6)) + 'px';
-  W = canvas.width; H = canvas.height; cx = W/2; cy = H/2; radius = Math.min(W,H)*0.45;
-}
-window.addEventListener('resize', ()=>{ resize(); draw(); });
-resize();
+            // Game variables
+            let gameActive = false;
+            let ball = { x: 0, y: 0, radius: 15, color: '#e74c3c' };
+            let goal = { x: 0, y: 0, radius: 25, color: '#2ecc71' };
+            let walls = [];
+            let startTime = null;
+            let timerInterval = null;
+            let attempts = 0;
+            let currentLevel = 2;
+            let deviceOrientation = { alpha: 0, beta: 0, gamma: 0 };
+            let canvasSize = 0;
 
-// Maze parameters — tune for phone performance
-let RINGS = 6; // concentric rings
-let CELLS_BASE = 8; // cells in outermost ring
-let cellGrid = []; // grid[r][s] = {walls: {inward, outward, left, right}, visited}
+            // Initialize the game
+            function initMazeGame() {
+                // Set canvas size
+                resizeCanvas();
+                
+                // Set initial level
+                currentLevel = parseInt(mazeLevelSelect.value);
+                levelDisplayElement.textContent = currentLevel;
+                attempts = 0;
+                attemptsCountElement.textContent = attempts;
+                
+                // Generate maze based on level
+                generateMaze(currentLevel);
+                
+                // Reset timer
+                resetTimer();
+                
+                // Start game
+                gameActive = true;
+                
+                // Start game loop
+                requestAnimationFrame(gameLoop);
+                
+                // Request device orientation permission
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleDeviceOrientation);
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    window.addEventListener('deviceorientation', handleDeviceOrientation);
+                }
+            }
 
-function createGrid(rings = RINGS){
-  cellGrid = [];
-  for(let r=0;r<rings;r++){
-    const cells = Math.max(6, CELLS_BASE + r*2);
-    const ring = [];
-    for(let s=0;s<cells;s++){
-      ring.push({visited:false, walls:{inward:true,outward:true,left:true,right:true}});
-    }
-    cellGrid.push(ring);
-  }
-}
+            // Resize canvas to fit container
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvasSize = Math.min(container.clientWidth, container.clientHeight);
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+            }
 
-function neighbors(r,s){
-  const res = [];
-  const cells = cellGrid[r].length;
-  // angular neighbors
-  res.push({r, s:(s-1+cells)%cells, dir:'left'});
-  res.push({r, s:(s+1)%cells, dir:'right'});
-  // radial neighbors
-  if(r>0) res.push({r:r-1, s: mapSectorToRing(s, r, r-1), dir:'inward'});
-  if(r<cellGrid.length-1) res.push({r:r+1, s: mapSectorToRing(s, r, r+1), dir:'outward'});
-  return res;
-}
+            // Generate maze based on level
+            function generateMaze(level) {
+                walls = [];
+                const center = canvasSize / 2;
+                const maxRadius = canvasSize / 2 - 30;
+                
+                // Set ball and goal positions
+                if (level === 1) {
+                    // Easy level - simple circular path
+                    ball.x = center - maxRadius * 0.7;
+                    ball.y = center;
+                    goal.x = center + maxRadius * 0.7;
+                    goal.y = center;
+                    
+                    // Add circular walls
+                    walls.push({ type: 'circle', x: center, y: center, radius: maxRadius * 0.8, thickness: 15 });
+                    walls.push({ type: 'circle', x: center, y: center, radius: maxRadius * 0.4, thickness: 15 });
+                    
+                    // Add some obstacles
+                    walls.push({ type: 'line', x1: center, y1: center - maxRadius * 0.6, x2: center, y2: center + maxRadius * 0.6, thickness: 10 });
+                    
+                } else if (level === 2) {
+                    // Medium level - more complex path
+                    ball.x = center - maxRadius * 0.6;
+                    ball.y = center;
+                    goal.x = center + maxRadius * 0.6;
+                    goal.y = center;
+                    
+                    // Add circular walls
+                    walls.push({ type: 'circle', x: center, y: center, radius: maxRadius * 0.9, thickness: 15 });
+                    walls.push({ type: 'circle', x: center, y: center, radius: maxRadius * 0.3, thickness: 15 });
+                    
+                    // Add obstacles
+                    walls.push({ type: 'line', x1: center - maxRadius * 0.6, y1: center - maxRadius * 0.6, x2: center + maxRadius * 0.6, y2: center + maxRadius * 0.6, thickness: 10 });
+                    walls.push({ type: 'line', x1: center - maxRadius * 0.6, y1: center + maxRadius * 0.6, x2: center + maxRadius * 0.6, y2: center - maxRadius * 0.6, thickness: 10 });
+                    
+                } else {
+                    // Hard level - complex maze
+                    ball.x = center - maxRadius * 0.8;
+                    ball.y = center;
+                    goal.x = center + maxRadius * 0.8;
+                    goal.y = center;
+                    
+                    // Add circular walls
+                    walls.push({ type: 'circle', x: center, y: center, radius: maxRadius * 0.95, thickness: 15 });
+                    walls.push({ type: 'circle', x: center, y: center, radius: maxRadius * 0.2, thickness: 15 });
+                    
+                    // Add multiple obstacles
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i * Math.PI) / 4;
+                        const length = maxRadius * 0.6;
+                        walls.push({
+                            type: 'line',
+                            x1: center + Math.cos(angle) * maxRadius * 0.3,
+                            y1: center + Math.sin(angle) * maxRadius * 0.3,
+                            x2: center + Math.cos(angle) * length,
+                            y2: center + Math.sin(angle) * length,
+                            thickness: 8
+                        });
+                    }
+                }
+            }
 
-// map sector index from ring r to ring nr by scaling angle
-function mapSectorToRing(s, r, nr){
-  const cells = cellGrid[r].length; const nc = cellGrid[nr].length;
-  const angle = (s + 0.5) / cells; // mid-angle
-  return Math.floor(angle * nc) % nc;
-}
+            // Handle device orientation
+            function handleDeviceOrientation(event) {
+                if (!gameActive) return;
+                
+                deviceOrientation = {
+                    alpha: event.alpha || 0,
+                    beta: event.beta || 0,
+                    gamma: event.gamma || 0
+                };
+            }
 
-function generateMaze(){
-  // recursive backtracker
-  const stack = [];
-  const startR = cellGrid.length-1; const startS = 0;
-  cellGrid[startR][startS].visited = true;
-  stack.push({r:startR,s:startS});
-  while(stack.length){
-    const cur = stack[stack.length-1];
-    const nbrs = neighbors(cur.r, cur.s).filter(n=>!cellGrid[n.r][n.s].visited);
-    if(nbrs.length===0){ stack.pop(); continue; }
-    const pick = nbrs[Math.floor(Math.random()*nbrs.length)];
-    // remove walls between cur and pick
-    const a = cellGrid[cur.r][cur.s];
-    const b = cellGrid[pick.r][pick.s];
-    if(pick.dir==='left'){ a.walls.left = false; b.walls.right = false; }
-    else if(pick.dir==='right'){ a.walls.right = false; b.walls.left = false; }
-    else if(pick.dir==='inward'){ a.walls.inward = false; b.walls.outward = false; }
-    else if(pick.dir==='outward'){ a.walls.outward = false; b.walls.inward = false; }
-    b.visited = true;
-    stack.push({r:pick.r,s:pick.s});
-  }
-}
+            // Game loop
+            function gameLoop() {
+                if (!gameActive) return;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw maze
+                drawMaze();
+                
+                // Update ball position based on device orientation
+                updateBallPosition();
+                
+                // Draw ball
+                drawBall();
+                
+                // Draw goal
+                drawGoal();
+                
+                // Check for collisions
+                checkCollisions();
+                
+                // Check for win condition
+                checkWinCondition();
+                
+                // Continue game loop
+                requestAnimationFrame(gameLoop);
+            }
 
-function polarToXY(r, s){
-  // returns center point of cell
-  const rings = cellGrid.length;
-  const ringWidth = radius / rings;
-  const innerR = r * ringWidth;
-  const outerR = (r+1) * ringWidth;
-  const midR = (innerR+outerR)/2;
-  const cells = cellGrid[r].length;
-  const angle = (s + 0.5) * (2*Math.PI / cells) - Math.PI/2;
-  return {x: cx + midR * Math.cos(angle), y: cy + midR * Math.sin(angle)};
-}
+            // Draw the maze walls
+            function drawMaze() {
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 1;
+                ctx.fillStyle = '#2c3e50';
+                
+                walls.forEach(wall => {
+                    ctx.beginPath();
+                    if (wall.type === 'circle') {
+                        ctx.arc(wall.x, wall.y, wall.radius, 0, Math.PI * 2);
+                        ctx.lineWidth = wall.thickness;
+                        ctx.stroke();
+                    } else if (wall.type === 'line') {
+                        ctx.lineWidth = wall.thickness;
+                        ctx.moveTo(wall.x1, wall.y1);
+                        ctx.lineTo(wall.x2, wall.y2);
+                        ctx.stroke();
+                    }
+                });
+            }
 
-function drawMaze(){
-  ctx.clearRect(0,0,W,H);
-  ctx.save();
-  ctx.translate(0,0);
-  ctx.lineWidth = Math.max(1, Math.round(2*devicePixelRatio));
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  const rings = cellGrid.length;
-  const ringWidth = radius / rings;
-  for(let r=0;r<rings;r++){
-    const cells = cellGrid[r].length;
-    const innerR = r * ringWidth;
-    const outerR = (r+1) * ringWidth;
-    // draw arcs for walls inward/outward
-    for(let s=0;s<cells;s++){
-      const cell = cellGrid[r][s];
-      const a1 = s * (2*Math.PI / cells) - Math.PI/2;
-      const a2 = (s+1)*(2*Math.PI / cells) - Math.PI/2;
-      // inward wall
-      if(cell.walls.inward){
-        ctx.beginPath(); ctx.arc(cx,cy, innerR, a1, a2); ctx.stroke();
-      }
-      // outward wall
-      if(cell.walls.outward){
-        ctx.beginPath(); ctx.arc(cx,cy, outerR, a1, a2); ctx.stroke();
-      }
-      // radial walls: left edge
-      if(cell.walls.left){
-        ctx.beginPath(); ctx.moveTo(cx + innerR*Math.cos(a1), cy+innerR*Math.sin(a1));
-        ctx.lineTo(cx + outerR*Math.cos(a1), cy+outerR*Math.sin(a1)); ctx.stroke();
-      }
-      // optionally draw right edge for last cell to close gaps
-      // right edges will be drawn by its neighbor's left
-    }
-  }
-  ctx.restore();
-}
+            // Draw the ball
+            function drawBall() {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+                ctx.strokeStyle = '#c0392b';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Add shine effect
+                ctx.beginPath();
+                ctx.arc(ball.x - ball.radius/3, ball.y - ball.radius/3, ball.radius/3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.fill();
+            }
 
-// Player ball state
-// Prevent ball from leaving the maze boundary by clamping to outer radius
-let OUTER_BOUNDARY_RADIUS = null; // will set after maze init
-let ball = {x:0,y:0,r:10, vx:0, vy:0};
-let moves = 0; let startTime = null; let finished=false;
+            // Draw the goal
+            function drawGoal() {
+                ctx.beginPath();
+                ctx.arc(goal.x, goal.y, goal.radius, 0, Math.PI * 2);
+                ctx.fillStyle = goal.color;
+                ctx.fill();
+                ctx.strokeStyle = '#27ae60';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Add pulsing effect
+                const pulseSize = Math.sin(Date.now() / 300) * 3;
+                ctx.beginPath();
+                ctx.arc(goal.x, goal.y, goal.radius + pulseSize, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
 
-function resetBall(){
-  // start at outer ring, random sector
-  const r = cellGrid.length-1; const s = Math.floor(cellGrid[r].length/2);
-  const p = polarToXY(r,s);
-  ball.x = p.x; ball.y = p.y; ball.vx=0; ball.vy=0; moves=0; finished=false; startTime = performance.now();
-}
+            // Update ball position based on device orientation
+            function updateBallPosition() {
+                // Use gamma (left-right tilt) and beta (front-back tilt) for movement
+                const sensitivity = 0.5;
+                const maxSpeed = 5;
+                
+                // Calculate movement based on device tilt
+                let dx = deviceOrientation.gamma * sensitivity;
+                let dy = deviceOrientation.beta * sensitivity;
+                
+                // Limit speed
+                const speed = Math.sqrt(dx * dx + dy * dy);
+                if (speed > maxSpeed) {
+                    dx = (dx / speed) * maxSpeed;
+                    dy = (dy / speed) * maxSpeed;
+                }
+                
+                // Update ball position
+                ball.x += dx;
+                ball.y += dy;
+                
+                // Keep ball within canvas bounds
+                ball.x = Math.max(ball.radius, Math.min(canvasSize - ball.radius, ball.x));
+                ball.y = Math.max(ball.radius, Math.min(canvasSize - ball.radius, ball.y));
+            }
 
-function getCellAt(x,y){
-  const dx = x-cx, dy=y-cy; const d = Math.sqrt(dx*dx+dy*dy);
-  const rings = cellGrid.length;
-  const ringWidth = radius / rings;
-  let r = Math.floor(d / ringWidth);
-  if(r<0) r=0; if(r>=rings) r=rings-1;
-  let angle = Math.atan2(dy,dx) + Math.PI/2; if(angle<0) angle += Math.PI*2;
-  const cells = cellGrid[r].length;
-  let s = Math.floor(angle / (2*Math.PI) * cells) % cells;
-  return {r,s};
-}
+            // Check for collisions with walls
+            function checkCollisions() {
+                const centerX = canvasSize / 2;
+                const centerY = canvasSize / 2;
+                
+                walls.forEach(wall => {
+                    if (wall.type === 'circle') {
+                        // Calculate distance from ball to circle center
+                        const dx = ball.x - wall.x;
+                        const dy = ball.y - wall.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Check if ball is colliding with inner or outer edge of circle
+                        if (distance < wall.radius + ball.radius && distance > wall.radius - wall.thickness - ball.radius) {
+                            // Collision detected - push ball away
+                            const angle = Math.atan2(dy, dx);
+                            const targetX = wall.x + Math.cos(angle) * (wall.radius + ball.radius);
+                            const targetY = wall.y + Math.sin(angle) * (wall.radius + ball.radius);
+                            
+                            ball.x = targetX;
+                            ball.y = targetY;
+                        }
+                    } else if (wall.type === 'line') {
+                        // Line collision detection
+                        const lineLength = Math.sqrt(
+                            Math.pow(wall.x2 - wall.x1, 2) + 
+                            Math.pow(wall.y2 - wall.y1, 2)
+                        );
+                        
+                        // Calculate the closest point on the line to the ball
+                        const t = Math.max(0, Math.min(1, (
+                            (ball.x - wall.x1) * (wall.x2 - wall.x1) + 
+                            (ball.y - wall.y1) * (wall.y2 - wall.y1)
+                        ) / (lineLength * lineLength)));
+                        
+                        const closestX = wall.x1 + t * (wall.x2 - wall.x1);
+                        const closestY = wall.y1 + t * (wall.y2 - wall.y1);
+                        
+                        // Calculate distance from ball to closest point on line
+                        const distance = Math.sqrt(
+                            Math.pow(ball.x - closestX, 2) + 
+                            Math.pow(ball.y - closestY, 2)
+                        );
+                        
+                        // Check if ball is colliding with line
+                        if (distance < ball.radius + wall.thickness / 2) {
+                            // Collision detected - push ball away
+                            const angle = Math.atan2(ball.y - closestY, ball.x - closestX);
+                            const targetX = closestX + Math.cos(angle) * (ball.radius + wall.thickness / 2);
+                            const targetY = closestY + Math.sin(angle) * (ball.radius + wall.thickness / 2);
+                            
+                            ball.x = targetX;
+                            ball.y = targetY;
+                        }
+                    }
+                });
+            }
 
-function hasWallBetween(a,b){
-  if(a.r===b.r){
-    const cells = cellGrid[a.r].length;
-    // angular difference
-    if((b.s === (a.s+1)%cells)) return cellGrid[a.r][a.s].walls.right;
-    if((b.s === (a.s-1+cells)%cells)) return cellGrid[a.r][a.s].walls.left;
-  } else if(a.r === b.r+1){
-    // b is inward
-    const mapped = mapSectorToRing(a.s,a.r,b.r);
-    if(mapped !== b.s) return true; // crossing to different angular cell -> treat as wall
-    return cellGrid[a.r][a.s].walls.inward;
-  } else if(a.r+1 === b.r){
-    const mapped = mapSectorToRing(b.s,b.r,a.r);
-    if(mapped !== a.s) return true;
-    return cellGrid[a.r][a.s].walls.outward;
-  }
-  return true;
-}
+            // Check if ball has reached the goal
+            function checkWinCondition() {
+                const dx = ball.x - goal.x;
+                const dy = ball.y - goal.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < goal.radius) {
+                    // Level completed!
+                    gameActive = false;
+                    clearInterval(timerInterval);
+                    showGameOverModal(true);
+                }
+            }
 
-// Input: tilt or joystick
-let accel = {ax:0, ay:0};
-window.addEventListener('deviceorientation', (ev)=>{
-  // gamma (left-right), beta (front-back)
-  if(ev.gamma==null) return;
-  // map gamma/beta to ax,ay
-  const gx = Math.max(-45, Math.min(45, ev.gamma));
-  const gy = Math.max(-45, Math.min(45, ev.beta-10)); // offset
-  const sensitivity = 0.02;
-  accel.ax = gx * sensitivity;
-  accel.ay = gy * sensitivity;
-});
+            // Reset the game
+            function resetMazeGame() {
+                gameActive = false;
+                clearInterval(timerInterval);
+                attempts++;
+                attemptsCountElement.textContent = attempts;
+                initMazeGame();
+            }
 
-// joystick fallback
-const joy = document.getElementById('joypad'); const stick = document.getElementById('stick');
-let joystickActive = false; let joyCx=0, joyCy=0;
-joy.addEventListener('pointerdown', startJoy);
-joy.addEventListener('pointermove', moveJoy);
-window.addEventListener('pointerup', endJoy);
-function startJoy(e){ joy.setPointerCapture(e.pointerId); joystickActive=true; moveJoy(e); }
-function moveJoy(e){ if(!joystickActive) return; const rect = joy.getBoundingClientRect(); const x = e.clientX - rect.left - rect.width/2; const y = e.clientY - rect.top - rect.height/2; const max = rect.width/2 - 10; const dist = Math.min(max, Math.hypot(x,y)); const nx = x/dist || 0; const ny = y/dist || 0; stick.style.transform = `translate(${nx*dist}px, ${ny*dist}px)`; accel.ax = (nx * dist / max) * 0.12; accel.ay = (ny * dist / max) * 0.12; }
-function endJoy(e){ joystickActive=false; stick.style.transform = '' ; accel.ax=0; accel.ay=0; }
+            // Reset timer
+            function resetTimer() {
+                startTime = new Date();
+                clearInterval(timerInterval);
+                
+                timerInterval = setInterval(() => {
+                    const currentTime = new Date();
+                    const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+                    const minutes = Math.floor(elapsedTime / 60);
+                    const seconds = elapsedTime % 60;
+                    
+                    timeTakenElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
 
-// controls
-document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); draw(); });
-document.getElementById('newlevel').addEventListener('click', ()=>{ startNewMaze(){
-  RINGS = Math.max(4, Math.floor(4 + Math.random()*6));
-  CELLS_BASE = Math.max(6, 6 + Math.floor(Math.random()*6));
-  createGrid(RINGS); generateMaze(); resetBall();
-  OUTER_BOUNDARY_RADIUS = radius * 0.97; // keep ball inside outer ring
-}(); });
+            // Show game over modal
+            function showGameOverModal(success) {
+                if (success) {
+                    const currentTime = new Date();
+                    const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+                    const minutes = Math.floor(elapsedTime / 60);
+                    const seconds = elapsedTime % 60;
+                    
+                    completionTimeElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    completionAttemptsElement.textContent = attempts;
+                    
+                    gameOverModal.style.display = 'flex';
+                }
+            }
 
-function startNewMaze(){
-  // randomize complexity a bit
-  RINGS = Math.max(4, Math.floor(4 + Math.random()*6));
-  CELLS_BASE = Math.max(6, 6 + Math.floor(Math.random()*6));
-  createGrid(RINGS); generateMaze(); resetBall();
-}
-startNewMaze();
+            // Event listeners
+            startMazeBtn.addEventListener('click', initMazeGame);
+            resetMazeBtn.addEventListener('click', resetMazeGame);
+            
+            nextLevelBtn.addEventListener('click', function() {
+                gameOverModal.style.display = 'none';
+                if (currentLevel < 3) {
+                    currentLevel++;
+                    mazeLevelSelect.value = currentLevel;
+                }
+                initMazeGame();
+            });
+            
+            playAgainBtn.addEventListener('click', function() {
+                gameOverModal.style.display = 'none';
+                initMazeGame();
+            });
+            
+            closeModalBtn.addEventListener('click', function() {
+                gameOverModal.style.display = 'none';
+            });
+            
+            mazeLevelSelect.addEventListener('change', function() {
+                currentLevel = parseInt(this.value);
+                if (gameActive) {
+                    resetMazeGame();
+                }
+            });
 
-function drawBall(){
-  ctx.beginPath(); ctx.fillStyle = 'rgba(255,194,89,0.95)'; ctx.arc(ball.x, ball.y, ball.r*devicePixelRatio, 0, Math.PI*2); ctx.fill();
-  // simple shine
-  ctx.beginPath(); ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.arc(ball.x - ball.r*devicePixelRatio*0.4, ball.y - ball.r*devicePixelRatio*0.6, ball.r*devicePixelRatio*0.5, 0, Math.PI*2); ctx.fill();
-}
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (gameActive) {
+                    resizeCanvas();
+                    generateMaze(currentLevel);
+                }
+            });
 
-function drawGoal(){
-  ctx.beginPath(); ctx.fillStyle = 'rgba(20,20,30,0.95)'; ctx.arc(cx, cy, (radius / cellGrid.length) * 0.6, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=2; ctx.arc(cx,cy,(radius / cellGrid.length) * 0.6,0,Math.PI*2); ctx.stroke();
-}
-
-function update(dt){
-  if(finished) return;
-
-  // integrate
-  if(finished) return;
-  // integrate
-  const maxSpeed = 600; // pixels / s
-  ball.vx += accel.ax * 600 * dt; ball.vy += accel.ay * 600 * dt;
-  // apply friction
-  ball.vx *= 0.995; ball.vy *= 0.995;
-  // clamp
-  const speed = Math.hypot(ball.vx, ball.vy);
-  if(speed > maxSpeed){ ball.vx = ball.vx / speed * maxSpeed; ball.vy = ball.vy / speed * maxSpeed; }
-  const nx = ball.x + ball.vx * dt; const ny = ball.y + ball.vy * dt;
-  const aCell = getCellAt(ball.x,ball.y); const bCell = getCellAt(nx,ny);
-  // if cell changed, check wall
-  if(aCell.r === bCell.r && aCell.s === bCell.s){ ball.x = nx; ball.y = ny; }
-  else {
-    if(!hasWallBetween(aCell, bCell)){
-      ball.x = nx; ball.y = ny; moves++; document.getElementById('moves').innerText = moves;
-    } else {
-      // stop velocity in direction of attempted crossing
-      ball.vx = 0; ball.vy = 0;
-    }
-  }
-  // boundary clamp (stop ball from going outside maze)
-  const dist = Math.hypot(ball.x - cx, ball.y - cy);
-  if(dist > OUTER_BOUNDARY_RADIUS){
-    const ang = Math.atan2(ball.y - cy, ball.x - cx);
-    ball.x = cx + OUTER_BOUNDARY_RADIUS * Math.cos(ang);
-    ball.y = cy + OUTER_BOUNDARY_RADIUS * Math.sin(ang);
-    ball.vx = 0; ball.vy = 0;
-  }
-
-  // check goal
-  const dToCenter = Math.hypot(ball.x-cx, ball.y-cy);
-  if(dToCenter < (radius / cellGrid.length) * 0.6){ finished=true; const t = (performance.now()-startTime)/1000; document.getElementById('time').innerText = t.toFixed(2); setTimeout(()=>{ alert('You won! Time: '+t.toFixed(2)+'s — try a new maze.'); }, 100); }
-}
-
-let last = performance.now();
-function loop(){
-  const now = performance.now(); const dt = (now-last)/1000; last = now;
-  update(dt);
-  draw();
-  if(!finished){ const curT = (performance.now()-startTime)/1000; document.getElementById('time').innerText = curT.toFixed(2); }
-  requestAnimationFrame(loop);
-}
-
-function draw(){
-  drawMaze(); drawGoal(); drawBall();
-}
-requestAnimationFrame(loop);
-
-// ask for motion permission on iOS
-if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
-  const btn = document.createElement('button'); btn.innerText='Enable Tilt'; btn.style.position='absolute'; btn.style.left='14px'; btn.style.bottom='14px'; btn.className='small';
-  btn.onclick = async ()=>{
-    try{
-      const p = await DeviceMotionEvent.requestPermission(); if(p==='granted'){ btn.remove(); }
-    }catch(e){ console.warn(e); }
-  };
-  document.body.appendChild(btn);
-}
-
-</script>
+            // Initialize game on page load
+            initMazeGame();
+        });
+    </script>
 </body>
 </html>
