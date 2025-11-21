@@ -194,6 +194,8 @@ function drawMaze(){
 }
 
 // Player ball state
+// Prevent ball from leaving the maze boundary by clamping to outer radius
+let OUTER_BOUNDARY_RADIUS = null; // will set after maze init
 let ball = {x:0,y:0,r:10, vx:0, vy:0};
 let moves = 0; let startTime = null; let finished=false;
 
@@ -260,7 +262,12 @@ function endJoy(e){ joystickActive=false; stick.style.transform = '' ; accel.ax=
 
 // controls
 document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); draw(); });
-document.getElementById('newlevel').addEventListener('click', ()=>{ startNewMaze(); });
+document.getElementById('newlevel').addEventListener('click', ()=>{ startNewMaze(){
+  RINGS = Math.max(4, Math.floor(4 + Math.random()*6));
+  CELLS_BASE = Math.max(6, 6 + Math.floor(Math.random()*6));
+  createGrid(RINGS); generateMaze(); resetBall();
+  OUTER_BOUNDARY_RADIUS = radius * 0.97; // keep ball inside outer ring
+}(); });
 
 function startNewMaze(){
   // randomize complexity a bit
@@ -283,6 +290,9 @@ function drawGoal(){
 
 function update(dt){
   if(finished) return;
+
+  // integrate
+  if(finished) return;
   // integrate
   const maxSpeed = 600; // pixels / s
   ball.vx += accel.ax * 600 * dt; ball.vy += accel.ay * 600 * dt;
@@ -303,6 +313,15 @@ function update(dt){
       ball.vx = 0; ball.vy = 0;
     }
   }
+  // boundary clamp (stop ball from going outside maze)
+  const dist = Math.hypot(ball.x - cx, ball.y - cy);
+  if(dist > OUTER_BOUNDARY_RADIUS){
+    const ang = Math.atan2(ball.y - cy, ball.x - cx);
+    ball.x = cx + OUTER_BOUNDARY_RADIUS * Math.cos(ang);
+    ball.y = cy + OUTER_BOUNDARY_RADIUS * Math.sin(ang);
+    ball.vx = 0; ball.vy = 0;
+  }
+
   // check goal
   const dToCenter = Math.hypot(ball.x-cx, ball.y-cy);
   if(dToCenter < (radius / cellGrid.length) * 0.6){ finished=true; const t = (performance.now()-startTime)/1000; document.getElementById('time').innerText = t.toFixed(2); setTimeout(()=>{ alert('You won! Time: '+t.toFixed(2)+'s — try a new maze.'); }, 100); }
