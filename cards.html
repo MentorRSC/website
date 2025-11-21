@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            flex-grow: 1;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 800px;
+            margin-bottom: 1.5rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        .card {
+            width: 120px;
+            height: 180px;
+            background: linear-gradient(145deg, #2c3e50, #4a6491);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+        
+        .card::before {
+            content: "?";
+            position: absolute;
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .card.selected {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            transform: translateY(-10px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card.revealed {
+            background: linear-gradient(145deg, #27ae60, #2ecc71);
+        }
+        
+        .card.revealed::before {
+            display: none;
+        }
+        
+        .comparison {
+            height: 60px;
+            margin: 1rem 0;
+            font-size: 1.5rem;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            width: 80%;
+            max-width: 800px;
+        }
+        
+        button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .primary-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .secondary-btn {
+            background: linear-gradient(to right, #e67e22, #d35400);
+            color: white;
+        }
+        
+        .danger-btn {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .success-btn {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .card-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .card-option {
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .card-option:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .card-option.active {
+            background-color: #3498db;
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .instructions h2 {
+            margin-bottom: 1rem;
+            color: #ffcc00;
+        }
+        
+        .instructions ol {
+            padding-left: 1.5rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+        
+        footer {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        
+        .line {
+            position: absolute;
+            height: 4px;
+            background-color: #ffcc00;
+            transform-origin: 0 0;
+            z-index: 10;
+            box-shadow: 0 0 8px rgba(255, 204, 0, 0.7);
+        }
+        
+        .win-message {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffcc00;
+            text-align: center;
+            margin: 1rem 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                width: 80px;
+                height: 120px;
+                font-size: 2rem;
+            }
+            
+            .card::before {
+                font-size: 2.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sorting Game</h1>
+        <div class="subtitle">Arrange the cards in ascending order with minimum moves</div>
+    </header>
+    
+    <div class="game-container">
+        <div class="stats">
+            <div class="stat-item">
+                <div>Moves</div>
+                <div class="stat-value" id="moves">0</div>
+            </div>
+            <div class="stat-item">
+                <div>Cards</div>
+                <div class="stat-value" id="card-count">4</div>
+            </div>
+            <div class="stat-item">
+                <div>Best Score</div>
+                <div class="stat-value" id="best-score">-</div>
+            </div>
+        </div>
+        
+        <div class="comparison" id="comparison"></div>
+        
+        <div class="cards-container" id="cards-container"></div>
+        
+        <div class="controls">
+            <button class="primary-btn" id="switch-btn">Switch</button>
+            <button class="secondary-btn" id="flip-all-btn">Flip All</button>
+            <button class="danger-btn" id="restart-btn">Restart</button>
+            <button class="success-btn" id="fullscreen-btn">Full Screen</button>
+        </div>
+        
+        <div class="card-options">
+            <div class="card-option active" data-cards="4">4 Cards</div>
+            <div class="card-option" data-cards="5">5 Cards</div>
+            <div class="card-option" data-cards="6">6 Cards</div>
+            <div class="card-option" data-cards="7">7 Cards</div>
+            <div class="card-option" data-cards="8">8 Cards</div>
+        </div>
+        
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <ol>
+                <li>Select two cards. The selected card turns red.</li>
+                <li>If you want to exchange the selected card, press the [Switch] button.</li>
+                <li>If you think all the cards are in order, press the [Flip All] button to confirm.</li>
+                <li>Try to complete with a minimum number of moves.</li>
+            </ol>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Sorting Game &copy; 2023 | Test your sorting skills!</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game state
+            let gameState = {
+                cards: [],
+                selectedCards: [],
+                moves: 0,
+                cardCount: 4,
+                isRevealed: false,
+                bestScores: {}
+            };
+            
+            // DOM elements
+            const cardsContainer = document.getElementById('cards-container');
+            const movesElement = document.getElementById('moves');
+            const cardCountElement = document.getElementById('card-count');
+            const bestScoreElement = document.getElementById('best-score');
+            const comparisonElement = document.getElementById('comparison');
+            const switchBtn = document.getElementById('switch-btn');
+            const flipAllBtn = document.getElementById('flip-all-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const cardOptions = document.querySelectorAll('.card-option');
+            
+            // Initialize game
+            initGame();
+            
+            // Event listeners
+            switchBtn.addEventListener('click', switchCards);
+            flipAllBtn.addEventListener('click', flipAllCards);
+            restartBtn.addEventListener('click', initGame);
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            cardOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const count = parseInt(this.getAttribute('data-cards'));
+                    changeCardCount(count);
+                });
+            });
+            
+            // Initialize the game
+            function initGame() {
+                gameState.moves = 0;
+                gameState.selectedCards = [];
+                gameState.isRevealed = false;
+                
+                movesElement.textContent = gameState.moves;
+                comparisonElement.textContent = '';
+                comparisonElement.style.color = 'white';
+                
+                generateCards();
+                updateBestScore();
+                renderCards();
+            }
+            
+            // Generate random cards
+            function generateCards() {
+                gameState.cards = [];
+                const numbers = [];
+                
+                for (let i = 1; i <= gameState.cardCount; i++) {
+                    numbers.push(i);
+                }
+                
+                // Shuffle the numbers
+                for (let i = numbers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+                }
+                
+                // Create card objects
+                for (let i = 0; i < gameState.cardCount; i++) {
+                    gameState.cards.push({
+                        value: numbers[i],
+                        selected: false,
+                        revealed: false
+                    });
+                }
+            }
+            
+            // Render cards to the DOM
+            function renderCards() {
+                cardsContainer.innerHTML = '';
+                
+                gameState.cards.forEach((card, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'card';
+                    
+                    if (card.selected) {
+                        cardElement.classList.add('selected');
+                    }
+                    
+                    if (card.revealed) {
+                        cardElement.classList.add('revealed');
+                        cardElement.textContent = card.value;
+                    }
+                    
+                    cardElement.addEventListener('click', () => selectCard(index));
+                    cardsContainer.appendChild(cardElement);
+                });
+                
+                // Draw lines between selected cards
+                if (gameState.selectedCards.length === 2) {
+                    drawLineBetweenCards();
+                } else {
+                    // Remove any existing lines
+                    document.querySelectorAll('.line').forEach(line => line.remove());
+                }
+            }
+            
+            // Select a card
+            function selectCard(index) {
+                if (gameState.isRevealed) return;
+                
+                const card = gameState.cards[index];
+                
+                // If card is already selected, deselect it
+                if (card.selected) {
+                    card.selected = false;
+                    gameState.selectedCards = gameState.selectedCards.filter(i => i !== index);
+                } else {
+                    // Select the card if we have less than 2 selected
+                    if (gameState.selectedCards.length < 2) {
+                        card.selected = true;
+                        gameState.selectedCards.push(index);
+                    }
+                }
+                
+                // If we have 2 cards selected, compare them
+                if (gameState.selectedCards.length === 2) {
+                    compareSelectedCards();
+                }
+                
+                renderCards();
+            }
+            
+            // Compare the two selected cards
+            function compareSelectedCards() {
+                const [index1, index2] = gameState.selectedCards;
+                const card1 = gameState.cards[index1];
+                const card2 = gameState.cards[index2];
+                
+                if (card1.value > card2.value) {
+                    comparisonElement.textContent = `${card1.value} > ${card2.value}`;
+                    comparisonElement.style.color = '#e74c3c';
+                } else if (card1.value < card2.value) {
+                    comparisonElement.textContent = `${card1.value} < ${card2.value}`;
+                    comparisonElement.style.color = '#e74c3c';
+                } else {
+                    comparisonElement.textContent = `${card1.value} = ${card2.value}`;
+                    comparisonElement.style.color = '#3498db';
+                }
+            }
+            
+            // Draw a line between two selected cards
+            function drawLineBetweenCards() {
+                const cardElements = document.querySelectorAll('.card');
+                const [index1, index2] = gameState.selectedCards;
+                
+                const card1 = cardElements[index1];
+                const card2 = cardElements[index2];
+                
+                const rect1 = card1.getBoundingClientRect();
+                const rect2 = card2.getBoundingClientRect();
+                
+                const containerRect = cardsContainer.getBoundingClientRect();
+                
+                const x1 = rect1.left + rect1.width / 2 - containerRect.left;
+                const y1 = rect1.top + rect1.height / 2 - containerRect.top;
+                const x2 = rect2.left + rect2.width / 2 - containerRect.left;
+                const y2 = rect2.top + rect2.height / 2 - containerRect.top;
+                
+                const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                
+                const line = document.createElement('div');
+                line.className = 'line';
+                line.style.width = `${length}px`;
+                line.style.left = `${x1}px`;
+                line.style.top = `${y1}px`;
+                line.style.transform = `rotate(${angle}deg)`;
+                
+                cardsContainer.appendChild(line);
+            }
+            
+            // Switch the two selected cards
+            function switchCards() {
+                if (gameState.selectedCards.length !== 2 || gameState.isRevealed) return;
+                
+                const [index1, index2] = gameState.selectedCards;
+                
+                // Swap the card values
+                [gameState.cards[index1].value, gameState.cards[index2].value] = 
+                [gameState.cards[index2].value, gameState.cards[index1].value];
+                
+                // Deselect the cards
+                gameState.cards[index1].selected = false;
+                gameState.cards[index2].selected = false;
+                gameState.selectedCards = [];
+                
+                // Increment moves
+                gameState.moves++;
+                movesElement.textContent = gameState.moves;
+                
+                comparisonElement.textContent = '';
+                
+                renderCards();
+            }
+            
+            // Flip all cards to reveal their values
+            function flipAllCards() {
+                if (gameState.isRevealed) return;
+                
+                gameState.isRevealed = true;
+                gameState.selectedCards = [];
+                
+                // Reveal all cards
+                gameState.cards.forEach(card => {
+                    card.revealed = true;
+                    card.selected = false;
+                });
+                
+                // Check if the cards are sorted
+                const isSorted = checkIfSorted();
+                
+                if (isSorted) {
+                    comparisonElement.innerHTML = '<div class="win-message">Congratulations! You sorted the cards!</div>';
+                    updateBestScore();
+                } else {
+                    comparisonElement.textContent = 'Cards are not sorted correctly. Try again!';
+                    comparisonElement.style.color = '#e74c3c';
+                }
+                
+                renderCards();
+            }
+            
+            // Check if the cards are sorted in ascending order
+            function checkIfSorted() {
+                for (let i = 0; i < gameState.cards.length - 1; i++) {
+                    if (gameState.cards[i].value > gameState.cards[i + 1].value) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            // Change the number of cards in the game
+            function changeCardCount(count) {
+                gameState.cardCount = count;
+                cardCountElement.textContent = count;
+                
+                // Update active card option
+                cardOptions.forEach(option => {
+                    if (parseInt(option.getAttribute('data-cards')) === count) {
+                        option.classList.add('active');
+                    } else {
+                        option.classList.remove('active');
+                    }
+                });
+                
+                initGame();
+            }
+            
+            // Update the best score display
+            function updateBestScore() {
+                const count = gameState.cardCount;
+                
+                if (checkIfSorted()) {
+                    if (!gameState.bestScores[count] || gameState.moves < gameState.bestScores[count]) {
+                        gameState.bestScores[count] = gameState.moves;
+                    }
+                }
+                
+                if (gameState.bestScores[count]) {
+                    bestScoreElement.textContent = gameState.bestScores[count];
+                } else {
+                    bestScoreElement.textContent = '-';
+                }
+            }
+            
+            // Toggle fullscreen mode
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
