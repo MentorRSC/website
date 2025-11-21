@@ -3,1055 +3,1098 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tower of Hanoi | Innovation Hub</title>
+    <title>3 Priests & 3 Devils Puzzle | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --accent: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
+        /* ===== INNOVATION HUB THEME CSS ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --danger: #e74c3c;
+            --priest-color: #3498db;
+            --devil-color: #e74c3c;
+        }
+
         body {
             background-color: #f5f7fa;
             color: var(--dark);
             line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 1.5rem 0;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
+
         .container {
             width: 90%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 15px;
         }
-        
-        .header-content {
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 15px 0;
         }
-        
+
         .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
             display: flex;
             align-items: center;
+            text-decoration: none;
         }
-        
-        .logo-icon {
+
+        .logo i {
+            font-size: 32px;
+            color: var(--primary);
             margin-right: 10px;
-            font-size: 2rem;
         }
-        
+
+        .logo h1 {
+            font-size: 24px;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
         nav ul {
             display: flex;
             list-style: none;
         }
-        
-        nav li {
-            margin-left: 1.5rem;
+
+        nav ul li {
+            margin-left: 25px;
         }
-        
-        nav a {
-            color: white;
+
+        nav ul li a {
             text-decoration: none;
+            color: var(--dark);
             font-weight: 500;
-            transition: opacity 0.3s;
+            transition: color 0.3s;
         }
-        
-        nav a:hover {
-            opacity: 0.8;
-        }
-        
-        .hero {
-            background-color: white;
-            padding: 3rem 0;
-            text-align: center;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+
+        nav ul li a:hover {
             color: var(--primary);
         }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            max-width: 800px;
+
+        .cta-button {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #0d5bbb;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        /* Game Specific Styles */
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .game-header h1 {
+            font-size: 2.5rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .game-header p {
+            color: var(--text);
+            max-width: 700px;
             margin: 0 auto;
         }
-        
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        
-        @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .game-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            position: relative;
-        }
-        
-        .info-section {
-            background-color: white;
-            border-radius: 8px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-        }
-        
-        h2 {
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--light);
-        }
-        
+
         .game-controls {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
-            gap: 10px;
         }
-        
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        label {
-            font-weight: 500;
-        }
-        
-        select, button {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
-            font-size: 1rem;
-        }
-        
-        button {
-            background-color: var(--secondary);
-            color: white;
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
             border: none;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        
-        button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        button.reset {
-            background-color: var(--accent);
-        }
-        
-        button.reset:hover {
-            background-color: #c0392b;
-        }
-        
-        button.solve {
-            background-color: var(--success);
-        }
-        
-        button.solve:hover {
-            background-color: #27ae60;
-        }
-        
-        button:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .game-stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-            background-color: var(--light);
-            padding: 1rem;
-            border-radius: 4px;
-        }
-        
-        .stat {
+            display: inline-block;
             text-align: center;
         }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--dark);
         }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #7f8c8d;
+
+        .btn-primary:hover {
+            background-color: #e6a800;
         }
-        
-        .game-board-container {
-            position: relative;
-            height: 350px;
-            margin-top: 1rem;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 10px;
-            background-color: #f9f9f9;
+
+        .btn-blue {
+            background-color: var(--primary);
+            color: var(--white);
         }
-        
-        .game-board {
-            display: flex;
-            justify-content: space-between;
-            height: 100%;
-            position: relative;
+
+        .btn-blue:hover {
+            background-color: #0d5bbb;
         }
-        
-        .peg {
-            width: 30%;
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .river-game {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 20px;
+        }
+
+        .river-container {
             position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 300px;
+            background: linear-gradient(to bottom, #4a90e2, #1a73e8);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .river-bank {
+            position: absolute;
+            top: 0;
+            width: 40%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .left-bank {
+            left: 0;
+            background-color: rgba(139, 195, 74, 0.1);
+            border-right: 2px dashed #8bc34a;
+        }
+
+        .right-bank {
+            right: 0;
+            background-color: rgba(139, 195, 74, 0.1);
+            border-left: 2px dashed #8bc34a;
+        }
+
+        .bank-title {
+            position: absolute;
+            top: 10px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .character-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        /* Enhanced Character Styles with Figures */
+        .character {
+            width: 70px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
         }
-        
-        .peg:hover {
+
+        .character:hover {
             transform: translateY(-5px);
         }
-        
-        .peg.selected {
-            transform: translateY(-10px);
+
+        .character.selected {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.7));
         }
-        
-        .peg-base {
-            width: 100px;
-            height: 20px;
-            background-color: var(--primary);
-            border-radius: 10px;
-            position: absolute;
-            bottom: 0;
-            z-index: 1;
-        }
-        
-        .peg-rod {
-            width: 10px;
-            height: 250px;
-            background-color: var(--primary);
-            border-radius: 5px;
-            position: absolute;
-            bottom: 20px;
-            z-index: 1;
-        }
-        
-        .disk-container {
-            position: absolute;
-            bottom: 20px;
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
-            width: 100%;
-            height: 250px;
-            z-index: 2;
-        }
-        
-        .disk {
-            height: 25px;
-            margin-top: 5px;
-            border-radius: 12px;
-            transition: all 0.5s ease;
-            z-index: 3;
-            position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+
+        .character-figure {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 24px;
             color: white;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .priest .character-figure {
+            background: linear-gradient(135deg, var(--priest-color), #2980b9);
+            border: 3px solid #2980b9;
+        }
+
+        .devil .character-figure {
+            background: linear-gradient(135deg, var(--devil-color), #c0392b);
+            border: 3px solid #c0392b;
+        }
+
+        .character-label {
+            margin-top: 8px;
             font-weight: bold;
-            font-size: 12px;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--dark);
         }
-        
-        .disk.moving {
-            z-index: 100;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        .character-icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
         }
-        
-        .disk-1 { background: linear-gradient(135deg, #e74c3c, #c0392b); width: 60px; }
-        .disk-2 { background: linear-gradient(135deg, #f39c12, #d35400); width: 80px; }
-        .disk-3 { background: linear-gradient(135deg, #f1c40f, #f39c12); width: 100px; }
-        .disk-4 { background: linear-gradient(135deg, #2ecc71, #27ae60); width: 120px; }
-        .disk-5 { background: linear-gradient(135deg, #3498db, #2980b9); width: 140px; }
-        .disk-6 { background: linear-gradient(135deg, #9b59b6, #8e44ad); width: 160px; }
-        .disk-7 { background: linear-gradient(135deg, #1abc9c, #16a085); width: 180px; }
-        .disk-8 { background: linear-gradient(135deg, #34495e, #2c3e50); width: 200px; }
-        
-        .instructions {
-            margin-bottom: 2rem;
+
+        .boat {
+            position: absolute;
+            bottom: 20px;
+            left: 40%;
+            width: 120px;
+            height: 60px;
+            background: linear-gradient(to bottom, #8b4513, #654321);
+            border-radius: 10px 10px 30px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            transition: left 1s ease-in-out;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid #5d4037;
         }
-        
-        .instructions ol {
-            margin-left: 1.5rem;
-            margin-bottom: 1.5rem;
+
+        .boat::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 30px;
+            background: #5d4037;
         }
-        
-        .instructions li {
-            margin-bottom: 0.5rem;
+
+        .boat::after {
+            content: '⛵';
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #5d4037;
         }
-        
-        .algorithm {
+
+        .boat-position-left {
+            left: 40%;
+        }
+
+        .boat-position-right {
+            left: 55%;
+        }
+
+        .boat-seat {
+            width: 40px;
+            height: 40px;
+            background: rgba(160, 82, 45, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
             background-color: var(--light);
-            padding: 1.5rem;
-            border-radius: 4px;
-            margin-top: 1.5rem;
+            border-radius: 8px;
+            min-width: 120px;
         }
-        
-        .algorithm h3 {
-            margin-bottom: 1rem;
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
             color: var(--primary);
         }
-        
-        .difficulty {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .difficulty-btn {
-            flex: 1;
-            padding: 6px 10px;
+
+        .stat-label {
             font-size: 0.9rem;
+            color: var(--text);
         }
-        
-        .difficulty-btn.active {
-            background-color: var(--primary);
-        }
-        
-        .notification-area {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            z-index: 10;
-            pointer-events: none;
-        }
-        
-        .message {
-            margin: 0 auto 15px;
-            padding: 12px 20px;
-            border-radius: 4px;
+
+        .message-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
             text-align: center;
             font-weight: 500;
-            max-width: 80%;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.3s ease;
-            pointer-events: none;
-        }
-        
-        .message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .message.success {
-            background-color: rgba(46, 204, 113, 0.95);
-            color: white;
-        }
-        
-        .message.error {
-            background-color: rgba(231, 76, 60, 0.95);
-            color: white;
-        }
-        
-        .move-history {
-            margin-top: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            padding: 10px;
-            font-size: 0.9rem;
-            background-color: #f9f9f9;
-        }
-        
-        .move-item {
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .move-item:last-child {
-            border-bottom: none;
-        }
-        
-        footer {
-            background-color: var(--primary);
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-        }
-        
-        .footer-content {
+            min-height: 60px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            justify-content: center;
+            transition: all 0.3s;
         }
-        
-        .footer-links {
-            display: flex;
+
+        .message-success {
+            background-color: rgba(52, 168, 83, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(52, 168, 83, 0.3);
+        }
+
+        .message-error {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .message-info {
+            background-color: rgba(26, 115, 232, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(26, 115, 232, 0.3);
+        }
+
+        .instructions {
+            background-color: var(--light);
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .instructions h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .rules {
+            background-color: rgba(251, 188, 4, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .rules h4 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 60px 0 20px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .footer-column ul {
             list-style: none;
         }
-        
-        .footer-links li {
-            margin-left: 1.5rem;
+
+        .footer-column ul li {
+            margin-bottom: 10px;
         }
-        
-        .footer-links a {
-            color: white;
+
+        .footer-column ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: background-color 0.3s;
             text-decoration: none;
         }
-        
-        .copyright {
-            margin-top: 1rem;
-            width: 100%;
-            font-size: 0.9rem;
-            color: #bdc3c7;
+
+        .social-links a:hover {
+            background-color: var(--primary);
         }
-        
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bbb;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Styles */
         @media (max-width: 768px) {
-            .header-content {
+            .header-container {
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             nav ul {
-                margin-top: 1rem;
+                margin-top: 20px;
+                flex-wrap: wrap;
                 justify-content: center;
             }
-            
-            nav li {
-                margin: 0 0.75rem;
+
+            nav ul li {
+                margin: 5px 10px;
             }
-            
-            .footer-content {
+
+            .mobile-menu {
+                display: block;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+
+            .nav-menu.active {
+                display: block;
+            }
+
+            .river-container {
+                height: 250px;
+            }
+
+            .character {
+                width: 60px;
+                height: 80px;
+            }
+
+            .character-figure {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .character-icon {
+                font-size: 24px;
+            }
+
+            .boat {
+                width: 100px;
+                height: 50px;
+            }
+
+            .boat-seat {
+                width: 35px;
+                height: 35px;
+            }
+
+            .game-stats {
                 flex-direction: column;
-            }
-            
-            .footer-links {
-                margin-top: 1rem;
-            }
-            
-            .footer-links li {
-                margin: 0 0.75rem;
-            }
-            
-            .game-controls {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .game-board-container {
-                height: 300px;
+                align-items: center;
+                gap: 15px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- ===== HEADER SECTION ===== -->
     <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <span class="logo-icon">🧩</span>
-                    Innovation Hub
-                </div>
-                <nav>
-                    <ul>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
                     <li><a href="index.html">Home</a></li>
                     <li><a href="https://rscpcalicut.org.in/">Parent</a></li>
                     <li><a href="resources.html">Resources</a></li>
                     <li><a href="projects.html">Projects</a></li>
-                    <li><a href="puzzles.html">Games</a></li>
+                    <li><a href="puzzles.html" class="active">Puzzles</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Events</a></li>
                     <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
                 </ul>
-                </nav>
-            </div>
+            </nav>
         </div>
     </header>
-    
-    <section class="hero">
+
+    <!-- ===== MAIN CONTENT AREA ===== -->
+    <main class="main-content">
         <div class="container">
-            <h1>Tower of Hanoi</h1>
-            <p class="subtitle">A classic puzzle of strategy and logic. Move all disks from the first tower to the last tower following the rules.</p>
-        </div>
-    </section>
-    
-    <div class="container">
-        <div class="content">
-            <section class="game-section">
-                <h2>Play the Game</h2>
-                
+            <!-- Game Header -->
+            <section class="game-header">
+                <h1>3 Priests & 3 Devils River-Crossing Puzzle</h1>
+                <p>A classic logic puzzle that challenges your problem-solving skills. Can you get everyone across the river safely?</p>
+            </section>
+
+            <!-- Game Container -->
+            <section class="game-container">
                 <div class="game-controls">
-                    <div class="control-group">
-                        <label for="disk-count">Disks:</label>
-                        <select id="disk-count">
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5" selected>5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                        </select>
-                        
-                        <div class="difficulty">
-                            <button class="difficulty-btn active" data-disks="3">Easy</button>
-                            <button class="difficulty-btn" data-disks="5">Medium</button>
-                            <button class="difficulty-btn" data-disks="7">Hard</button>
-                        </div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <button id="start-btn">Start Game</button>
-                        <button id="solve-btn" class="solve">Auto Solve</button>
-                        <button id="reset-btn" class="reset">Reset</button>
-                    </div>
+                    <button id="start-btn" class="btn btn-primary">Start Game</button>
+                    <button id="reset-btn" class="btn btn-blue">Reset</button>
+                    <button id="hint-btn" class="btn btn-blue">Hint</button>
+                    <button id="solve-btn" class="btn btn-danger">Show Solution</button>
+                    <button id="move-boat-btn" class="btn btn-primary">Move Boat</button>
                 </div>
-                
-                <div class="game-stats">
-                    <div class="stat">
-                        <div class="stat-value" id="move-count">0</div>
-                        <div class="stat-label">Moves</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value" id="min-moves">31</div>
-                        <div class="stat-label">Minimum Moves</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value" id="time">00:00</div>
-                        <div class="stat-label">Time</div>
-                    </div>
-                </div>
-                
-                <div class="game-board-container">
-                    <div class="notification-area" id="notification-area">
-                        <!-- Notifications will appear here -->
-                    </div>
-                    
-                    <div class="game-board">
-                        <div class="peg" id="peg-1" data-peg="1">
-                            <div class="peg-rod"></div>
-                            <div class="peg-base"></div>
-                            <div class="disk-container" id="disk-container-1">
-                                <!-- Disks will be placed here by JavaScript -->
+
+                <div class="river-game">
+                    <div class="river-container">
+                        <div class="river-bank left-bank">
+                            <div class="bank-title">Left Bank</div>
+                            <div class="character-container" id="left-bank-characters">
+                                <!-- Characters will be added here by JavaScript -->
                             </div>
                         </div>
-                        <div class="peg" id="peg-2" data-peg="2">
-                            <div class="peg-rod"></div>
-                            <div class="peg-base"></div>
-                            <div class="disk-container" id="disk-container-2"></div>
+                        
+                        <div class="river-bank right-bank">
+                            <div class="bank-title">Right Bank</div>
+                            <div class="character-container" id="right-bank-characters">
+                                <!-- Characters will be added here by JavaScript -->
+                            </div>
                         </div>
-                        <div class="peg" id="peg-3" data-peg="3">
-                            <div class="peg-rod"></div>
-                            <div class="peg-base"></div>
-                            <div class="disk-container" id="disk-container-3"></div>
+                        
+                        <div class="boat boat-position-left" id="boat">
+                            <div class="boat-seat" id="seat-1"></div>
+                            <div class="boat-seat" id="seat-2"></div>
                         </div>
                     </div>
+
+                    <div class="game-stats">
+                        <div class="stat">
+                            <div class="stat-value" id="moves-count">0</div>
+                            <div class="stat-label">Moves</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="priests-left">3</div>
+                            <div class="stat-label">Priests Left</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="devils-left">3</div>
+                            <div class="stat-label">Devils Left</div>
+                        </div>
+                    </div>
+
+                    <div class="message-area message-info" id="message-area">
+                        Click START to begin the game. Select characters to move them to the boat.
+                    </div>
                 </div>
-                
-                <div class="move-history" id="move-history">
-                    <div class="move-item">Game started. Move disks from Peg 1 to Peg 3.</div>
-                </div>
-            </section>
-            
-            <section class="info-section">
-                <h2>About the Puzzle</h2>
-                
+
                 <div class="instructions">
                     <h3>How to Play</h3>
                     <ol>
-                        <li>The goal is to move all disks from the first tower (left) to the last tower (right).</li>
-                        <li>Only one disk can be moved at a time.</li>
-                        <li>Each move consists of taking the upper disk from one of the stacks and placing it on top of another stack.</li>
-                        <li>No disk may be placed on top of a smaller disk.</li>
+                        <li>Click on a character to select/deselect them for the boat</li>
+                        <li>You can select up to 2 characters for the boat</li>
+                        <li>Click the MOVE BOAT button to cross the river</li>
+                        <li>Repeat until all characters are on the right bank</li>
                     </ol>
-                    
-                    <h3>Strategy Tips</h3>
-                    <ul>
-                        <li>Start by moving the smallest disks to create space for larger ones.</li>
-                        <li>Try to build a pattern of moves that can be repeated.</li>
-                        <li>The minimum number of moves required is 2^n - 1, where n is the number of disks.</li>
-                        <li>For an even number of disks, make your first move to the middle peg.</li>
-                        <li>For an odd number of disks, make your first move to the destination peg.</li>
-                    </ul>
-                </div>
-                
-                <div class="algorithm">
-                    <h3>Mathematical Background</h3>
-                    <p>The Tower of Hanoi is a classic example of a recursive algorithm. The solution can be expressed recursively:</p>
-                    <p>To move n disks from source to destination using auxiliary:</p>
-                    <ol>
-                        <li>Move n-1 disks from source to auxiliary</li>
-                        <li>Move the nth disk from source to destination</li>
-                        <li>Move the n-1 disks from auxiliary to destination</li>
-                    </ol>
-                    <p>This puzzle demonstrates important concepts in computer science like recursion and algorithm analysis.</p>
-                    <p>The minimum number of moves required to solve the puzzle is 2<sup>n</sup> - 1, where n is the number of disks.</p>
+
+                    <div class="rules">
+                        <h4>Rules:</h4>
+                        <ul>
+                            <li>The boat can carry at most 2 people</li>
+                            <li>At least 1 person must be in the boat to row it</li>
+                            <li>Devils may NEVER outnumber priests on either bank</li>
+                            <li>If priests are outnumbered by devils on any bank, you lose!</li>
+                        </ul>
+                    </div>
                 </div>
             </section>
         </div>
-    </div>
-    
+    </main>
+
+    <!-- ===== FOOTER SECTION ===== -->
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div class="logo">
-                    <span class="logo-icon">🧩</span>
-                    Innovation Hub
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and collaborative spaces.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
                 </div>
-                <ul class="footer-links">
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-                <div class="copyright">
-                    &copy; 2023 Innovation Hub. All rights reserved.
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="puzzles.html">Puzzles & Games</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog">Join Now</a></li>
+                    </ul>
                 </div>
+                <div class="footer-column">
+                    <h3>Innovation Tracks</h3>
+                    <ul>
+                        <li><a href="#">Tech Innovation</a></li>
+                        <li><a href="#">Social Innovation</a></li>
+                        <li><a href="#">Product Design</a></li>
+                        <li><a href="#">Sustainable Tech</a></li>
+                        <li><a href="#">Health Innovation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentor2hubrsc@gmail.com</li>
+                        <li><i class="fas fa-clock"></i> TUESDAY - SUNDAY: 11AM-4PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
             </div>
         </div>
     </footer>
-    
+
+    <!-- ===== JAVASCRIPT ===== -->
     <script>
+        // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
-            // Game state variables
-            let disks = 5;
-            let moves = 0;
-            let startTime = null;
-            let timerInterval = null;
-            let selectedPeg = null;
-            let gameActive = false;
-            let isSolving = false;
-            let moveHistory = [];
-            let notificationTimeout = null;
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navMenu = document.querySelector('.nav-menu');
             
-            // DOM elements
-            const diskCountSelect = document.getElementById('disk-count');
+            mobileMenu.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.header-container')) {
+                    navMenu.classList.remove('active');
+                }
+            });
+
+            // Add active class to current page in navigation
+            const currentPage = window.location.pathname.split('/').pop();
+            const navLinks = document.querySelectorAll('.nav-menu a');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+
+            // River Crossing Game Logic
+            const gameState = {
+                leftBank: {
+                    priests: 3,
+                    devils: 3
+                },
+                rightBank: {
+                    priests: 0,
+                    devils: 0
+                },
+                boat: {
+                    position: 'left', // 'left' or 'right'
+                    passengers: []
+                },
+                moves: 0,
+                gameStarted: false,
+                gameOver: false
+            };
+
+            const leftBankElement = document.getElementById('left-bank-characters');
+            const rightBankElement = document.getElementById('right-bank-characters');
+            const boatElement = document.getElementById('boat');
+            const movesCountElement = document.getElementById('moves-count');
+            const priestsLeftElement = document.getElementById('priests-left');
+            const devilsLeftElement = document.getElementById('devils-left');
+            const messageArea = document.getElementById('message-area');
             const startBtn = document.getElementById('start-btn');
-            const solveBtn = document.getElementById('solve-btn');
             const resetBtn = document.getElementById('reset-btn');
-            const moveCountElement = document.getElementById('move-count');
-            const minMovesElement = document.getElementById('min-moves');
-            const timeElement = document.getElementById('time');
-            const notificationArea = document.getElementById('notification-area');
-            const moveHistoryElement = document.getElementById('move-history');
-            const difficultyButtons = document.querySelectorAll('.difficulty-btn');
-            const pegs = [
-                document.getElementById('disk-container-1'),
-                document.getElementById('disk-container-2'),
-                document.getElementById('disk-container-3')
-            ];
-            const pegElements = [
-                document.getElementById('peg-1'),
-                document.getElementById('peg-2'),
-                document.getElementById('peg-3')
-            ];
-            
+            const hintBtn = document.getElementById('hint-btn');
+            const solveBtn = document.getElementById('solve-btn');
+            const moveBoatBtn = document.getElementById('move-boat-btn');
+
             // Initialize the game
             function initGame() {
-                resetGame();
-                createDisks();
-                updateMinMoves();
-                gameActive = true;
+                gameState.leftBank = { priests: 3, devils: 3 };
+                gameState.rightBank = { priests: 0, devils: 0 };
+                gameState.boat = { position: 'left', passengers: [] };
+                gameState.moves = 0;
+                gameState.gameStarted = true;
+                gameState.gameOver = false;
                 
-                // Add event listeners to pegs
-                pegElements.forEach((peg, index) => {
-                    peg.addEventListener('click', () => handlePegClick(index));
-                });
-                
-                showMessage("Game started! Move all disks from Peg 1 to Peg 3.", "success");
-                addMoveToHistory("Game started. Move disks from Peg 1 to Peg 3.");
+                updateDisplay();
+                showMessage('Game started! Select characters to move them to the boat.', 'info');
             }
-            
+
             // Reset the game
             function resetGame() {
-                moves = 0;
-                moveCountElement.textContent = moves;
-                selectedPeg = null;
-                moveHistory = [];
-                moveHistoryElement.innerHTML = '';
-                
-                // Clear all pegs
-                pegs.forEach(peg => {
-                    peg.innerHTML = '';
-                });
-                
-                // Reset peg highlighting
-                pegElements.forEach(peg => {
-                    peg.classList.remove('selected');
-                });
-                
-                // Reset timer
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
-                timeElement.textContent = '00:00';
-                startTime = null;
-                
-                // Enable buttons
-                solveBtn.disabled = false;
-                isSolving = false;
-                
-                // Clear notifications
-                clearNotifications();
+                initGame();
             }
-            
-            // Create disks based on selected count
-            function createDisks() {
-                disks = parseInt(diskCountSelect.value);
+
+            // Update the visual display
+            function updateDisplay() {
+                // Update bank displays
+                updateBankDisplay(leftBankElement, gameState.leftBank, 'left');
+                updateBankDisplay(rightBankElement, gameState.rightBank, 'right');
                 
-                // Create disks from largest to smallest
-                for (let i = disks; i >= 1; i--) {
-                    const disk = document.createElement('div');
-                    disk.className = `disk disk-${i}`;
-                    disk.setAttribute('data-size', i);
-                    disk.textContent = i;
-                    pegs[0].appendChild(disk);
-                }
+                // Update boat position
+                boatElement.className = `boat boat-position-${gameState.boat.position}`;
+                
+                // Update boat passengers
+                updateBoatPassengers();
+                
+                // Update stats
+                movesCountElement.textContent = gameState.moves;
+                priestsLeftElement.textContent = gameState.leftBank.priests;
+                devilsLeftElement.textContent = gameState.leftBank.devils;
             }
-            
-            // Update minimum moves display
-            function updateMinMoves() {
-                const minMoves = Math.pow(2, disks) - 1;
-                minMovesElement.textContent = minMoves;
-            }
-            
-            // Handle peg click
-            function handlePegClick(pegIndex) {
-                if (!gameActive || isSolving) return;
+
+            // Update bank display with figures
+            function updateBankDisplay(bankElement, bank, side) {
+                bankElement.innerHTML = '';
                 
-                const peg = pegs[pegIndex];
-                
-                // Start timer on first move
-                if (startTime === null) {
-                    startTimer();
+                // Add priests
+                for (let i = 0; i < bank.priests; i++) {
+                    const priest = createCharacterElement('priest', 'Priest', side);
+                    bankElement.appendChild(priest);
                 }
                 
-                // If no peg is selected, select this one if it has disks
-                if (selectedPeg === null) {
-                    if (peg.children.length > 0) {
-                        selectedPeg = pegIndex;
-                        pegElements[pegIndex].classList.add('selected');
-                        showMessage(`Selected Peg ${pegIndex + 1}. Now select destination peg.`, "success");
-                    } else {
-                        showMessage("This peg has no disks to move.", "error");
-                    }
+                // Add devils
+                for (let i = 0; i < bank.devils; i++) {
+                    const devil = createCharacterElement('devil', 'Devil', side);
+                    bankElement.appendChild(devil);
+                }
+            }
+
+            // Create a character element with figure
+            function createCharacterElement(type, label, side) {
+                const character = document.createElement('div');
+                character.className = `character ${type}`;
+                character.dataset.type = type;
+                character.dataset.side = side;
+                
+                const figure = document.createElement('div');
+                figure.className = 'character-figure';
+                
+                const icon = document.createElement('div');
+                icon.className = 'character-icon';
+                
+                // Set appropriate icons for priests and devils
+                if (type === 'priest') {
+                    icon.innerHTML = '🙏';
+                    icon.title = 'Priest';
                 } else {
-                    // If a peg is already selected, try to move disk
-                    if (selectedPeg !== pegIndex) {
-                        if (isValidMove(selectedPeg, pegIndex)) {
-                            moveDisk(selectedPeg, pegIndex).then(() => {
-                                moves++;
-                                moveCountElement.textContent = moves;
-                                
-                                // Add to move history
-                                addMoveToHistory(`Moved disk from Peg ${selectedPeg + 1} to Peg ${pegIndex + 1}`);
-                                
-                                // Check for win condition
-                                if (checkWin()) {
-                                    gameActive = false;
-                                    clearInterval(timerInterval);
-                                    showMessage(`Congratulations! You solved the puzzle in ${moves} moves and ${timeElement.textContent}!`, "success");
-                                    addMoveToHistory("Puzzle solved!");
-                                }
-                            });
-                        } else {
-                            showMessage("Invalid move! You cannot place a larger disk on top of a smaller one.", "error");
-                        }
-                    } else {
-                        showMessage("Disk returned to original position.", "success");
+                    icon.innerHTML = '😈';
+                    icon.title = 'Devil';
+                }
+                
+                const characterLabel = document.createElement('div');
+                characterLabel.className = 'character-label';
+                characterLabel.textContent = label;
+                
+                figure.appendChild(icon);
+                character.appendChild(figure);
+                character.appendChild(characterLabel);
+                
+                character.addEventListener('click', () => selectCharacter(type, side));
+                
+                return character;
+            }
+
+            // Update boat passengers display
+            function updateBoatPassengers() {
+                const seat1 = document.getElementById('seat-1');
+                const seat2 = document.getElementById('seat-2');
+                
+                seat1.innerHTML = '';
+                seat2.innerHTML = '';
+                
+                if (gameState.boat.passengers.length > 0) {
+                    const passenger1 = createBoatCharacter(gameState.boat.passengers[0]);
+                    seat1.appendChild(passenger1);
+                }
+                
+                if (gameState.boat.passengers.length > 1) {
+                    const passenger2 = createBoatCharacter(gameState.boat.passengers[1]);
+                    seat2.appendChild(passenger2);
+                }
+            }
+
+            // Create a character for the boat
+            function createBoatCharacter(type) {
+                const passenger = document.createElement('div');
+                passenger.className = `character-figure ${type}`;
+                
+                const icon = document.createElement('div');
+                icon.className = 'character-icon';
+                
+                if (type === 'priest') {
+                    icon.innerHTML = '🙏';
+                } else {
+                    icon.innerHTML = '😈';
+                }
+                
+                passenger.appendChild(icon);
+                return passenger;
+            }
+
+            // Select/deselect a character for the boat
+            function selectCharacter(type, side) {
+                if (!gameState.gameStarted || gameState.gameOver) {
+                    showMessage('Start the game first!', 'error');
+                    return;
+                }
+                
+                // Check if character is on the same side as the boat
+                if (side !== gameState.boat.position) {
+                    showMessage('The boat is on the other side!', 'error');
+                    return;
+                }
+                
+                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                
+                // Check if character is available
+                if (bank[type + 's'] <= 0) {
+                    showMessage(`No ${type}s available on this bank!`, 'error');
+                    return;
+                }
+                
+                // Check if character is already in the boat
+                const passengerIndex = gameState.boat.passengers.indexOf(type);
+                if (passengerIndex !== -1) {
+                    // Remove from boat
+                    gameState.boat.passengers.splice(passengerIndex, 1);
+                    bank[type + 's']++;
+                    showMessage(`Removed ${type} from boat`, 'info');
+                } else {
+                    // Check if boat is full
+                    if (gameState.boat.passengers.length >= 2) {
+                        showMessage('Boat is full! Remove someone first.', 'error');
+                        return;
                     }
                     
-                    // Deselect the peg
-                    pegElements[selectedPeg].classList.remove('selected');
-                    selectedPeg = null;
-                }
-            }
-            
-            // Check if move is valid
-            function isValidMove(fromPegIndex, toPegIndex) {
-                const fromPeg = pegs[fromPegIndex];
-                const toPeg = pegs[toPegIndex];
-                
-                // If from peg is empty, invalid move
-                if (fromPeg.children.length === 0) {
-                    return false;
+                    // Add to boat
+                    gameState.boat.passengers.push(type);
+                    bank[type + 's']--;
+                    showMessage(`Added ${type} to boat`, 'info');
                 }
                 
-                // Get the top disk from each peg
-                const fromDisk = fromPeg.children[fromPeg.children.length - 1];
-                const toDisk = toPeg.children[toPeg.children.length - 1];
-                
-                // If to peg is empty, move is valid
-                if (!toDisk) {
-                    return true;
+                updateDisplay();
+            }
+
+            // Move the boat to the other side
+            function moveBoat() {
+                if (gameState.boat.passengers.length === 0) {
+                    showMessage('Boat is empty! At least one person must row the boat.', 'error');
+                    return;
                 }
                 
-                // Check if moving smaller disk on top of larger disk
-                const fromSize = parseInt(fromDisk.getAttribute('data-size'));
-                const toSize = parseInt(toDisk.getAttribute('data-size'));
+                // Move boat to the other side
+                gameState.boat.position = gameState.boat.position === 'left' ? 'right' : 'left';
+                gameState.moves++;
                 
-                return fromSize < toSize;
-            }
-            
-            // Move disk from one peg to another with animation
-            function moveDisk(fromPegIndex, toPegIndex) {
-                return new Promise((resolve) => {
-                    const fromPeg = pegs[fromPegIndex];
-                    const toPeg = pegs[toPegIndex];
-                    
-                    const disk = fromPeg.children[fromPeg.children.length - 1];
-                    
-                    // Add moving class for animation
-                    disk.classList.add('moving');
-                    
-                    // Calculate positions for animation
-                    const fromRect = fromPeg.getBoundingClientRect();
-                    const toRect = toPeg.getBoundingClientRect();
-                    
-                    // Lift disk up
-                    disk.style.transform = `translateY(-100px)`;
-                    
-                    setTimeout(() => {
-                        // Move disk horizontally
-                        const horizontalMove = toRect.left - fromRect.left;
-                        disk.style.transform = `translateX(${horizontalMove}px) translateY(-100px)`;
-                        
-                        setTimeout(() => {
-                            // Place disk down
-                            disk.style.transform = `translateX(${horizontalMove}px) translateY(0)`;
-                            
-                            setTimeout(() => {
-                                // Reset transform and complete move
-                                disk.style.transform = '';
-                                disk.classList.remove('moving');
-                                fromPeg.removeChild(disk);
-                                toPeg.appendChild(disk);
-                                resolve();
-                            }, 300);
-                        }, 300);
-                    }, 300);
-                });
-            }
-            
-            // Check if player has won
-            function checkWin() {
-                return pegs[2].children.length === disks;
-            }
-            
-            // Start the timer
-            function startTimer() {
-                startTime = new Date();
-                timerInterval = setInterval(updateTimer, 1000);
-            }
-            
-            // Update the timer display
-            function updateTimer() {
-                const currentTime = new Date();
-                const elapsedTime = Math.floor((currentTime - startTime) / 1000);
-                const minutes = Math.floor(elapsedTime / 60);
-                const seconds = elapsedTime % 60;
+                // Move passengers to the new bank
+                const targetBank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
                 
-                timeElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
-            
-            // Show message to user
-            function showMessage(text, type) {
-                // Clear any existing timeout
-                if (notificationTimeout) {
-                    clearTimeout(notificationTimeout);
-                }
-                
-                // Create notification element
-                const notification = document.createElement('div');
-                notification.className = `message ${type}`;
-                notification.textContent = text;
-                
-                // Add to notification area
-                notificationArea.innerHTML = '';
-                notificationArea.appendChild(notification);
-                
-                // Trigger animation
-                setTimeout(() => {
-                    notification.classList.add('show');
-                }, 10);
-                
-                // Auto-hide after 3 seconds
-                notificationTimeout = setTimeout(() => {
-                    notification.classList.remove('show');
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                }, 3000);
-            }
-            
-            // Clear all notifications
-            function clearNotifications() {
-                notificationArea.innerHTML = '';
-                if (notificationTimeout) {
-                    clearTimeout(notificationTimeout);
-                    notificationTimeout = null;
-                }
-            }
-            
-            // Add move to history
-            function addMoveToHistory(text) {
-                const moveItem = document.createElement('div');
-                moveItem.className = 'move-item';
-                moveItem.textContent = `Move ${moves + 1}: ${text}`;
-                moveHistoryElement.appendChild(moveItem);
-                moveHistoryElement.scrollTop = moveHistoryElement.scrollHeight;
-            }
-            
-            // Auto-solve the puzzle
-            function autoSolve() {
-                if (isSolving) return;
-                
-                isSolving = true;
-                solveBtn.disabled = true;
-                gameActive = false;
-                
-                // Clear any existing disks
-                pegs.forEach(peg => {
-                    peg.innerHTML = '';
+                gameState.boat.passengers.forEach(passenger => {
+                    targetBank[passenger + 's']++;
                 });
                 
-                // Recreate disks on first peg
-                createDisks();
+                // Clear boat
+                gameState.boat.passengers = [];
                 
-                // Reset game stats
-                moves = 0;
-                moveCountElement.textContent = moves;
-                moveHistoryElement.innerHTML = '';
-                addMoveToHistory("Auto-solve started.");
+                updateDisplay();
                 
-                // Reset timer
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                }
-                timeElement.textContent = '00:00';
-                startTime = null;
-                
-                // Start timer
-                startTimer();
-                
-                // Solve recursively
-                const solve = (n, from, to, aux) => {
-                    if (n === 0) return Promise.resolve();
-                    
-                    return solve(n - 1, from, aux, to)
-                        .then(() => {
-                            return new Promise(resolve => {
-                                setTimeout(() => {
-                                    moveDisk(from, to).then(() => {
-                                        moves++;
-                                        moveCountElement.textContent = moves;
-                                        addMoveToHistory(`Auto-move: Peg ${from + 1} to Peg ${to + 1}`);
-                                        resolve();
-                                    });
-                                }, 600);
-                            });
-                        })
-                        .then(() => solve(n - 1, aux, to, from));
-                };
-                
-                solve(disks, 0, 2, 1).then(() => {
-                    clearInterval(timerInterval);
-                    showMessage(`Puzzle solved automatically in ${moves} moves!`, "success");
-                    addMoveToHistory("Auto-solve completed!");
-                    isSolving = false;
-                    solveBtn.disabled = false;
-                });
+                // Check game state
+                checkGameState();
             }
-            
+
+            // Check if the game is won or lost
+            function checkGameState() {
+                // Check for loss condition (devils outnumber priests)
+                if ((gameState.leftBank.priests > 0 && gameState.leftBank.devils > gameState.leftBank.priests) ||
+                    (gameState.rightBank.priests > 0 && gameState.rightBank.devils > gameState.rightBank.priests)) {
+                    gameState.gameOver = true;
+                    showMessage('Game Over! Devils outnumbered priests on one bank.', 'error');
+                    return;
+                }
+                
+                // Check for win condition
+                if (gameState.leftBank.priests === 0 && gameState.leftBank.devils === 0) {
+                    gameState.gameOver = true;
+                    showMessage(`Congratulations! You solved the puzzle in ${gameState.moves} moves.`, 'success');
+                    return;
+                }
+                
+                // Continue game
+                showMessage('Boat moved! Select characters for the return trip.', 'info');
+            }
+
+            // Show a message to the user
+            function showMessage(message, type) {
+                messageArea.textContent = message;
+                messageArea.className = 'message-area';
+                messageArea.classList.add(`message-${type}`);
+            }
+
+            // Provide a hint
+            function provideHint() {
+                if (!gameState.gameStarted) {
+                    showMessage('Start the game first!', 'error');
+                    return;
+                }
+                
+                if (gameState.gameOver) {
+                    showMessage('Game is over! Reset to play again.', 'error');
+                    return;
+                }
+                
+                // Simple hint based on current state
+                const currentBank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                
+                if (currentBank.priests === 3 && currentBank.devils === 3) {
+                    showMessage('Hint: Start by moving two devils to the right bank.', 'info');
+                } else if (gameState.rightBank.devils > gameState.rightBank.priests && gameState.rightBank.priests > 0) {
+                    showMessage('Hint: You need to bring a priest back to balance the numbers.', 'info');
+                } else {
+                    showMessage('Hint: Try to maintain balance - never let devils outnumber priests.', 'info');
+                }
+            }
+
+            // Show the solution
+            function showSolution() {
+                showMessage('Optimal solution: 1. DD → | 2. D ← | 3. DD → | 4. D ← | 5. PP → | 6. PD ← | 7. PP → | 8. D ← | 9. DD → | 10. D ← | 11. DD →', 'info');
+            }
+
             // Event listeners
             startBtn.addEventListener('click', initGame);
             resetBtn.addEventListener('click', resetGame);
-            solveBtn.addEventListener('click', autoSolve);
-            
-            diskCountSelect.addEventListener('change', function() {
-                disks = parseInt(this.value);
-                if (gameActive && !isSolving) {
-                    resetGame();
-                    createDisks();
-                    updateMinMoves();
-                }
-            });
-            
-            difficultyButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const diskCount = parseInt(this.getAttribute('data-disks'));
-                    diskCountSelect.value = diskCount;
-                    disks = diskCount;
-                    
-                    // Update active button
-                    difficultyButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    if (gameActive && !isSolving) {
-                        resetGame();
-                        createDisks();
-                        updateMinMoves();
-                    }
-                });
-            });
-            
-            // Initialize the game on page load
-            initGame();
+            hintBtn.addEventListener('click', provideHint);
+            solveBtn.addEventListener('click', showSolution);
+            moveBoatBtn.addEventListener('click', moveBoat);
+
+            // Initialize the game display
+            updateDisplay();
         });
     </script>
 </body>
