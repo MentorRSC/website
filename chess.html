@@ -559,8 +559,251 @@
                             }
                         }
                         break;
-                        
-                    case 'bishop':
+
+        case 'bishop':
                         // Bishop moves (diagonals)
                         addDirectionalMoves(moves, row, col, piece, -1, -1); // Up-left
-                        addDirectionalMoves(moves, row, col, piece, -1,
+                        addDirectionalMoves(moves, row, col, piece, -1, 1);  // Up-right
+                        addDirectionalMoves(moves, row, col, piece, 1, -1);  // Down-left
+                        addDirectionalMoves(moves, row, col, piece, 1, 1);   // Down-right
+                        break;
+                        
+                    case 'rook':
+                        // Rook moves (horizontal/vertical)
+                        addDirectionalMoves(moves, row, col, piece, -1, 0);  // Up
+                        addDirectionalMoves(moves, row, col, piece, 1, 0);   // Down
+                        addDirectionalMoves(moves, row, col, piece, 0, -1);  // Left
+                        addDirectionalMoves(moves, row, col, piece, 0, 1);   // Right
+                        break;
+                        
+                    case 'queen':
+                        // Queen moves (all directions)
+                        for (let i = -1; i <= 1; i++) {
+                            for (let j = -1; j <= 1; j++) {
+                                if (i !== 0 || j !== 0) {
+                                    addDirectionalMoves(moves, row, col, piece, i, j);
+                                }
+                            }
+                        }
+                        break;
+                        
+                    case 'king':
+                        // King moves (one square in any direction)
+                        for (let i = -1; i <= 1; i++) {
+                            for (let j = -1; j <= 1; j++) {
+                                if ((i !== 0 || j !== 0) && 
+                                    isInBounds(row + i, col + j) && 
+                                    (!board[row + i][col + j] || board[row + i][col + j].color !== piece.color)) {
+                                    moves.push({ row: row + i, col: col + j });
+                                }
+                            }
+                        }
+                        break;
+                }
+                
+                return moves;
+            }
+            
+            // Helper function to add directional moves (for bishop, rook, queen)
+            function addDirectionalMoves(moves, startRow, startCol, piece, rowDir, colDir) {
+                let row = startRow + rowDir;
+                let col = startCol + colDir;
+                
+                while (isInBounds(row, col)) {
+                    if (!board[row][col]) {
+                        // Empty square
+                        moves.push({ row, col });
+                    } else if (board[row][col].color !== piece.color) {
+                        // Capture opponent's piece
+                        moves.push({ row, col });
+                        break;
+                    } else {
+                        // Own piece, stop
+                        break;
+                    }
+                    
+                    row += rowDir;
+                    col += colDir;
+                }
+            }
+            
+            // Check if coordinates are within the board
+            function isInBounds(row, col) {
+                return row >= 0 && row < 8 && col >= 0 && col < 8;
+            }
+            
+            // Move a piece
+            function movePiece(fromRow, fromCol, toRow, toCol) {
+                const piece = board[fromRow][fromCol];
+                const targetPiece = board[toRow][toCol];
+                
+                // Record the move
+                moveHistory.push({
+                    from: { row: fromRow, col: fromCol },
+                    to: { row: toRow, col: toCol },
+                    piece: { ...piece },
+                    captured: targetPiece ? { ...targetPiece } : null
+                });
+                
+                // Update captured pieces if applicable
+                if (targetPiece) {
+                    capturedPieces[piece.color].push(targetPiece);
+                    updateCapturedPieces();
+                }
+                
+                // Move the piece
+                board[toRow][toCol] = { ...piece, hasMoved: true };
+                board[fromRow][fromCol] = null;
+                
+                // Switch player
+                currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                
+                // Update UI
+                updateStatus();
+                updateMoveHistory();
+                
+                // Check for game end conditions (simplified)
+                if (isCheckmate()) {
+                    statusElement.textContent = `Checkmate! ${currentPlayer === 'white' ? 'Black' : 'White'} wins!`;
+                } else if (isCheck()) {
+                    statusElement.textContent = `${currentPlayer === 'white' ? 'Black' : 'White'} is in check!`;
+                }
+            }
+            
+            // Update game status
+            function updateStatus() {
+                if (currentPlayer === 'white') {
+                    statusElement.textContent = 'White to move';
+                    whiteTurnIndicator.classList.add('active');
+                } else {
+                    statusElement.textContent = 'Black to move';
+                    whiteTurnIndicator.classList.remove('active');
+                }
+            }
+            
+            // Update move history display
+            function updateMoveHistory() {
+                moveHistoryElement.innerHTML = '';
+                
+                for (let i = 0; i < moveHistory.length; i += 2) {
+                    const moveNumber = Math.floor(i / 2) + 1;
+                    const whiteMove = moveHistory[i];
+                    const blackMove = moveHistory[i + 1];
+                    
+                    const moveElement = document.createElement('div');
+                    moveElement.className = 'move';
+                    moveElement.textContent = `${moveNumber}. ${formatMove(whiteMove)}`;
+                    moveHistoryElement.appendChild(moveElement);
+                    
+                    if (blackMove) {
+                        const blackMoveElement = document.createElement('div');
+                        blackMoveElement.className = 'move';
+                        blackMoveElement.textContent = formatMove(blackMove);
+                        moveHistoryElement.appendChild(blackMoveElement);
+                    }
+                }
+                
+                // Scroll to bottom
+                moveHistoryElement.scrollTop = moveHistoryElement.scrollHeight;
+            }
+            
+            // Format a move for display
+            function formatMove(move) {
+                const pieceSymbol = getPieceSymbol(move.piece).trim();
+                const fromFile = String.fromCharCode(97 + move.from.col);
+                const fromRank = 8 - move.from.row;
+                const toFile = String.fromCharCode(97 + move.to.col);
+                const toRank = 8 - move.to.row;
+                
+                return `${pieceSymbol} ${fromFile}${fromRank} → ${toFile}${toRank}`;
+            }
+            
+            // Update captured pieces display
+            function updateCapturedPieces() {
+                whiteCapturedElement.innerHTML = '';
+                blackCapturedElement.innerHTML = '';
+                
+                capturedPieces.white.forEach(piece => {
+                    const pieceElement = document.createElement('span');
+                    pieceElement.className = 'piece-icon';
+                    pieceElement.textContent = getPieceSymbol(piece);
+                    whiteCapturedElement.appendChild(pieceElement);
+                });
+                
+                capturedPieces.black.forEach(piece => {
+                    const pieceElement = document.createElement('span');
+                    pieceElement.className = 'piece-icon';
+                    pieceElement.textContent = getPieceSymbol(piece);
+                    blackCapturedElement.appendChild(pieceElement);
+                });
+            }
+            
+            // Check if current player is in check (simplified)
+            function isCheck() {
+                // This is a simplified version - a full implementation would be more complex
+                return false;
+            }
+            
+            // Check for checkmate (simplified)
+            function isCheckmate() {
+                // This is a simplified version - a full implementation would be more complex
+                return false;
+            }
+            
+            // Event listeners for buttons
+            newGameButton.addEventListener('click', function() {
+                if (confirm('Start a new game? Current game will be lost.')) {
+                    initializeBoard();
+                    moveHistory = [];
+                    capturedPieces = { white: [], black: [] };
+                    currentPlayer = 'white';
+                    selectedPiece = null;
+                    validMoves = [];
+                    updateMoveHistory();
+                    updateCapturedPieces();
+                    updateStatus();
+                }
+            });
+            
+            undoButton.addEventListener('click', function() {
+                if (moveHistory.length > 0) {
+                    const lastMove = moveHistory.pop();
+                    
+                    // Restore the piece to its original position
+                    board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
+                    board[lastMove.to.row][lastMove.to.col] = lastMove.captured;
+                    
+                    // Remove from captured pieces if applicable
+                    if (lastMove.captured) {
+                        const capturingColor = lastMove.piece.color;
+                        capturedPieces[capturingColor].pop();
+                        updateCapturedPieces();
+                    }
+                    
+                    // Switch back to the previous player
+                    currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                    
+                    // Update UI
+                    selectedPiece = null;
+                    validMoves = [];
+                    renderBoard();
+                    updateStatus();
+                    updateMoveHistory();
+                }
+            });
+            
+            flipButton.addEventListener('click', function() {
+                boardFlipped = !boardFlipped;
+                renderBoard();
+            });
+            
+            hintButton.addEventListener('click', function() {
+                alert('Hint: Try to control the center of the board and develop your pieces!');
+            });
+            
+            // Initialize the game
+            initializeBoard();
+        });
+    </script>
+</body>
+</html>
