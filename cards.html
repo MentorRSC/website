@@ -1061,11 +1061,17 @@
                 
                 renderCards();
                 
-                // Check if sorted after switch
+                // Check if sorted after switch - FIXED: Reveal cards when solved
                 if (checkIfSorted()) {
                     gameState.isRevealed = true;
                     comparisonElement.innerHTML = '<div class="win-message">Congratulations! You sorted the cards!</div>';
                     updateBestScore();
+                    
+                    // Reveal all cards when solved
+                    gameState.cards.forEach(card => {
+                        card.revealed = true;
+                    });
+                    renderCards(); // Re-render to show the numbers
                 }
             }
             
@@ -1076,7 +1082,7 @@
                 gameState.isRevealed = true;
                 gameState.selectedCards = [];
                 
-                // Reveal all cards - THIS IS THE FIX
+                // Reveal all cards
                 gameState.cards.forEach(card => {
                     card.revealed = true;
                     card.selected = false;
@@ -1235,13 +1241,14 @@
                         comparisonElement.innerHTML = '<div class="win-message">Autoplay completed the puzzle!</div>';
                         updateBestScore();
                         
-                        // Mark all as sorted AND revealed - THIS IS THE FIX
+                        // Mark all as sorted AND revealed
                         gameState.cards.forEach(card => {
                             card.state = 'sorted';
                             card.revealed = true; // Make sure cards are revealed
                         });
                         
                         toggleAutoplay();
+                        renderCards(); // Make sure to render after revealing
                     }
                 }
                 
