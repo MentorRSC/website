@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Round Maze — Wooden Puzzle (Web Version)</title>
+  <style>
+    :root{--bg:#111;--panel:#0f1720;--accent:#f59e0b;--muted:#9ca3af}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial}
+    body{background:linear-gradient(180deg,#071028 0%, #08121a 60%);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:12px}
+    .app{width:100%;max-width:900px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(2,6,23,0.7)}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:18px;margin:0}
+    .row{display:flex;gap:10px;align-items:center}
+    #gamewrap{position:relative;margin-top:12px;background:radial-gradient(circle at 50% 40%, rgba(255,255,255,0.02), transparent 30%);border-radius:10px;padding:10px}
+    canvas{display:block;width:100%;height:calc(100vw - 80px);max-height:640px;border-radius:8px;background:transparent}
+    .hud{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);padding:8px 12px;border-radius:8px;font-weight:600}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);display:flex;gap:8px;align-items:center}
+    .muted{color:var(--muted);font-size:13px}
+    .controls{margin-left:auto;display:flex;gap:8px}
+    .small{font-size:13px;padding:6px 8px}
+    .footer{margin-top:8px;color:var(--muted);font-size:13px}
+    .hint{font-size:13px;color:var(--muted)}
+    /* simple on-screen joystick */
+    #joystick{position:absolute;right:14px;bottom:14px;width:120px;height:120px;border-radius:60px;display:none;align-items:center;justify-content:center}
+    #joypad{width:80px;height:80px;border-radius:40px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center}
+    #stick{width:36px;height:36px;border-radius:18px;background:linear-gradient(180deg,#ffd89b,#ffb347);box-shadow:0 6px 14px rgba(0,0,0,0.5)}
+    @media (max-width:640px){canvas{height:70vh} #joystick{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <header>
+      <div>
+        <h1>SIGNAMIO — Round Maze (Web)</h1>
+        <div class="muted">Play the wooden round-maze puzzle in your phone browser — tilt or touch to move the ball.</div>
+      </div>
+      <div class="controls">
+        <button id="restart">Restart</button>
+        <button id="newlevel" class="small">New Maze</button>
+      </div>
+    </header>
+
+    <div id="gamewrap">
+      <canvas id="c"></canvas>
+      <div id="joystick">
+        <div id="joypad">
+          <div id="stick"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud">
+      <div class="panel">Time: <strong id="time">0.00</strong>s</div>
+      <div class="panel">Moves: <strong id="moves">0</strong></div>
+      <div class="panel muted">Goal: reach the center hole</div>
+    </div>
+
+    <div class="footer">
+      <div class="hint">Tip: On mobile allow motion permissions when prompted to use tilt controls. Use the joystick if unavailable.</div>
+    </div>
+  </div>
+
+<script>
+/*
+  Circular maze with polar cell grid and simple physics.
+  - Maze generation: recursive backtracker across polar cells (rings x arcs)
+  - Rendering: walls drawn as arcs and radial lines
+  - Ball movement: using deviceorientation or on-screen joystick
+  - Collision: movement allowed only between cells with no wall between them
+*/
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy, radius;
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.max(800, Math.floor(rect.width * devicePixelRatio));
+  canvas.height = Math.max(800, Math.floor(Math.min(rect.width, window.innerHeight*0.6) * devicePixelRatio));
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = (Math.min(rect.width, window.innerHeight*0.6)) + 'px';
+  W = canvas.width; H = canvas.height; cx = W/2; cy = H/2; radius = Math.min(W,H)*0.45;
+}
+window.addEventListener('resize', ()=>{ resize(); draw(); });
+resize();
+
+// Maze parameters — tune for phone performance
+let RINGS = 6; // concentric rings
+let CELLS_BASE = 8; // cells in outermost ring
+let cellGrid = []; // grid[r][s] = {walls: {inward, outward, left, right}, visited}
+
+function createGrid(rings = RINGS){
+  cellGrid = [];
+  for(let r=0;r<rings;r++){
+    const cells = Math.max(6, CELLS_BASE + r*2);
+    const ring = [];
+    for(let s=0;s<cells;s++){
+      ring.push({visited:false, walls:{inward:true,outward:true,left:true,right:true}});
+    }
+    cellGrid.push(ring);
+  }
+}
+
+function neighbors(r,s){
+  const res = [];
+  const cells = cellGrid[r].length;
+  // angular neighbors
+  res.push({r, s:(s-1+cells)%cells, dir:'left'});
+  res.push({r, s:(s+1)%cells, dir:'right'});
+  // radial neighbors
+  if(r>0) res.push({r:r-1, s: mapSectorToRing(s, r, r-1), dir:'inward'});
+  if(r<cellGrid.length-1) res.push({r:r+1, s: mapSectorToRing(s, r, r+1), dir:'outward'});
+  return res;
+}
+
+// map sector index from ring r to ring nr by scaling angle
+function mapSectorToRing(s, r, nr){
+  const cells = cellGrid[r].length; const nc = cellGrid[nr].length;
+  const angle = (s + 0.5) / cells; // mid-angle
+  return Math.floor(angle * nc) % nc;
+}
+
+function generateMaze(){
+  // recursive backtracker
+  const stack = [];
+  const startR = cellGrid.length-1; const startS = 0;
+  cellGrid[startR][startS].visited = true;
+  stack.push({r:startR,s:startS});
+  while(stack.length){
+    const cur = stack[stack.length-1];
+    const nbrs = neighbors(cur.r, cur.s).filter(n=>!cellGrid[n.r][n.s].visited);
+    if(nbrs.length===0){ stack.pop(); continue; }
+    const pick = nbrs[Math.floor(Math.random()*nbrs.length)];
+    // remove walls between cur and pick
+    const a = cellGrid[cur.r][cur.s];
+    const b = cellGrid[pick.r][pick.s];
+    if(pick.dir==='left'){ a.walls.left = false; b.walls.right = false; }
+    else if(pick.dir==='right'){ a.walls.right = false; b.walls.left = false; }
+    else if(pick.dir==='inward'){ a.walls.inward = false; b.walls.outward = false; }
+    else if(pick.dir==='outward'){ a.walls.outward = false; b.walls.inward = false; }
+    b.visited = true;
+    stack.push({r:pick.r,s:pick.s});
+  }
+}
+
+function polarToXY(r, s){
+  // returns center point of cell
+  const rings = cellGrid.length;
+  const ringWidth = radius / rings;
+  const innerR = r * ringWidth;
+  const outerR = (r+1) * ringWidth;
+  const midR = (innerR+outerR)/2;
+  const cells = cellGrid[r].length;
+  const angle = (s + 0.5) * (2*Math.PI / cells) - Math.PI/2;
+  return {x: cx + midR * Math.cos(angle), y: cy + midR * Math.sin(angle)};
+}
+
+function drawMaze(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(0,0);
+  ctx.lineWidth = Math.max(1, Math.round(2*devicePixelRatio));
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  const rings = cellGrid.length;
+  const ringWidth = radius / rings;
+  for(let r=0;r<rings;r++){
+    const cells = cellGrid[r].length;
+    const innerR = r * ringWidth;
+    const outerR = (r+1) * ringWidth;
+    // draw arcs for walls inward/outward
+    for(let s=0;s<cells;s++){
+      const cell = cellGrid[r][s];
+      const a1 = s * (2*Math.PI / cells) - Math.PI/2;
+      const a2 = (s+1)*(2*Math.PI / cells) - Math.PI/2;
+      // inward wall
+      if(cell.walls.inward){
+        ctx.beginPath(); ctx.arc(cx,cy, innerR, a1, a2); ctx.stroke();
+      }
+      // outward wall
+      if(cell.walls.outward){
+        ctx.beginPath(); ctx.arc(cx,cy, outerR, a1, a2); ctx.stroke();
+      }
+      // radial walls: left edge
+      if(cell.walls.left){
+        ctx.beginPath(); ctx.moveTo(cx + innerR*Math.cos(a1), cy+innerR*Math.sin(a1));
+        ctx.lineTo(cx + outerR*Math.cos(a1), cy+outerR*Math.sin(a1)); ctx.stroke();
+      }
+      // optionally draw right edge for last cell to close gaps
+      // right edges will be drawn by its neighbor's left
+    }
+  }
+  ctx.restore();
+}
+
+// Player ball state
+let ball = {x:0,y:0,r:10, vx:0, vy:0};
+let moves = 0; let startTime = null; let finished=false;
+
+function resetBall(){
+  // start at outer ring, random sector
+  const r = cellGrid.length-1; const s = Math.floor(cellGrid[r].length/2);
+  const p = polarToXY(r,s);
+  ball.x = p.x; ball.y = p.y; ball.vx=0; ball.vy=0; moves=0; finished=false; startTime = performance.now();
+}
+
+function getCellAt(x,y){
+  const dx = x-cx, dy=y-cy; const d = Math.sqrt(dx*dx+dy*dy);
+  const rings = cellGrid.length;
+  const ringWidth = radius / rings;
+  let r = Math.floor(d / ringWidth);
+  if(r<0) r=0; if(r>=rings) r=rings-1;
+  let angle = Math.atan2(dy,dx) + Math.PI/2; if(angle<0) angle += Math.PI*2;
+  const cells = cellGrid[r].length;
+  let s = Math.floor(angle / (2*Math.PI) * cells) % cells;
+  return {r,s};
+}
+
+function hasWallBetween(a,b){
+  if(a.r===b.r){
+    const cells = cellGrid[a.r].length;
+    // angular difference
+    if((b.s === (a.s+1)%cells)) return cellGrid[a.r][a.s].walls.right;
+    if((b.s === (a.s-1+cells)%cells)) return cellGrid[a.r][a.s].walls.left;
+  } else if(a.r === b.r+1){
+    // b is inward
+    const mapped = mapSectorToRing(a.s,a.r,b.r);
+    if(mapped !== b.s) return true; // crossing to different angular cell -> treat as wall
+    return cellGrid[a.r][a.s].walls.inward;
+  } else if(a.r+1 === b.r){
+    const mapped = mapSectorToRing(b.s,b.r,a.r);
+    if(mapped !== a.s) return true;
+    return cellGrid[a.r][a.s].walls.outward;
+  }
+  return true;
+}
+
+// Input: tilt or joystick
+let accel = {ax:0, ay:0};
+window.addEventListener('deviceorientation', (ev)=>{
+  // gamma (left-right), beta (front-back)
+  if(ev.gamma==null) return;
+  // map gamma/beta to ax,ay
+  const gx = Math.max(-45, Math.min(45, ev.gamma));
+  const gy = Math.max(-45, Math.min(45, ev.beta-10)); // offset
+  const sensitivity = 0.02;
+  accel.ax = gx * sensitivity;
+  accel.ay = gy * sensitivity;
+});
+
+// joystick fallback
+const joy = document.getElementById('joypad'); const stick = document.getElementById('stick');
+let joystickActive = false; let joyCx=0, joyCy=0;
+joy.addEventListener('pointerdown', startJoy);
+joy.addEventListener('pointermove', moveJoy);
+window.addEventListener('pointerup', endJoy);
+function startJoy(e){ joy.setPointerCapture(e.pointerId); joystickActive=true; moveJoy(e); }
+function moveJoy(e){ if(!joystickActive) return; const rect = joy.getBoundingClientRect(); const x = e.clientX - rect.left - rect.width/2; const y = e.clientY - rect.top - rect.height/2; const max = rect.width/2 - 10; const dist = Math.min(max, Math.hypot(x,y)); const nx = x/dist || 0; const ny = y/dist || 0; stick.style.transform = `translate(${nx*dist}px, ${ny*dist}px)`; accel.ax = (nx * dist / max) * 0.12; accel.ay = (ny * dist / max) * 0.12; }
+function endJoy(e){ joystickActive=false; stick.style.transform = '' ; accel.ax=0; accel.ay=0; }
+
+// controls
+document.getElementById('restart').addEventListener('click', ()=>{ resetBall(); draw(); });
+document.getElementById('newlevel').addEventListener('click', ()=>{ startNewMaze(); });
+
+function startNewMaze(){
+  // randomize complexity a bit
+  RINGS = Math.max(4, Math.floor(4 + Math.random()*6));
+  CELLS_BASE = Math.max(6, 6 + Math.floor(Math.random()*6));
+  createGrid(RINGS); generateMaze(); resetBall();
+}
+startNewMaze();
+
+function drawBall(){
+  ctx.beginPath(); ctx.fillStyle = 'rgba(255,194,89,0.95)'; ctx.arc(ball.x, ball.y, ball.r*devicePixelRatio, 0, Math.PI*2); ctx.fill();
+  // simple shine
+  ctx.beginPath(); ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.arc(ball.x - ball.r*devicePixelRatio*0.4, ball.y - ball.r*devicePixelRatio*0.6, ball.r*devicePixelRatio*0.5, 0, Math.PI*2); ctx.fill();
+}
+
+function drawGoal(){
+  ctx.beginPath(); ctx.fillStyle = 'rgba(20,20,30,0.95)'; ctx.arc(cx, cy, (radius / cellGrid.length) * 0.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=2; ctx.arc(cx,cy,(radius / cellGrid.length) * 0.6,0,Math.PI*2); ctx.stroke();
+}
+
+function update(dt){
+  if(finished) return;
+  // integrate
+  const maxSpeed = 600; // pixels / s
+  ball.vx += accel.ax * 600 * dt; ball.vy += accel.ay * 600 * dt;
+  // apply friction
+  ball.vx *= 0.995; ball.vy *= 0.995;
+  // clamp
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if(speed > maxSpeed){ ball.vx = ball.vx / speed * maxSpeed; ball.vy = ball.vy / speed * maxSpeed; }
+  const nx = ball.x + ball.vx * dt; const ny = ball.y + ball.vy * dt;
+  const aCell = getCellAt(ball.x,ball.y); const bCell = getCellAt(nx,ny);
+  // if cell changed, check wall
+  if(aCell.r === bCell.r && aCell.s === bCell.s){ ball.x = nx; ball.y = ny; }
+  else {
+    if(!hasWallBetween(aCell, bCell)){
+      ball.x = nx; ball.y = ny; moves++; document.getElementById('moves').innerText = moves;
+    } else {
+      // stop velocity in direction of attempted crossing
+      ball.vx = 0; ball.vy = 0;
+    }
+  }
+  // check goal
+  const dToCenter = Math.hypot(ball.x-cx, ball.y-cy);
+  if(dToCenter < (radius / cellGrid.length) * 0.6){ finished=true; const t = (performance.now()-startTime)/1000; document.getElementById('time').innerText = t.toFixed(2); setTimeout(()=>{ alert('You won! Time: '+t.toFixed(2)+'s — try a new maze.'); }, 100); }
+}
+
+let last = performance.now();
+function loop(){
+  const now = performance.now(); const dt = (now-last)/1000; last = now;
+  update(dt);
+  draw();
+  if(!finished){ const curT = (performance.now()-startTime)/1000; document.getElementById('time').innerText = curT.toFixed(2); }
+  requestAnimationFrame(loop);
+}
+
+function draw(){
+  drawMaze(); drawGoal(); drawBall();
+}
+requestAnimationFrame(loop);
+
+// ask for motion permission on iOS
+if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+  const btn = document.createElement('button'); btn.innerText='Enable Tilt'; btn.style.position='absolute'; btn.style.left='14px'; btn.style.bottom='14px'; btn.className='small';
+  btn.onclick = async ()=>{
+    try{
+      const p = await DeviceMotionEvent.requestPermission(); if(p==='granted'){ btn.remove(); }
+    }catch(e){ console.warn(e); }
+  };
+  document.body.appendChild(btn);
+}
+
+</script>
+</body>
+</html>
