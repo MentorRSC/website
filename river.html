@@ -133,6 +133,40 @@
             padding: 30px;
             margin-bottom: 30px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .game-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            margin: 0;
+            border-radius: 0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .fullscreen-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+            transition: background-color 0.3s;
+        }
+
+        .fullscreen-toggle:hover {
+            background: #0d5bbb;
         }
 
         .game-header {
@@ -197,6 +231,20 @@
 
         .btn-danger:hover {
             background-color: #c0392b;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            order: 3;
         }
 
         .river-game {
@@ -318,9 +366,8 @@
         .boat {
             position: absolute;
             bottom: 20px;
-            left: 40%;
-            width: 120px;
-            height: 60px;
+            width: 160px;
+            height: 70px;
             background: linear-gradient(to bottom, #8b4513, #654321);
             border-radius: 10px 10px 30px 30px;
             display: flex;
@@ -353,11 +400,11 @@
         }
 
         .boat-position-left {
-            left: 40%;
+            left: 38%;
         }
 
         .boat-position-right {
-            left: 55%;
+            left: 53%;
         }
 
         .boat-seat {
@@ -369,6 +416,29 @@
             align-items: center;
             justify-content: center;
             position: relative;
+        }
+
+        .boat-move-btn {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            border-radius: 20px;
+            padding: 6px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .boat-move-btn:hover {
+            background: #e6a800;
+            transform: translateX(-50%) translateY(-2px);
         }
 
         .game-stats {
@@ -460,6 +530,52 @@
         .rules h4 {
             color: var(--dark);
             margin-bottom: 10px;
+        }
+
+        /* Solution Animation */
+        .solution-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--light);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .solution-step {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .solution-step.active {
+            background-color: rgba(26, 115, 232, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .solution-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Game Layout Reorganization */
+        .game-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .game-main-area {
+            order: 1;
+        }
+
+        .game-secondary-controls {
+            order: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         /* Footer Styles */
@@ -596,8 +712,8 @@
             }
 
             .boat {
-                width: 100px;
-                height: 50px;
+                width: 140px;
+                height: 60px;
             }
 
             .boat-seat {
@@ -609,6 +725,22 @@
                 flex-direction: column;
                 align-items: center;
                 gap: 15px;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .game-container.fullscreen {
+                padding: 10px;
+            }
+
+            .fullscreen-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 6px 10px;
+                font-size: 14px;
             }
         }
     </style>
@@ -631,7 +763,7 @@
                     <li><a href="resources.html">Resources</a></li>
                     <li><a href="projects.html">Projects</a></li>
                     <li><a href="puzzles.html" class="active">Puzzles</a></li>
-                                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
                 </ul>
             </nav>
         </div>
@@ -647,74 +779,107 @@
             </section>
 
             <!-- Game Container -->
-            <section class="game-container">
-                <div class="game-controls">
-                    <button id="start-btn" class="btn btn-primary">Start Game</button>
-                    <button id="reset-btn" class="btn btn-blue">Reset</button>
-                    <button id="hint-btn" class="btn btn-blue">Hint</button>
-                    <button id="solve-btn" class="btn btn-danger">Show Solution</button>
-                    <button id="move-boat-btn" class="btn btn-primary">Move Boat</button>
-                </div>
+            <section class="game-container" id="game-container">
+                <button class="fullscreen-toggle" id="fullscreen-toggle" title="Toggle Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
 
-                <div class="river-game">
-                    <div class="river-container">
-                        <div class="river-bank left-bank">
-                            <div class="bank-title">Left Bank</div>
-                            <div class="character-container" id="left-bank-characters">
-                                <!-- Characters will be added here by JavaScript -->
+                <div class="game-layout">
+                    <div class="game-main-area">
+                        <div class="game-controls">
+                            <button id="start-btn" class="btn btn-primary">Start Game</button>
+                            <button id="reset-btn" class="btn btn-blue">Reset</button>
+                            <button id="hint-btn" class="btn btn-blue">Hint</button>
+                            <button id="solve-btn" class="btn btn-danger">Show Solution</button>
+                        </div>
+
+                        <div class="river-game">
+                            <div class="river-container">
+                                <div class="river-bank left-bank">
+                                    <div class="bank-title">Left Bank</div>
+                                    <div class="character-container" id="left-bank-characters">
+                                        <!-- Characters will be added here by JavaScript -->
+                                    </div>
+                                </div>
+                                
+                                <div class="river-bank right-bank">
+                                    <div class="bank-title">Right Bank</div>
+                                    <div class="character-container" id="right-bank-characters">
+                                        <!-- Characters will be added here by JavaScript -->
+                                    </div>
+                                </div>
+                                
+                                <div class="boat boat-position-left" id="boat">
+                                    <div class="boat-seat" id="seat-1"></div>
+                                    <div class="boat-seat" id="seat-2"></div>
+                                    <button class="boat-move-btn" id="boat-move-btn">Move Boat</button>
+                                </div>
+                            </div>
+
+                            <div class="game-stats">
+                                <div class="stat">
+                                    <div class="stat-value" id="moves-count">0</div>
+                                    <div class="stat-label">Moves</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value" id="priests-left">3</div>
+                                    <div class="stat-label">Priests Left</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value" id="devils-left">3</div>
+                                    <div class="stat-label">Devils Left</div>
+                                </div>
+                            </div>
+
+                            <div class="message-area message-info" id="message-area">
+                                Click START to begin the game. Select characters to move them to the boat.
                             </div>
                         </div>
-                        
-                        <div class="river-bank right-bank">
-                            <div class="bank-title">Right Bank</div>
-                            <div class="character-container" id="right-bank-characters">
-                                <!-- Characters will be added here by JavaScript -->
+                    </div>
+
+                    <div class="game-secondary-controls">
+                        <!-- Quick Action Buttons -->
+                        <div class="quick-actions">
+                            <button id="add-two-devils" class="btn btn-blue btn-small">Add 2 Devils</button>
+                            <button id="add-two-priests" class="btn btn-blue btn-small">Add 2 Priests</button>
+                            <button id="add-one-each" class="btn btn-blue btn-small">Add 1 Priest + 1 Devil</button>
+                            <button id="add-one-devil" class="btn btn-blue btn-small">Add 1 Devil</button>
+                            <button id="add-one-priest" class="btn btn-blue btn-small">Add 1 Priest</button>
+                            <button id="clear-boat" class="btn btn-danger btn-small">Clear Boat</button>
+                        </div>
+
+                        <!-- Solution Animation Container -->
+                        <div class="solution-container" id="solution-container">
+                            <h3>Optimal Solution</h3>
+                            <div id="solution-steps">
+                                <!-- Solution steps will be added here -->
+                            </div>
+                            <div class="solution-controls">
+                                <button id="prev-step" class="btn btn-blue">Previous Step</button>
+                                <button id="next-step" class="btn btn-blue">Next Step</button>
+                                <button id="auto-play" class="btn btn-primary">Auto Play</button>
                             </div>
                         </div>
-                        
-                        <div class="boat boat-position-left" id="boat">
-                            <div class="boat-seat" id="seat-1"></div>
-                            <div class="boat-seat" id="seat-2"></div>
-                        </div>
-                    </div>
 
-                    <div class="game-stats">
-                        <div class="stat">
-                            <div class="stat-value" id="moves-count">0</div>
-                            <div class="stat-label">Moves</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value" id="priests-left">3</div>
-                            <div class="stat-label">Priests Left</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-value" id="devils-left">3</div>
-                            <div class="stat-label">Devils Left</div>
-                        </div>
-                    </div>
+                        <div class="instructions">
+                            <h3>How to Play</h3>
+                            <ol>
+                                <li>Click on a character to select/deselect them for the boat</li>
+                                <li>You can select up to 2 characters for the boat</li>
+                                <li>Click the MOVE BOAT button to cross the river</li>
+                                <li>Repeat until all characters are on the right bank</li>
+                            </ol>
 
-                    <div class="message-area message-info" id="message-area">
-                        Click START to begin the game. Select characters to move them to the boat.
-                    </div>
-                </div>
-
-                <div class="instructions">
-                    <h3>How to Play</h3>
-                    <ol>
-                        <li>Click on a character to select/deselect them for the boat</li>
-                        <li>You can select up to 2 characters for the boat</li>
-                        <li>Click the MOVE BOAT button to cross the river</li>
-                        <li>Repeat until all characters are on the right bank</li>
-                    </ol>
-
-                    <div class="rules">
-                        <h4>Rules:</h4>
-                        <ul>
-                            <li>The boat can carry at most 2 people</li>
-                            <li>At least 1 person must be in the boat to row it</li>
-                            <li>Devils may NEVER outnumber priests on either bank</li>
-                            <li>If priests are outnumbered by devils on any bank, you lose!</li>
-                        </ul>
+                            <div class="rules">
+                                <h4>Rules:</h4>
+                                <ul>
+                                    <li>The boat can carry at most 2 people</li>
+                                    <li>At least 1 person must be in the boat to row it</li>
+                                    <li>Devils may NEVER outnumber priests on either bank</li>
+                                    <li>If priests are outnumbered by devils on any bank, you lose!</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -739,7 +904,7 @@
                     <h3>Quick Links</h3>
                     <ul>
                         <li><a href="index.html">Home</a></li>
-                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Parent</a></li>
                         <li><a href="resources.html">Resources</a></li>
                         <li><a href="projects.html">Projects Gallery</a></li>
                         <li><a href="puzzles.html">Puzzles & Games</a></li>
@@ -830,7 +995,63 @@
             const resetBtn = document.getElementById('reset-btn');
             const hintBtn = document.getElementById('hint-btn');
             const solveBtn = document.getElementById('solve-btn');
-            const moveBoatBtn = document.getElementById('move-boat-btn');
+            const boatMoveBtn = document.getElementById('boat-move-btn');
+            const solutionContainer = document.getElementById('solution-container');
+            const solutionSteps = document.getElementById('solution-steps');
+            const prevStepBtn = document.getElementById('prev-step');
+            const nextStepBtn = document.getElementById('next-step');
+            const autoPlayBtn = document.getElementById('auto-play');
+            const fullscreenToggle = document.getElementById('fullscreen-toggle');
+            const gameContainer = document.getElementById('game-container');
+
+            // Quick action buttons
+            const addTwoDevilsBtn = document.getElementById('add-two-devils');
+            const addTwoPriestsBtn = document.getElementById('add-two-priests');
+            const addOneEachBtn = document.getElementById('add-one-each');
+            const addOneDevilBtn = document.getElementById('add-one-devil');
+            const addOnePriestBtn = document.getElementById('add-one-priest');
+            const clearBoatBtn = document.getElementById('clear-boat');
+
+            // Solution steps for the puzzle
+            const solution = [
+                { passengers: ['devil', 'devil'], description: "Move two devils to the right bank" },
+                { passengers: ['devil'], description: "Bring one devil back to the left bank" },
+                { passengers: ['devil', 'devil'], description: "Move two devils to the right bank" },
+                { passengers: ['devil'], description: "Bring one devil back to the left bank" },
+                { passengers: ['priest', 'priest'], description: "Move two priests to the right bank" },
+                { passengers: ['priest', 'devil'], description: "Bring one priest and one devil back to the left bank" },
+                { passengers: ['priest', 'priest'], description: "Move two priests to the right bank" },
+                { passengers: ['devil'], description: "Bring one devil back to the left bank" },
+                { passengers: ['devil', 'devil'], description: "Move two devils to the right bank" },
+                { passengers: ['devil'], description: "Bring one devil back to the left bank" },
+                { passengers: ['devil', 'devil'], description: "Move the last two devils to the right bank" }
+            ];
+
+            let currentStep = 0;
+            let autoPlayInterval = null;
+
+            // Fullscreen functionality
+            fullscreenToggle.addEventListener('click', function() {
+                if (!document.fullscreenElement) {
+                    gameContainer.requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                    gameContainer.classList.add('fullscreen');
+                    fullscreenToggle.innerHTML = '<i class="fas fa-compress"></i>';
+                } else {
+                    document.exitFullscreen();
+                    gameContainer.classList.remove('fullscreen');
+                    fullscreenToggle.innerHTML = '<i class="fas fa-expand"></i>';
+                }
+            });
+
+            // Handle fullscreen change events
+            document.addEventListener('fullscreenchange', function() {
+                if (!document.fullscreenElement) {
+                    gameContainer.classList.remove('fullscreen');
+                    fullscreenToggle.innerHTML = '<i class="fas fa-expand"></i>';
+                }
+            });
 
             // Initialize the game
             function initGame() {
@@ -848,6 +1069,57 @@
             // Reset the game
             function resetGame() {
                 initGame();
+                hideSolution();
+            }
+
+            // Add characters to boat function
+            function addCharactersToBoat(characters) {
+                if (!gameState.gameStarted || gameState.gameOver) {
+                    showMessage('Start the game first!', 'error');
+                    return false;
+                }
+
+                // Clear boat first
+                clearBoat();
+
+                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                
+                // Check if we have enough characters
+                for (const char of characters) {
+                    if (bank[char + 's'] <= 0) {
+                        showMessage(`Not enough ${char}s available on this bank!`, 'error');
+                        return false;
+                    }
+                }
+
+                // Add characters to boat
+                for (const char of characters) {
+                    gameState.boat.passengers.push(char);
+                    bank[char + 's']--;
+                }
+
+                updateDisplay();
+                showMessage(`Added ${characters.length} character(s) to boat`, 'info');
+                return true;
+            }
+
+            // Clear boat function
+            function clearBoat() {
+                if (!gameState.gameStarted || gameState.gameOver) {
+                    showMessage('Start the game first!', 'error');
+                    return;
+                }
+
+                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                
+                // Return all passengers to the bank
+                gameState.boat.passengers.forEach(passenger => {
+                    bank[passenger + 's']++;
+                });
+
+                gameState.boat.passengers = [];
+                updateDisplay();
+                showMessage('Boat cleared', 'info');
             }
 
             // Update the visual display
@@ -957,47 +1229,46 @@
                 return passenger;
             }
 
-            // Select/deselect a character for the boat
+            // FIXED: Select/deselect a character for the boat
             function selectCharacter(type, side) {
                 if (!gameState.gameStarted || gameState.gameOver) {
                     showMessage('Start the game first!', 'error');
                     return;
                 }
-                
-                // Check if character is on the same side as the boat
+
+                // Check if the character is on the same side as the boat
                 if (side !== gameState.boat.position) {
                     showMessage('The boat is on the other side!', 'error');
                     return;
                 }
-                
+
                 const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
-                
-                // Check if character is available
-                if (bank[type + 's'] <= 0) {
+
+                // FIXED: Count how many of this type are already in the boat
+                const countInBoat = gameState.boat.passengers.filter(p => p === type).length;
+
+                // FIXED: Check availability using count from boat
+                const availableOnBank = bank[type + 's'] - countInBoat;
+
+                if (availableOnBank <= 0) {
                     showMessage(`No ${type}s available on this bank!`, 'error');
                     return;
                 }
-                
-                // Check if character is already in the boat
-                const passengerIndex = gameState.boat.passengers.indexOf(type);
-                if (passengerIndex !== -1) {
-                    // Remove from boat
-                    gameState.boat.passengers.splice(passengerIndex, 1);
-                    bank[type + 's']++;
-                    showMessage(`Removed ${type} from boat`, 'info');
-                } else {
-                    // Check if boat is full
-                    if (gameState.boat.passengers.length >= 2) {
-                        showMessage('Boat is full! Remove someone first.', 'error');
-                        return;
-                    }
-                    
-                    // Add to boat
-                    gameState.boat.passengers.push(type);
-                    bank[type + 's']--;
-                    showMessage(`Added ${type} to boat`, 'info');
+
+                // If the boat already has 2 passengers
+                if (gameState.boat.passengers.length >= 2) {
+                    showMessage('Boat is full! Remove someone first.', 'error');
+                    return;
                 }
-                
+
+                // Add to boat
+                gameState.boat.passengers.push(type);
+
+                // Reduce from bank
+                bank[type + 's']--;
+
+                showMessage(`Added ${type} to boat`, 'info');
+
                 updateDisplay();
             }
 
@@ -1080,9 +1351,95 @@
                 }
             }
 
-            // Show the solution
+            // Show the solution with visual steps
             function showSolution() {
-                showMessage('Optimal solution: 1. DD → | 2. D ← | 3. DD → | 4. D ← | 5. PP → | 6. PD ← | 7. PP → | 8. D ← | 9. DD → | 10. D ← | 11. DD →', 'info');
+                solutionContainer.style.display = 'block';
+                solutionSteps.innerHTML = '';
+                
+                // Create solution steps
+                solution.forEach((step, index) => {
+                    const stepElement = document.createElement('div');
+                    stepElement.className = 'solution-step';
+                    stepElement.innerHTML = `
+                        <strong>Step ${index + 1}:</strong> ${step.description}
+                        <div>Boat carries: ${step.passengers.map(p => p === 'priest' ? '🙏' : '😈').join(' ')}</div>
+                    `;
+                    solutionSteps.appendChild(stepElement);
+                });
+                
+                // Highlight first step
+                highlightStep(0);
+                
+                // Show message
+                showMessage('Solution displayed below. Use controls to navigate through steps.', 'info');
+            }
+
+            // Highlight a specific step in the solution
+            function highlightStep(stepIndex) {
+                const steps = document.querySelectorAll('.solution-step');
+                steps.forEach(step => step.classList.remove('active'));
+                
+                if (steps[stepIndex]) {
+                    steps[stepIndex].classList.add('active');
+                    steps[stepIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                
+                currentStep = stepIndex;
+            }
+
+            // Hide the solution display
+            function hideSolution() {
+                solutionContainer.style.display = 'none';
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = null;
+                }
+            }
+
+            // Auto-play the solution
+            function autoPlaySolution() {
+                resetGame();
+                showSolution();
+                
+                let stepIndex = 0;
+                
+                autoPlayInterval = setInterval(() => {
+                    if (stepIndex >= solution.length) {
+                        clearInterval(autoPlayInterval);
+                        showMessage('Solution completed!', 'success');
+                        return;
+                    }
+                    
+                    highlightStep(stepIndex);
+                    
+                    // Simulate the step in the game
+                    const step = solution[stepIndex];
+                    
+                    // Clear boat and add passengers
+                    gameState.boat.passengers = [...step.passengers];
+                    
+                    // Update banks based on boat position
+                    const fromBank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                    step.passengers.forEach(passenger => {
+                        fromBank[passenger + 's']--;
+                    });
+                    
+                    // Move boat
+                    gameState.boat.position = gameState.boat.position === 'left' ? 'right' : 'left';
+                    gameState.moves++;
+                    
+                    // Update target bank
+                    const toBank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                    step.passengers.forEach(passenger => {
+                        toBank[passenger + 's']++;
+                    });
+                    
+                    // Clear boat for next step
+                    gameState.boat.passengers = [];
+                    
+                    updateDisplay();
+                    stepIndex++;
+                }, 2000);
             }
 
             // Event listeners
@@ -1090,11 +1447,30 @@
             resetBtn.addEventListener('click', resetGame);
             hintBtn.addEventListener('click', provideHint);
             solveBtn.addEventListener('click', showSolution);
-            moveBoatBtn.addEventListener('click', moveBoat);
+            boatMoveBtn.addEventListener('click', moveBoat);
+            prevStepBtn.addEventListener('click', () => {
+                if (currentStep > 0) {
+                    highlightStep(currentStep - 1);
+                }
+            });
+            nextStepBtn.addEventListener('click', () => {
+                if (currentStep < solution.length - 1) {
+                    highlightStep(currentStep + 1);
+                }
+            });
+            autoPlayBtn.addEventListener('click', autoPlaySolution);
+
+            // Quick action button listeners
+            addTwoDevilsBtn.addEventListener('click', () => addCharactersToBoat(['devil', 'devil']));
+            addTwoPriestsBtn.addEventListener('click', () => addCharactersToBoat(['priest', 'priest']));
+            addOneEachBtn.addEventListener('click', () => addCharactersToBoat(['priest', 'devil']));
+            addOneDevilBtn.addEventListener('click', () => addCharactersToBoat(['devil']));
+            addOnePriestBtn.addEventListener('click', () => addCharactersToBoat(['priest']));
+            clearBoatBtn.addEventListener('click', clearBoat);
 
             // Initialize the game display
             updateDisplay();
         });
     </script>
 </body>
-</html>
+</html>n
