@@ -6,7 +6,6 @@
     <title>Innovation Hub | Tower of Hanoi</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Your CSS Styles */
         * {
             margin: 0;
             padding: 0;
@@ -349,7 +348,6 @@
             left: 0;
             right: 0;
             z-index: 10;
-  margin-bottom: 5cm;  
             pointer-events: none;
         }
 
@@ -382,6 +380,11 @@
             color: white;
         }
 
+        .message.info {
+            background-color: rgba(52, 152, 219, 0.95);
+            color: white;
+        }
+
         .move-history {
             margin-top: 15px;
             max-height: 150px;
@@ -400,6 +403,76 @@
 
         .move-item:last-child {
             border-bottom: none;
+        }
+
+        /* Welcome Modal Styles */
+        .welcome-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .welcome-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .welcome-modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .modal-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .modal-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .modal-btn:hover {
+            background-color: #0d5bbb;
         }
 
         /* Card Styles */
@@ -543,6 +616,20 @@
     </style>
 </head>
 <body>
+    <!-- Welcome Modal -->
+    <div class="welcome-modal active" id="welcome-modal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-puzzle-piece"></i>
+            </div>
+            <h2>Welcome to Tower of Hanoi!</h2>
+            <p>Click the <strong>Start Game</strong> button to begin playing.</p>
+            <p>Your goal is to move all disks from <strong>Peg 1</strong> to <strong>Peg 3</strong>.</p>
+            <p>Remember: You can only move one disk at a time, and you cannot place a larger disk on top of a smaller one.</p>
+            <button class="modal-btn" id="modal-close-btn">Got it!</button>
+        </div>
+    </div>
+
     <!-- Header Section -->
     <header>
         <div class="container header-container">
@@ -756,8 +843,23 @@
                 }
             });
 
+            // Welcome Modal Logic
+            const welcomeModal = document.getElementById('welcome-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            
+            // Show modal on page load
+            setTimeout(() => {
+                welcomeModal.classList.add('active');
+            }, 500);
+            
+            // Close modal when button is clicked
+            modalCloseBtn.addEventListener('click', function() {
+                welcomeModal.classList.remove('active');
+                showMessage("Click 'Start Game' to begin! Move all disks from Peg 1 to Peg 3.", "info");
+            });
+
             // Tower of Hanoi Game Logic
-            let disks = 4;
+            let disks = 5;
             let moves = 0;
             let startTime = null;
             let timerInterval = null;
@@ -803,7 +905,7 @@
                 addMoveToHistory("Game started. Move disks from Peg 1 to Peg 3.");
             }
             
-            // Reset the game - FIXED VERSION
+            // Reset the game
             function resetGame() {
                 moves = 0;
                 moveCountElement.textContent = moves;
@@ -816,7 +918,7 @@
                     peg.innerHTML = '';
                 });
                 
-                // IMPORTANT: Recreate the disks after clearing
+                // Create disks
                 createDisks();
                 
                 // Reset peg highlighting
@@ -844,6 +946,9 @@
                 
                 // Add initial move history
                 addMoveToHistory("Game reset. Move disks");
+                
+                // Show welcome message again
+                showMessage("Click 'Start Game' to begin! Move all disks from Peg 1 to Peg 3.", "info");
             }
             
             // Create disks based on selected count
@@ -904,11 +1009,7 @@
                                 if (checkWin()) {
                                     gameActive = false;
                                     clearInterval(timerInterval);
-                                    const optimalMoves = Math.pow(2, disks) - 1;
-                                    const efficiency = moves === optimalMoves ? "perfectly" : 
-                                                     moves <= optimalMoves + 5 ? "efficiently" : "with some extra moves";
-                                    showMessage(`Congratulations! You solved the puzzle in ${moves} moves (${efficiency}) in ${timeElement.textContent}!`, "success");
-                                    addMoveToHistory("Puzzle solved!");
+                                    showWinMessage();
                                 }
                             });
                         } else {
@@ -922,6 +1023,28 @@
                     pegElements[selectedPeg].classList.remove('selected');
                     selectedPeg = null;
                 }
+            }
+            
+            // Show win message based on efficiency
+            function showWinMessage() {
+                const optimalMoves = Math.pow(2, disks) - 1;
+                const efficiencyRatio = moves / optimalMoves;
+                let message;
+                
+                if (moves === optimalMoves) {
+                    message = `Perfect! 🎉 You solved the puzzle with the minimum ${moves} moves in ${timeElement.textContent}! You're a Tower of Hanoi master!`;
+                } else if (efficiencyRatio <= 1.2) {
+                    message = `Excellent! 🏆 You solved the puzzle in ${moves} moves (optimal is ${optimalMoves}) in ${timeElement.textContent}! Great strategy!`;
+                } else if (efficiencyRatio <= 1.5) {
+                    message = `Well done! 👍 You completed the puzzle in ${moves} moves (optimal is ${optimalMoves}) in ${timeElement.textContent}. Good problem-solving skills!`;
+                } else if (efficiencyRatio <= 2) {
+                    message = `Good job! 😊 You finished in ${moves} moves (optimal is ${optimalMoves}) in ${timeElement.textContent}. Keep practicing to improve your efficiency!`;
+                } else {
+                    message = `Congratulations! 🎊 You completed the puzzle in ${moves} moves (optimal is ${optimalMoves}) in ${timeElement.textContent}. Every solution teaches you something - try again to find a more efficient path!`;
+                }
+                
+                showMessage(message, "success");
+                addMoveToHistory("Puzzle solved!");
             }
             
             // Check if move is valid
@@ -1032,7 +1155,8 @@
                     notification.classList.add('show');
                 }, 10);
                 
-                // Auto-hide after 3 seconds
+                // Auto-hide after 5 seconds for success messages, 3 for errors
+                const hideTime = type === 'success' || type === 'info' ? 5000 : 3000;
                 notificationTimeout = setTimeout(() => {
                     notification.classList.remove('show');
                     setTimeout(() => {
@@ -1040,7 +1164,7 @@
                             notification.parentNode.removeChild(notification);
                         }
                     }, 300);
-                }, 3000);
+                }, hideTime);
             }
             
             // Clear all notifications
@@ -1097,7 +1221,7 @@
                 
                 solve(disks, 0, 2, 1).then(() => {
                     clearInterval(timerInterval);
-                    showMessage(`Puzzle solved automatically in ${moves} moves!`, "success");
+                    showMessage(`Puzzle solved automatically in ${moves} moves (optimal solution)!`, "success");
                     addMoveToHistory("Auto-solve completed!");
                     isSolving = false;
                     solveBtn.disabled = false;
@@ -1133,7 +1257,9 @@
             });
             
             // Initialize the game on page load
-            initGame();
+            // Don't auto-start the game, wait for user to click Start Game
+            createDisks();
+            updateMinMoves();
         });
     </script>
 </body>
