@@ -532,32 +532,129 @@
             margin-bottom: 10px;
         }
 
-        /* Solution Animation */
-        .solution-container {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: var(--light);
-            border-radius: 10px;
+        /* Solution Animation - Side Panel */
+        .solution-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
             display: none;
         }
 
-        .solution-step {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: white;
+        .solution-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 1000px;
+            height: 80%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: flex;
+            overflow: hidden;
+            display: none;
+        }
+
+        .solution-game-view {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #f8f9fa;
+        }
+
+        .solution-steps-container {
+            width: 350px;
+            background: var(--light);
+            border-left: 3px solid var(--primary);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .solution-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .close-solution {
+            background: var(--danger);
+            color: white;
+            border: none;
             border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .close-solution:hover {
+            background: #c0392b;
+        }
+
+        .solution-step {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .solution-step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
         .solution-step.active {
-            background-color: rgba(26, 115, 232, 0.1);
+            background: rgba(26, 115, 232, 0.1);
             border-left: 4px solid var(--primary);
+            transform: translateX(5px);
+        }
+
+        .step-number {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .step-description {
+            color: var(--dark);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .step-passengers {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .passenger-icon {
+            font-size: 18px;
         }
 
         .solution-controls {
             display: flex;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 20px;
+            justify-content: center;
         }
 
         /* Game Layout Reorganization */
@@ -742,6 +839,23 @@
                 padding: 6px 10px;
                 font-size: 14px;
             }
+
+            .solution-panel {
+                flex-direction: column;
+                width: 95%;
+                height: 90%;
+            }
+
+            .solution-steps-container {
+                width: 100%;
+                height: 40%;
+                border-left: none;
+                border-top: 3px solid var(--primary);
+            }
+
+            .solution-game-view {
+                height: 60%;
+            }
         }
     </style>
 </head>
@@ -792,7 +906,20 @@
                             <button id="hint-btn" class="btn btn-blue">Hint</button>
                             <button id="solve-btn" class="btn btn-danger">Show Solution</button>
                         </div>
-
+ <div class="game-stats">
+                                <div class="stat">
+                                    <div class="stat-value" id="moves-count">0</div>
+                                    <div class="stat-label">Moves</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value" id="priests-left">3</div>
+                                    <div class="stat-label">Priests Left</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value" id="devils-left">3</div>
+                                    <div class="stat-label">Devils Left</div>
+                                </div>
+                            </div>
                         <div class="river-game">
                             <div class="river-container">
                                 <div class="river-bank left-bank">
@@ -816,21 +943,15 @@
                                 </div>
                             </div>
 
-                            <div class="game-stats">
-                                <div class="stat">
-                                    <div class="stat-value" id="moves-count">0</div>
-                                    <div class="stat-label">Moves</div>
-                                </div>
-                                <div class="stat">
-                                    <div class="stat-value" id="priests-left">3</div>
-                                    <div class="stat-label">Priests Left</div>
-                                </div>
-                                <div class="stat">
-                                    <div class="stat-value" id="devils-left">3</div>
-                                    <div class="stat-label">Devils Left</div>
-                                </div>
-                            </div>
-
+                           
+ <div class="quick-actions">
+                            <button id="add-two-devils" class="btn btn-blue btn-small">Add 2 Devils</button>
+                            <button id="add-two-priests" class="btn btn-blue btn-small">Add 2 Priests</button>
+                            <button id="add-one-each" class="btn btn-blue btn-small">Add 1 Priest + 1 Devil</button>
+                            <button id="add-one-devil" class="btn btn-blue btn-small">Add 1 Devil</button>
+                            <button id="add-one-priest" class="btn btn-blue btn-small">Add 1 Priest</button>
+                            <button id="clear-boat" class="btn btn-danger btn-small">Clear Boat</button>
+                        </div>
                             <div class="message-area message-info" id="message-area">
                                 Click START to begin the game. Select characters to move them to the boat.
                             </div>
@@ -839,27 +960,7 @@
 
                     <div class="game-secondary-controls">
                         <!-- Quick Action Buttons -->
-                        <div class="quick-actions">
-                            <button id="add-two-devils" class="btn btn-blue btn-small">Add 2 Devils</button>
-                            <button id="add-two-priests" class="btn btn-blue btn-small">Add 2 Priests</button>
-                            <button id="add-one-each" class="btn btn-blue btn-small">Add 1 Priest + 1 Devil</button>
-                            <button id="add-one-devil" class="btn btn-blue btn-small">Add 1 Devil</button>
-                            <button id="add-one-priest" class="btn btn-blue btn-small">Add 1 Priest</button>
-                            <button id="clear-boat" class="btn btn-danger btn-small">Clear Boat</button>
-                        </div>
-
-                        <!-- Solution Animation Container -->
-                        <div class="solution-container" id="solution-container">
-                            <h3>Optimal Solution</h3>
-                            <div id="solution-steps">
-                                <!-- Solution steps will be added here -->
-                            </div>
-                            <div class="solution-controls">
-                                <button id="prev-step" class="btn btn-blue">Previous Step</button>
-                                <button id="next-step" class="btn btn-blue">Next Step</button>
-                                <button id="auto-play" class="btn btn-primary">Auto Play</button>
-                            </div>
-                        </div>
+                       
 
                         <div class="instructions">
                             <h3>How to Play</h3>
@@ -885,6 +986,62 @@
             </section>
         </div>
     </main>
+
+    <!-- Solution Overlay and Panel -->
+    <div class="solution-overlay" id="solution-overlay"></div>
+    <div class="solution-panel" id="solution-panel">
+        <div class="solution-game-view" id="solution-game-view">
+            <!-- Game will be rendered here during solution view -->
+            <div class="river-container">
+                <div class="river-bank left-bank">
+                    <div class="bank-title">Left Bank</div>
+                    <div class="character-container" id="solution-left-bank-characters">
+                        <!-- Characters will be added here by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="river-bank right-bank">
+                    <div class="bank-title">Right Bank</div>
+                    <div class="character-container" id="solution-right-bank-characters">
+                        <!-- Characters will be added here by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="boat boat-position-left" id="solution-boat">
+                    <div class="boat-seat" id="solution-seat-1"></div>
+                    <div class="boat-seat" id="solution-seat-2"></div>
+                </div>
+            </div>
+            <div class="game-stats">
+                <div class="stat">
+                    <div class="stat-value" id="solution-moves-count">0</div>
+                    <div class="stat-label">Moves</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="solution-priests-left">3</div>
+                    <div class="stat-label">Priests Left</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="solution-devils-left">3</div>
+                    <div class="stat-label">Devils Left</div>
+                </div>
+            </div>
+        </div>
+        <div class="solution-steps-container">
+            <div class="solution-header">
+                <h3>Optimal Solution</h3>
+                <button class="close-solution" id="close-solution">Close</button>
+            </div>
+            <div id="solution-steps">
+                <!-- Solution steps will be added here -->
+            </div>
+            <div class="solution-controls">
+                <button id="prev-step" class="btn btn-blue">Previous Step</button>
+                <button id="next-step" class="btn btn-blue">Next Step</button>
+                <button id="auto-play" class="btn btn-primary">Auto Play</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== FOOTER SECTION ===== -->
     <footer>
@@ -939,8 +1096,8 @@
 
     <!-- ===== JAVASCRIPT ===== -->
     <script>
-        // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
             const mobileMenu = document.querySelector('.mobile-menu');
             const navMenu = document.querySelector('.nav-menu');
             
@@ -955,16 +1112,6 @@
                 }
             });
 
-            // Add active class to current page in navigation
-            const currentPage = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('.nav-menu a');
-            
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPage) {
-                    link.classList.add('active');
-                }
-            });
-
             // River Crossing Game Logic
             const gameState = {
                 leftBank: {
@@ -976,7 +1123,7 @@
                     devils: 0
                 },
                 boat: {
-                    position: 'left', // 'left' or 'right'
+                    position: 'left',
                     passengers: []
                 },
                 moves: 0,
@@ -984,6 +1131,7 @@
                 gameOver: false
             };
 
+            // DOM Elements
             const leftBankElement = document.getElementById('left-bank-characters');
             const rightBankElement = document.getElementById('right-bank-characters');
             const boatElement = document.getElementById('boat');
@@ -996,13 +1144,25 @@
             const hintBtn = document.getElementById('hint-btn');
             const solveBtn = document.getElementById('solve-btn');
             const boatMoveBtn = document.getElementById('boat-move-btn');
-            const solutionContainer = document.getElementById('solution-container');
+            const fullscreenToggle = document.getElementById('fullscreen-toggle');
+            const gameContainer = document.getElementById('game-container');
+
+            // Solution elements
+            const solutionOverlay = document.getElementById('solution-overlay');
+            const solutionPanel = document.getElementById('solution-panel');
+            const closeSolutionBtn = document.getElementById('close-solution');
             const solutionSteps = document.getElementById('solution-steps');
             const prevStepBtn = document.getElementById('prev-step');
             const nextStepBtn = document.getElementById('next-step');
             const autoPlayBtn = document.getElementById('auto-play');
-            const fullscreenToggle = document.getElementById('fullscreen-toggle');
-            const gameContainer = document.getElementById('game-container');
+
+            // Solution game view elements
+            const solutionLeftBankElement = document.getElementById('solution-left-bank-characters');
+            const solutionRightBankElement = document.getElementById('solution-right-bank-characters');
+            const solutionBoatElement = document.getElementById('solution-boat');
+            const solutionMovesCountElement = document.getElementById('solution-moves-count');
+            const solutionPriestsLeftElement = document.getElementById('solution-priests-left');
+            const solutionDevilsLeftElement = document.getElementById('solution-devils-left');
 
             // Quick action buttons
             const addTwoDevilsBtn = document.getElementById('add-two-devils');
@@ -1012,7 +1172,7 @@
             const addOnePriestBtn = document.getElementById('add-one-priest');
             const clearBoatBtn = document.getElementById('clear-boat');
 
-            // Solution steps for the puzzle
+            // Solution steps
             const solution = [
                 { passengers: ['devil', 'devil'], description: "Move two devils to the right bank" },
                 { passengers: ['devil'], description: "Bring one devil back to the left bank" },
@@ -1029,6 +1189,7 @@
 
             let currentStep = 0;
             let autoPlayInterval = null;
+            let solutionGameState = null;
 
             // Fullscreen functionality
             fullscreenToggle.addEventListener('click', function() {
@@ -1040,14 +1201,6 @@
                     fullscreenToggle.innerHTML = '<i class="fas fa-compress"></i>';
                 } else {
                     document.exitFullscreen();
-                    gameContainer.classList.remove('fullscreen');
-                    fullscreenToggle.innerHTML = '<i class="fas fa-expand"></i>';
-                }
-            });
-
-            // Handle fullscreen change events
-            document.addEventListener('fullscreenchange', function() {
-                if (!document.fullscreenElement) {
                     gameContainer.classList.remove('fullscreen');
                     fullscreenToggle.innerHTML = '<i class="fas fa-expand"></i>';
                 }
@@ -1070,56 +1223,6 @@
             function resetGame() {
                 initGame();
                 hideSolution();
-            }
-
-            // Add characters to boat function
-            function addCharactersToBoat(characters) {
-                if (!gameState.gameStarted || gameState.gameOver) {
-                    showMessage('Start the game first!', 'error');
-                    return false;
-                }
-
-                // Clear boat first
-                clearBoat();
-
-                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
-                
-                // Check if we have enough characters
-                for (const char of characters) {
-                    if (bank[char + 's'] <= 0) {
-                        showMessage(`Not enough ${char}s available on this bank!`, 'error');
-                        return false;
-                    }
-                }
-
-                // Add characters to boat
-                for (const char of characters) {
-                    gameState.boat.passengers.push(char);
-                    bank[char + 's']--;
-                }
-
-                updateDisplay();
-                showMessage(`Added ${characters.length} character(s) to boat`, 'info');
-                return true;
-            }
-
-            // Clear boat function
-            function clearBoat() {
-                if (!gameState.gameStarted || gameState.gameOver) {
-                    showMessage('Start the game first!', 'error');
-                    return;
-                }
-
-                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
-                
-                // Return all passengers to the bank
-                gameState.boat.passengers.forEach(passenger => {
-                    bank[passenger + 's']++;
-                });
-
-                gameState.boat.passengers = [];
-                updateDisplay();
-                showMessage('Boat cleared', 'info');
             }
 
             // Update the visual display
@@ -1229,7 +1332,7 @@
                 return passenger;
             }
 
-            // FIXED: Select/deselect a character for the boat
+            // Select/deselect a character for the boat
             function selectCharacter(type, side) {
                 if (!gameState.gameStarted || gameState.gameOver) {
                     showMessage('Start the game first!', 'error');
@@ -1244,10 +1347,10 @@
 
                 const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
 
-                // FIXED: Count how many of this type are already in the boat
+                // Count how many of this type are already in the boat
                 const countInBoat = gameState.boat.passengers.filter(p => p === type).length;
 
-                // FIXED: Check availability using count from boat
+                // Check availability using count from boat
                 const availableOnBank = bank[type + 's'] - countInBoat;
 
                 if (availableOnBank <= 0) {
@@ -1351,30 +1454,106 @@
                 }
             }
 
-            // Show the solution with visual steps
+            // Add characters to boat function
+            function addCharactersToBoat(characters) {
+                if (!gameState.gameStarted || gameState.gameOver) {
+                    showMessage('Start the game first!', 'error');
+                    return false;
+                }
+
+                // Clear boat first
+                clearBoat();
+
+                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                
+                // Check if we have enough characters
+                for (const char of characters) {
+                    if (bank[char + 's'] <= 0) {
+                        showMessage(`Not enough ${char}s available on this bank!`, 'error');
+                        return false;
+                    }
+                }
+
+                // Add characters to boat
+                for (const char of characters) {
+                    gameState.boat.passengers.push(char);
+                    bank[char + 's']--;
+                }
+
+                updateDisplay();
+                showMessage(`Added ${characters.length} character(s) to boat`, 'info');
+                return true;
+            }
+
+            // Clear boat function
+            function clearBoat() {
+                if (!gameState.gameStarted || gameState.gameOver) {
+                    showMessage('Start the game first!', 'error');
+                    return;
+                }
+
+                const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                
+                // Return all passengers to the bank
+                gameState.boat.passengers.forEach(passenger => {
+                    bank[passenger + 's']++;
+                });
+
+                gameState.boat.passengers = [];
+                updateDisplay();
+                showMessage('Boat cleared', 'info');
+            }
+
+            // SOLUTION OVERLAY FUNCTIONS
             function showSolution() {
-                solutionContainer.style.display = 'block';
-                solutionSteps.innerHTML = '';
+                // Initialize solution game state
+                solutionGameState = {
+                    leftBank: { priests: 3, devils: 3 },
+                    rightBank: { priests: 0, devils: 0 },
+                    boat: { position: 'left', passengers: [] },
+                    moves: 0
+                };
+
+                // Show overlay and panel
+                solutionOverlay.style.display = 'block';
+                solutionPanel.style.display = 'flex';
                 
                 // Create solution steps
+                solutionSteps.innerHTML = '';
                 solution.forEach((step, index) => {
                     const stepElement = document.createElement('div');
                     stepElement.className = 'solution-step';
                     stepElement.innerHTML = `
-                        <strong>Step ${index + 1}:</strong> ${step.description}
-                        <div>Boat carries: ${step.passengers.map(p => p === 'priest' ? '🙏' : '😈').join(' ')}</div>
+                        <div class="step-number">Step ${index + 1}</div>
+                        <div class="step-description">${step.description}</div>
+                        <div class="step-passengers">
+                            <span>Boat carries:</span>
+                            ${step.passengers.map(p => 
+                                `<span class="passenger-icon">${p === 'priest' ? '🙏' : '😈'}</span>`
+                            ).join('')}
+                        </div>
                     `;
+                    stepElement.addEventListener('click', () => {
+                        highlightStep(index);
+                        applySolutionStep(index);
+                    });
                     solutionSteps.appendChild(stepElement);
                 });
                 
                 // Highlight first step
                 highlightStep(0);
-                
-                // Show message
-                showMessage('Solution displayed below. Use controls to navigate through steps.', 'info');
+                applySolutionStep(0);
             }
 
-            // Highlight a specific step in the solution
+            function hideSolution() {
+                solutionOverlay.style.display = 'none';
+                solutionPanel.style.display = 'none';
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = null;
+                }
+            }
+
             function highlightStep(stepIndex) {
                 const steps = document.querySelectorAll('.solution-step');
                 steps.forEach(step => step.classList.remove('active'));
@@ -1387,59 +1566,127 @@
                 currentStep = stepIndex;
             }
 
-            // Hide the solution display
-            function hideSolution() {
-                solutionContainer.style.display = 'none';
-                if (autoPlayInterval) {
-                    clearInterval(autoPlayInterval);
-                    autoPlayInterval = null;
-                }
-            }
+            function applySolutionStep(stepIndex) {
+                if (!solutionGameState) return;
 
-            // Auto-play the solution
-            function autoPlaySolution() {
-                resetGame();
-                showSolution();
-                
-                let stepIndex = 0;
-                
-                autoPlayInterval = setInterval(() => {
-                    if (stepIndex >= solution.length) {
-                        clearInterval(autoPlayInterval);
-                        showMessage('Solution completed!', 'success');
-                        return;
-                    }
-                    
-                    highlightStep(stepIndex);
-                    
-                    // Simulate the step in the game
-                    const step = solution[stepIndex];
-                    
-                    // Clear boat and add passengers
-                    gameState.boat.passengers = [...step.passengers];
-                    
+                // Reset to initial state
+                solutionGameState.leftBank = { priests: 3, devils: 3 };
+                solutionGameState.rightBank = { priests: 0, devils: 0 };
+                solutionGameState.boat = { position: 'left', passengers: [] };
+                solutionGameState.moves = 0;
+
+                // Apply all steps up to the current one
+                for (let i = 0; i <= stepIndex; i++) {
+                    const step = solution[i];
+                    if (!step) continue;
+
+                    // Add passengers to boat
+                    solutionGameState.boat.passengers = [...step.passengers];
+
                     // Update banks based on boat position
-                    const fromBank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                    const fromBank = solutionGameState.boat.position === 'left' ? solutionGameState.leftBank : solutionGameState.rightBank;
                     step.passengers.forEach(passenger => {
                         fromBank[passenger + 's']--;
                     });
-                    
+
                     // Move boat
-                    gameState.boat.position = gameState.boat.position === 'left' ? 'right' : 'left';
-                    gameState.moves++;
-                    
+                    solutionGameState.boat.position = solutionGameState.boat.position === 'left' ? 'right' : 'left';
+                    solutionGameState.moves++;
+
                     // Update target bank
-                    const toBank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
+                    const toBank = solutionGameState.boat.position === 'left' ? solutionGameState.leftBank : solutionGameState.rightBank;
                     step.passengers.forEach(passenger => {
                         toBank[passenger + 's']++;
                     });
-                    
+
                     // Clear boat for next step
-                    gameState.boat.passengers = [];
+                    solutionGameState.boat.passengers = [];
+                }
+
+                // Update solution game display
+                updateSolutionDisplay();
+            }
+
+            function updateSolutionDisplay() {
+                if (!solutionGameState) return;
+
+                // Update bank displays
+                updateSolutionBankDisplay(solutionLeftBankElement, solutionGameState.leftBank, 'left');
+                updateSolutionBankDisplay(solutionRightBankElement, solutionGameState.rightBank, 'right');
+                
+                // Update boat position
+                solutionBoatElement.className = `boat boat-position-${solutionGameState.boat.position}`;
+                
+                // Update boat passengers (empty since we clear after each move)
+                const solutionSeat1 = document.getElementById('solution-seat-1');
+                const solutionSeat2 = document.getElementById('solution-seat-2');
+                solutionSeat1.innerHTML = '';
+                solutionSeat2.innerHTML = '';
+                
+                // Update stats
+                solutionMovesCountElement.textContent = solutionGameState.moves;
+                solutionPriestsLeftElement.textContent = solutionGameState.leftBank.priests;
+                solutionDevilsLeftElement.textContent = solutionGameState.leftBank.devils;
+            }
+
+            function updateSolutionBankDisplay(bankElement, bank, side) {
+                bankElement.innerHTML = '';
+                
+                // Add priests
+                for (let i = 0; i < bank.priests; i++) {
+                    const priest = createSolutionCharacterElement('priest', 'Priest', side);
+                    bankElement.appendChild(priest);
+                }
+                
+                // Add devils
+                for (let i = 0; i < bank.devils; i++) {
+                    const devil = createSolutionCharacterElement('devil', 'Devil', side);
+                    bankElement.appendChild(devil);
+                }
+            }
+
+            function createSolutionCharacterElement(type, label, side) {
+                const character = document.createElement('div');
+                character.className = `character ${type}`;
+                
+                const figure = document.createElement('div');
+                figure.className = 'character-figure';
+                
+                const icon = document.createElement('div');
+                icon.className = 'character-icon';
+                
+                if (type === 'priest') {
+                    icon.innerHTML = '🙏';
+                } else {
+                    icon.innerHTML = '😈';
+                }
+                
+                const characterLabel = document.createElement('div');
+                characterLabel.className = 'character-label';
+                characterLabel.textContent = label;
+                
+                figure.appendChild(icon);
+                character.appendChild(figure);
+                character.appendChild(characterLabel);
+                
+                return character;
+            }
+
+            function autoPlaySolution() {
+                currentStep = 0;
+                highlightStep(0);
+                applySolutionStep(0);
+                
+                autoPlayInterval = setInterval(() => {
+                    if (currentStep >= solution.length - 1) {
+                        clearInterval(autoPlayInterval);
+                        return;
+                    }
                     
-                    updateDisplay();
-                    stepIndex++;
-                }, 2000);
+                    currentStep++;
+                    highlightStep(currentStep);
+                    applySolutionStep(currentStep);
+                }, 1500);
             }
 
             // Event listeners
@@ -1448,14 +1695,22 @@
             hintBtn.addEventListener('click', provideHint);
             solveBtn.addEventListener('click', showSolution);
             boatMoveBtn.addEventListener('click', moveBoat);
+
+            // Solution event listeners
+            closeSolutionBtn.addEventListener('click', hideSolution);
+            solutionOverlay.addEventListener('click', hideSolution);
             prevStepBtn.addEventListener('click', () => {
                 if (currentStep > 0) {
-                    highlightStep(currentStep - 1);
+                    currentStep--;
+                    highlightStep(currentStep);
+                    applySolutionStep(currentStep);
                 }
             });
             nextStepBtn.addEventListener('click', () => {
                 if (currentStep < solution.length - 1) {
-                    highlightStep(currentStep + 1);
+                    currentStep++;
+                    highlightStep(currentStep);
+                    applySolutionStep(currentStep);
                 }
             });
             autoPlayBtn.addEventListener('click', autoPlaySolution);
@@ -1473,4 +1728,4 @@
         });
     </script>
 </body>
-</html>n
+</html>
