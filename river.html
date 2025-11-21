@@ -26,6 +26,8 @@
             --danger: #e74c3c;
             --priest-color: #3498db;
             --devil-color: #e74c3c;
+            --land-color: #8bc34a;
+            --river-color: #4a90e2;
         }
 
         body {
@@ -169,6 +171,25 @@
             background: #0d5bbb;
         }
 
+        .zoom-toggle {
+            position: absolute;
+            top: 15px;
+            right: 120px;
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+            transition: background-color 0.3s;
+        }
+
+        .zoom-toggle:hover {
+            background: #e6a800;
+        }
+
         .game-header {
             text-align: center;
             margin-bottom: 30px;
@@ -259,7 +280,7 @@
             width: 100%;
             max-width: 800px;
             height: 300px;
-            background: linear-gradient(to bottom, #4a90e2, #1a73e8);
+            background: linear-gradient(to bottom, var(--river-color), #1a73e8);
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -279,14 +300,14 @@
 
         .left-bank {
             left: 0;
-            background-color: rgba(139, 195, 74, 0.1);
-            border-right: 2px dashed #8bc34a;
+            background-color: rgba(139, 195, 74, 0.3);
+            border-right: 2px dashed var(--land-color);
         }
 
         .right-bank {
             right: 0;
-            background-color: rgba(139, 195, 74, 0.1);
-            border-left: 2px dashed #8bc34a;
+            background-color: rgba(139, 195, 74, 0.3);
+            border-left: 2px dashed var(--land-color);
         }
 
         .bank-title {
@@ -833,11 +854,18 @@
                 padding: 10px;
             }
 
-            .fullscreen-toggle {
+            .fullscreen-toggle, .zoom-toggle {
                 top: 10px;
-                right: 10px;
                 padding: 6px 10px;
                 font-size: 14px;
+            }
+
+            .fullscreen-toggle {
+                right: 10px;
+            }
+
+            .zoom-toggle {
+                right: 80px;
             }
 
             .solution-panel {
@@ -894,6 +922,9 @@
 
             <!-- Game Container -->
             <section class="game-container" id="game-container">
+                <button class="zoom-toggle" id="zoom-toggle" title="Zoom In/Out">
+                    <i class="fas fa-search-plus"></i>
+                </button>
                 <button class="fullscreen-toggle" id="fullscreen-toggle" title="Toggle Fullscreen">
                     <i class="fas fa-expand"></i>
                 </button>
@@ -906,20 +937,20 @@
                             <button id="hint-btn" class="btn btn-blue">Hint</button>
                             <button id="solve-btn" class="btn btn-danger">Show Solution</button>
                         </div>
- <div class="game-stats">
-                                <div class="stat">
-                                    <div class="stat-value" id="moves-count">0</div>
-                                    <div class="stat-label">Moves</div>
-                                </div>
-                                <div class="stat">
-                                    <div class="stat-value" id="priests-left">3</div>
-                                    <div class="stat-label">Priests Left</div>
-                                </div>
-                                <div class="stat">
-                                    <div class="stat-value" id="devils-left">3</div>
-                                    <div class="stat-label">Devils Left</div>
-                                </div>
+                        <div class="game-stats">
+                            <div class="stat">
+                                <div class="stat-value" id="moves-count">0</div>
+                                <div class="stat-label">Moves</div>
                             </div>
+                            <div class="stat">
+                                <div class="stat-value" id="priests-left">3</div>
+                                <div class="stat-label">Priests Left</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value" id="devils-left">3</div>
+                                <div class="stat-label">Devils Left</div>
+                            </div>
+                        </div>
                         <div class="river-game">
                             <div class="river-container">
                                 <div class="river-bank left-bank">
@@ -943,45 +974,40 @@
                                 </div>
                             </div>
 
-                           
- <div class="quick-actions">
-                            <button id="add-two-devils" class="btn btn-blue btn-small">Add 2 Devils</button>
-                            <button id="add-two-priests" class="btn btn-blue btn-small">Add 2 Priests</button>
-                            <button id="add-one-each" class="btn btn-blue btn-small">Add 1 Priest + 1 Devil</button>
-                            <button id="add-one-devil" class="btn btn-blue btn-small">Add 1 Devil</button>
-                            <button id="add-one-priest" class="btn btn-blue btn-small">Add 1 Priest</button>
-                            <button id="clear-boat" class="btn btn-danger btn-small">Clear Boat</button>
-                        </div>
+                            <div class="quick-actions">
+                                <button id="add-two-devils" class="btn btn-blue btn-small">Add 2 Devils</button>
+                                <button id="add-two-priests" class="btn btn-blue btn-small">Add 2 Priests</button>
+                                <button id="add-one-each" class="btn btn-blue btn-small">Add 1 Priest + 1 Devil</button>
+                                <button id="add-one-devil" class="btn btn-blue btn-small">Add 1 Devil</button>
+                                <button id="add-one-priest" class="btn btn-blue btn-small">Add 1 Priest</button>
+                                <button id="clear-boat" class="btn btn-danger btn-small">Clear Boat</button>
+                            </div>
                             <div class="message-area message-info" id="message-area">
                                 Click START to begin the game. Select characters to move them to the boat.
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <div class="game-secondary-controls">
-                        <!-- Quick Action Buttons -->
-                       
+            <!-- Instructions moved outside the game container -->
+            <section class="instructions">
+                <h3>How to Play</h3>
+                <ol>
+                    <li>Click on a character to select/deselect them for the boat</li>
+                    <li>You can select up to 2 characters for the boat</li>
+                    <li>Click the MOVE BOAT button to cross the river</li>
+                    <li>Repeat until all characters are on the right bank</li>
+                </ol>
 
-                        <div class="instructions">
-                            <h3>How to Play</h3>
-                            <ol>
-                                <li>Click on a character to select/deselect them for the boat</li>
-                                <li>You can select up to 2 characters for the boat</li>
-                                <li>Click the MOVE BOAT button to cross the river</li>
-                                <li>Repeat until all characters are on the right bank</li>
-                            </ol>
-
-                            <div class="rules">
-                                <h4>Rules:</h4>
-                                <ul>
-                                    <li>The boat can carry at most 2 people</li>
-                                    <li>At least 1 person must be in the boat to row it</li>
-                                    <li>Devils may NEVER outnumber priests on either bank</li>
-                                    <li>If priests are outnumbered by devils on any bank, you lose!</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <div class="rules">
+                    <h4>Rules:</h4>
+                    <ul>
+                        <li>The boat can carry at most 2 people</li>
+                        <li>At least 1 person must be in the boat to row it</li>
+                        <li>Devils may NEVER outnumber priests on either bank</li>
+                        <li>If priests are outnumbered by devils on any bank, you lose!</li>
+                    </ul>
                 </div>
             </section>
         </div>
@@ -1145,6 +1171,7 @@
             const solveBtn = document.getElementById('solve-btn');
             const boatMoveBtn = document.getElementById('boat-move-btn');
             const fullscreenToggle = document.getElementById('fullscreen-toggle');
+            const zoomToggle = document.getElementById('zoom-toggle');
             const gameContainer = document.getElementById('game-container');
 
             // Solution elements
@@ -1190,6 +1217,7 @@
             let currentStep = 0;
             let autoPlayInterval = null;
             let solutionGameState = null;
+            let zoomLevel = 1;
 
             // Fullscreen functionality
             fullscreenToggle.addEventListener('click', function() {
@@ -1203,6 +1231,20 @@
                     document.exitFullscreen();
                     gameContainer.classList.remove('fullscreen');
                     fullscreenToggle.innerHTML = '<i class="fas fa-expand"></i>';
+                }
+            });
+
+            // Zoom functionality
+            zoomToggle.addEventListener('click', function() {
+                if (zoomLevel === 1) {
+                    gameContainer.style.transform = 'scale(1.2)';
+                    gameContainer.style.transformOrigin = 'center top';
+                    zoomLevel = 1.2;
+                    zoomToggle.innerHTML = '<i class="fas fa-search-minus"></i>';
+                } else {
+                    gameContainer.style.transform = 'scale(1)';
+                    zoomLevel = 1;
+                    zoomToggle.innerHTML = '<i class="fas fa-search-plus"></i>';
                 }
             });
 
@@ -1347,13 +1389,8 @@
 
                 const bank = gameState.boat.position === 'left' ? gameState.leftBank : gameState.rightBank;
 
-                // Count how many of this type are already in the boat
-                const countInBoat = gameState.boat.passengers.filter(p => p === type).length;
-
-                // Check availability using count from boat
-                const availableOnBank = bank[type + 's'] - countInBoat;
-
-                if (availableOnBank <= 0) {
+                // Check if we have enough characters of this type
+                if (bank[type + 's'] <= 0) {
                     showMessage(`No ${type}s available on this bank!`, 'error');
                     return;
                 }
