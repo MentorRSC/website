@@ -5,8 +5,425 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chemical Inventory | Innovation Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href=" https://mentorrsc.github.io/website/styles/common.css">
-    <link rel="stylesheet" href=" https://mentorrsc.github.io/website/styles/chemicals.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --danger: #e74c3c;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #0d5bbb;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        /* Chemicals Header */
+        .chemicals-header {
+            background: linear-gradient(135deg, var(--primary), #0d5bbb);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 15px;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .back-link i {
+            margin-right: 8px;
+        }
+
+        .chemicals-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Chemicals Grid */
+        .chemicals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .chemical-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 4px solid var(--primary);
+        }
+
+        .chemical-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .chemical-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .chemical-formula {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .chemical-category {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .category-acid {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .category-base {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .category-salt {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .category-organic {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .category-other {
+            background-color: #fff8e1;
+            color: #ff8f00;
+        }
+
+        .chemical-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .hazard-level, .stock-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .hazard-high {
+            color: #e53935;
+        }
+
+        .hazard-medium {
+            color: #ff9800;
+        }
+
+        .hazard-low {
+            color: #43a047;
+        }
+
+        .stock-in-stock {
+            color: #43a047;
+        }
+
+        .stock-low-stock {
+            color: #ff9800;
+        }
+
+        .stock-out-of-stock {
+            color: #e53935;
+        }
+
+        /* Section */
+        .section {
+            padding: 40px 0;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 60px 0 20px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background-color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bbb;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            nav ul {
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav ul li {
+                margin: 5px 10px;
+            }
+
+            .mobile-menu {
+                display: block;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+
+            .nav-menu.active {
+                display: block;
+            }
+
+            .chemicals-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header Section -->
@@ -44,8 +461,6 @@
                 <p>Complete database of laboratory chemicals with safety information and stock status</p>
             </div>
         </section>
-
-       
 
         <!-- Controls -->
         <section class="container">
@@ -133,156 +548,241 @@
         </div>
     </footer>
 
-    <script src="scripts/common.js"></script>
     <script>
-        // Chemical data array
+        // Chemical data array with formulas
         const chemicalsData = [
-            // First list
-            { id: 1, name: "Acetic Acid (Glacial)", category: "acid", hazard: "medium", stock: "in-stock" },
-{ id: 2, name: "Acetone", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 3, name: "Ammonium Dichromate", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 4, name: "Ammonium Solution", category: "base", hazard: "medium", stock: "in-stock" },
-{ id: 5, name: "Ammonium Thiocyanate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 6, name: "Aniline", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 7, name: "Barium Carbonate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 8, name: "Barium Chloride", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 9, name: "Benzaldehyde", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 10, name: "Benzene", category: "organic", hazard: "high", stock: "low-stock" },
-{ id: 12, name: "Calcium Carbonate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 13, name: "Cobalt Acetate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 14, name: "Cobalt Nitrate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 15, name: "Copper Acetate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 16, name: "Copper Sulphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 17, name: "Fehling's Solution A", category: "reagent", hazard: "medium", stock: "in-stock" },
-{ id: 18, name: "Fehling's Solution B", category: "reagent", hazard: "medium", stock: "in-stock" },
-{ id: 19, name: "Ferric Alum", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 20, name: "Ferrous Sulphate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 21, name: "Hexane (Petroleum Fraction)", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 22, name: "Hydrochloric Acid", category: "acid", hazard: "high", stock: "in-stock" },
-{ id: 23, name: "Hydrogen Peroxide", category: "oxidizer", hazard: "high", stock: "in-stock" },
-{ id: 24, name: "Iodine", category: "element", hazard: "medium", stock: "in-stock" },
-{ id: 25, name: "K₂CrO₄ (Potassium Chromate)", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 26, name: "KMnO₄ (Potassium Permanganate)", category: "oxidizer", hazard: "high", stock: "in-stock" },
-{ id: 27, name: "KMnO₄ (Duplicate entry fix)", category: "oxidizer", hazard: "high", stock: "in-stock" },
-{ id: 28, name: "Lead Nitrate", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 29, name: "Leishman's Stain Powder", category: "stain", hazard: "medium", stock: "in-stock" },
-{ id: 30, name: "Lithium Carbonate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 31, name: "Manganese Chloride", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 32, name: "Manganese Sulphate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 33, name: "Methanol", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 34, name: "NaAc (Sodium Acetate)", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 35, name: "NaOH (Sodium Hydroxide)", category: "base", hazard: "high", stock: "in-stock" },
-{ id: 36, name: "NH₄CNS (Ammonium Thiocyanate)", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 37, name: "Nickel Carbonate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 38, name: "Nickel Nitrate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 39, name: "Nitric Acid", category: "acid", hazard: "high", stock: "in-stock" },
-{ id: 40, name: "Nitric Acid (Dilute)", category: "acid", hazard: "medium", stock: "in-stock" },
-{ id: 41, name: "Potassium Ferrocyanide", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 42, name: "Potassium Ferricyanide", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 43, name: "Potassium Iodide", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 44, name: "Silica Gel (Blue)", category: "indicator", hazard: "low", stock: "in-stock" },
-{ id: 45, name: "Sodium Acetate Trihydrate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 46, name: "Sodium Alginate", category: "polymer", hazard: "low", stock: "in-stock" },
-{ id: 47, name: "Sodium Bicarbonate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 48, name: "Sodium Carbonate", category: "base", hazard: "medium", stock: "in-stock" },
-{ id: 49, name: "Sodium Carbonate (Anhydrous)", category: "base", hazard: "medium", stock: "in-stock" },
-{ id: 50, name: "Sodium Carbonate (Decahydrate)", category: "base", hazard: "low", stock: "in-stock" },
-{ id: 51, name: "Sodium Chloride", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 52, name: "Sodium Chloride (Duplicate)", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 53, name: "Sodium Hydroxide (Flakes)", category: "base", hazard: "high", stock: "in-stock" },
-{ id: 54, name: "Sodium Hydroxide (Flakes)", category: "base", hazard: "high", stock: "in-stock" },
-{ id: 55, name: "Sodium Metal", category: "metal", hazard: "high", stock: "low-stock" },
-{ id: 56, name: "Sodium Metal (Granular)", category: "metal", hazard: "high", stock: "low-stock" },
-{ id: 57, name: "Sodium Nitrate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 58, name: "Sodium Polyacrylate (25% Liquid)", category: "polymer", hazard: "low", stock: "in-stock" },
-{ id: 59, name: "Sodium Polyacrylate (Powder)", category: "polymer", hazard: "low", stock: "in-stock" },
-{ id: 60, name: "Sodium Silicate (Paste)", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 61, name: "Sodium Thiosulphate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 62, name: "Strontium Nitrate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 63, name: "Sulphuric Acid (Pure)", category: "acid", hazard: "high", stock: "in-stock" },
-{ id: 64, name: "Tetrahydrofuran (THF)", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 65, name: "Triethanolamine", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 66, name: "Urea", category: "organic", hazard: "low", stock: "in-stock" },
-{ id: 67, name: "Zinc Acetate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 68, name: "Zinc Chloride", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 69, name: "Zinc Dust", category: "metal", hazard: "medium", stock: "in-stock" },
-{ id: 70, name: "Zinc Granules", category: "metal", hazard: "medium", stock: "in-stock" },
-{ id: 71, name: "Zinc Nitrate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 72, name: "Zinc Oxide", category: "oxide", hazard: "low", stock: "in-stock" },
-{ id: 73, name: "Zinc Sulphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 74, name: "Ethyl Alcohol (Ethanol)", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 75, name: "Absolute Alcohol (99.9% Ethanol)", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 76, name: "Isopropyl Alcohol (IPA)", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 77, name: "Glycerin", category: "organic", hazard: "low", stock: "in-stock" },
-{ id: 78, name: "Formaldehyde Solution (Formalin)", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 79, name: "Phenolphthalein Indicator", category: "indicator", hazard: "medium", stock: "in-stock" },
-{ id: 80, name: "Methyl Orange Indicator", category: "indicator", hazard: "medium", stock: "in-stock" },
-{ id: 81, name: "Methyl Red Indicator", category: "indicator", hazard: "medium", stock: "in-stock" },
-{ id: 82, name: "Bromothymol Blue", category: "indicator", hazard: "low", stock: "in-stock" },
-{ id: 83, name: "Cresol Red", category: "indicator", hazard: "medium", stock: "in-stock" },
-{ id: 84, name: "Thymol Blue", category: "indicator", hazard: "medium", stock: "in-stock" },
-{ id: 85, name: "Universal Indicator Solution", category: "indicator", hazard: "medium", stock: "in-stock" },
-{ id: 86, name: "Activated Charcoal", category: "carbon", hazard: "low", stock: "in-stock" },
-{ id: 87, name: "Charcoal Powder", category: "carbon", hazard: "low", stock: "in-stock" },
-{ id: 88, name: "Boric Acid", category: "acid", hazard: "low", stock: "in-stock" },
-{ id: 89, name: "Oxalic Acid", category: "acid", hazard: "medium", stock: "in-stock" },
-{ id: 90, name: "Tartaric Acid", category: "acid", hazard: "low", stock: "in-stock" },
-{ id: 91, name: "Citric Acid", category: "acid", hazard: "low", stock: "in-stock" },
-{ id: 92, name: "Picric Acid (Wet)", category: "acid", hazard: "high", stock: "low-stock" },
-{ id: 93, name: "Picric Acid (Dry – Highly Explosive)", category: "acid", hazard: "high", stock: "out-of-stock" },
-{ id: 94, name: "Acetyl Chloride", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 95, name: "Benzoyl Chloride", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 96, name: "Thionyl Chloride (SOCl₂)", category: "inorganic", hazard: "high", stock: "in-stock" },
-{ id: 97, name: "Phosphorus Trichloride (PCl₃)", category: "inorganic", hazard: "high", stock: "in-stock" },
-{ id: 98, name: "Phosphorus Pentachloride (PCl₅)", category: "inorganic", hazard: "high", stock: "in-stock" },
-{ id: 99, name: "Silver Nitrate", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 100, name: "Silver Chloride", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 101, name: "Mercuric Chloride (HgCl₂)", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 102, name: "Mercurous Chloride (Calomel)", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 103, name: "Mercury Metal", category: "metal", hazard: "high", stock: "in-stock" },
-{ id: 104, name: "Chromic Acid", category: "acid", hazard: "high", stock: "in-stock" },
-{ id: 105, name: "Chloroform", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 106, name: "Carbon Tetrachloride (CCl₄)", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 107, name: "Diethyl Ether", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 108, name: "Dimethyl Sulphoxide (DMSO)", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 109, name: "Acetonitrile", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 110, name: "Toluene", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 111, name: "Xylene", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 112, name: "Phenol Crystals", category: "organic", hazard: "high", stock: "in-stock" },
-{ id: 113, name: "Resorcinol", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 114, name: "Benzoic Acid", category: "acid", hazard: "low", stock: "in-stock" },
-{ id: 115, name: "Salicylic Acid", category: "acid", hazard: "low", stock: "in-stock" },
-{ id: 116, name: "Anthracene", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 117, name: "Naphthalene", category: "organic", hazard: "medium", stock: "in-stock" },
-{ id: 118, name: "Urease Enzyme", category: "biochemical", hazard: "low", stock: "low-stock" },
-{ id: 119, name: "Gelatin Powder", category: "biochemical", hazard: "low", stock: "in-stock" },
-{ id: 120, name: "Agar-Agar", category: "biochemical", hazard: "low", stock: "in-stock" },
-{ id: 121, name: "Casein Powder", category: "biochemical", hazard: "low", stock: "in-stock" },
-{ id: 122, name: "Starch Soluble", category: "biochemical", hazard: "low", stock: "in-stock" },
-{ id: 123, name: "Starch Insoluble", category: "biochemical", hazard: "low", stock: "in-stock" },
-{ id: 124, name: "Gelatin Granular", category: "biochemical", hazard: "low", stock: "in-stock" },
-{ id: 125, name: "Sucrose", category: "organic", hazard: "low", stock: "in-stock" },
-{ id: 126, name: "Glucose", category: "organic", hazard: "low", stock: "in-stock" },
-{ id: 127, name: "Fructose", category: "organic", hazard: "low", stock: "in-stock" },
-{ id: 128, name: "Lactose", category: "organic", hazard: "low", stock: "in-stock" },
-{ id: 129, name: "Sodium Benzoate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 130, name: "Potassium Sorbate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 131, name: "Sodium Citrate", category: "salt", hazard: "low", stock: "in-stock" },
-{ id: 132, name: "Sodium Phosphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 133, name: "Potassium Phosphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 134, name: "Ammonium Phosphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 135, name: "Ferric Chloride", category: "salt", hazard: "high", stock: "in-stock" },
-{ id: 136, name: "Ferrous Chloride", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 137, name: "Aluminium Chloride", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 138, name: "Aluminium Sulphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 139, name: "Chromium(III) Sulphate", category: "salt", hazard: "medium", stock: "in-stock" },
-{ id: 140, name: "Chromium(VI) Oxide (Chromic Oxide)", category: "oxide", hazard: "high", stock: "in-stock" },
-
+            { id: 1, name: "Acetic Acid (Glacial)", formula: "CH₃COOH", category: "acid", hazard: "medium", stock: "in-stock" },
+            { id: 2, name: "Acetone", formula: "C₃H₆O", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 3, name: "Ammonium Dichromate", formula: "(NH₄)₂Cr₂O₇", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 4, name: "Ammonium Solution", formula: "NH₄OH", category: "base", hazard: "medium", stock: "in-stock" },
+            { id: 5, name: "Ammonium Thiocyanate", formula: "NH₄SCN", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 6, name: "Aniline", formula: "C₆H₅NH₂", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 7, name: "Barium Carbonate", formula: "BaCO₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 8, name: "Barium Chloride", formula: "BaCl₂", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 9, name: "Benzaldehyde", formula: "C₆H₅CHO", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 10, name: "Benzene", formula: "C₆H₆", category: "organic", hazard: "high", stock: "low-stock" },
+            { id: 12, name: "Calcium Carbonate", formula: "CaCO₃", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 13, name: "Cobalt Acetate", formula: "Co(CH₃COO)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 14, name: "Cobalt Nitrate", formula: "Co(NO₃)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 15, name: "Copper Acetate", formula: "Cu(CH₃COO)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 16, name: "Copper Sulphate", formula: "CuSO₄", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 17, name: "Fehling's Solution A", formula: "CuSO₄ in NaOH", category: "reagent", hazard: "medium", stock: "in-stock" },
+            { id: 18, name: "Fehling's Solution B", formula: "KNaC₄H₄O₆·4H₂O", category: "reagent", hazard: "medium", stock: "in-stock" },
+            { id: 19, name: "Ferric Alum", formula: "NH₄Fe(SO₄)₂·12H₂O", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 20, name: "Ferrous Sulphate", formula: "FeSO₄", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 21, name: "Hexane", formula: "C₆H₁₄", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 22, name: "Hydrochloric Acid", formula: "HCl", category: "acid", hazard: "high", stock: "in-stock" },
+            { id: 23, name: "Hydrogen Peroxide", formula: "H₂O₂", category: "oxidizer", hazard: "high", stock: "in-stock" },
+            { id: 24, name: "Iodine", formula: "I₂", category: "element", hazard: "medium", stock: "in-stock" },
+            { id: 25, name: "Potassium Chromate", formula: "K₂CrO₄", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 26, name: "Potassium Permanganate", formula: "KMnO₄", category: "oxidizer", hazard: "high", stock: "in-stock" },
+            { id: 28, name: "Lead Nitrate", formula: "Pb(NO₃)₂", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 30, name: "Lithium Carbonate", formula: "Li₂CO₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 31, name: "Manganese Chloride", formula: "MnCl₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 32, name: "Manganese Sulphate", formula: "MnSO₄", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 33, name: "Methanol", formula: "CH₃OH", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 34, name: "Sodium Acetate", formula: "CH₃COONa", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 35, name: "Sodium Hydroxide", formula: "NaOH", category: "base", hazard: "high", stock: "in-stock" },
+            { id: 36, name: "Ammonium Thiocyanate", formula: "NH₄SCN", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 37, name: "Nickel Carbonate", formula: "NiCO₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 38, name: "Nickel Nitrate", formula: "Ni(NO₃)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 39, name: "Nitric Acid", formula: "HNO₃", category: "acid", hazard: "high", stock: "in-stock" },
+            { id: 40, name: "Nitric Acid (Dilute)", formula: "HNO₃ (dil.)", category: "acid", hazard: "medium", stock: "in-stock" },
+            { id: 41, name: "Potassium Ferrocyanide", formula: "K₄[Fe(CN)₆]", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 42, name: "Potassium Ferricyanide", formula: "K₃[Fe(CN)₆]", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 43, name: "Potassium Iodide", formula: "KI", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 44, name: "Silica Gel (Blue)", formula: "SiO₂·nH₂O", category: "indicator", hazard: "low", stock: "in-stock" },
+            { id: 45, name: "Sodium Acetate Trihydrate", formula: "CH₃COONa·3H₂O", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 46, name: "Sodium Alginate", formula: "(C₆H₇O₆Na)ₙ", category: "polymer", hazard: "low", stock: "in-stock" },
+            { id: 47, name: "Sodium Bicarbonate", formula: "NaHCO₃", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 48, name: "Sodium Carbonate", formula: "Na₂CO₃", category: "base", hazard: "medium", stock: "in-stock" },
+            { id: 49, name: "Sodium Carbonate (Anhydrous)", formula: "Na₂CO₃", category: "base", hazard: "medium", stock: "in-stock" },
+            { id: 50, name: "Sodium Carbonate (Decahydrate)", formula: "Na₂CO₃·10H₂O", category: "base", hazard: "low", stock: "in-stock" },
+            { id: 51, name: "Sodium Chloride", formula: "NaCl", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 53, name: "Sodium Hydroxide (Flakes)", formula: "NaOH", category: "base", hazard: "high", stock: "in-stock" },
+            { id: 55, name: "Sodium Metal", formula: "Na", category: "metal", hazard: "high", stock: "low-stock" },
+            { id: 57, name: "Sodium Nitrate", formula: "NaNO₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 58, name: "Sodium Polyacrylate", formula: "(C₃H₃NaO₂)ₙ", category: "polymer", hazard: "low", stock: "in-stock" },
+            { id: 60, name: "Sodium Silicate", formula: "Na₂SiO₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 61, name: "Sodium Thiosulphate", formula: "Na₂S₂O₃", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 62, name: "Strontium Nitrate", formula: "Sr(NO₃)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 63, name: "Sulphuric Acid", formula: "H₂SO₄", category: "acid", hazard: "high", stock: "in-stock" },
+            { id: 64, name: "Tetrahydrofuran", formula: "C₄H₈O", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 65, name: "Triethanolamine", formula: "C₆H₁₅NO₃", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 66, name: "Urea", formula: "CH₄N₂O", category: "organic", hazard: "low", stock: "in-stock" },
+            { id: 67, name: "Zinc Acetate", formula: "Zn(CH₃COO)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 68, name: "Zinc Chloride", formula: "ZnCl₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 69, name: "Zinc Dust", formula: "Zn", category: "metal", hazard: "medium", stock: "in-stock" },
+            { id: 70, name: "Zinc Granules", formula: "Zn", category: "metal", hazard: "medium", stock: "in-stock" },
+            { id: 71, name: "Zinc Nitrate", formula: "Zn(NO₃)₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 72, name: "Zinc Oxide", formula: "ZnO", category: "oxide", hazard: "low", stock: "in-stock" },
+            { id: 73, name: "Zinc Sulphate", formula: "ZnSO₄", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 74, name: "Ethyl Alcohol", formula: "C₂H₅OH", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 75, name: "Absolute Alcohol", formula: "C₂H₅OH (99.9%)", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 76, name: "Isopropyl Alcohol", formula: "C₃H₈O", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 77, name: "Glycerin", formula: "C₃H₈O₃", category: "organic", hazard: "low", stock: "in-stock" },
+            { id: 78, name: "Formaldehyde Solution", formula: "CH₂O", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 79, name: "Phenolphthalein", formula: "C₂₀H₁₄O₄", category: "indicator", hazard: "medium", stock: "in-stock" },
+            { id: 80, name: "Methyl Orange", formula: "C₁₄H₁₄N₃NaO₃S", category: "indicator", hazard: "medium", stock: "in-stock" },
+            { id: 81, name: "Methyl Red", formula: "C₁₅H₁₅N₃O₂", category: "indicator", hazard: "medium", stock: "in-stock" },
+            { id: 82, name: "Bromothymol Blue", formula: "C₂₇H₂₈Br₂O₅S", category: "indicator", hazard: "low", stock: "in-stock" },
+            { id: 83, name: "Cresol Red", formula: "C₂₁H₁₈O₅S", category: "indicator", hazard: "medium", stock: "in-stock" },
+            { id: 84, name: "Thymol Blue", formula: "C₂₇H₃₀O₅S", category: "indicator", hazard: "medium", stock: "in-stock" },
+            { id: 85, name: "Universal Indicator", formula: "Mixture", category: "indicator", hazard: "medium", stock: "in-stock" },
+            { id: 86, name: "Activated Charcoal", formula: "C", category: "carbon", hazard: "low", stock: "in-stock" },
+            { id: 87, name: "Charcoal Powder", formula: "C", category: "carbon", hazard: "low", stock: "in-stock" },
+            { id: 88, name: "Boric Acid", formula: "H₃BO₃", category: "acid", hazard: "low", stock: "in-stock" },
+            { id: 89, name: "Oxalic Acid", formula: "H₂C₂O₄", category: "acid", hazard: "medium", stock: "in-stock" },
+            { id: 90, name: "Tartaric Acid", formula: "C₄H₆O₆", category: "acid", hazard: "low", stock: "in-stock" },
+            { id: 91, name: "Citric Acid", formula: "C₆H₈O₇", category: "acid", hazard: "low", stock: "in-stock" },
+            { id: 92, name: "Picric Acid (Wet)", formula: "C₆H₃N₃O₇", category: "acid", hazard: "high", stock: "low-stock" },
+            { id: 94, name: "Acetyl Chloride", formula: "CH₃COCl", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 95, name: "Benzoyl Chloride", formula: "C₆H₅COCl", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 96, name: "Thionyl Chloride", formula: "SOCl₂", category: "inorganic", hazard: "high", stock: "in-stock" },
+            { id: 97, name: "Phosphorus Trichloride", formula: "PCl₃", category: "inorganic", hazard: "high", stock: "in-stock" },
+            { id: 98, name: "Phosphorus Pentachloride", formula: "PCl₅", category: "inorganic", hazard: "high", stock: "in-stock" },
+            { id: 99, name: "Silver Nitrate", formula: "AgNO₃", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 100, name: "Silver Chloride", formula: "AgCl", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 101, name: "Mercuric Chloride", formula: "HgCl₂", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 102, name: "Mercurous Chloride", formula: "Hg₂Cl₂", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 103, name: "Mercury Metal", formula: "Hg", category: "metal", hazard: "high", stock: "in-stock" },
+            { id: 104, name: "Chromic Acid", formula: "H₂CrO₄", category: "acid", hazard: "high", stock: "in-stock" },
+            { id: 105, name: "Chloroform", formula: "CHCl₃", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 106, name: "Carbon Tetrachloride", formula: "CCl₄", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 107, name: "Diethyl Ether", formula: "C₄H₁₀O", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 108, name: "Dimethyl Sulphoxide", formula: "C₂H₆OS", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 109, name: "Acetonitrile", formula: "CH₃CN", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 110, name: "Toluene", formula: "C₆H₅CH₃", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 111, name: "Xylene", formula: "C₆H₄(CH₃)₂", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 112, name: "Phenol Crystals", formula: "C₆H₅OH", category: "organic", hazard: "high", stock: "in-stock" },
+            { id: 113, name: "Resorcinol", formula: "C₆H₆O₂", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 114, name: "Benzoic Acid", formula: "C₆H₅COOH", category: "acid", hazard: "low", stock: "in-stock" },
+            { id: 115, name: "Salicylic Acid", formula: "C₇H₆O₃", category: "acid", hazard: "low", stock: "in-stock" },
+            { id: 116, name: "Anthracene", formula: "C₁₄H₁₀", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 117, name: "Naphthalene", formula: "C₁₀H₈", category: "organic", hazard: "medium", stock: "in-stock" },
+            { id: 118, name: "Urease Enzyme", formula: "Enzyme", category: "biochemical", hazard: "low", stock: "low-stock" },
+            { id: 119, name: "Gelatin Powder", formula: "Protein", category: "biochemical", hazard: "low", stock: "in-stock" },
+            { id: 120, name: "Agar-Agar", formula: "Polysaccharide", category: "biochemical", hazard: "low", stock: "in-stock" },
+            { id: 121, name: "Casein Powder", formula: "Protein", category: "biochemical", hazard: "low", stock: "in-stock" },
+            { id: 122, name: "Starch Soluble", formula: "(C₆H₁₀O₅)ₙ", category: "biochemical", hazard: "low", stock: "in-stock" },
+            { id: 123, name: "Starch Insoluble", formula: "(C₆H₁₀O₅)ₙ", category: "biochemical", hazard: "low", stock: "in-stock" },
+            { id: 125, name: "Sucrose", formula: "C₁₂H₂₂O₁₁", category: "organic", hazard: "low", stock: "in-stock" },
+            { id: 126, name: "Glucose", formula: "C₆H₁₂O₆", category: "organic", hazard: "low", stock: "in-stock" },
+            { id: 127, name: "Fructose", formula: "C₆H₁₂O₆", category: "organic", hazard: "low", stock: "in-stock" },
+            { id: 128, name: "Lactose", formula: "C₁₂H₂₂O₁₁", category: "organic", hazard: "low", stock: "in-stock" },
+            { id: 129, name: "Sodium Benzoate", formula: "C₆H₅COONa", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 130, name: "Potassium Sorbate", formula: "C₆H₇KO₂", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 131, name: "Sodium Citrate", formula: "Na₃C₆H₅O₇", category: "salt", hazard: "low", stock: "in-stock" },
+            { id: 132, name: "Sodium Phosphate", formula: "Na₃PO₄", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 133, name: "Potassium Phosphate", formula: "K₃PO₄", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 134, name: "Ammonium Phosphate", formula: "(NH₄)₃PO₄", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 135, name: "Ferric Chloride", formula: "FeCl₃", category: "salt", hazard: "high", stock: "in-stock" },
+            { id: 136, name: "Ferrous Chloride", formula: "FeCl₂", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 137, name: "Aluminium Chloride", formula: "AlCl₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 138, name: "Aluminium Sulphate", formula: "Al₂(SO₄)₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 139, name: "Chromium(III) Sulphate", formula: "Cr₂(SO₄)₃", category: "salt", hazard: "medium", stock: "in-stock" },
+            { id: 140, name: "Chromium(VI) Oxide", formula: "CrO₃", category: "oxide", hazard: "high", stock: "in-stock" }
         ];
 
         // Initialize chemical page
         document.addEventListener('DOMContentLoaded', function() {
-            chemicalFunctions.init(chemicalsData);
+            const chemicalsGrid = document.getElementById('chemicalsGrid');
+            const searchInput = document.getElementById('searchInput');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            let currentFilter = 'all';
+            let currentSearch = '';
+            
+            // Render chemicals
+            function renderChemicals() {
+                chemicalsGrid.innerHTML = '';
+                
+                const filteredChemicals = chemicalsData.filter(chemical => {
+                    const matchesFilter = currentFilter === 'all' || chemical.category === currentFilter;
+                    const matchesSearch = chemical.name.toLowerCase().includes(currentSearch.toLowerCase()) || 
+                                         chemical.formula.toLowerCase().includes(currentSearch.toLowerCase());
+                    return matchesFilter && matchesSearch;
+                });
+                
+                if (filteredChemicals.length === 0) {
+                    chemicalsGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text);">No chemicals found matching your criteria.</p>';
+                    return;
+                }
+                
+                filteredChemicals.forEach(chemical => {
+                    const card = document.createElement('div');
+                    card.className = 'chemical-card';
+                    
+                    // Get category class
+                    let categoryClass = 'category-other';
+                    if (chemical.category === 'acid') categoryClass = 'category-acid';
+                    else if (chemical.category === 'base') categoryClass = 'category-base';
+                    else if (chemical.category === 'salt') categoryClass = 'category-salt';
+                    else if (chemical.category === 'organic') categoryClass = 'category-organic';
+                    
+                    // Get hazard icon
+                    let hazardIcon = 'fa-exclamation-circle';
+                    if (chemical.hazard === 'high') hazardIcon = 'fa-radiation';
+                    else if (chemical.hazard === 'medium') hazardIcon = 'fa-exclamation-triangle';
+                    
+                    // Get stock icon
+                    let stockIcon = 'fa-check-circle';
+                    if (chemical.stock === 'low-stock') stockIcon = 'fa-exclamation-circle';
+                    else if (chemical.stock === 'out-of-stock') stockIcon = 'fa-times-circle';
+                    
+                    card.innerHTML = `
+                        <div class="chemical-name">${chemical.name}</div>
+                        <div class="chemical-formula">${chemical.formula}</div>
+                        <div class="chemical-category ${categoryClass}">${chemical.category}</div>
+                        <div class="chemical-details">
+                            <div class="hazard-level ${'hazard-' + chemical.hazard}">
+                                <i class="fas ${hazardIcon}"></i>
+                                ${chemical.hazard.charAt(0).toUpperCase() + chemical.hazard.slice(1)} Hazard
+                            </div>
+                            <div class="stock-status ${'stock-' + chemical.stock}">
+                                <i class="fas ${stockIcon}"></i>
+                                ${chemical.stock.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </div>
+                        </div>
+                    `;
+                    
+                    chemicalsGrid.appendChild(card);
+                });
+            }
+            
+            // Event listeners for filter buttons
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.getAttribute('data-filter');
+                    renderChemicals();
+                });
+            });
+            
+            // Event listener for search input
+            searchInput.addEventListener('input', function() {
+                currentSearch = this.value;
+                renderChemicals();
+            });
+            
+            // Mobile menu toggle
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            mobileMenu.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.header-container')) {
+                    navMenu.classList.remove('active');
+                }
+            });
+            
+            // Initial render
+            renderChemicals();
         });
     </script>
 </body>
