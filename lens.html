@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lens Simulator | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Common Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --danger: #e74c3c;
+            --concave: #3498db;
+            --convex: #e74c3c;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #0d5bbb;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 60px 0 20px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background-color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bbb;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            nav ul {
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav ul li {
+                margin: 5px 10px;
+            }
+
+            .mobile-menu {
+                display: block;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+
+            .nav-menu.active {
+                display: block;
+            }
+        }
+
+        /* Lens Simulator Styles */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .page-header p {
+            font-size: 1.2rem;
+            color: var(--text);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .simulator-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .simulator-section {
+            flex: 2;
+            min-width: 500px;
+            background: var(--white);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+        }
+        
+        .controls-section {
+            flex: 1;
+            min-width: 300px;
+            background: var(--white);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .lens-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .lens-btn {
+            padding: 12px 24px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text);
+            font-weight: 600;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .lens-btn.active {
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .concave-btn.active {
+            background: var(--concave);
+        }
+        
+        .convex-btn.active {
+            background: var(--convex);
+        }
+        
+        .lens-btn:hover:not(.active) {
+            background: #d0d0d0;
+        }
+        
+        .simulation-area {
+            position: relative;
+            height: 400px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .optical-axis {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #bdc3c7;
+            transform: translateY(-50%);
+        }
+        
+        .lens {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 200px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+        
+        .concave-lens {
+            border: 4px solid var(--concave);
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .convex-lens {
+            border: 4px solid var(--convex);
+            background: rgba(231, 76, 60, 0.1);
+        }
+        
+        .focal-point {
+            position: absolute;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .focal-point-f {
+            background: var(--primary);
+        }
+        
+        .focal-point-2f {
+            background: var(--secondary);
+        }
+        
+        .object {
+            position: absolute;
+            width: 30px;
+            height: 80px;
+            background: var(--accent);
+            border-radius: 4px;
+            cursor: move;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .image {
+            position: absolute;
+            width: 30px;
+            height: 80px;
+            background: var(--secondary);
+            border-radius: 4px;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ray {
+            position: absolute;
+            height: 2px;
+            background: var(--primary);
+            transform-origin: left center;
+        }
+        
+        .ray::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -3px;
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: 6px solid var(--primary);
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            text-align: center;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            text-align: center;
+        }
+        
+        .info-card p {
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        
+        .properties {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .property {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .property-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .property-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .instructions {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-top: 30px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        
+        @media (max-width: 768px) {
+            .simulator-container {
+                flex-direction: column;
+            }
+            
+            .simulator-section, .controls-section {
+                min-width: 100%;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .simulation-area {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Parent</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                    <li><a href="puzzles.html" class="active">Puzzles</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Lens Simulator</h1>
+                <p>Explore how concave and convex lenses form images by dragging objects and adjusting parameters</p>
+            </div>
+            
+            <div class="simulator-container">
+                <div class="simulator-section">
+                    <div class="lens-selector">
+                        <button class="lens-btn concave-btn active" data-lens="concave">Concave Lens</button>
+                        <button class="lens-btn convex-btn" data-lens="convex">Convex Lens</button>
+                    </div>
+                    
+                    <div class="simulation-area" id="simulation-area">
+                        <div class="optical-axis"></div>
+                        <div class="lens concave-lens" id="lens"></div>
+                        <div class="focal-point focal-point-f" id="focal-point-f" style="left: 35%;"></div>
+                        <div class="focal-point focal-point-2f" id="focal-point-2f" style="left: 25%;"></div>
+                        <div class="focal-point focal-point-f" id="focal-point-f-right" style="left: 65%;"></div>
+                        <div class="focal-point focal-point-2f" id="focal-point-2f-right" style="left: 75%;"></div>
+                        <div class="object" id="object" style="left: 20%;">O</div>
+                        <div class="image" id="image" style="left: 80%; display: none;">I</div>
+                        <div class="ray" id="ray1"></div>
+                        <div class="ray" id="ray2"></div>
+                        <div class="ray" id="ray3"></div>
+                    </div>
+                    
+                    <div class="control-panel">
+                        <h3>Lens Properties</h3>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Focal Length</span>
+                                <span id="focal-length-value">20 cm</span>
+                            </div>
+                            <input type="range" min="10" max="40" value="20" class="slider" id="focal-length">
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Object Height</span>
+                                <span id="object-height-value">4 cm</span>
+                            </div>
+                            <input type="range" min="2" max="10" value="4" class="slider" id="object-height">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls-section">
+                    <div class="info-card">
+                        <h3>Lens Information</h3>
+                        <p id="lens-description">
+                            A concave lens is a diverging lens that spreads out light rays. 
+                            It always forms a virtual, upright, and diminished image.
+                        </p>
+                        <div class="properties">
+                            <div class="property">
+                                <span class="property-name">Image Type:</span>
+                                <span class="property-value" id="image-type">Virtual</span>
+                            </div>
+                            <div class="property">
+                                <span class="property-name">Image Orientation:</span>
+                                <span class="property-value" id="image-orientation">Upright</span>
+                            </div>
+                            <div class="property">
+                                <span class="property-name">Image Size:</span>
+                                <span class="property-value" id="image-size">Diminished</span>
+                            </div>
+                            <div class="property">
+                                <span class="property-name">Object Distance:</span>
+                                <span class="property-value" id="object-distance">30 cm</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Key Concepts</h3>
+                        <p><strong>Focal Point (F):</strong> The point where parallel rays converge or appear to diverge from.</p>
+                        <p><strong>Optical Center:</strong> The center point of the lens.</p>
+                        <p><strong>Principal Axis:</strong> The horizontal line passing through the optical center.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3>How to Use the Lens Simulator</h3>
+                <ul>
+                    <li>Select between concave and convex lenses using the buttons</li>
+                    <li>Drag the object (orange rectangle) left or right to change its position</li>
+                    <li>Adjust the focal length and object height using the sliders</li>
+                    <li>Observe how the image (green rectangle) changes based on object position</li>
+                    <li>Study the light rays to understand how images are formed</li>
+                </ul>
+                <p><strong>Learning Objectives:</strong></p>
+                <ul>
+                    <li>Understand the difference between concave and convex lenses</li>
+                    <li>Learn how image characteristics change with object position</li>
+                    <li>Visualize the path of light rays through lenses</li>
+                    <li>Relate focal length to image formation</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and collaborative spaces.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Science Simulations</h3>
+                    <ul>
+                        <li><a href="lens-simulator.html">Lens Simulator</a></li>
+                        <li><a href="circuit-simulator.html">Circuit Simulator</a></li>
+                        <li><a href="wave-simulator.html">Wave Simulator</a></li>
+                        <li><a href="chemistry-lab.html">Virtual Chemistry Lab</a></li>
+                        <li><a href="physics-experiments.html">Physics Experiments</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentor2hubrsc@gmail.com</li>
+                        <li><i class="fas fa-clock"></i> TUESDAY - SUNDAY: 11AM-4PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            mobileMenu.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.header-container')) {
+                    navMenu.classList.remove('active');
+                }
+            });
+
+            // Lens Simulator Elements
+            const simulationArea = document.getElementById('simulation-area');
+            const lens = document.getElementById('lens');
+            const object = document.getElementById('object');
+            const image = document.getElementById('image');
+            const ray1 = document.getElementById('ray1');
+            const ray2 = document.getElementById('ray2');
+            const ray3 = document.getElementById('ray3');
+            const focalPointF = document.getElementById('focal-point-f');
+            const focalPoint2F = document.getElementById('focal-point-2f');
+            const focalPointFRight = document.getElementById('focal-point-f-right');
+            const focalPoint2FRight = document.getElementById('focal-point-2f-right');
+            const lensBtns = document.querySelectorAll('.lens-btn');
+            const focalLengthSlider = document.getElementById('focal-length');
+            const objectHeightSlider = document.getElementById('object-height');
+            const focalLengthValue = document.getElementById('focal-length-value');
+            const objectHeightValue = document.getElementById('object-height-value');
+            const lensDescription = document.getElementById('lens-description');
+            const imageType = document.getElementById('image-type');
+            const imageOrientation = document.getElementById('image-orientation');
+            const imageSize = document.getElementById('image-size');
+            const objectDistance = document.getElementById('object-distance');
+            
+            // Lens Simulator State
+            let currentLens = 'concave';
+            let focalLength = 20; // in cm
+            let objectHeight = 4; // in cm
+            let isDragging = false;
+            let objectPosition = 20; // percentage from left
+            
+            // Initialize the lens simulator
+            function initializeSimulator() {
+                updateLens();
+                updateObject();
+                updateRays();
+                updateInfo();
+                
+                // Set up event listeners
+                setupEventListeners();
+            }
+            
+            // Set up event listeners
+            function setupEventListeners() {
+                // Lens type buttons
+                lensBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        lensBtns.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        currentLens = this.dataset.lens;
+                        updateLens();
+                        updateRays();
+                        updateInfo();
+                    });
+                });
+                
+                // Sliders
+                focalLengthSlider.addEventListener('input', function() {
+                    focalLength = parseInt(this.value);
+                    focalLengthValue.textContent = `${focalLength} cm`;
+                    updateFocalPoints();
+                    updateRays();
+                    updateInfo();
+                });
+                
+                objectHeightSlider.addEventListener('input', function() {
+                    objectHeight = parseInt(this.value);
+                    objectHeightValue.textContent = `${objectHeight} cm`;
+                    updateObject();
+                    updateRays();
+                });
+                
+                // Object dragging
+                object.addEventListener('mousedown', startDrag);
+                object.addEventListener('touchstart', startDrag);
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag);
+                
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+            }
+            
+            // Start dragging the object
+            function startDrag(e) {
+                isDragging = true;
+                e.preventDefault();
+            }
+            
+            // Drag the object
+            function drag(e) {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                let clientX;
+                
+                if (e.type === 'mousemove') {
+                    clientX = e.clientX;
+                } else if (e.type === 'touchmove') {
+                    clientX = e.touches[0].clientX;
+                }
+                
+                const rect = simulationArea.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const percentage = (x / rect.width) * 100;
+                
+                // Limit object position to reasonable values
+                if (percentage >= 5 && percentage <= 45) {
+                    objectPosition = percentage;
+                    updateObject();
+                    updateRays();
+                    updateInfo();
+                }
+            }
+            
+            // Stop dragging the object
+            function stopDrag() {
+                isDragging = false;
+            }
+            
+            // Update lens type and appearance
+            function updateLens() {
+                if (currentLens === 'concave') {
+                    lens.className = 'lens concave-lens';
+                    lensDescription.textContent = 'A concave lens is a diverging lens that spreads out light rays. It always forms a virtual, upright, and diminished image.';
+                } else {
+                    lens.className = 'lens convex-lens';
+                    lensDescription.textContent = 'A convex lens is a converging lens that focuses light rays. It can form real or virtual images depending on object position.';
+                }
+                
+                updateFocalPoints();
+            }
+            
+            // Update focal points based on focal length
+            function updateFocalPoints() {
+                const areaWidth = simulationArea.offsetWidth;
+                const center = 50; // percentage
+                
+                // Calculate focal point positions
+                const fPos = (focalLength / 50) * 25; // scaled for visualization
+                
+                focalPointF.style.left = `${center - fPos}%`;
+                focalPoint2F.style.left = `${center - (2 * fPos)}%`;
+                focalPointFRight.style.left = `${center + fPos}%`;
+                focalPoint2FRight.style.left = `${center + (2 * fPos)}%`;
+            }
+            
+            // Update object position and size
+            function updateObject() {
+                object.style.left = `${objectPosition}%`;
+                
+                // Adjust object height based on slider
+                const height = objectHeight * 8; // scale for visualization
+                object.style.height = `${height}px`;
+                object.style.transform = `translate(-50%, -50%)`;
+            }
+            
+            // Update light rays and image
+            function updateRays() {
+                const areaWidth = simulationArea.offsetWidth;
+                const centerX = areaWidth / 2;
+                const objectX = (objectPosition / 100) * areaWidth;
+                const objectTop = (simulationArea.offsetHeight / 2) - (parseInt(object.style.height) / 2);
+                
+                // Calculate focal point positions in pixels
+                const fPos = (focalLength / 50) * (areaWidth / 4);
+                const focalLeft = centerX - fPos;
+                const focalRight = centerX + fPos;
+                
+                // Calculate image position and properties based on lens type
+                let imageX, imageHeight, imageVisible = true;
+                
+                if (currentLens === 'concave') {
+                    // For concave lens, image is always virtual, upright, and on the same side as object
+                    const u = centerX - objectX; // object distance from lens
+                    const f = fPos; // focal length (negative for concave)
+                    
+                    // Lens formula: 1/f = 1/v - 1/u (f is negative for concave)
+                    // So v = (u * f) / (u + f)
+                    const v = (u * (-f)) / (u - f);
+                    
+                    imageX = centerX - v;
+                    imageHeight = (v / u) * objectHeight * 8;
+                    
+                    // For concave lens, image is always virtual and upright
+                    imageType.textContent = 'Virtual';
+                    imageOrientation.textContent = 'Upright';
+                    
+                    // Show image only if it's within reasonable bounds
+                    if (imageX < centerX && imageX > 0) {
+                        image.style.display = 'flex';
+                    } else {
+                        image.style.display = 'none';
+                    }
+                } else {
+                    // For convex lens
+                    const u = centerX - objectX; // object distance from lens
+                    const f = fPos; // focal length
+                    
+                    // Lens formula: 1/f = 1/v - 1/u
+                    // So v = (u * f) / (u - f)
+                    const v = (u * f) / (u - f);
+                    
+                    imageX = centerX + v;
+                    imageHeight = (v / u) * objectHeight * 8;
+                    
+                    // Determine image properties based on object position
+                    if (objectX < centerX - (2 * fPos)) {
+                        // Object beyond 2F
+                        imageType.textContent = 'Real';
+                        imageOrientation.textContent = 'Inverted';
+                        imageSize.textContent = 'Diminished';
+                    } else if (objectX > centerX - (2 * fPos) && objectX < centerX - fPos) {
+                        // Object between F and 2F
+                        imageType.textContent = 'Real';
+                        imageOrientation.textContent = 'Inverted';
+                        imageSize.textContent = 'Magnified';
+                    } else if (objectX > centerX - fPos) {
+                        // Object between F and lens
+                        imageType.textContent = 'Virtual';
+                        imageOrientation.textContent = 'Upright';
+                        imageSize.textContent = 'Magnified';
+                        imageX = centerX - Math.abs(v); // Virtual image is on same side as object
+                    }
+                    
+                    // Show image only if it's within reasonable bounds
+                    if (imageX > 0 && imageX < areaWidth) {
+                        image.style.display = 'flex';
+                    } else {
+                        image.style.display = 'none';
+                    }
+                }
+                
+                // Update image position and size
+                image.style.left = `${(imageX / areaWidth) * 100}%`;
+                image.style.height = `${Math.abs(imageHeight)}px`;
+                image.style.transform = `translate(-50%, -50%)`;
+                
+                // Update image size description for convex lens
+                if (currentLens === 'convex') {
+                    if (Math.abs(imageHeight) > parseInt(object.style.height)) {
+                        imageSize.textContent = 'Magnified';
+                    } else {
+                        imageSize.textContent = 'Diminished';
+                    }
+                } else {
+                    // For concave lens, image is always diminished
+                    imageSize.textContent = 'Diminished';
+                }
+                
+                // Draw rays
+                drawRays(objectX, objectTop, centerX, focalLeft, focalRight, imageX);
+            }
+            
+            // Draw light rays
+            function drawRays(objectX, objectTop, centerX, focalLeft, focalRight, imageX) {
+                const areaHeight = simulationArea.offsetHeight;
+                const centerY = areaHeight / 2;
+                const objectHeightPx = parseInt(object.style.height);
+                
+                // Clear previous rays
+                ray1.style.display = 'none';
+                ray2.style.display = 'none';
+                ray3.style.display = 'none';
+                
+                if (currentLens === 'concave') {
+                    // For concave lens - draw diverging rays
+                    
+                    // Ray 1: Parallel to principal axis, diverges as if coming from focal point
+                    const ray1Length = centerX - objectX;
+                    ray1.style.display = 'block';
+                    ray1.style.left = `${objectX}px`;
+                    ray1.style.top = `${objectTop}px`;
+                    ray1.style.width = `${ray1Length}px`;
+                    ray1.style.transform = `rotate(0deg)`;
+                    
+                    // Ray 2: Towards optical center, continues straight
+                    const ray2Length = centerX - objectX;
+                    ray2.style.display = 'block';
+                    ray2.style.left = `${objectX}px`;
+                    ray2.style.top = `${objectTop}px`;
+                    ray2.style.width = `${ray2Length}px`;
+                    ray2.style.transform = `rotate(0deg)`;
+                    
+                    // Ray 3: As if going towards focal point on right, emerges parallel
+                    const ray3Length = centerX - objectX;
+                    ray3.style.display = 'block';
+                    ray3.style.left = `${objectX}px`;
+                    ray3.style.top = `${objectTop}px`;
+                    ray3.style.width = `${ray3Length}px`;
+                    ray3.style.transform = `rotate(0deg)`;
+                    
+                } else {
+                    // For convex lens
+                    
+                    // Ray 1: Parallel to principal axis, passes through focal point
+                    const ray1Length = centerX - objectX;
+                    ray1.style.display = 'block';
+                    ray1.style.left = `${objectX}px`;
+                    ray1.style.top = `${objectTop}px`;
+                    ray1.style.width = `${ray1Length}px`;
+                    ray1.style.transform = `rotate(0deg)`;
+                    
+                    // Ray 2: Through optical center, continues straight
+                    const ray2Length = centerX - objectX;
+                    ray2.style.display = 'block';
+                    ray2.style.left = `${objectX}px`;
+                    ray2.style.top = `${objectTop}px`;
+                    ray2.style.width = `${ray2Length}px`;
+                    ray2.style.transform = `rotate(0deg)`;
+                    
+                    // Ray 3: Through focal point, emerges parallel
+                    const ray3Length = centerX - objectX;
+                    ray3.style.display = 'block';
+                    ray3.style.left = `${objectX}px`;
+                    ray3.style.top = `${objectTop}px`;
+                    ray3.style.width = `${ray3Length}px`;
+                    ray3.style.transform = `rotate(0deg)`;
+                }
+            }
+            
+            // Update information panel
+            function updateInfo() {
+                const areaWidth = simulationArea.offsetWidth;
+                const centerX = areaWidth / 2;
+                const objectX = (objectPosition / 100) * areaWidth;
+                
+                // Calculate object distance from lens
+                const u = (centerX - objectX) / (areaWidth / 100); // in percentage of simulation width
+                const objectDistanceValue = Math.round(u * 0.5); // Convert to cm (approximate)
+                
+                objectDistance.textContent = `${objectDistanceValue} cm`;
+            }
+            
+            // Initialize the lens simulator
+            initializeSimulator();
+        });
+    </script>
+</body>
+</html>
