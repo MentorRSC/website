@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Fundamentals Quiz | Innovation Hub</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .question-container {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .question-section {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .options-container {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+        }
+
+        .option:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .option.selected {
+            background: rgba(52, 152, 219, 0.3);
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+        }
+
+        .option.correct {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: var(--success);
+        }
+
+        .option.incorrect {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: var(--accent);
+        }
+
+        .option-letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            margin-right: 1rem;
+            font-weight: bold;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.secondary {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+
+        button.secondary:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .results-container {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success) 0% 0%, rgba(255, 255, 255, 0.1) 0% 100%);
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-inner {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--light);
+        }
+
+        .score-text {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .feedback {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .performance {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .performance-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .performance-fill {
+            height: 100%;
+            background: var(--success);
+            border-radius: 5px;
+            transition: width 1s ease;
+        }
+
+        .hub-badge {
+            display: inline-block;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Physics Fundamentals Quiz</h1>
+            <p class="subtitle">Test your knowledge from Newton to Quantum Technology</p>
+            <div class="hub-badge">Innovation Hub Science e-Lab</div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="current-question">1</div>
+                <div class="stat-label">Current Question</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="score">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="total-questions">20</div>
+                <div class="stat-label">Total Questions</div>
+            </div>
+        </div>
+
+        <div class="quiz-content">
+            <div class="question-container" id="question-container">
+                <div class="question-section" id="question-section">Section A: The Classical World</div>
+                <div class="question-text" id="question-text">
+                    When a car suddenly stops, your body lurches forward. This is a direct example of:
+                </div>
+                <div class="options-container" id="options-container">
+                    <!-- Options will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="navigation">
+                <button id="prev-btn" disabled>
+                    < Previous
+                </button>
+                <button id="next-btn">
+                    Next >
+                </button>
+            </div>
+        </div>
+
+        <div class="results-container" id="results-container">
+            <h2>Quiz Completed!</h2>
+            <div class="score-circle">
+                <div class="score-inner">
+                    <div class="score-value" id="final-score">0%</div>
+                    <div class="score-text">Your Score</div>
+                </div>
+            </div>
+            <div class="feedback" id="feedback">Great job!</div>
+            <div class="performance">
+                <div>Performance Summary</div>
+                <div class="performance-bar">
+                    <div class="performance-fill" id="performance-fill" style="width: 0%"></div>
+                </div>
+                <div id="performance-text">0% Correct Answers</div>
+            </div>
+            <button id="retake-btn" class="secondary" style="margin-top: 2rem;">
+                Retake Quiz
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Physics questions data
+        const questions = [
+            {
+                section: "Section A: The Classical World",
+                text: "When a car suddenly stops, your body lurches forward. This is a direct example of:",
+                options: [
+                    "Gravity",
+                    "Inertia (your body's tendency to keep moving)",
+                    "Acceleration",
+                    "Friction"
+                ],
+                correct: 1
+            },
+            {
+                section: "Section A: The Classical World",
+                text: "Why does it hurt your foot when you kick a heavy rock?",
+                options: [
+                    "The rock is magnetic.",
+                    "The rock pushes back on your foot with equal force (Action-Reaction).",
+                    "Your foot has low potential energy.",
+                    "The rock absorbs your heat energy."
+                ],
+                correct: 1
+            },
+            {
+                section: "Section A: The Classical World",
+                text: "A roller coaster at its highest point has a lot of stored energy. As it races down, this energy becomes energy of motion. This best illustrates:",
+                options: [
+                    "Conservation of Mass",
+                    "Conservation of Energy",
+                    "Conservation of Charge",
+                    "Theory of Relativity"
+                ],
+                correct: 1
+            },
+            {
+                section: "Section B: Thermodynamics & Waves",
+                text: "Why does a metal spoon left in a hot cup of soup become hot all the way to the handle?",
+                options: [
+                    "Conduction (heat transfer through contact)",
+                    "Radiation (heat transfer through waves)",
+                    "Convection (heat transfer through fluid movement)",
+                    "Insulation"
+                ],
+                correct: 0
+            },
+            {
+                section: "Section B: Thermodynamics & Waves",
+                text: "Why can you hear a person talking from the next room even if you can't see them?",
+                options: [
+                    "Light waves can bend around corners.",
+                    "Sound waves can bend around corners and travel through walls.",
+                    "Sound travels faster in solids than air.",
+                    "They are using a laser."
+                ],
+                correct: 1
+            },
+            {
+                section: "Section B: Thermodynamics & Waves",
+                text: "A microwave oven heats your food, a remote control changes the TV channel, and an X-ray machine checks for broken bones. What do these have in common?",
+                options: [
+                    "They all use sound waves.",
+                    "They all use nuclear energy.",
+                    "They all use different parts of the electromagnetic spectrum.",
+                    "They all use mechanical energy."
+                ],
+                correct: 2
+            },
+            {
+                section: "Section C: Electromagnetism & The Atom",
+                text: "Why does a balloon, rubbed on your hair, stick to a wall?",
+                options: [
+                    "It becomes hot.",
+                    "It becomes heavy.",
+                    "It gains a static electric charge.",
+                    "It loses its gravity."
+                ],
+                correct: 2
+            },
+            {
+                section: "Section C: Electromagnetism & The Atom",
+                text: "The energy that powers the sun (and all life on Earth) comes from a process where atomic nuclei combine. What is this process called?",
+                options: [
+                    "Fission",
+                    "Fusion",
+                    "Combustion",
+                    "Conduction"
+                ],
+                correct: 1
+            },
+            {
+                section: "Section C: Electromagnetism & The Atom",
+                text: "What is the main purpose of a simple battery in a flashlight?",
+                options: [
+                    "To create light.",
+                    "To store light.",
+                    "To provide resistance.",
+                    "To provide a flow of electric current."
+                ],
+                correct: 3
+            },
+            {
+                section: "Section D: Einstein's Revolution (Relativity)",
+                text: "The GPS navigation in your phone or car must make incredibly precise time measurements to pinpoint your location. Why do the satellites in space have to account for Einstein's theory of relativity?",
+                options: [
+                    "Because gravity in space is stronger.",
+                    "Because time runs slightly faster for the satellites in orbit than it does on Earth.",
+                    "Because the satellites are moving slower than the Earth.",
+                    "Because of the Earth's magnetic field."
+                ],
+                correct: 1
+            },
+            {
+                section: "Section D: Einstein's Revolution (Relativity)",
+                text: "The sun's light takes about 8 minutes to reach Earth. If the sun suddenly vanished, we wouldn't know for 8 minutes. This is because nothing, not even information, can travel faster than:",
+                options: [
+                    "The Speed of Sound",
+                    "The Speed of Light",
+                    "Escape Velocity",
+                    "Electrical Current"
+                ],
+                correct: 1
+            },
+            {
+                section: "Section D: Einstein's Revolution (Relativity)",
+                text: "Nuclear power plants generate electricity using the principle E=mc². What does this principle allow them to do?",
+                options: [
+                    "Create new atoms from nothing.",
+                    "Burn fuel like a coal plant.",
+                    "Extract a huge amount of energy from a small amount of mass.",
+                    "Use energy to create mass."
+                ],
+                correct: 2
+            },
+            {
+                section: "Section E: The Quantum World",
+                text: "Solar panels on rooftops generate electricity when light hits them. This works because light behaves as a particle (a photon) that can knock electrons loose. This is a practical use of:",
+                options: [
+                    "Quantum Tunneling",
+                    "Wave-Particle Duality",
+                    "Superposition",
+                    "The Uncertainty Principle"
+                ],
+                correct: 1
+            },
+            {
+                section: "Section E: The Quantum World",
+                text: "Why can't we have a microscope that can see the exact location and the exact speed of an electron at the same time?",
+                options: [
+                    "Electrons are too small.",
+                    "The microscope isn't powerful enough.",
+                    "It's a fundamental limit of nature described by the Uncertainty Principle.",
+                    "Electrons have no speed."
+                ],
+                correct: 2
+            },
+            {
+                section: "Section E: The Quantum World",
+                text: "What common modern device relies on electrons making specific 'jumps' between energy levels to produce light?",
+                options: [
+                    "A toaster",
+                    "A microwave",
+                    "An LED (Light Emitting Diode) bulb",
+                    "A speaker"
+                ],
+                correct: 2
+            },
+            {
+                section: "Section F: Modern Frontiers & Technology",
+                text: "Barcode scanners at grocery stores, laser pointers in presentations, and fiber-optic internet cables all use:",
+                options: [
+                    "Radio Waves",
+                    "Sound Waves",
+                    "Laser Light",
+                    "X-Rays"
+                ],
+                correct: 2
+            },
+            {
+                section: "Section F: Modern Frontiers & Technology",
+                text: "The study of the Big Bang and the evolution of the universe helps us answer fundamental questions like 'Where did we come from?' and 'What is the fate of the universe?' This field of study is called:",
+                options: [
+                    "Astrobiology",
+                    "Cosmology",
+                    "Geology",
+                    "Meteorology"
+                ],
+                correct: 1
+            },
+            {
+              
+              section: "Section F: Modern Frontiers & Technology",
+                text: "Barcode scanners at grocery stores, laser pointers in presentations, and fiber-optic internet cables all use:",
+                options: [
+                    "Radio Waves",
+                    "Sound Waves",
+                    "Laser Light",
+                    "X-Rays"
+                ],
+                correct: 2
+            },
+            {
+                section: "Section F: Modern Frontiers & Technology",
+                text: "The study of the Big Bang and the evolution of the universe helps us answer fundamental questions like 'Where did we come from?' and 'What is the fate of the universe?' This field of study is called:",
+                options: [
+                    "Astrobiology",
+                    "Cosmology",
+                    "Geology",
+                    "Meteorology"
+                ],
+                correct: 1
+            },
+            {
+                section: "Section F: Modern Frontiers & Technology",
+                text: "Future quantum computers are expected to be especially powerful for tasks like:",
+                options: [
+                    "Word processing and spreadsheets.",
+                    "Discovering new medicines by simulating complex molecules.",
+                    "Playing video games with better graphics.",
+                    "Increasing internet browsing speed."
+                ],
+                correct: 1
+            },
+            {
+                section: "Section F: Modern Frontiers & Technology",
+                text: "Some banks and government agencies are starting to use a new, ultra-secure method to transfer data. This technology, which relies on the quantum properties of photons, is called:",
+                options: [
+                    "Blockchain",
+                    "Quantum Cryptography",
+                    "Wi-Fi 6",
+                    "5G"
+                ],
+                correct: 1
+            }
+        ];
+
+        // Quiz state variables
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+
+        // DOM elements
+        const questionSectionEl = document.getElementById('question-section');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const currentQuestionEl = document.getElementById('current-question');
+        const scoreEl = document.getElementById('score');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const quizContent = document.querySelector('.quiz-content');
+        const resultsContainer = document.getElementById('results-container');
+        const finalScoreEl = document.getElementById('final-score');
+        const feedbackEl = document.getElementById('feedback');
+        const performanceFillEl = document.getElementById('performance-fill');
+        const performanceTextEl = document.getElementById('performance-text');
+        const retakeBtn = document.getElementById('retake-btn');
+
+        // Initialize the quiz
+        function initQuiz() {
+            totalQuestionsEl.textContent = questions.length;
+            loadQuestion();
+            updateNavigation();
+        }
+
+        // Load the current question
+        function loadQuestion() {
+            const question = questions[currentQuestionIndex];
+            
+            questionSectionEl.textContent = question.section;
+            questionTextEl.textContent = question.text;
+            optionsContainerEl.innerHTML = '';
+            
+            currentQuestionEl.textContent = currentQuestionIndex + 1;
+            
+            // Create option elements
+            question.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'option';
+                if (userAnswers[currentQuestionIndex] === index) {
+                    optionEl.classList.add('selected');
+                }
+                
+                optionEl.innerHTML = `
+                    <span class="option-letter">${String.fromCharCode(65 + index)}</span>
+                    <span class="option-text">${option}</span>
+                `;
+                
+                optionEl.addEventListener('click', () => selectOption(index));
+                optionsContainerEl.appendChild(optionEl);
+            });
+        }
+
+        // Handle option selection
+        function selectOption(optionIndex) {
+            userAnswers[currentQuestionIndex] = optionIndex;
+            loadQuestion();
+            
+            // If this is a new answer, check if it's correct and update score
+            if (userAnswers[currentQuestionIndex] === questions[currentQuestionIndex].correct) {
+                score++;
+                scoreEl.textContent = score;
+            }
+        }
+
+        // Update navigation buttons
+        function updateNavigation() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.textContent = 'Finish Quiz';
+            } else {
+                nextBtn.textContent = 'Next >';
+            }
+        }
+
+        // Navigate to next question
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+                updateNavigation();
+            } else {
+                showResults();
+            }
+        }
+
+        // Navigate to previous question
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+                updateNavigation();
+            }
+        }
+
+        // Show results
+        function showResults() {
+            quizContent.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            finalScoreEl.textContent = `${percentage}%`;
+            
+            // Set performance bar
+            setTimeout(() => {
+                performanceFillEl.style.width = `${percentage}%`;
+            }, 100);
+            
+            performanceTextEl.textContent = `${percentage}% Correct Answers`;
+            
+            // Set feedback message
+            if (percentage >= 90) {
+                feedbackEl.textContent = "Outstanding! You're a physics genius!";
+            } else if (percentage >= 70) {
+                feedbackEl.textContent = "Great job! You have a solid understanding of physics.";
+            } else if (percentage >= 50) {
+                feedbackEl.textContent = "Good effort! Keep learning and you'll master physics.";
+            } else {
+                feedbackEl.textContent = "Don't worry! Physics takes time to master. Keep studying!";
+            }
+        }
+
+        // Retake quiz
+        function retakeQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = new Array(questions.length).fill(null);
+            
+            scoreEl.textContent = score;
+            quizContent.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            
+            loadQuestion();
+            updateNavigation();
+        }
+
+        // Event listeners
+        prevBtn.addEventListener('click', prevQuestion);
+        nextBtn.addEventListener('click', nextQuestion);
+        retakeBtn.addEventListener('click', retakeQuiz);
+
+        // Initialize the quiz
+        initQuiz();
+    </script>
+</body>
+</html>
