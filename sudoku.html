@@ -3,54 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sudoku Game</title>
+    <title>Sudoku Game | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Common Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --danger: #e74c3c;
+        }
+
         body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 20px;
         }
-        
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
         header {
-            text-align: center;
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #0d5bbb;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 60px 0 20px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
             margin-bottom: 20px;
-            width: 100%;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background-color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bbb;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            nav ul {
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav ul li {
+                margin: 5px 10px;
+            }
+
+            .mobile-menu {
+                display: block;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+
+            .nav-menu.active {
+                display: block;
+            }
+        }
+
+        /* Sudoku Game Styles */
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
         
-        h1 {
+        .game-header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
-            background: linear-gradient(to right, #e74c3c, #3498db);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: var(--primary);
         }
         
-        .subtitle {
+        .game-subtitle {
             font-size: 1.2rem;
-            color: #bdc3c7;
+            color: var(--text);
             margin-bottom: 20px;
         }
         
-        .container {
+        .game-container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 30px;
             max-width: 1200px;
             width: 100%;
+            margin: 0 auto;
         }
         
         .game-section {
@@ -64,10 +278,10 @@
         .info-section {
             flex: 1;
             min-width: 300px;
-            background: rgba(30, 30, 46, 0.8);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            background: var(--white);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -86,9 +300,9 @@
             grid-template-rows: repeat(9, 1fr);
             width: 450px;
             height: 450px;
-            border: 3px solid #2c3e50;
+            border: 3px solid var(--primary);
             border-radius: 5px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
         
@@ -99,7 +313,7 @@
             font-size: 24px;
             font-weight: bold;
             background-color: #fff;
-            color: #2c3e50;
+            color: var(--dark);
             border: 1px solid #bdc3c7;
             cursor: pointer;
             transition: all 0.2s;
@@ -111,7 +325,7 @@
         }
         
         .cell.selected {
-            background-color: #3498db;
+            background-color: var(--primary);
             color: white;
         }
         
@@ -131,11 +345,11 @@
         .cell.prefilled {
             background-color: #f8f9fa;
             font-weight: bold;
-            color: #2c3e50;
+            color: var(--dark);
         }
         
         .cell:nth-child(3n) {
-            border-right: 2px solid #2c3e50;
+            border-right: 2px solid var(--primary);
         }
         
         .cell:nth-child(9n) {
@@ -144,7 +358,7 @@
         
         .cell:nth-child(n+19):nth-child(-n+27),
         .cell:nth-child(n+46):nth-child(-n+54) {
-            border-bottom: 2px solid #2c3e50;
+            border-bottom: 2px solid var(--primary);
         }
         
         .number-pad {
@@ -156,7 +370,7 @@
         
         .number-btn {
             padding: 15px;
-            background: linear-gradient(to right, #3498db, #2980b9);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -164,13 +378,13 @@
             font-size: 1.2rem;
             font-weight: 600;
             transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .number-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(to right, #2980b9, #3498db);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            background: #0d5bbb;
         }
         
         .number-btn:active {
@@ -178,12 +392,12 @@
         }
         
         .number-btn.clear {
-            background: linear-gradient(to right, #e74c3c, #c0392b);
+            background: var(--danger);
             grid-column: span 2;
         }
         
         .number-btn.clear:hover {
-            background: linear-gradient(to right, #c0392b, #e74c3c);
+            background: #c0392b;
         }
         
         .controls {
@@ -194,9 +408,9 @@
             justify-content: center;
         }
         
-        button {
+        .game-btn {
             padding: 12px 24px;
-            background: linear-gradient(to right, #3498db, #2980b9);
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 8px;
@@ -204,16 +418,16 @@
             font-size: 1rem;
             font-weight: 600;
             transition: all 0.3s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        button:hover {
+        .game-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(to right, #2980b9, #3498db);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            background: #0d5bbb;
         }
         
-        button:active {
+        .game-btn:active {
             transform: translateY(0);
         }
         
@@ -222,58 +436,63 @@
             gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
+            margin: 20px 0;
         }
         
         .difficulty-btn {
             padding: 10px 20px;
-            background: rgba(52, 73, 94, 0.7);
+            background: #e0e0e0;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
+            color: var(--text);
         }
         
         .difficulty-btn.active {
-            background: linear-gradient(to right, #2ecc71, #27ae60);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .difficulty-btn:hover:not(.active) {
-            background: rgba(52, 73, 94, 1);
+            background: #d0d0d0;
         }
         
         .status {
-            background: rgba(44, 62, 80, 0.9);
+            background: var(--white);
             padding: 15px;
             border-radius: 10px;
             text-align: center;
             margin-top: 20px;
             font-size: 1.2rem;
             font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 100%;
         }
         
         .timer {
             font-size: 1.5rem;
             margin-bottom: 10px;
-            color: #3498db;
+            color: var(--primary);
         }
         
         .game-info {
-            background: rgba(44, 62, 80, 0.9);
+            background: var(--white);
             border-radius: 10px;
-            padding: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
         
         .game-info h3 {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-align: center;
-            color: #3498db;
+            color: var(--primary);
         }
         
         .game-info p {
             margin-bottom: 10px;
             line-height: 1.5;
+            color: var(--text);
         }
         
         .game-info ul {
@@ -283,6 +502,7 @@
         
         .game-info li {
             margin-bottom: 5px;
+            color: var(--text);
         }
         
         .hints {
@@ -292,7 +512,7 @@
         }
         
         @media (max-width: 768px) {
-            .container {
+            .game-container {
                 flex-direction: column;
                 align-items: center;
             }
@@ -316,91 +536,189 @@
             .cell {
                 font-size: 18px;
             }
+            
+            .game-header h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Header Section -->
     <header>
-        <h1>Sudoku Game</h1>
-        <p class="subtitle">Sudoku Game</p>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Parent</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                    <li><a href="puzzles.html" class="active">Puzzles</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
-    
-    <div class="container">
-        <div class="game-section">
-            <div class="sudoku-container">
-                <div class="sudoku-board" id="sudoku-board">
-                    <!-- Board will be generated by JavaScript -->
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="game-header">
+                <h1>Sudoku Game</h1>
+                <p class="game-subtitle">Challenge your logic and problem-solving skills</p>
+            </div>
+            
+            <div class="game-container">
+                <div class="game-section">
+                    <div class="sudoku-container">
+                        <div class="sudoku-board" id="sudoku-board">
+                            <!-- Board will be generated by JavaScript -->
+                        </div>
+                        
+                        <div class="number-pad">
+                            <button class="number-btn" data-number="1">1</button>
+                            <button class="number-btn" data-number="2">2</button>
+                            <button class="number-btn" data-number="3">3</button>
+                            <button class="number-btn" data-number="4">4</button>
+                            <button class="number-btn" data-number="5">5</button>
+                            <button class="number-btn" data-number="6">6</button>
+                            <button class="number-btn" data-number="7">7</button>
+                            <button class="number-btn" data-number="8">8</button>
+                            <button class="number-btn" data-number="9">9</button>
+                            <button class="number-btn clear" id="clear-btn">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="status" id="status">
+                        <div class="timer" id="timer">00:00</div>
+                        <div id="statusText">Select a difficulty to start</div>
+                    </div>
+                    
+                    <div class="difficulty">
+                        <div class="difficulty-btn active" data-difficulty="easy">Easy</div>
+                        <div class="difficulty-btn" data-difficulty="medium">Medium</div>
+                        <div class="difficulty-btn" data-difficulty="hard">Hard</div>
+                        <div class="difficulty-btn" data-difficulty="expert">Expert</div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="game-btn" id="newGame">New Game</button>
+                        <button class="game-btn" id="checkSolution">Check Solution</button>
+                        <button class="game-btn" id="hint">Get Hint</button>
+                        <button class="game-btn" id="solve">Solve Puzzle</button>
+                    </div>
                 </div>
                 
-                <div class="number-pad">
-                    <button class="number-btn" data-number="1">1</button>
-                    <button class="number-btn" data-number="2">2</button>
-                    <button class="number-btn" data-number="3">3</button>
-                    <button class="number-btn" data-number="4">4</button>
-                    <button class="number-btn" data-number="5">5</button>
-                    <button class="number-btn" data-number="6">6</button>
-                    <button class="number-btn" data-number="7">7</button>
-                    <button class="number-btn" data-number="8">8</button>
-                    <button class="number-btn" data-number="9">9</button>
-                    <button class="number-btn clear" id="clear-btn">Clear</button>
-                </div>
-            </div>
-            
-            <div class="status" id="status">
-                <div class="timer" id="timer">00:00</div>
-                <div id="statusText">Select a difficulty to start</div>
-            </div>
-            
-            <div class="difficulty">
-                <div class="difficulty-btn active" data-difficulty="easy">Easy</div>
-                <div class="difficulty-btn" data-difficulty="medium">Medium</div>
-                <div class="difficulty-btn" data-difficulty="hard">Hard</div>
-                <div class="difficulty-btn" data-difficulty="expert">Expert</div>
-            </div>
-            
-            <div class="controls">
-                <button id="newGame">New Game</button>
-                <button id="checkSolution">Check Solution</button>
-                <button id="hint">Get Hint</button>
-                <button id="solve">Solve Puzzle</button>
-            </div>
-        </div>
-        
-        <div class="info-section">
-            <div class="game-info">
-                <h3>How to Play Sudoku</h3>
-                <p>Fill the grid so that every row, column, and 3x3 box contains the digits 1 to 9.</p>
-                <p><strong>Rules:</strong></p>
-                <ul>
-                    <li>Each row must contain all digits from 1 to 9 without repetition</li>
-                    <li>Each column must contain all digits from 1 to 9 without repetition</li>
-                    <li>Each 3x3 box must contain all digits from 1 to 9 without repetition</li>
-                </ul>
-                <div class="hints">
-                    <div>
-                        <strong>Tips:</strong>
-                        <p>Start with the easiest numbers first</p>
-                        <p>Look for rows, columns or boxes with many filled numbers</p>
+                <div class="info-section">
+                    <div class="game-info">
+                        <h3>How to Play Sudoku</h3>
+                        <p>Fill the grid so that every row, column, and 3x3 box contains the digits 1 to 9.</p>
+                        <p><strong>Rules:</strong></p>
+                        <ul>
+                            <li>Each row must contain all digits from 1 to 9 without repetition</li>
+                            <li>Each column must contain all digits from 1 to 9 without repetition</li>
+                            <li>Each 3x3 box must contain all digits from 1 to 9 without repetition</li>
+                        </ul>
+                        <div class="hints">
+                            <div>
+                                <strong>Tips:</strong>
+                                <p>Start with the easiest numbers first</p>
+                                <p>Look for rows, columns or boxes with many filled numbers</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-info">
+                        <h3>Game Features</h3>
+                        <ul>
+                            <li>Four difficulty levels</li>
+                            <li>Hint system</li>
+                            <li>Error highlighting</li>
+                            <li>Timer</li>
+                            <li>Solution checking</li>
+                            <li>Auto-solve function</li>
+                        </ul>
                     </div>
                 </div>
             </div>
-            
-            <div class="game-info">
-                <h3>Game Features</h3>
-                <ul>
-                    <li>Four difficulty levels</li>
-                    <li>Hint system</li>
-                    <li>Error highlighting</li>
-                    <li>Timer</li>
-                    <li>Solution checking</li>
-                    <li>Auto-solve function</li>
-                </ul>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and collaborative spaces.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Puzzle Games</h3>
+                    <ul>
+                        <li><a href="sudoku.html">Sudoku</a></li>
+                        <li><a href="tower-of-hanoi.html">Tower of Hanoi</a></li>
+                        <li><a href="crossword.html">Crossword</a></li>
+                        <li><a href="logic-puzzles.html">Logic Puzzles</a></li>
+                        <li><a href="math-challenges.html">Math Challenges</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentor2hubrsc@gmail.com</li>
+                        <li><i class="fas fa-clock"></i> TUESDAY - SUNDAY: 11AM-4PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
             </div>
         </div>
-    </div>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            mobileMenu.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.header-container')) {
+                    navMenu.classList.remove('active');
+                }
+            });
+
             // Game elements
             const boardElement = document.getElementById('sudoku-board');
             const statusElement = document.getElementById('statusText');
