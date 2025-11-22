@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Optics Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #3949ab, #1a237e);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #5c6bc0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background-color: #e8eaf6;
+            border-bottom: 1px solid #c5cae9;
+        }
+        
+        .control-group {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-group h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #1a237e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-group h3 i {
+            font-size: 18px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .slider-container label {
+            width: 120px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            margin: 0 15px;
+            background: #c5cae9;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #3949ab;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            width: 60px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a237e;
+            background: #e8eaf6;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .toggle-container label {
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #3949ab;
+            cursor: pointer;
+        }
+        
+        .simulation-area {
+            display: flex;
+            height: 500px;
+        }
+        
+        .canvas-container {
+            flex: 3;
+            position: relative;
+            background: linear-gradient(to bottom, #e3f2fd, #f3e5f5);
+            border-right: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .info-panel {
+            flex: 1;
+            padding: 20px;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            background: #e8eaf6;
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #3949ab;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .info-section {
+            margin-bottom: 25px;
+        }
+        
+        .info-section h3 {
+            color: #1a237e;
+            margin-bottom: 12px;
+            font-size: 18px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #c5cae9;
+        }
+        
+        .info-section p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .formula {
+            background-color: #e3f2fd;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            border-left: 4px solid #3949ab;
+        }
+        
+        .measurements {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .measurement {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .measurement-value {
+            font-weight: bold;
+            font-size: 18px;
+            color: #1a237e;
+            margin-bottom: 5px;
+        }
+        
+        .measurement-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .button {
+            background: linear-gradient(to right, #3949ab, #1a237e);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .button.secondary {
+            background: linear-gradient(to right, #78909c, #546e7a);
+        }
+        
+        .controls-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px 20px;
+            background-color: #e8eaf6;
+            border-top: 1px solid #c5cae9;
+        }
+        
+        footer {
+            background-color: #1a237e;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .instructions p {
+            margin-bottom: 8px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 900px) {
+            .simulation-area {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .canvas-container {
+                height: 400px;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">GO</div>
+                <h1>Geometric Optics Simulation</h1>
+            </div>
+            <div>
+                <button class="button" id="reset-btn">Reset All</button>
+            </div>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h3><i>📏</i> Object Properties</h3>
+                <div class="slider-container">
+                    <label for="object-height">Height:</label>
+                    <input type="range" id="object-height" min="10" max="100" value="40">
+                    <span class="value-display" id="object-height-value">40 cm</span>
+                </div>
+                <div class="slider-container">
+                    <label for="object-distance">Distance:</label>
+                    <input type="range" id="object-distance" min="10" max="200" value="120">
+                    <span class="value-display" id="object-distance-value">120 cm</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3><i>🔍</i> Lens Properties</h3>
+                <div class="slider-container">
+                    <label for="focal-length">Focal Length:</label>
+                    <input type="range" id="focal-length" min="10" max="100" value="50">
+                    <span class="value-display" id="focal-length-value">50 cm</span>
+                </div>
+                <div class="toggle-container">
+                    <input type="checkbox" id="lens-type" class="checkbox" checked>
+                    <label for="lens-type">Converging Lens</label>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3><i>👁️</i> Display Options</h3>
+                <div class="toggle-container">
+                    <input type="checkbox" id="show-rays" class="checkbox" checked>
+                    <label for="show-rays">Show Light Rays</label>
+                </div>
+                <div class="toggle-container">
+                    <input type="checkbox" id="show-measurements" class="checkbox" checked>
+                    <label for="show-measurements">Show Measurements</label>
+                </div>
+                <div class="toggle-container">
+                    <input type="checkbox" id="show-focal-points" class="checkbox" checked>
+                    <label for="show-focal-points">Show Focal Points</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="simulation-area">
+            <div class="canvas-container">
+                <canvas id="optics-canvas"></canvas>
+            </div>
+            
+            <div class="info-panel">
+                <div class="tab-container">
+                    <div class="tab active" data-tab="info">Information</div>
+                    <div class="tab" data-tab="measurements">Measurements</div>
+                    <div class="tab" data-tab="principles">Principles</div>
+                </div>
+                
+                <div class="tab-content active" id="info-tab">
+                    <div class="info-section">
+                        <h3>Lens Equation</h3>
+                        <p>The relationship between object distance (d₀), image distance (dᵢ), and focal length (f) is given by:</p>
+                        <div class="formula">1/f = 1/d₀ + 1/dᵢ</div>
+                        <p>Where:</p>
+                        <ul>
+                            <li>f is the focal length of the lens</li>
+                            <li>d₀ is the distance from the object to the lens</li>
+                            <li>dᵢ is the distance from the image to the lens</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Magnification</h3>
+                        <p>The magnification (M) is the ratio of image height to object height:</p>
+                        <div class="formula">M = hᵢ/h₀ = -dᵢ/d₀</div>
+                        <p>Where:</p>
+                        <ul>
+                            <li>hᵢ is the image height</li>
+                            <li>h₀ is the object height</li>
+                            <li>dᵢ is the image distance</li>
+                            <li>d₀ is the object distance</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="measurements-tab">
+                    <div class="info-section">
+                        <h3>Current Measurements</h3>
+                        <div class="measurements">
+                            <div class="measurement">
+                                <div class="measurement-value" id="image-distance-value">60.0 cm</div>
+                                <div class="measurement-label">Image Distance</div>
+                            </div>
+                            <div class="measurement">
+                                <div class="measurement-value" id="image-height-value">-20.0 cm</div>
+                                <div class="measurement-label">Image Height</div>
+                            </div>
+                            <div class="measurement">
+                                <div class="measurement-value" id="magnification-value">-0.5</div>
+                                <div class="measurement-label">Magnification</div>
+                            </div>
+                            <div class="measurement">
+                                <div class="measurement-value" id="image-type-value">Real</div>
+                                <div class="measurement-label">Image Type</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="instructions">
+                        <p><strong>How to use:</strong></p>
+                        <ul>
+                            <li>Adjust the object height and distance using sliders</li>
+                            <li>Change the focal length of the lens</li>
+                            <li>Toggle between converging and diverging lenses</li>
+                            <li>Observe how the image changes in real-time</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="principles-tab">
+                    <div class="info-section">
+                        <h3>Principles of Geometric Optics</h3>
+                        <p>Geometric optics describes light propagation in terms of rays. The three principal rays used to locate images are:</p>
+                        <ul>
+                            <li><strong>Parallel Ray:</strong> Parallel to the axis, passes through the focal point after refraction</li>
+                            <li><strong>Focal Ray:</strong> Passes through the focal point, emerges parallel to the axis</li>
+                            <li><strong>Central Ray:</strong> Passes through the center of the lens undeviated</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-section">
+                        <h3>Image Characteristics</h3>
+                        <p>Depending on the object position relative to the focal point:</p>
+                        <ul>
+                            <li><strong>Real Image:</strong> Formed when light rays actually converge</li>
+                            <li><strong>Virtual Image:</strong> Formed when light rays appear to diverge</li>
+                            <li><strong>Upright or Inverted:</strong> Determined by the sign of magnification</li>
+                            <li><strong>Magnified or Reduced:</strong> Determined by the absolute value of magnification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-footer">
+            <button class="button secondary" id="help-btn">Help</button>
+            <button class="button" id="example-btn">Show Example</button>
+        </div>
+        
+        <footer>
+            <p>Geometric Optics Simulation | Based on PhET Interactive Simulations | Created for Educational Purposes</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('optics-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions
+            function setCanvasSize() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+                drawOptics();
+            }
+            
+            // Initial sizing
+            setCanvasSize();
+            window.addEventListener('resize', setCanvasSize);
+            
+            // Get DOM elements
+            const objectHeightSlider = document.getElementById('object-height');
+            const objectDistanceSlider = document.getElementById('object-distance');
+            const focalLengthSlider = document.getElementById('focal-length');
+            const lensTypeCheckbox = document.getElementById('lens-type');
+            const showRaysCheckbox = document.getElementById('show-rays');
+            const showMeasurementsCheckbox = document.getElementById('show-measurements');
+            const showFocalPointsCheckbox = document.getElementById('show-focal-points');
+            const resetButton = document.getElementById('reset-btn');
+            const helpButton = document.getElementById('help-btn');
+            const exampleButton = document.getElementById('example-btn');
+            
+            const objectHeightValue = document.getElementById('object-height-value');
+            const objectDistanceValue = document.getElementById('object-distance-value');
+            const focalLengthValue = document.getElementById('focal-length-value');
+            
+            const imageDistanceValue = document.getElementById('image-distance-value');
+            const imageHeightValue = document.getElementById('image-height-value');
+            const magnificationValue = document.getElementById('magnification-value');
+            const imageTypeValue = document.getElementById('image-type-value');
+            
+         // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Add active class to current tab and content
+                    this.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Simulation parameters
+            let params = {
+                objectHeight: 40, // cm
+                objectDistance: 120, // cm
+                focalLength: 50, // cm
+                lensType: 'converging', // 'converging' or 'diverging'
+                showRays: true,
+                showMeasurements: true,
+                showFocalPoints: true
+            };
+            
+            // Update display values when sliders change
+            objectHeightSlider.addEventListener('input', function() {
+                params.objectHeight = parseInt(this.value);
+                objectHeightValue.textContent = `${params.objectHeight} cm`;
+                drawOptics();
+            });
+            
+            objectDistanceSlider.addEventListener('input', function() {
+                params.objectDistance = parseInt(this.value);
+                objectDistanceValue.textContent = `${params.objectDistance} cm`;
+                drawOptics();
+            });
+            
+            focalLengthSlider.addEventListener('input', function() {
+                params.focalLength = parseInt(this.value);
+                focalLengthValue.textContent = `${params.focalLength} cm`;
+                drawOptics();
+            });
+            
+            lensTypeCheckbox.addEventListener('change', function() {
+                params.lensType = this.checked ? 'converging' : 'diverging';
+                drawOptics();
+            });
+            
+            showRaysCheckbox.addEventListener('change', function() {
+                params.showRays = this.checked;
+                drawOptics();
+            });
+            
+            showMeasurementsCheckbox.addEventListener('change', function() {
+                params.showMeasurements = this.checked;
+                drawOptics();
+            });
+            
+            showFocalPointsCheckbox.addEventListener('change', function() {
+                params.showFocalPoints = this.checked;
+                drawOptics();
+            });
+            
+            resetButton.addEventListener('click', function() {
+                // Reset to default values
+                params.objectHeight = 40;
+                params.objectDistance = 120;
+                params.focalLength = 50;
+                params.lensType = 'converging';
+                params.showRays = true;
+                params.showMeasurements = true;
+                params.showFocalPoints = true;
+                
+                // Update UI elements
+                objectHeightSlider.value = params.objectHeight;
+                objectDistanceSlider.value = params.objectDistance;
+                focalLengthSlider.value = params.focalLength;
+                lensTypeCheckbox.checked = true;
+                showRaysCheckbox.checked = true;
+                showMeasurementsCheckbox.checked = true;
+                showFocalPointsCheckbox.checked = true;
+                
+                objectHeightValue.textContent = `${params.objectHeight} cm`;
+                objectDistanceValue.textContent = `${params.objectDistance} cm`;
+                focalLengthValue.textContent = `${params.focalLength} cm`;
+                
+                drawOptics();
+            });
+            
+            helpButton.addEventListener('click', function() {
+                alert("Welcome to the Geometric Optics Simulation!\n\nAdjust the sliders to change object properties and lens characteristics. Toggle display options to show/hide rays and measurements. Use the tabs to learn about the principles of geometric optics.");
+            });
+            
+            exampleButton.addEventListener('click', function() {
+                // Set up an interesting example
+                params.objectHeight = 60;
+                params.objectDistance = 80;
+                params.focalLength = 40;
+                
+                // Update UI elements
+                objectHeightSlider.value = params.objectHeight;
+                objectDistanceSlider.value = params.objectDistance;
+                focalLengthSlider.value = params.focalLength;
+                
+                objectHeightValue.textContent = `${params.objectHeight} cm`;
+                objectDistanceValue.textContent = `${params.objectDistance} cm`;
+                focalLengthValue.textContent = `${params.focalLength} cm`;
+                
+                drawOptics();
+            });
+            
+            // Draw the optics simulation
+            function drawOptics() {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Scale factor for converting cm to pixels
+                const scale = canvas.width / 300; // 300 cm represented across canvas width
+                
+                // Lens position (center of canvas)
+                const lensX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                // Calculate image properties using lens formula
+                let imageDistance, imageHeight, magnification, imageType;
+                
+                if (params.lensType === 'converging') {
+                    // Converging lens: 1/f = 1/do + 1/di
+                    imageDistance = 1 / (1/params.focalLength - 1/params.objectDistance);
+                    magnification = -imageDistance / params.objectDistance;
+                    imageHeight = params.objectHeight * magnification;
+                    
+                    // Determine image type
+                    if (params.objectDistance > params.focalLength) {
+                        imageType = 'Real, Inverted';
+                    } else if (params.objectDistance < params.focalLength) {
+                        imageType = 'Virtual, Upright';
+                    } else {
+                        imageType = 'At Infinity';
+                    }
+                } else {
+                    // Diverging lens: 1/f = 1/do + 1/di (f is negative)
+                    imageDistance = 1 / (-1/params.focalLength - 1/params.objectDistance);
+                    magnification = -imageDistance / params.objectDistance;
+                    imageHeight = params.objectHeight * magnification;
+                    imageType = 'Virtual, Upright';
+                }
+                
+                // Update measurement display
+                imageDistanceValue.textContent = `${Math.abs(imageDistance).toFixed(1)} cm`;
+                imageHeightValue.textContent = `${imageHeight.toFixed(1)} cm`;
+                magnificationValue.textContent = `${magnification.toFixed(2)}`;
+                imageTypeValue.textContent = imageType;
+                
+                // Draw optical axis
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(canvas.width, centerY);
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Draw lens
+                ctx.beginPath();
+                if (params.lensType === 'converging') {
+                    // Draw converging lens (double convex)
+                    ctx.moveTo(lensX, centerY - 100);
+                    ctx.lineTo(lensX - 15, centerY - 80);
+                    ctx.lineTo(lensX + 15, centerY - 80);
+                    ctx.lineTo(lensX, centerY - 100);
+                    
+                    ctx.moveTo(lensX, centerY + 100);
+                    ctx.lineTo(lensX - 15, centerY + 80);
+                    ctx.lineTo(lensX + 15, centerY + 80);
+                    ctx.lineTo(lensX, centerY + 100);
+                } else {
+                    // Draw diverging lens (double concave)
+                    ctx.moveTo(lensX - 15, centerY - 100);
+                    ctx.lineTo(lensX, centerY - 80);
+                    ctx.lineTo(lensX + 15, centerY - 100);
+                    
+                    ctx.moveTo(lensX - 15, centerY + 100);
+                    ctx.lineTo(lensX, centerY + 80);
+                    ctx.lineTo(lensX + 15, centerY + 100);
+                }
+                ctx.strokeStyle = '#1a237e';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw focal points if enabled
+                if (params.showFocalPoints) {
+                    const focalPointX1 = lensX - params.focalLength * scale;
+                    const focalPointX2 = lensX + params.focalLength * scale;
+                    
+                    ctx.beginPath();
+                    ctx.arc(focalPointX1, centerY, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f44336';
+                    ctx.fill();
+                    ctx.strokeStyle = '#c62828';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.arc(focalPointX2, centerY, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f44336';
+                    ctx.fill();
+                    ctx.strokeStyle = '#c62828';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Label focal points
+                    ctx.fillStyle = '#c62828';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('F', focalPointX1, centerY - 15);
+                    ctx.fillText('F', focalPointX2, centerY - 15);
+                }
+                
+                // Draw object
+                const objectX = lensX - params.objectDistance * scale;
+                const objectTopY = centerY - params.objectHeight * scale;
+                
+                ctx.beginPath();
+                ctx.moveTo(objectX, centerY);
+                ctx.lineTo(objectX, objectTopY);
+                ctx.strokeStyle = '#4caf50';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                
+                // Draw arrowhead for object
+                ctx.beginPath();
+                ctx.moveTo(objectX - 5, objectTopY + 10);
+                ctx.lineTo(objectX, objectTopY);
+                ctx.lineTo(objectX + 5, objectTopY + 10);
+                ctx.strokeStyle = '#4caf50';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Label object
+                ctx.fillStyle = '#2e7d32';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Object', objectX, centerY + 20);
+                
+                // Draw image
+                if (imageType !== 'At Infinity') {
+                    const imageX = lensX + imageDistance * scale;
+                    const imageTopY = centerY - imageHeight * scale;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(imageX, centerY);
+                    ctx.lineTo(imageX, imageTopY);
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    
+                    // Draw arrowhead for image
+                    ctx.beginPath();
+                    if (imageHeight > 0) {
+                        ctx.moveTo(imageX - 5, imageTopY + 10);
+                        ctx.lineTo(imageX, imageTopY);
+                        ctx.lineTo(imageX + 5, imageTopY + 10);
+                    } else {
+                        ctx.moveTo(imageX - 5, imageTopY - 10);
+                        ctx.lineTo(imageX, imageTopY);
+                        ctx.lineTo(imageX + 5, imageTopY - 10);
+                    }
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Label image
+                    ctx.fillStyle = '#ef6c00';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Image', imageX, centerY + 20);
+                }
+                
+                // Draw rays if enabled
+                if (params.showRays) {
+                    const objectTopX = lensX - params.objectDistance * scale;
+                    const objectTopY = centerY - params.objectHeight * scale;
+                    
+                    if (params.lensType === 'converging') {
+                        if (params.objectDistance > params.focalLength) {
+                            // Real image case - draw three principal rays
+                            const imageX = lensX + imageDistance * scale;
+                            const imageTopY = centerY - imageHeight * scale;
+                            
+                            // Ray 1: Parallel to axis, through focal point
+                            drawRay(objectTopX, objectTopY, lensX, objectTopY, imageX, imageTopY, '#2196f3');
+                            
+                            // Ray 2: Through focal point, parallel to axis
+                            drawRay(objectTopX, objectTopY, lensX + params.focalLength * scale, centerY, imageX, imageTopY, '#e91e63');
+                            
+                            // Ray 3: Through center of lens
+                            drawRay(objectTopX, objectTopY, lensX, centerY, imageX, imageTopY, '#9c27b0');
+                        } else {
+                            // Virtual image case
+                            const imageX = lensX + imageDistance * scale;
+                            const imageTopY = centerY - imageHeight * scale;
+                            
+                            // Ray 1: Parallel to axis, through focal point
+                            drawRay(objectTopX, objectTopY, lensX, objectTopY, lensX + params.focalLength * scale, centerY, '#2196f3');
+                            
+                            // Ray 2: Through focal point, parallel to axis (virtual)
+                            drawDashedRay(objectTopX, objectTopY, lensX - params.focalLength * scale, centerY, lensX, objectTopY, '#e91e63');
+                            
+                            // Ray 3: Through center of lens
+                            drawRay(objectTopX, objectTopY, lensX, centerY, imageX, imageTopY, '#9c27b0');
+                        }
+                    } else {
+                        // Diverging lens case
+                        const imageX = lensX + imageDistance * scale;
+                        const imageTopY = centerY - imageHeight * scale;
+                        
+                        // Ray 1: Parallel to axis (virtual focal point)
+                        drawDashedRay(objectTopX, objectTopY, lensX - params.focalLength * scale, centerY, lensX, objectTopY, '#2196f3');
+                        
+                        // Ray 2: Toward focal point, emerges parallel
+                        drawRay(objectTopX, objectTopY, lensX, objectTopY, imageX, imageTopY, '#e91e63');
+                        
+                        // Ray 3: Through center of lens
+                        drawRay(objectTopX, objectTopY, lensX, centerY, imageX, imageTopY, '#9c27b0');
+                    }
+                }
+                
+                // Draw measurements if enabled
+                if (params.showMeasurements) {
+                    // Object distance
+                    drawMeasurement(objectX, centerY + 30, lensX, centerY + 30, `d₀ = ${params.objectDistance} cm`, '#4caf50');
+                    
+                    // Focal length
+                    if (params.showFocalPoints) {
+                        const focalPointX2 = lensX + params.focalLength * scale;
+                        drawMeasurement(lensX, centerY - 30, focalPointX2, centerY - 30, `f = ${params.focalLength} cm`, '#f44336');
+                    }
+                    
+                    // Image distance
+                    if (imageType !== 'At Infinity') {
+                        const imageX = lensX + imageDistance * scale;
+                        drawMeasurement(lensX, centerY + 50, imageX, centerY + 50, `dᵢ = ${Math.abs(imageDistance).toFixed(1)} cm`, '#ff9800');
+                    }
+                }
+            }
+            
+            // Helper function to draw a solid ray
+            function drawRay(startX, startY, controlX, controlY, endX, endY, color) {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(controlX, controlY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            
+            // Helper function to draw a dashed ray (for virtual rays)
+            function drawDashedRay(startX, startY, controlX, controlY, endX, endY, color) {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(controlX, controlY);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+            
+            // Helper function to draw measurements
+            function drawMeasurement(startX, startY, endX, endY, text, color) {
+                const midX = (startX + endX) / 2;
+                const midY = (startY + endY) / 2 - 10;
+                
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX, startY - 15);
+                ctx.lineTo(endX, endY - 15);
+                ctx.lineTo(endX, endY);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Draw arrowheads
+                ctx.beginPath();
+                ctx.moveTo(startX - 5, startY - 10);
+                ctx.lineTo(startX, startY - 15);
+                ctx.lineTo(startX + 5, startY - 10);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(endX - 5, endY - 10);
+                ctx.lineTo(endX, endY - 15);
+                ctx.lineTo(endX + 5, endY - 10);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.fillStyle = color;
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, midX, midY);
+            }
+            
+            // Initial draw
+            drawOptics();
+        });
+    </script>
+</body>
+</html>
