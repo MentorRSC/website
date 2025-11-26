@@ -579,7 +579,7 @@
                 
                 <div class="simulation-area">
                     <div class="canvas-container">
-                        <canvas id="optics-canvas"></canvas>
+                        <canvas id="optics-canvas" width="800" height="500"></canvas>
                     </div>
                     
                     <div class="info-panel">
@@ -730,20 +730,13 @@
                 });
             });
 
+            // Get canvas and context
             const canvas = document.getElementById('optics-canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas dimensions
-            function setCanvasSize() {
-                const container = canvas.parentElement;
-                canvas.width = container.clientWidth;
-                canvas.height = container.clientHeight;
-                drawOptics();
-            }
-            
-            // Initial sizing
-            setCanvasSize();
-            window.addEventListener('resize', setCanvasSize);
+            // Set fixed canvas dimensions
+            canvas.width = 800;
+            canvas.height = 500;
             
             // Get DOM elements
             const objectHeightSlider = document.getElementById('object-height');
@@ -841,6 +834,7 @@
                 
                 // Lens position (center of canvas)
                 const lensX = canvas.width / 2;
+                const centerY = canvas.height / 2;
                 
                 // Calculate image properties using lens formula
                 let imageDistance, imageHeight, magnification, imageType;
@@ -875,16 +869,16 @@
                 
                 // Draw optical axis
                 ctx.beginPath();
-                ctx.moveTo(0, canvas.height / 2);
-                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(canvas.width, centerY);
                 ctx.strokeStyle = '#999';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 
                 // Draw lens
                 ctx.beginPath();
-                ctx.moveTo(lensX, canvas.height / 2 - 100);
-                ctx.lineTo(lensX, canvas.height / 2 + 100);
+                ctx.moveTo(lensX, centerY - 100);
+                ctx.lineTo(lensX, centerY + 100);
                 ctx.strokeStyle = '#1a73e8';
                 ctx.lineWidth = 4;
                 ctx.stroke();
@@ -894,43 +888,43 @@
                 const focalPointX2 = lensX + params.focalLength * scale;
                 
                 ctx.beginPath();
-                ctx.arc(focalPointX1, canvas.height / 2, 5, 0, Math.PI * 2);
+                ctx.arc(focalPointX1, centerY, 5, 0, Math.PI * 2);
                 ctx.fillStyle = '#e74c3c';
                 ctx.fill();
                 
                 ctx.beginPath();
-                ctx.arc(focalPointX2, canvas.height / 2, 5, 0, Math.PI * 2);
+                ctx.arc(focalPointX2, centerY, 5, 0, Math.PI * 2);
                 ctx.fillStyle = '#e74c3c';
                 ctx.fill();
                 
                 // Draw object
                 const objectX = lensX - params.objectDistance * scale;
-                const objectY = canvas.height / 2 - params.objectHeight * scale;
+                const objectTop = centerY - params.objectHeight * scale;
                 
                 ctx.beginPath();
-                ctx.moveTo(objectX, canvas.height / 2);
-                ctx.lineTo(objectX, objectY);
+                ctx.moveTo(objectX, centerY);
+                ctx.lineTo(objectX, objectTop);
                 ctx.strokeStyle = '#34a853';
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 
                 // Draw arrowhead for object
                 ctx.beginPath();
-                ctx.moveTo(objectX - 5, objectY + 10);
-                ctx.lineTo(objectX, objectY);
-                ctx.lineTo(objectX + 5, objectY + 10);
+                ctx.moveTo(objectX - 5, objectTop + 10);
+                ctx.lineTo(objectX, objectTop);
+                ctx.lineTo(objectX + 5, objectTop + 10);
                 ctx.strokeStyle = '#34a853';
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
                 // Draw image
                 const imageX = lensX + imageDistance * scale;
-                const imageY = canvas.height / 2 - imageHeight * scale;
+                const imageTop = centerY - imageHeight * scale;
                 
                 if (imageType !== 'At Infinity') {
                     ctx.beginPath();
-                    ctx.moveTo(imageX, canvas.height / 2);
-                    ctx.lineTo(imageX, imageY);
+                    ctx.moveTo(imageX, centerY);
+                    ctx.lineTo(imageX, imageTop);
                     ctx.strokeStyle = '#fbbc04';
                     ctx.lineWidth = 3;
                     ctx.stroke();
@@ -938,13 +932,13 @@
                     // Draw arrowhead for image
                     ctx.beginPath();
                     if (imageHeight > 0) {
-                        ctx.moveTo(imageX - 5, imageY + 10);
-                        ctx.lineTo(imageX, imageY);
-                        ctx.lineTo(imageX + 5, imageY + 10);
+                        ctx.moveTo(imageX - 5, imageTop + 10);
+                        ctx.lineTo(imageX, imageTop);
+                        ctx.lineTo(imageX + 5, imageTop + 10);
                     } else {
-                        ctx.moveTo(imageX - 5, imageY - 10);
-                        ctx.lineTo(imageX, imageY);
-                        ctx.lineTo(imageX + 5, imageY - 10);
+                        ctx.moveTo(imageX - 5, imageTop - 10);
+                        ctx.lineTo(imageX, imageTop);
+                        ctx.lineTo(imageX + 5, imageTop - 10);
                     }
                     ctx.strokeStyle = '#fbbc04';
                     ctx.lineWidth = 2;
@@ -953,52 +947,80 @@
                 
                 // Draw rays if enabled
                 if (params.showRays) {
+                    // Ray 1: Parallel to principal axis
+                    ctx.beginPath();
+                    ctx.moveTo(objectX, objectTop);
+                    ctx.lineTo(lensX, objectTop);
+                    
                     if (params.lensType === 'converging') {
                         if (params.objectDistance > params.focalLength) {
-                            // Real image case
-                            drawRay(objectX, objectY, lensX, canvas.height / 2 - 50, imageX, imageY, '#1a73e8');
-                            drawRay(objectX, objectY, lensX, canvas.height / 2, imageX, imageY, '#1a73e8');
-                            drawRay(objectX, objectY, focalPointX2, canvas.height / 2, imageX, imageY, '#1a73e8');
+                            // Real image case - ray passes through focal point
+                            ctx.lineTo(focalPointX2 + (imageX - lensX), imageTop);
                         } else {
-                            // Virtual image case
-                            drawRay(objectX, objectY, lensX, canvas.height / 2 - 50, lensX - 100, canvas.height / 2 - 150, '#1a73e8');
-                            drawRay(objectX, objectY, lensX, canvas.height / 2, imageX, imageY, '#1a73e8');
-                            drawRay(objectX, objectY, focalPointX2, canvas.height / 2, imageX, imageY, '#1a73e8');
+                            // Virtual image case - ray appears to come from focal point
+                            ctx.lineTo(focalPointX2 - 100, objectTop - 50);
                         }
                     } else {
-                        // Diverging lens case
-                        drawRay(objectX, objectY, lensX, canvas.height / 2 - 50, lensX - 100, canvas.height / 2 - 150, '#1a73e8');
-                        drawRay(objectX, objectY, lensX, canvas.height / 2, imageX, imageY, '#1a73e8');
-                        drawRay(objectX, objectY, focalPointX1, canvas.height / 2, imageX, imageY, '#1a73e8');
+                        // Diverging lens - ray appears to come from focal point
+                        ctx.lineTo(focalPointX1 - 100, objectTop - 50);
                     }
+                    
+                    ctx.strokeStyle = '#1a73e8';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Ray 2: Through optical center
+                    ctx.beginPath();
+                    ctx.moveTo(objectX, objectTop);
+                    ctx.lineTo(lensX, centerY);
+                    ctx.lineTo(imageX, imageTop);
+                    ctx.strokeStyle = '#1a73e8';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Ray 3: Through focal point
+                    ctx.beginPath();
+                    ctx.moveTo(objectX, objectTop);
+                    
+                    if (params.lensType === 'converging') {
+                        if (params.objectDistance > params.focalLength) {
+                            // Real image case - ray through focal point becomes parallel
+                            ctx.lineTo(focalPointX1, centerY);
+                            ctx.lineTo(lensX, centerY - (objectTop - centerY));
+                            ctx.lineTo(imageX, imageTop);
+                        } else {
+                            // Virtual image case
+                            ctx.lineTo(focalPointX1 - 100, centerY - 50);
+                        }
+                    } else {
+                        // Diverging lens
+                        ctx.lineTo(focalPointX2 + 100, centerY + 50);
+                    }
+                    
+                    ctx.strokeStyle = '#1a73e8';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
                 }
                 
                 // Draw measurements if enabled
                 if (params.showMeasurements) {
                     // Object distance
-                    drawMeasurement(objectX, canvas.height / 2, lensX, canvas.height / 2, `d₀ = ${params.objectDistance} cm`, '#34a853');
+                    drawMeasurement(objectX, centerY, lensX, centerY, `d₀ = ${params.objectDistance} cm`, '#34a853');
                     
                     // Focal length
-                    drawMeasurement(lensX, canvas.height / 2, focalPointX2, canvas.height / 2, `f = ${params.focalLength} cm`, '#e74c3c');
+                    drawMeasurement(lensX, centerY, focalPointX2, centerY, `f = ${params.focalLength} cm`, '#e74c3c');
                     
                     // Image distance
                     if (imageType !== 'At Infinity') {
-                        drawMeasurement(lensX, canvas.height / 2, imageX, canvas.height / 2, `dᵢ = ${Math.abs(imageDistance).toFixed(1)} cm`, '#fbbc04');
+                        drawMeasurement(lensX, centerY, imageX, centerY, `dᵢ = ${Math.abs(imageDistance).toFixed(1)} cm`, '#fbbc04');
                     }
                 }
-            }
-            
-            // Helper function to draw a ray
-            function drawRay(startX, startY, controlX, controlY, endX, endY, color) {
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(controlX, controlY);
-                ctx.lineTo(endX, endY);
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
             }
             
             // Helper function to draw measurements
