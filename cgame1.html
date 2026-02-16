@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GESTURE BATTLE · fixed calibration</title>
+    <title>GESTURE BATTLE · final</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
@@ -90,47 +90,82 @@
             border-radius: 20px;
             transition: width 0.1s linear;
         }
-        .control-bar {
+        
+        /* Hidden dropdown menu */
+        .menu-container {
             position: absolute;
             top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
+            left: 10px;
             z-index: 60;
-            pointer-events: auto;
         }
-        .ctrl-btn {
+        .menu-btn {
             background: #1e2a3a;
             border: 2px solid #ffb347;
             color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 8px 14px;
-            border-radius: 40px;
+            font-size: 1.5rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             box-shadow: 0 4px 10px black;
             transition: 0.2s;
-            line-height: 1;
+        }
+        .menu-btn:hover {
+            background: #2f3a4a;
+            transform: scale(1.05);
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: 60px;
+            left: 0;
+            background: #1a2535;
+            border: 2px solid #ffb347;
+            border-radius: 20px;
+            padding: 10px;
+            display: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px black;
+            min-width: 160px;
+            z-index: 61;
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .menu-item {
+            padding: 12px 20px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: 0.2s;
             display: flex;
             align-items: center;
-            gap: 4px;
-            -webkit-tap-highlight-color: transparent;
+            gap: 10px;
+            white-space: nowrap;
         }
-        .ctrl-btn.active {
+        .menu-item:hover {
+            background: #2f4055;
+        }
+        .menu-item.active {
             background: #2f6b3e;
-            border-color: #a0ff9e;
             color: #e8ffe8;
         }
-        #musicBtn {
-            background: #2a2a4a;
-            border-color: #aa88ff;
-        }
-        #musicBtn.playing {
+        .menu-item.music-playing {
             background: #4a3a8a;
-            border-color: #cc99ff;
+            color: #e8e8ff;
         }
+        .menu-divider {
+            height: 1px;
+            background: #ffaa3366;
+            margin: 8px 0;
+        }
+
         .pause-indicator {
             position: absolute;
             top: 80px;
@@ -268,6 +303,11 @@
             width: 400px;
             position: relative;
             z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
         .instructions-popup h2 {
             text-align: center;
@@ -314,22 +354,11 @@
             font-size: 0.9rem;
             color: #aaa;
         }
-        .next-btn {
-            background: #ffaa33;
-            border: none;
-            font-size: 1.3rem;
-            font-weight: bold;
-            padding: 15px 30px;
-            border-radius: 40px;
-            color: #0b0e14;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 100%;
-            transition: 0.2s;
-        }
-        .next-btn:hover {
-            background: #ffbf5e;
-            transform: scale(1.02);
+        .auto-close-timer {
+            text-align: center;
+            margin-top: 15px;
+            color: #ffaa33;
+            font-size: 0.9rem;
         }
         .calibration-popup {
             background: linear-gradient(135deg, #2a1a1a, #1a0a0a);
@@ -454,6 +483,22 @@
             margin-right: 5px;
             box-shadow: 0 0 10px #00ffaa;
         }
+        .low-time-warning {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 200, 0, 0.9);
+            color: black;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 50;
+            display: none;
+            animation: pulse 1s infinite;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -461,9 +506,21 @@
 <div class="game-container">
     <canvas id="canvas"></canvas>
 
-    <div class="control-bar">
-        <div id="toggleGameBtn" class="ctrl-btn">⏸️ PAUSE</div>
-        <div id="musicBtn" class="ctrl-btn playing">🎵 ON</div>
+    <!-- Hidden Menu Button -->
+    <div class="menu-container">
+        <div class="menu-btn" id="menuBtn">☰</div>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="menu-item" id="menuToggleGame">
+                <span>⏸️</span> Pause Game
+            </div>
+            <div class="menu-item" id="menuMusicToggle">
+                <span>🎵</span> Music ON
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item" id="menuRestart">
+                <span>↻</span> Restart Game
+            </div>
+        </div>
     </div>
 
     <div id="dashboard">
@@ -479,7 +536,8 @@
         </div>
     </div>
 
-    <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND · waiting</div>
+    <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND DETECTED</div>
+    <div id="lowTimeWarning" class="low-time-warning">⚠️ LOW TIME! ⚠️</div>
     <div class="gesture-hint" id="gestureHint">
         ✌️ peace = start/restart &nbsp; ✊ fist = STOP &nbsp; (hold)
     </div>
@@ -523,8 +581,8 @@
             <div class="instruction-item">
                 <div class="instruction-icon">🍊</div>
                 <div class="instruction-text">
-                    <strong>Orange ball</strong> - +1 point & +2 seconds<br>
-                    <small>Touch with fingertip to collect</small>
+                    <strong>Orange ball</strong> - +1 point & +3 seconds<br>
+                    <small>Touch to collect and add time</small>
                 </div>
             </div>
 
@@ -552,7 +610,9 @@
                 </div>
             </div>
 
-            <button id="instructionsNextBtn" class="next-btn">NEXT → CALIBRATION</button>
+            <div class="auto-close-timer">
+                Auto-closing in <span id="closeTimer">5</span> seconds...
+            </div>
         </div>
     </div>
 
@@ -636,11 +696,17 @@
     const gameoverDiv = document.getElementById('gameover');
     const restartBtn = document.getElementById('restartBtn');
     const pauseIndicator = document.getElementById('pauseIndicator');
-    const toggleBtn = document.getElementById('toggleGameBtn');
-    const musicBtn = document.getElementById('musicBtn');
+    const lowTimeWarning = document.getElementById('lowTimeWarning');
     const hintEl = document.getElementById('gestureHint');
     const permissionMsg = document.getElementById('permissionMessage');
     const cameraPrompt = document.getElementById('cameraPrompt');
+    
+    // Menu elements
+    const menuBtn = document.getElementById('menuBtn');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const menuToggleGame = document.getElementById('menuToggleGame');
+    const menuMusicToggle = document.getElementById('menuMusicToggle');
+    const menuRestart = document.getElementById('menuRestart');
     
     // Overlays
     const instructionsOverlay = document.getElementById('instructionsOverlay');
@@ -650,6 +716,7 @@
     const startPrompt = document.getElementById('startPrompt');
     const instructionsNextBtn = document.getElementById('instructionsNextBtn');
     const fistCalibrationSkipBtn = document.getElementById('fistCalibrationSkipBtn');
+    const closeTimerSpan = document.getElementById('closeTimer');
 
     // Mobile detection
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -666,6 +733,10 @@
     let calibrationStep = 0; // 0: none, 1: fist, 2: peace
     let fistDetected = false;
     let peaceDetected = false;
+    
+    // Auto-close timer
+    let instructionsCloseTimer = null;
+    let closeCountdown = 5;
     
     if (isMobile) {
         document.body.style.padding = '0';
@@ -738,12 +809,12 @@
         if (enable) { 
             if (audioCtx?.state === 'suspended') audioCtx.resume(); 
             startMusic(); 
-            musicBtn.innerHTML = '🎵 ON'; 
-            musicBtn.classList.add('playing'); 
+            menuMusicToggle.innerHTML = '<span>🎵</span> Music ON';
+            menuMusicToggle.classList.add('music-playing');
         } else { 
             stopMusic(); 
-            musicBtn.innerHTML = '🎵 OFF'; 
-            musicBtn.classList.remove('playing'); 
+            menuMusicToggle.innerHTML = '<span>🎵</span> Music OFF';
+            menuMusicToggle.classList.remove('music-playing');
         }
     }
 
@@ -839,7 +910,8 @@
     // ----- GAME CONSTANTS -----
     const INIT_TIME = 30;
     const INIT_LIVES = 3;
-    const TIME_PER_POP = 2;
+    const TIME_PER_POP = 3; // Changed to 3 seconds
+    const LOW_TIME_THRESHOLD = 12; // Show warning below 12 seconds
     const ORANGE_RADIUS = isMobile ? 25 : 30;
     const RED_RADIUS = isMobile ? 23 : 28;
 
@@ -919,8 +991,8 @@
         gameActive = true;
         gamePaused = false;
         gameOverFlag = false;
-        toggleBtn.innerHTML = '⏹️ STOP';
-        toggleBtn.classList.add('active');
+        menuToggleGame.innerHTML = '<span>⏹️</span> Stop Game';
+        menuToggleGame.classList.add('active');
         startPrompt.style.display = 'none';
         
         // Hide all calibration overlays
@@ -943,15 +1015,15 @@
     function pauseGame() {
         gamePaused = true;
         gameActive = false;
-        toggleBtn.innerHTML = '▶️ START';
-        toggleBtn.classList.remove('active');
+        menuToggleGame.innerHTML = '<span>▶️</span> Start Game';
+        menuToggleGame.classList.remove('active');
     }
 
     function resumeGame() {
         gamePaused = false;
         gameActive = true;
-        toggleBtn.innerHTML = '⏹️ STOP';
-        toggleBtn.classList.add('active');
+        menuToggleGame.innerHTML = '<span>⏹️</span> Stop Game';
+        menuToggleGame.classList.add('active');
     }
 
     function restartGame() {
@@ -963,8 +1035,8 @@
         gamePaused = false;
         gameOverFlag = false;
         
-        toggleBtn.innerHTML = '⏹️ STOP';
-        toggleBtn.classList.add('active');
+        menuToggleGame.innerHTML = '<span>⏹️</span> Stop Game';
+        menuToggleGame.classList.add('active');
         
         score = 0;
         lives = INIT_LIVES;
@@ -989,11 +1061,12 @@
         gameStarted = false;
         gameOverFlag = true;
         gamePaused = false;
-        toggleBtn.innerHTML = '▶️ START';
-        toggleBtn.classList.remove('active');
+        menuToggleGame.innerHTML = '<span>▶️</span> Start Game';
+        menuToggleGame.classList.remove('active');
         finalScoreSpan.innerText = score;
         gameoverDiv.style.visibility = 'visible';
         pauseIndicator.style.opacity = '0';
+        lowTimeWarning.style.display = 'none';
         playFistStopSound();
     }
 
@@ -1017,9 +1090,36 @@
         let percent = Math.max(0, (timeLeft / INIT_TIME) * 100);
         timeFill.style.width = percent + '%';
         
-        if (timeLeft < 10 && gameActive) {
+        // Show low time warning below threshold
+        if (timeLeft < LOW_TIME_THRESHOLD && gameActive && !gamePaused) {
+            lowTimeWarning.style.display = 'block';
             yellowAlertIntensity = Math.max(yellowAlertIntensity, 0.7);
+        } else {
+            lowTimeWarning.style.display = 'none';
         }
+    }
+
+    // Start auto-close timer for instructions
+    function startInstructionsCloseTimer() {
+        closeCountdown = 5;
+        if (closeTimerSpan) closeTimerSpan.innerText = closeCountdown;
+        
+        if (instructionsCloseTimer) clearInterval(instructionsCloseTimer);
+        
+        instructionsCloseTimer = setInterval(() => {
+            closeCountdown--;
+            if (closeTimerSpan) closeTimerSpan.innerText = closeCountdown;
+            
+            if (closeCountdown <= 0) {
+                clearInterval(instructionsCloseTimer);
+                instructionsOverlay.style.display = 'none';
+                
+                // Start fist calibration
+                calibrationStep = 1;
+                fistDetected = false;
+                fistCalibrationOverlay.style.display = 'flex';
+            }
+        }, 1000);
     }
 
     // ----- GESTURE DETECTION -----
@@ -1104,11 +1204,6 @@
             ctx.save();
             ctx.fillStyle = `rgba(255, 255, 50, ${yellowAlertIntensity * 0.2})`;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.font = 'bold 30px Arial';
-            ctx.fillStyle = `rgba(255, 200, 0, ${yellowAlertIntensity})`;
-            ctx.textAlign = 'center';
-            ctx.fillText('⚠️ LOW TIME ⚠️', canvas.width/2, 150);
             ctx.restore();
         }
 
@@ -1301,6 +1396,7 @@
             
             // Show instructions popup
             instructionsOverlay.style.display = 'flex';
+            startInstructionsCloseTimer();
             
             initAudioOnUserGesture();
             
@@ -1311,22 +1407,14 @@
         }
     }
 
-    // Instructions next button
-    instructionsNextBtn.addEventListener('click', () => {
-        instructionsOverlay.style.display = 'none';
-        
-        // Start fist calibration
-        calibrationStep = 1;
-        fistDetected = false;
-        fistCalibrationOverlay.style.display = 'flex';
+    // Camera prompt click handler
+    cameraPrompt.addEventListener('click', () => {
+        requestCameraPermission();
     });
     
-    instructionsNextBtn.addEventListener('touchstart', (e) => {
+    cameraPrompt.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        instructionsOverlay.style.display = 'none';
-        calibrationStep = 1;
-        fistDetected = false;
-        fistCalibrationOverlay.style.display = 'flex';
+        requestCameraPermission();
     });
 
     // Skip calibration button
@@ -1343,14 +1431,61 @@
         calibrationStep = 0;
     });
 
-    // Camera prompt click handler
-    cameraPrompt.addEventListener('click', () => {
-        requestCameraPermission();
+    // Menu button click handler
+    menuBtn.addEventListener('click', () => {
+        dropdownMenu.classList.toggle('show');
     });
     
-    cameraPrompt.addEventListener('touchstart', (e) => {
+    menuBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        requestCameraPermission();
+        dropdownMenu.classList.toggle('show');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('show');
+        }
+    });
+
+    // Menu item handlers
+    menuToggleGame.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+        if (!cameraPermissionGranted) return;
+        
+        if (!gameStarted && !gameOverFlag) {
+            startGame();
+        } else if (gameActive && !gamePaused) {
+            pauseGame();
+        } else if (gamePaused) {
+            resumeGame();
+        } else if (gameOverFlag) {
+            restartGame();
+        }
+    });
+
+    menuMusicToggle.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+        initAudioOnUserGesture();
+        setMusicEnabled(!musicEnabled);
+    });
+
+    menuRestart.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+        if (!cameraPermissionGranted) return;
+        restartGame();
+    });
+
+    restartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!cameraPermissionGranted) return;
+        restartGame();
+    });
+    
+    restartBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!cameraPermissionGranted) return;
+        restartGame();
     });
 
     // Show camera prompt immediately
@@ -1467,61 +1602,6 @@
     }
     
     requestAnimationFrame(gameLoop);
-
-    // UI buttons
-    toggleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!cameraPermissionGranted) return;
-        
-        if (!gameStarted && !gameOverFlag) {
-            startGame();
-        } else if (gameActive && !gamePaused) {
-            pauseGame();
-        } else if (gamePaused) {
-            resumeGame();
-        } else if (gameOverFlag) {
-            restartGame();
-        }
-    });
-    
-    toggleBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (!cameraPermissionGranted) return;
-        
-        if (!gameStarted && !gameOverFlag) {
-            startGame();
-        } else if (gameActive && !gamePaused) {
-            pauseGame();
-        } else if (gamePaused) {
-            resumeGame();
-        } else if (gameOverFlag) {
-            restartGame();
-        }
-    });
-
-    musicBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        initAudioOnUserGesture(); 
-        setMusicEnabled(!musicEnabled);
-    });
-    
-    musicBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        initAudioOnUserGesture(); 
-        setMusicEnabled(!musicEnabled);
-    });
-    
-    restartBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!cameraPermissionGranted) return;
-        restartGame();
-    });
-    
-    restartBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (!cameraPermissionGranted) return;
-        restartGame();
-    });
 
     // Initialize
     setMusicEnabled(true);
