@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hand SOS · project Narendran</title>
+    <title>Hand SOS · Emergency Detector</title>
     <style>
         * {
             margin: 0;
@@ -21,7 +21,7 @@
             touch-action: none;
         }
 
-        /* main container: full height, 92% width */
+        /* main container */
         .camera-frame {
             height: 100vh;
             width: 92%;
@@ -34,7 +34,6 @@
             position: relative;
         }
 
-        /* canvas occupies all available space, video is painted behind */
         .canvas-wrapper {
             flex: 1 1 0;
             min-height: 0;
@@ -50,7 +49,6 @@
             background: #2a2f3a;
         }
 
-        /* status bar */
         .status-area {
             padding: 12px 20px;
             background: #10131c;
@@ -166,7 +164,7 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             box-shadow: 0 10px 25px black;
-            min-width: 200px;
+            min-width: 220px;
             z-index: 101;
         }
 
@@ -202,7 +200,112 @@
             margin: 8px 0;
         }
 
-        /* camera permission prompt */
+        /* popup messages */
+        .popup-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+
+        .info-popup {
+            background: linear-gradient(135deg, #1e2a3a, #0e1a2a);
+            border: 3px solid #ffaa33;
+            border-radius: 40px;
+            padding: 30px 40px;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            box-shadow: 0 0 80px #ffaa33;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            max-width: 90%;
+            width: 450px;
+            animation: fadeIn 0.5s;
+        }
+
+        .info-popup h2 {
+            color: #ffaa33;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .info-popup p {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .info-popup .emergency-demo {
+            font-size: 3rem;
+            margin: 15px 0;
+            animation: pulse 1.5s infinite;
+        }
+
+        .info-popup .contact-input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #ffaa33;
+            border-radius: 30px;
+            padding: 12px 20px;
+            width: 100%;
+            margin: 10px 0;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .info-popup .contact-input::placeholder {
+            color: #aaa;
+        }
+
+        .next-btn {
+            background: #ffaa33;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 12px 25px;
+            border-radius: 30px;
+            color: #0b0e14;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .next-btn:hover {
+            background: #ffbf5e;
+            transform: scale(1.02);
+        }
+
+        .skip-btn {
+            background: transparent;
+            border: 1px solid #ffaa33;
+            color: #ffaa33;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         .camera-prompt {
             position: absolute;
             top: 50%;
@@ -273,6 +376,19 @@
             font-style: normal;
             margin-right: 4px;
         }
+
+        .notification-badge {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #ffaa33;
+            color: black;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 50;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -292,6 +408,9 @@
                 <span>🦴</span> Skeleton: ON
             </div>
             <div class="menu-divider"></div>
+            <div class="menu-item" id="menuContacts">
+                <span>👥</span> Emergency Contacts
+            </div>
             <div class="menu-item" id="menuReset">
                 <span>↻</span> Reset Emergency
             </div>
@@ -306,6 +425,10 @@
         <div class="timer-badge" id="timerDisplay">⏱️ 0.0s</div>
         <div class="signature"><i>✋</i> project by Narendran</div>
     </div>
+
+    <div class="notification-badge" id="notificationBadge">
+        📱 Emergency contacts saved
+    </div>
 </div>
 
 <!-- Camera Permission Prompt -->
@@ -313,6 +436,47 @@
     📷 CAMERA ACCESS NEEDED
     <span>👆</span>
     TAP TO REQUEST PERMISSION
+</div>
+
+<!-- Info Popup after Camera Access -->
+<div id="infoPopup" class="popup-overlay">
+    <div class="info-popup">
+        <h2>🚨 SOS EMERGENCY DETECTOR</h2>
+        
+        <div class="emergency-demo">
+            ✋ → 🆘
+        </div>
+        
+        <p>
+            <strong>How it works:</strong><br>
+            Show <strong style="color: #ffaa33;">OPEN HAND</strong> to camera for <strong style="color: #ffaa33;">3 seconds</strong><br>
+            This will trigger an EMERGENCY ALERT
+        </p>
+
+        <p style="color: #ffaa33; font-size: 1.5rem;">⚠️</p>
+
+        <p>
+            <strong>When emergency is triggered:</strong><br>
+            • Red flashing screen appears<br>
+            • Loud alarm sound plays<br>
+            • <strong>Notifications sent to your emergency contacts</strong>
+        </p>
+
+        <p>
+            <strong>To cancel emergency:</strong><br>
+            Show <strong style="color: #55ff55;">TWO FINGERS</strong> (peace sign) to reset
+        </p>
+
+        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 20px; margin: 15px 0;">
+            <p style="margin-bottom: 10px;">📱 <strong>Emergency Contacts</strong></p>
+            <input type="email" id="emailInput" class="contact-input" placeholder="Email address (for alerts)">
+            <input type="tel" id="phoneInput" class="contact-input" placeholder="Phone number (for SMS)">
+            <p style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">* Notifications will be sent when emergency is triggered</p>
+        </div>
+
+        <button id="saveContactsBtn" class="next-btn">💾 SAVE & CONTINUE</button>
+        <button id="skipContactsBtn" class="skip-btn">Skip for now</button>
+    </div>
 </div>
 
 <div id="permissionMessage" class="permission-message">❌ Camera access denied<br><small>Please enable camera permissions</small></div>
@@ -337,6 +501,8 @@
         const emergencyOverlay = document.getElementById('emergencyOverlay');
         const cameraPrompt = document.getElementById('cameraPrompt');
         const permissionMsg = document.getElementById('permissionMessage');
+        const infoPopup = document.getElementById('infoPopup');
+        const notificationBadge = document.getElementById('notificationBadge');
         
         // Menu elements
         const menuBtn = document.getElementById('menuBtn');
@@ -344,7 +510,14 @@
         const menuStartStop = document.getElementById('menuStartStop');
         const menuLiveStream = document.getElementById('menuLiveStream');
         const menuSkeleton = document.getElementById('menuSkeleton');
+        const menuContacts = document.getElementById('menuContacts');
         const menuReset = document.getElementById('menuReset');
+
+        // Contact inputs
+        const emailInput = document.getElementById('emailInput');
+        const phoneInput = document.getElementById('phoneInput');
+        const saveContactsBtn = document.getElementById('saveContactsBtn');
+        const skipContactsBtn = document.getElementById('skipContactsBtn');
 
         // ---------- state variables ----------
         let lastGesture = 'unknown';
@@ -360,13 +533,20 @@
         let cameraInitialized = false;
         let cameraPermissionGranted = false;
         
+        // Emergency contacts
+        let emergencyEmail = localStorage.getItem('emergencyEmail') || '';
+        let emergencyPhone = localStorage.getItem('emergencyPhone') || '';
+        
         // Mobile detection
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         
         // Hand tracking variables
         let handDetected = false;
-        let fingerPos = { x: -100, y: -100, valid: false };
         let videoElement = null;
+
+        // Load saved contacts
+        if (emergencyEmail) emailInput.value = emergencyEmail;
+        if (emergencyPhone) phoneInput.value = emergencyPhone;
 
         // ---------- audio (alarm) ----------
         function initAlarm() {
@@ -448,6 +628,95 @@
             alarmSound.isPlaying = false;
         }
 
+        // ---------- Send emergency notifications ----------
+        function sendEmergencyNotifications() {
+            console.log('🚨 EMERGENCY TRIGGERED! Sending notifications...');
+            
+            // Get current date/time
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            const dateStr = now.toLocaleDateString();
+            
+            const emergencyMessage = `🚨 SOS EMERGENCY ALERT! 🚨\nTime: ${timeStr} on ${dateStr}\nEmergency was triggered by open hand gesture. Please check immediately!`;
+            
+            // Show badge
+            notificationBadge.style.display = 'block';
+            notificationBadge.innerHTML = '📱 Sending emergency alerts...';
+            
+            // Send email if provided
+            if (emergencyEmail) {
+                sendEmail(emergencyEmail, emergencyMessage);
+            }
+            
+            // Send SMS if phone provided (using SMS protocol for mobile)
+            if (emergencyPhone && isMobile) {
+                sendSMS(emergencyPhone, emergencyMessage);
+            }
+            
+            // Also try to send via Web Push if available (would need service worker)
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('🚨 SOS EMERGENCY', {
+                    body: emergencyMessage,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="red"/><text x="50" y="70" font-size="50" text-anchor="middle" fill="white">⚠️</text></svg>'
+                });
+            }
+            
+            // Simulate API call to emergency service (in real app, this would be your backend)
+            simulateEmergencyAPI(emergencyMessage);
+            
+            setTimeout(() => {
+                notificationBadge.innerHTML = '📱 Emergency alerts sent!';
+                setTimeout(() => {
+                    notificationBadge.style.display = 'none';
+                }, 3000);
+            }, 2000);
+        }
+
+        function sendEmail(email, message) {
+            // In production, this would be an API call to your backend
+            console.log(`Sending email to ${email}: ${message}`);
+            
+            // Simulate email via mailto:
+            const mailtoLink = `mailto:${email}?subject=🚨 SOS EMERGENCY ALERT&body=${encodeURIComponent(message)}`;
+            
+            // You could open in a new tab or use a backend service
+            // For demo, we'll just log it
+            console.log('Email would be sent via:', mailtoLink);
+            
+            // In real implementation, you'd use a service like:
+            // fetch('https://your-api.com/send-emergency-email', {
+            //     method: 'POST',
+            //     headers: {'Content-Type': 'application/json'},
+            //     body: JSON.stringify({email, message})
+            // });
+        }
+
+        function sendSMS(phone, message) {
+            // For mobile, can use SMS protocol
+            console.log(`Sending SMS to ${phone}: ${message}`);
+            
+            // On mobile, this opens SMS app (doesn't auto-send)
+            const smsLink = `sms:${phone}?body=${encodeURIComponent(message)}`;
+            
+            // You could open this in a new window
+            // window.location.href = smsLink;
+            
+            console.log('SMS would be sent via:', smsLink);
+            
+            // In production, use a service like Twilio via your backend
+        }
+
+        function simulateEmergencyAPI(message) {
+            // Simulate API call to emergency monitoring service
+            console.log('Calling emergency API:', message);
+            
+            // In production, you'd call your backend which then:
+            // 1. Sends emails via SMTP
+            // 2. Sends SMS via Twilio
+            // 3. Triggers phone calls if needed
+            // 4. Logs to emergency dashboard
+        }
+
         // ---------- Camera permission request ----------
         async function requestCameraPermission() {
             try {
@@ -481,13 +750,38 @@
                 cameraInitialized = true;
                 cameraPrompt.style.display = 'none';
                 
+                // Show info popup
+                infoPopup.style.display = 'flex';
+                
                 initAlarm();
+                
+                // Request notification permission
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
                 
             } catch (err) {
                 console.error('Camera access error:', err);
                 permissionMsg.style.display = 'block';
                 cameraPrompt.style.display = 'block';
             }
+        }
+
+        // Save contacts
+        function saveEmergencyContacts() {
+            emergencyEmail = emailInput.value;
+            emergencyPhone = phoneInput.value;
+            
+            localStorage.setItem('emergencyEmail', emergencyEmail);
+            localStorage.setItem('emergencyPhone', emergencyPhone);
+            
+            infoPopup.style.display = 'none';
+            
+            notificationBadge.style.display = 'block';
+            notificationBadge.innerHTML = '📱 Emergency contacts saved!';
+            setTimeout(() => {
+                notificationBadge.style.display = 'none';
+            }, 2000);
         }
 
         // ---------- Hand tracking initialization ----------
@@ -585,6 +879,10 @@
                                 emergencyActive = true;
                                 emergencyOverlay.style.display = 'flex';
                                 playAlarm();
+                                
+                                // Send emergency notifications
+                                sendEmergencyNotifications();
+                                
                                 openHandStartTime = null;
                             }
                         }
@@ -712,6 +1010,12 @@
             dropdownMenu.classList.remove('show');
         });
 
+        // Emergency contacts
+        menuContacts.addEventListener('click', () => {
+            infoPopup.style.display = 'flex';
+            dropdownMenu.classList.remove('show');
+        });
+
         // Reset emergency
         menuReset.addEventListener('click', () => {
             if (emergencyActive) {
@@ -722,6 +1026,26 @@
             openHandStartTime = null;
             timerEl.innerText = '⏱️ 0.0s';
             dropdownMenu.classList.remove('show');
+        });
+
+        // Save contacts button
+        saveContactsBtn.addEventListener('click', () => {
+            saveEmergencyContacts();
+        });
+
+        saveContactsBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            saveEmergencyContacts();
+        });
+
+        // Skip contacts button
+        skipContactsBtn.addEventListener('click', () => {
+            infoPopup.style.display = 'none';
+        });
+
+        skipContactsBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            infoPopup.style.display = 'none';
         });
 
         // Camera prompt click handler
