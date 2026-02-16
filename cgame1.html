@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hand Hunter</title>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+<style>
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#canvas {
+    position: fixed;
+    inset: 0;
+}
+
+#hud {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    color: white;
+    font-size: 18px;
+    background: rgba(0,0,0,0.6);
+    padding: 8px 14px;
+    border-radius: 10px;
+}
+
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 28px;
+    display: none;
+}
+
+#overlay button {
+    margin-top: 20px;
+    font-size: 20px;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+video {
+    display: none;
+}
+
+</style>
+</head>
+
+<body>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+    <div id="score">Score: 0</div>
+    <div id="time">Time: 60</div>
+    <div id="lives">Lives: 3</div>
+</div>
+
+<div id="overlay">
+    <div id="finalText"></div>
+    <button onclick="restart()">Play Again</button>
+</div>
+
+<script>
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const scoreEl = document.getElementById("score");
+const timeEl = document.getElementById("time");
+const livesEl = document.getElementById("lives");
+
+const overlay = document.getElementById("overlay");
+const finalText = document.getElementById("finalText");
+
+
+// Resize
+function resize() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+}
+addEventListener("resize", resize);
+resize();
+
+
+// Game State
+let score = 0;
+let time = 60;
+let lives = 3;
+let gameOver = false;
+
+let speed = 2;
+
+
+// Targets
+let targets = [];
+
+function newTarget() {
+
+    const size = 20 + Math.random() * 15;
+
+    targets.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: size,
+        vx: (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1),
+        vy: (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1),
+        life: 180
+    });
+}
+
+
+// Spawn
+setInterval(() => {
+    if (!gameOver) newTarget();
+}, 1200);
+
+
+// Timer
+setInterval(() => {
+
+    if (gameOver) return;
+
+    time--;
+    timeEl.innerText = "Time: " + time;
+
+    if (time <= 0) endGame();
+
+}, 1000);
+
+
+// MediaPipe
+const hands = new Hands({
+    locateFile: file =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+
+hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7
+});
+
+hands.onResults(loop);
+
+
+// Camera
+const camera = new Camera(video, {
+    onFrame: async () => {
+        await hands.send({ image: video });
+    },
+    width: 1280,
+    height: 720
+});
+
+camera.start();
+
+
+// Main Loop
+function loop(results) {
+
+    if (gameOver) return;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Camera
+    ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
+
+
+    // Update targets
+    for (let i = targets.length-1; i >= 0; i--) {
+
+        const t = targets[i];
+
+        t.x += t.vx * speed;
+        t.y += t.vy * speed;
+
+        t.life--;
+
+
+        // Bounce
+        if (t.x < t.r || t.x > canvas.width - t.r)
+            t.vx *= -1;
+
+        if (t.y < t.r || t.y > canvas.height - t.r)
+            t.vy *= -1;
+
+
+        // Expired
+        if (t.life <= 0) {
+
+            targets.splice(i,1);
+
+            lives--;
+            livesEl.innerText = "Lives: " + lives;
+
+            if (lives <= 0) endGame();
+
+            continue;
+        }
+
+
+        // Draw
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.r, 0, Math.PI*2);
+        ctx.fillStyle = "orange";
+        ctx.fill();
+    }
+
+
+    // Hand
+    if (results.multiHandLandmarks.length) {
+
+        const p = results.multiHandLandmarks[0][8];
+
+        const x = p.x * canvas.width;
+        const y = p.y * canvas.height;
+
+
+        // Finger
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI*2);
+        ctx.fillStyle = "lime";
+        ctx.fill();
+
+
+        // Hit detection
+        for (let i = targets.length-1; i >= 0; i--) {
+
+            const t = targets[i];
+
+            const dx = x - t.x;
+            const dy = y - t.y;
+
+            if (Math.hypot(dx,dy) < t.r + 7) {
+
+                targets.splice(i,1);
+
+                score += 10;
+                speed += 0.05;
+
+                scoreEl.innerText = "Score: " + score;
+            }
+        }
+    }
+}
+
+
+// End Game
+function endGame() {
+
+    gameOver = true;
+
+    overlay.style.display = "flex";
+
+    finalText.innerText =
+        "Game Over\nScore: " + score;
+}
+
+
+// Restart
+function restart() {
+
+    score = 0;
+    time = 60;
+    lives = 3;
+    speed = 2;
+
+    targets = [];
+
+    gameOver = false;
+
+    scoreEl.innerText = "Score: 0";
+    timeEl.innerText = "Time: 60";
+    livesEl.innerText = "Lives: 3";
+
+    overlay.style.display = "none";
+}
+
+</script>
+
+</body>
+</html>
