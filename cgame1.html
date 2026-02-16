@@ -499,6 +499,28 @@
             animation: pulse 1s infinite;
             white-space: nowrap;
         }
+        .last-life-warning {
+            position: absolute;
+            top: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 50, 50, 0.95);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 40px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            z-index: 51;
+            display: none;
+            animation: pulse 0.8s infinite;
+            white-space: nowrap;
+            border: 2px solid #ffaaaa;
+            box-shadow: 0 0 30px #ff0000;
+        }
+        .last-life-warning span {
+            font-size: 2rem;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -538,6 +560,9 @@
 
     <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND DETECTED</div>
     <div id="lowTimeWarning" class="low-time-warning">⚠️ LOW TIME! ⚠️</div>
+    <div id="lastLifeWarning" class="last-life-warning">
+        <span>⚠️</span> LAST LIFE! BE CAREFUL! <span>⚠️</span>
+    </div>
     <div class="gesture-hint" id="gestureHint">
         ✌️ peace = start/restart &nbsp; ✊ fist = STOP &nbsp; (hold)
     </div>
@@ -697,6 +722,7 @@
     const restartBtn = document.getElementById('restartBtn');
     const pauseIndicator = document.getElementById('pauseIndicator');
     const lowTimeWarning = document.getElementById('lowTimeWarning');
+    const lastLifeWarning = document.getElementById('lastLifeWarning');
     const hintEl = document.getElementById('gestureHint');
     const permissionMsg = document.getElementById('permissionMessage');
     const cameraPrompt = document.getElementById('cameraPrompt');
@@ -714,7 +740,6 @@
     const peaceCalibrationOverlay = document.getElementById('peaceCalibrationOverlay');
     
     const startPrompt = document.getElementById('startPrompt');
-    const instructionsNextBtn = document.getElementById('instructionsNextBtn');
     const fistCalibrationSkipBtn = document.getElementById('fistCalibrationSkipBtn');
     const closeTimerSpan = document.getElementById('closeTimer');
 
@@ -910,8 +935,8 @@
     // ----- GAME CONSTANTS -----
     const INIT_TIME = 30;
     const INIT_LIVES = 3;
-    const TIME_PER_POP = 3; // Changed to 3 seconds
-    const LOW_TIME_THRESHOLD = 12; // Show warning below 12 seconds
+    const TIME_PER_POP = 3;
+    const LOW_TIME_THRESHOLD = 12;
     const ORANGE_RADIUS = isMobile ? 25 : 30;
     const RED_RADIUS = isMobile ? 23 : 28;
 
@@ -1008,6 +1033,7 @@
         livesSpan.innerText = lives;
         timerSpan.innerText = timeLeft;
         updateTimeBar();
+        updateLastLifeWarning();
         spawnOrange();
         spawnRed();
     }
@@ -1045,6 +1071,7 @@
         livesSpan.innerText = lives;
         timerSpan.innerText = timeLeft;
         updateTimeBar();
+        updateLastLifeWarning();
         
         spawnOrange();
         spawnRed();
@@ -1067,6 +1094,7 @@
         gameoverDiv.style.visibility = 'visible';
         pauseIndicator.style.opacity = '0';
         lowTimeWarning.style.display = 'none';
+        lastLifeWarning.style.display = 'none';
         playFistStopSound();
     }
 
@@ -1079,10 +1107,21 @@
         livesSpan.innerText = lives;
         playRedHitSound();
         
+        // Show last life warning when only 1 life remains
+        updateLastLifeWarning();
+        
         if (lives <= 0) {
             triggerGameOver();
         } else {
             spawnRed();
+        }
+    }
+
+    function updateLastLifeWarning() {
+        if (lives === 1 && gameActive && !gamePaused) {
+            lastLifeWarning.style.display = 'block';
+        } else {
+            lastLifeWarning.style.display = 'none';
         }
     }
 
@@ -1520,6 +1559,7 @@
                 timeLeft = INIT_TIME; 
                 lives--; 
                 livesSpan.innerText = lives; 
+                updateLastLifeWarning();
                 if (lives <= 0) triggerGameOver();
                 else {
                     yellowAlertIntensity = 1.0;
