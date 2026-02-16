@@ -9,7 +9,6 @@
         :root {
             --primary: #3498db;
             --secondary: #2ecc71;
-            --dark: #2c3e50;
         }
 
         * {
@@ -33,12 +32,52 @@
             border-radius: 20px;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 380px;
+            width: 100%;
         }
 
-        .qr-container img {
+        /* QR Box */
+        #qrcode {
+            margin: 0 auto 25px;
             width: 250px;
-            max-width: 90%;
-            margin-bottom: 30px;
+            height: 250px;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s ease;
+            font-size: 15px;
+        }
+
+        .visit-btn {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .visit-btn:hover {
+            background: #27ae60;
+        }
+
+        .share-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .share-btn:hover {
+            background: #2980b9;
         }
 
         .back-btn {
@@ -62,24 +101,83 @@
                 padding: 40px 20px;
             }
 
-            .qr-container img {
+            #qrcode {
                 width: 200px;
+                height: 200px;
             }
         }
     </style>
 </head>
+
 <body>
 
-    <div class="qr-container">
-        <!-- Replace this image with your actual QR code image file -->
-        <img src="instagram.png" alt="Instagram QR Code">
+<div class="qr-container">
 
-        <br>
+    <!-- QR Code Will Appear Here -->
+    <div id="qrcode"></div>
 
-        <a href="linktree.html" class="back-btn">
-            ← Go Back
+    <!-- Buttons -->
+    <div class="btn-group">
+
+        <a href="https://www.instagram.com/innovation_hub_calicut?igsh=MWp3MDdnZWdqaXZwaw=="
+           target="_blank"
+           class="action-btn visit-btn">
+            📷 Visit Instagram
         </a>
+
+        <button onclick="shareProfile()" class="action-btn share-btn">
+            🔗 Share Profile
+        </button>
+
     </div>
+
+    <a href="linktree.html" class="back-btn">
+        ← Go Back
+    </a>
+
+</div>
+
+
+<!-- QR Generator Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+
+const instagramURL = "https://www.instagram.com/innovation_hub_calicut?igsh=MWp3MDdnZWdqaXZwaw==";
+
+/* Generate QR */
+new QRCode(document.getElementById("qrcode"), {
+    text: instagramURL,
+    width: 250,
+    height: 250,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+});
+
+
+/* Share Function */
+function shareProfile() {
+
+    const text = "Check out Innovation Hub Calicut on Instagram!";
+
+    if (navigator.share) {
+
+        navigator.share({
+            title: "Innovation Hub Calicut",
+            text: text,
+            url: instagramURL
+        });
+
+    } else {
+
+        navigator.clipboard.writeText(instagramURL);
+        alert("Instagram link copied!");
+
+    }
+}
+
+</script>
 
 </body>
 </html>
