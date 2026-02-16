@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand SOS · project Narendran</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b0e14;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        /* main container: full height, 92% width */
+        .camera-frame {
+            height: 100vh;
+            width: 92%;
+            display: flex;
+            flex-direction: column;
+            background: #1a1f2b;
+            border-radius: 2rem 2rem 0 0;
+            overflow: hidden;
+            box-shadow: 0 25px 40px -10px black;
+        }
+
+        /* canvas occupies all available space, video is painted behind */
+        .canvas-wrapper {
+            flex: 1 1 0;
+            min-height: 0;   /* firefox flex overflow fix */
+            position: relative;
+            background: #202432;
+        }
+
+        #handCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;          /* covers area without stretching, matches video */
+            background: #2a2f3a;         /* fallback while loading */
+        }
+
+        /* status bar – small but visible */
+        .status-area {
+            padding: 12px 20px;
+            background: #10131c;
+            color: #b9c6db;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+            border-top: 1px solid #2f3a4b;
+        }
+
+        .gesture-hint {
+            background: #262e3d;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #c6d9ff;
+        }
+
+        .timer-badge {
+            background: #1f2738;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #b1eaff;
+            box-shadow: inset 0 2px 3px #0a0e14;
+        }
+
+        /* red emergency overlay – covers the whole frame, but hidden by default */
+        #emergencyOverlay {
+            position: fixed;          /* covers viewport independently */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ef4444;
+            background-image: repeating-linear-gradient(45deg, #ff0000 0px, #ff0000 25px, #cc0000 25px, #cc0000 50px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            font-size: 6vw;
+            font-weight: 900;
+            color: white;
+            text-shadow: 6px 6px 0 #4a0000;
+            letter-spacing: 8px;
+            flex-direction: column;
+            border: 12px solid #a30000;
+            box-sizing: border-box;
+            backdrop-filter: blur(2px);
+            animation: pulseAlarm 1.2s infinite alternate;
+        }
+
+        #emergencyOverlay span {
+            font-size: 3vw;
+            background: rgba(0,0,0,0.4);
+            padding: 0.5em 2em;
+            border-radius: 60px;
+            margin-top: 2rem;
+            font-weight: 400;
+            letter-spacing: 4px;
+            border: 2px dashed white;
+        }
+
+        @keyframes pulseAlarm {
+            0% { opacity: 0.95; filter: brightness(1); }
+            100% { opacity: 1; filter: brightness(1.3); }
+        }
+
+        /* small watermark + name */
+        .note {
+            font-size: 0.9rem;
+            color: #5d6f8f;
+            margin-left: 1rem;
+        }
+        .signature {
+            color: #b3ceff;
+            font-weight: 400;
+            background: #1e2638;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            border: 1px solid #3a4865;
+        }
+        .signature i {
+            color: #ffd966;
+            font-style: normal;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="camera-frame">
+    <div class="canvas-wrapper">
+        <canvas id="handCanvas"></canvas>
+    </div>
+    <div class="status-area">
+        <div class="gesture-hint" id="gestureDisplay">✋ waiting for hand</div>
+        <div class="timer-badge" id="timerDisplay">⏱️ 0.0s</div>
+        <div class="signature"><i>✋</i> project by Narendran</div>
+    </div>
+</div>
+
+<!-- fullscreen red emergency overlay -->
+<div id="emergencyOverlay">
+    🆘 SOS EMERGENCY 🆘
+    <span>🔊 alarm sound · show 2 fingers to reset</span>
+</div>
+
+<!-- Include MediaPipe Hands and Camera utilities -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<script>
+    (function() {
+        // ---------- DOM elements ----------
+        const canvas = document.getElementById('handCanvas');
+        const ctx = canvas.getContext('2d');
+        const gestureEl = document.getElementById('gestureDisplay');
+        const timerEl = document.getElementById('timerDisplay');
+        const emergencyOverlay = document.getElementById('emergencyOverlay');
+
+        // ---------- state variables ----------
+        let lastGesture = 'unknown';
+        let openHandStartTime = null;          // timestamp when open hand first detected (ms)
+        const OPEN_HAND_DURATION_MS = 3000;     // 3 seconds
+        let emergencyActive = false;            // is red screen & alarm on?
+        let alarmSound = null;                  // will be created after user interaction
+
+        // ---------- audio (alarm) ----------
+        function initAlarm() {
+            if (alarmSound) return;
+            try {
+                // create a simple oscillating tone (web audio api) to avoid external files
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const gainNode = audioCtx.createGain();
+                const oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.value = 440; // A4
+                gainNode.gain.value = 0.3;        // comfortable but alarming
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                // loop manually? we want continuous alarm. we'll use a simple loop by restarting
+                // but easier: store context and create looping scheduled buffer?
+                // for simplicity, we'll create an AudioBuffer with a harsh tone and loop it.
+                // But Web Audio loop is cleaner: use AudioBufferSourceNode with loop = true.
+                // However we need to stop it later. Let's build a loopable buffer.
+                const sampleRate = audioCtx.sampleRate;
+                const duration = 1.0; // 1 second sample
+                const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
+                const channel = buffer.getChannelData(0);
+                // fill with alternating square-ish wave to sound like alarm
+                for (let i = 0; i < buffer.length; i++) {
+                    const t = i / sampleRate;
+                    // alternating 300 Hz and 450 Hz harsh
+                    const freq = (Math.floor(t * 6) % 2 === 0) ? 380 : 520;
+                    channel[i] = Math.sin(2 * Math.PI * freq * t) * 0.5 + Math.sin(4 * Math.PI * 280 * t) * 0.2;
+                }
+
+                const sourceNode = audioCtx.createBufferSource();
+                sourceNode.buffer = buffer;
+                sourceNode.loop = true;
+                sourceNode.connect(gainNode);
+
+                alarmSound = {
+                    context: audioCtx,
+                    source: sourceNode,
+                    gain: gainNode,
+                    isPlaying: false
+                };
+
+                // note: audio context starts suspended. we'll resume on first interaction or emergency
+                document.addEventListener('click', () => {
+                    if (alarmSound && alarmSound.context.state === 'suspended') {
+                        alarmSound.context.resume();
+                    }
+                }, { once: true });
+            } catch (e) {
+                console.warn('Web Audio not supported, no alarm sound.');
+                alarmSound = null;
+            }
+        }
+
+        function playAlarm() {
+            if (!alarmSound) return;
+            const { context, source, gain } = alarmSound;
+            if (context.state === 'suspended') {
+                context.resume().then(() => {
+                    if (!alarmSound.isPlaying) {
+                        source.start(0);
+                        alarmSound.isPlaying = true;
+                    }
+                });
+            } else if (!alarmSound.isPlaying) {
+                source.start(0);
+                alarmSound.isPlaying = true;
+            }
+        }
+
+        function stopAlarm() {
+            if (!alarmSound || !alarmSound.isPlaying) return;
+            try {
+                alarmSound.source.stop();
+            } catch (e) {}
+            // recreate source for next alarm
+            const audioCtx = alarmSound.context;
+            const gainNode = alarmSound.gain;
+            const newBuffer = alarmSound.source.buffer; // same buffer
+            const newSource = audioCtx.createBufferSource();
+            newSource.buffer = newBuffer;
+            newSource.loop = true;
+            newSource.connect(gainNode);
+            alarmSound.source = newSource;
+            alarmSound.isPlaying = false;
+        }
+
+        // ---------- hand detection logic (MediaPipe) ----------
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onHandResults);
+
+        // camera init
+        const camera = new Camera(document.createElement('video'), {
+            onFrame: async () => {
+                if (!emergencyActive) { // we still process hands to detect reset even when emergency is active? yes: we want to detect 2-finger stop.
+                    await hands.send({ image: video });
+                } else {
+                    // even in emergency, we process hands so we can exit on two fingers
+                    await hands.send({ image: video });
+                }
+            },
+            width: 1280,
+            height: 720
+        });
+
+        // we need the video element created by Camera, but we also need its reference
+        let video;
+        camera.video.addEventListener('loadedmetadata', () => {
+            video = camera.video;
+        });
+
+        // start camera
+        camera.start().then(() => {
+            initAlarm(); // prepare audio after user interaction (camera asks permission, that's a user gesture)
+        }).catch(e => {
+            gestureEl.innerText = '🚫 camera access denied';
+        });
+
+        // ---------- drawing and landmark detection ----------
+        function onHandResults(results) {
+            // clear canvas and draw video
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (results.image) {
+                ctx.save();
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // default no gesture
+            let currentGesture = 'no hand';
+            let fingerCount = 0;
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                // we take the first hand
+                const landmarks = results.multiHandLandmarks[0];
+
+                // draw landmarks + dotted lines
+                drawHandConnections(landmarks, results.multiHandedness?.[0]?.index);
+
+                // count extended fingers (simple heuristic)
+                // indices: thumb: 4, index: 8, middle: 12, ring: 16, pinky: 20
+                const tipIds = [4, 8, 12, 16, 20];
+                const fingerTips = tipIds.map(id => landmarks[id]);
+                const fingerBase = [2, 5, 9, 13, 17].map(id => landmarks[id]); // approximate base
+
+                let extended = 0;
+                // thumb: compare x coordinate (for right/left handedness) – simplified: check if tip.x is more left/right relative to base?
+                // we do rough: if hand is right, thumb extended when tip.x > base.x; if left, opposite.
+                // for demo we count all fingers if tip y < base y (except thumb we use x)
+                for (let i = 0; i < 5; i++) {
+                    const tip = fingerTips[i];
+                    const base = fingerBase[i];
+                    if (i === 0) { // thumb
+                        // compare x: depends on handedness. we use wrist (0) and index base to guess orientation
+                        const wrist = landmarks[0];
+                        const indexBase = landmarks[5];
+                        // if wrist.x < indexBase.x => palm facing? Actually simpler: if tip.x > base.x for right hand? but we just trust y? no, thumb is sideways.
+                        // we use a very common approach: if thumb tip is left of thumb base for left hand etc. but we skip precise, we treat all fingers with y compare except thumb? 
+                        // But to make open hand reliable we combine with simple logic: open hand = all fingers extended with approx direction.
+                        // easier: count fingers if tip.y < base.y for index,middle,ring,pinky (typical) and for thumb use separate rule:
+                        // assume right hand by default, and if tip.x > base.x then extended. 
+                        // we'll consider thumb extended if tip.x > base.x + 0.03 (heuristic)
+                        if (tip.x > base.x + 0.03) extended++;
+                    } else {
+                        // for other four: tip y should be higher (smaller y) than base y (since y=0 is top)
+                        if (tip.y < base.y - 0.03) extended++; 
+                    }
+                }
+
+                fingerCount = extended;
+
+                // determine gesture:
+                if (fingerCount === 5) currentGesture = 'open hand';
+                else if (fingerCount === 2) currentGesture = 'two fingers';
+                else currentGesture = `${fingerCount} fingers`;
+            } else {
+                currentGesture = 'no hand';
+            }
+
+            // update UI
+            gestureEl.innerText = `✋ ${currentGesture}`;
+
+            // ---------- emergency logic ----------
+            const now = performance.now(); // milliseconds
+
+            if (!emergencyActive) {
+                if (currentGesture === 'open hand') {
+                    if (openHandStartTime === null) {
+                        openHandStartTime = now;
+                    } else {
+                        const elapsed = (now - openHandStartTime) / 1000;
+                        timerEl.innerText = `⏱️ ${elapsed.toFixed(1)}s`;
+                        if (elapsed >= 3.0) {
+                            // trigger emergency
+                            emergencyActive = true;
+                            emergencyOverlay.style.display = 'flex';
+                            playAlarm();
+                            openHandStartTime = null; // reset timer
+                        }
+                    }
+                } else {
+                    // gesture lost or different → reset timer
+                    openHandStartTime = null;
+                    timerEl.innerText = '⏱️ 0.0s';
+                }
+            } else {
+                // EMERGENCY ACTIVE: check for two fingers to reset
+                timerEl.innerText = '⏱️ 🔴 SOS';
+                if (currentGesture === 'two fingers') {
+                    // stop emergency, hide red, stop alarm
+                    emergencyActive = false;
+                    emergencyOverlay.style.display = 'none';
+                    stopAlarm();
+                    openHandStartTime = null; // also reset timer
+                    timerEl.innerText = '⏱️ 0.0s';
+                }
+            }
+
+            // If no hand, ensure timer reset if not emergency
+            if (!emergencyActive && currentGesture === 'no hand') {
+                openHandStartTime = null;
+                timerEl.innerText = '⏱️ 0.0s';
+            }
+        }
+
+        // draw landmarks and dotted lines
+        function drawHandConnections(landmarks, handedness) {
+            if (!landmarks) return;
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // connections for hand (from MediaPipe)
+            const connections = [
+                [0,1],[1,2],[2,3],[3,4],       // thumb
+                [0,5],[5,6],[6,7],[7,8],       // index
+                [5,9],[9,10],[10,11],[11,12],  // middle
+                [9,13],[13,14],[14,15],[15,16],// ring
+                [13,17],[17,18],[18,19],[19,20],// pinky
+                [0,17],[2,5]                    // palm
+            ];
+
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#fff9d0';
+            ctx.setLineDash([8, 6]); // dotted line
+            ctx.beginPath();
+
+            // draw dotted lines
+            for (let [i, j] of connections) {
+                const p1 = landmarks[i];
+                const p2 = landmarks[j];
+                if (p1 && p2) {
+                    ctx.moveTo(p1.x * w, p1.y * h);
+                    ctx.lineTo(p2.x * w, p2.y * h);
+                }
+            }
+            ctx.stroke();
+
+            // draw points (solid)
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#80deea';
+            ctx.strokeStyle = '#01579b';
+            ctx.lineWidth = 1.5;
+            for (let lm of landmarks) {
+                ctx.beginPath();
+                ctx.arc(lm.x * w, lm.y * h, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#aaf0f0';
+                ctx.fill();
+                ctx.strokeStyle = '#002884';
+                ctx.stroke();
+            }
+        }
+
+        // adjust canvas size to wrapper
+        function resizeCanvas() {
+            const wrapper = document.querySelector('.canvas-wrapper');
+            if (wrapper) {
+                canvas.width = wrapper.clientWidth;
+                canvas.height = wrapper.clientHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // also ensure video stream is drawn even before hand detection
+        // but hand results already draw image.
+
+        // additional: stop alarm if emergency overlay hidden via two fingers already handled.
+    })();
+</script>
+</body>
+</html>
