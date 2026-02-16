@@ -1,307 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Hand Hunter</title>
-
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
-<style>
-
-html, body {
-    margin: 0;
-    padding: 0;
-    background: black;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-}
-
-#canvas {
-    position: fixed;
-    inset: 0;
-}
-
-#hud {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
-    color: white;
-    font-size: 18px;
-    background: rgba(0,0,0,0.6);
-    padding: 8px 14px;
-    border-radius: 10px;
-}
-
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 28px;
-    display: none;
-}
-
-#overlay button {
-    margin-top: 20px;
-    font-size: 20px;
-    padding: 10px 20px;
-    cursor: pointer;
-}
-
-video {
-    display: none;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAND POP · timer pauses when hand lost</title>
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #0b0e14;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            touch-action: none;
+        }
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            cursor: none;
+        }
+        /* game dashboard */
+        #dashboard {
+            position: fixed;
+            top: 16px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            pointer-events: none;
+            z-index: 20;
+            flex-wrap: wrap;
+            padding: 0 16px;
+        }
+        .panel {
+            background: rgba(8, 12, 24, 0.75);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 180, 70, 0.3);
+            border-radius: 60px;
+            padding: 10px 28px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.7rem;
+            letter-spacing: 1px;
+        }
+        .panel span {
+            color: #ffb347;
+            font-weight: 800;
+            margin-left: 6px;
+            min-width: 50px;
+            text-align: center;
+        }
+        .lives {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: 6px;
+        }
+        .heart {
+            color: #ff5e6b;
+            font-size: 2rem;
+            filter: drop-shadow(0 0 8px #ff3b4a);
+        }
+        .time-bar-bg {
+            width: 120px;
+            height: 14px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-left: 8px;
+            border: 1px solid rgba(255,200,100,0.3);
+        }
+        .time-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #6ef0a0, #ffcd7e);
+            border-radius: 20px;
+            transition: width 0.1s linear;
+        }
+        /* game over overlay */
+        #gameover {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            visibility: hidden;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .gameover-card {
+            background: #1a1f2e;
+            padding: 50px 70px;
+            border-radius: 60px;
+            border: 2px solid #ffaa33;
+            text-align: center;
+            box-shadow: 0 30px 50px black;
+        }
+        .gameover-card h1 {
+            font-size: 4rem;
+            color: #ffc164;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px orange;
+        }
+        .gameover-card p {
+            font-size: 2.2rem;
+            color: white;
+            margin: 10px 0;
+        }
+        #restartBtn {
+            background: #ffaa33;
+            border: none;
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 20px 50px;
+            border-radius: 60px;
+            color: #0b0e14;
+            cursor: pointer;
+            box-shadow: 0 0 30px #ffaa33;
+            transition: 0.2s;
+            margin-top: 20px;
+        }
+        #restartBtn:hover {
+            background: #ffbf5e;
+            transform: scale(1.05);
+            box-shadow: 0 0 45px #ffb347;
+        }
+        .hint {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255,255,240,0.5);
+            font-size: 1.1rem;
+            z-index: 15;
+            text-shadow: 0 2px 5px black;
+        }
+        .pause-indicator {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 50, 50, 0.75);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 60px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            backdrop-filter: blur(4px);
+            border: 1px solid #ff8a8a;
+            z-index: 25;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        video { display: none; }
+    </style>
 </head>
-
 <body>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas"></canvas>
 
-<div id="hud">
-    <div id="score">Score: 0</div>
-    <div id="time">Time: 60</div>
-    <div id="lives">Lives: 3</div>
+<!-- Dashboard -->
+<div id="dashboard">
+    <div class="panel">
+        ⏳<span id="timerDisplay">30</span>s
+        <div class="time-bar-bg"><div id="timeFill" class="time-fill" style="width:100%"></div></div>
+    </div>
+    <div class="panel">
+        ❤️ <span id="livesDisplay">3</span>
+    </div>
+    <div class="panel">
+        🍊<span id="scoreDisplay">0</span>
+    </div>
 </div>
 
-<div id="overlay">
-    <div id="finalText"></div>
-    <button onclick="restart()">Play Again</button>
+<!-- Pause indicator (shows when hand missing) -->
+<div id="pauseIndicator" class="pause-indicator">⏸️ PAUSED · no hand</div>
+
+<!-- Game over screen -->
+<div id="gameover">
+    <div class="gameover-card">
+        <h1>GAME OVER</h1>
+        <p>🍊 <span id="finalScore">0</span></p>
+        <p>⏱️ time's up / no lives</p>
+        <button id="restartBtn">↻ PLAY AGAIN</button>
+    </div>
 </div>
+
+<div class="hint">👆 finger controls timer · hides when hand lost · pop orange ball</div>
 
 <script>
+(function() {
+    // ----- DOM elements -----
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const timerSpan = document.getElementById('timerDisplay');
+    const livesSpan = document.getElementById('livesDisplay');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const finalScoreSpan = document.getElementById('finalScore');
+    const timeFill = document.getElementById('timeFill');
+    const gameoverDiv = document.getElementById('gameover');
+    const restartBtn = document.getElementById('restartBtn');
+    const pauseIndicator = document.getElementById('pauseIndicator');
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+    // ----- Game constants -----
+    const INIT_TIME = 30;           // seconds
+    const INIT_LIVES = 3;
+    const TIME_PER_POP = 2;         // seconds added when ball popped
+    const BALL_RADIUS = 32;
 
-const scoreEl = document.getElementById("score");
-const timeEl = document.getElementById("time");
-const livesEl = document.getElementById("lives");
+    // ----- Game state -----
+    let score = 0;
+    let lives = INIT_LIVES;
+    let timeLeft = INIT_TIME;
+    let gameActive = true;
+    let lastTimestamp = 0;
 
-const overlay = document.getElementById("overlay");
-const finalText = document.getElementById("finalText");
+    // Flag: is hand detected? (updated in onResults)
+    let handDetected = false;
 
+    // Ball object (moving)
+    let ball = {
+        x: 400, y: 300, r: BALL_RADIUS,
+        vx: 0, vy: 0,
+        speed: 0.25
+    };
 
-// Resize
-function resize() {
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
-}
-addEventListener("resize", resize);
-resize();
+    // finger tip position (mirrored)
+    let fingerPos = { x: -100, y: -100, valid: false };
 
+    // ----- helper: resize canvas -----
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // keep ball inside
+        const margin = ball.r + 10;
+        if (ball.x < margin) ball.x = margin;
+        if (ball.x > canvas.width - margin) ball.x = canvas.width - margin;
+        if (ball.y < margin) ball.y = margin;
+        if (ball.y > canvas.height - margin) ball.y = canvas.height - margin;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-// Game State
-let score = 0;
-let time = 60;
-let lives = 3;
-let gameOver = false;
-
-let speed = 2;
-
-
-// Targets
-let targets = [];
-
-function newTarget() {
-
-    const size = 20 + Math.random() * 15;
-
-    targets.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: size,
-        vx: (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1),
-        vy: (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1),
-        life: 180
-    });
-}
-
-
-// Spawn
-setInterval(() => {
-    if (!gameOver) newTarget();
-}, 1200);
-
-
-// Timer
-setInterval(() => {
-
-    if (gameOver) return;
-
-    time--;
-    timeEl.innerText = "Time: " + time;
-
-    if (time <= 0) endGame();
-
-}, 1000);
-
-
-// MediaPipe
-const hands = new Hands({
-    locateFile: file =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-});
-
-hands.setOptions({
-    maxNumHands: 1,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.7
-});
-
-hands.onResults(loop);
-
-
-// Camera
-const camera = new Camera(video, {
-    onFrame: async () => {
-        await hands.send({ image: video });
-    },
-    width: 1280,
-    height: 720
-});
-
-camera.start();
-
-
-// Main Loop
-function loop(results) {
-
-    if (gameOver) return;
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // Camera
-    ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
-
-
-    // Update targets
-    for (let i = targets.length-1; i >= 0; i--) {
-
-        const t = targets[i];
-
-        t.x += t.vx * speed;
-        t.y += t.vy * speed;
-
-        t.life--;
-
-
-        // Bounce
-        if (t.x < t.r || t.x > canvas.width - t.r)
-            t.vx *= -1;
-
-        if (t.y < t.r || t.y > canvas.height - t.r)
-            t.vy *= -1;
-
-
-        // Expired
-        if (t.life <= 0) {
-
-            targets.splice(i,1);
-
-            lives--;
-            livesEl.innerText = "Lives: " + lives;
-
-            if (lives <= 0) endGame();
-
-            continue;
-        }
-
-
-        // Draw
-        ctx.beginPath();
-        ctx.arc(t.x, t.y, t.r, 0, Math.PI*2);
-        ctx.fillStyle = "orange";
-        ctx.fill();
+    // ----- spawn ball with random direction -----
+    function spawnBall() {
+        const margin = ball.r + 20;
+        ball.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        ball.y = Math.random() * (canvas.height - 2 * margin) + margin;
+        const angle = Math.random() * 2 * Math.PI;
+        ball.speed = 0.2 + Math.random() * 0.3;
+        ball.vx = Math.cos(angle) * ball.speed;
+        ball.vy = Math.sin(angle) * ball.speed;
     }
 
+    // initial ball
+    spawnBall();
 
-    // Hand
-    if (results.multiHandLandmarks.length) {
+    // ----- game over trigger -----
+    function gameOver() {
+        if (!gameActive) return;
+        gameActive = false;
+        finalScoreSpan.innerText = score;
+        gameoverDiv.style.visibility = 'visible';
+        pauseIndicator.style.opacity = '0'; // hide pause when gameover
+    }
 
-        const p = results.multiHandLandmarks[0][8];
+    // ----- restart -----
+    function restartGame() {
+        gameActive = true;
+        gameoverDiv.style.visibility = 'hidden';
+        score = 0;
+        lives = INIT_LIVES;
+        timeLeft = INIT_TIME;
+        scoreSpan.innerText = score;
+        livesSpan.innerText = lives;
+        timerSpan.innerText = timeLeft;
+        updateTimeBar();
+        spawnBall();
+        handDetected = false;
+        fingerPos.valid = false;
+        pauseIndicator.style.opacity = '0';
+    }
 
-        const x = p.x * canvas.width;
-        const y = p.y * canvas.height;
+    // update time bar
+    function updateTimeBar() {
+        let percent = Math.max(0, (timeLeft / INIT_TIME) * 100);
+        timeFill.style.width = percent + '%';
+    }
 
+    // ----- collision & pop logic -----
+    function checkPopAndMove() {
+        if (!gameActive) return;
 
-        // Finger
-        ctx.beginPath();
-        ctx.arc(x, y, 7, 0, Math.PI*2);
-        ctx.fillStyle = "lime";
-        ctx.fill();
+        // Move ball (always moves, even if hand not detected)
+        ball.x += ball.vx;
+        ball.y += ball.vy;
 
+        // Bounce with damping
+        const damp = 0.98;
+        if (ball.x < ball.r) {
+            ball.x = ball.r;
+            ball.vx *= -0.8;
+        }
+        if (ball.x > canvas.width - ball.r) {
+            ball.x = canvas.width - ball.r;
+            ball.vx *= -0.8;
+        }
+        if (ball.y < ball.r) {
+            ball.y = ball.r;
+            ball.vy *= -0.8;
+        }
+        if (ball.y > canvas.height - ball.r) {
+            ball.y = canvas.height - ball.r;
+            ball.vy *= -0.8;
+        }
 
-        // Hit detection
-        for (let i = targets.length-1; i >= 0; i--) {
+        // Pop only if hand is valid
+        if (fingerPos.valid) {
+            const dx = fingerPos.x - ball.x;
+            const dy = fingerPos.y - ball.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
 
-            const t = targets[i];
+            if (dist < ball.r + 18) {
+                // POP!
+                score++;
+                scoreSpan.innerText = score;
 
-            const dx = x - t.x;
-            const dy = y - t.y;
+                // add time (capped at 45)
+                timeLeft = Math.min(timeLeft + TIME_PER_POP, 45);
+                timerSpan.innerText = Math.floor(timeLeft * 10) / 10;
+                updateTimeBar();
 
-            if (Math.hypot(dx,dy) < t.r + 7) {
+                // teleport ball & new direction
+                const margin = ball.r + 20;
+                ball.x = Math.random() * (canvas.width - 2 * margin) + margin;
+                ball.y = Math.random() * (canvas.height - 2 * margin) + margin;
+                const angle = Math.random() * 2 * Math.PI;
+                ball.speed = 0.2 + Math.random() * 0.3;
+                ball.vx = Math.cos(angle) * ball.speed;
+                ball.vy = Math.sin(angle) * ball.speed;
 
-                targets.splice(i,1);
-
-                score += 10;
-                speed += 0.05;
-
-                scoreEl.innerText = "Score: " + score;
+                // flash feedback
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 255, 180, 0.4)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
             }
         }
     }
-}
 
+    // ----- MediaPipe setup -----
+    const hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
 
-// End Game
-function endGame() {
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.6,
+        minTrackingConfidence: 0.6
+    });
 
-    gameOver = true;
+    hands.onResults((results) => {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    overlay.style.display = "flex";
+        // Draw mirrored camera
+        if (results.image) {
+            ctx.save();
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = '#0f131f';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
-    finalText.innerText =
-        "Game Over\nScore: " + score;
-}
+        // Update hand detection status
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            handDetected = true;
+            const landmarks = results.multiHandLandmarks[0];
+            const indexTip = landmarks[8];  // index fingertip
 
+            // convert to canvas with mirror
+            const rawX = indexTip.x * canvas.width;
+            const rawY = indexTip.y * canvas.height;
+            const mirroredX = canvas.width - rawX;
 
-// Restart
-function restart() {
+            fingerPos.x = mirroredX;
+            fingerPos.y = rawY;
+            fingerPos.valid = true;
 
-    score = 0;
-    time = 60;
-    lives = 3;
-    speed = 2;
+            // Draw fingertip pointer
+            ctx.beginPath();
+            ctx.arc(fingerPos.x, fingerPos.y, 15, 0, 2 * Math.PI);
+            ctx.fillStyle = '#00ffe0';
+            ctx.shadowColor = '#0ff';
+            ctx.shadowBlur = 30;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 4;
+            ctx.stroke();
 
-    targets = [];
+            // inner dot
+            ctx.beginPath();
+            ctx.arc(fingerPos.x, fingerPos.y, 6, 0, 2*Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+        } else {
+            handDetected = false;
+            fingerPos.valid = false;
+        }
 
-    gameOver = false;
+        // Draw the ball
+        ctx.shadowColor = '#ffaa33';
+        ctx.shadowBlur = 30;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, 2*Math.PI);
+        ctx.fillStyle = '#ff9000';
+        ctx.fill();
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(ball.x-6, ball.y-6, ball.r-10, 0, 2*Math.PI);
+        ctx.fillStyle = '#ffc87c';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // glare
+        ctx.beginPath();
+        ctx.arc(ball.x-10, ball.y-10, 7, 0, 2*Math.PI);
+        ctx.fillStyle = '#fffdeb';
+        ctx.globalAlpha = 0.35;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    });
 
-    scoreEl.innerText = "Score: 0";
-    timeEl.innerText = "Time: 60";
-    livesEl.innerText = "Lives: 3";
+    // Camera
+    const camera = new Camera(video, {
+        onFrame: async () => {
+            if (gameActive) await hands.send({ image: video });
+        },
+        width: 1280,
+        height: 720,
+        facingMode: 'user'
+    });
+    camera.start().catch(e => console.warn('camera error', e));
 
-    overlay.style.display = "none";
-}
+    // ----- GAME LOOP with timer that PAUSES when hand lost -----
+    function gameLoop(now) {
+        if (!lastTimestamp) {
+            lastTimestamp = now;
+            requestAnimationFrame(gameLoop);
+            return;
+        }
 
+        const deltaTime = now - lastTimestamp; // milliseconds
+        lastTimestamp = now;
+
+        if (gameActive) {
+            // ⏸️ TIME DECREMENT only if hand is detected!
+            if (handDetected) {
+                timeLeft -= deltaTime / 1000;
+                // show pause indicator with opacity 0 (hidden)
+                pauseIndicator.style.opacity = '0';
+            } else {
+                // hand lost → timer frozen, show indicator
+                pauseIndicator.style.opacity = '1';
+            }
+
+            // time out or negative check
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                // lose a life
+                lives--;
+                livesSpan.innerText = lives;
+
+                if (lives <= 0) {
+                    gameOver();
+                } else {
+                    // refill time partially (penalty)
+                    timeLeft = INIT_TIME * 0.7; // 21 seconds
+                    if (timeLeft < 5) timeLeft = 8;
+                }
+            }
+
+            // update display
+            timerSpan.innerText = timeLeft.toFixed(1);
+            updateTimeBar();
+
+            // move ball & check collisions (always, regardless of hand)
+            checkPopAndMove();
+
+            // extra lives check
+            if (lives <= 0) {
+                gameOver();
+            }
+        } else {
+            // game inactive: hide pause indicator
+            pauseIndicator.style.opacity = '0';
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+    requestAnimationFrame(gameLoop);
+
+    // restart button
+    restartBtn.addEventListener('click', () => {
+        restartGame();
+    });
+
+})();
 </script>
-
 </body>
 </html>
