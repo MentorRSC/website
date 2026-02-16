@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GESTURE STATES · mobile fix</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: #0a0d14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            touch-action: none;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            border: none;
+        }
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #141a26;
+            cursor: none;
+            touch-action: none;
+        }
+        #dashboard {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            pointer-events: none;
+            z-index: 20;
+            flex-wrap: wrap;
+            padding: 0 5px;
+        }
+        .panel {
+            background: rgba(8, 12, 24, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 180, 70, 0.4);
+            border-radius: 30px;
+            padding: 6px 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .panel span {
+            color: #ffb347;
+            font-weight: 800;
+            margin-left: 3px;
+            min-width: 30px;
+            text-align: center;
+        }
+        .time-bar-bg {
+            width: 60px;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-left: 3px;
+            border: 1px solid rgba(255,200,100,0.3);
+        }
+        .time-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #6ef0a0, #ffcd7e);
+            border-radius: 20px;
+            transition: width 0.1s linear;
+        }
+        .control-bar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 60;
+            pointer-events: auto;
+        }
+        .ctrl-btn {
+            background: #1e2a3a;
+            border: 2px solid #ffb347;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 10px black;
+            transition: 0.2s;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ctrl-btn.active {
+            background: #2f6b3e;
+            border-color: #a0ff9e;
+            color: #e8ffe8;
+        }
+        #musicBtn {
+            background: #2a2a4a;
+            border-color: #aa88ff;
+        }
+        #musicBtn.playing {
+            background: #4a3a8a;
+            border-color: #cc99ff;
+        }
+        .pause-indicator {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(200, 50, 50, 0.95);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: bold;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid #ff8a8a;
+            z-index: 25;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .gesture-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #eee;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            border: 1px solid #ffaa3380;
+            z-index: 30;
+            pointer-events: none;
+            font-weight: 500;
+            transition: opacity 0.8s;
+        }
+        .gesture-hint.fade {
+            opacity: 0;
+        }
+        #gameover {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            visibility: hidden;
+            border-radius: 0;
+        }
+        .gameover-card {
+            background: #1a1f2e;
+            padding: 30px 40px;
+            border-radius: 40px;
+            border: 2px solid #ffaa33;
+            text-align: center;
+            box-shadow: 0 15px 30px black;
+            max-width: 90%;
+        }
+        .gameover-card h1 {
+            font-size: 2.2rem;
+            color: #ffc164;
+            margin-bottom: 10px;
+        }
+        .gameover-card p {
+            font-size: 1.6rem;
+            color: white;
+        }
+        #restartBtn {
+            background: #ffaa33;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 12px 30px;
+            border-radius: 40px;
+            color: #0b0e14;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #restartBtn:hover {
+            background: #ffbf5e;
+            transform: scale(1.03);
+        }
+        video { 
+            display: none; 
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .permission-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 200;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <canvas id="canvas"></canvas>
+
+    <div class="control-bar">
+        <div id="toggleGameBtn" class="ctrl-btn active">⏹️ STOP</div>
+        <div id="musicBtn" class="ctrl-btn playing">🎵 ON</div>
+    </div>
+
+    <div id="dashboard">
+        <div class="panel">
+            ⏳<span id="timerDisplay">30</span>s
+            <div class="time-bar-bg"><div id="timeFill" class="time-fill" style="width:100%"></div></div>
+        </div>
+        <div class="panel">
+            ❤️ <span id="livesDisplay">3</span>
+        </div>
+        <div class="panel">
+            🍊<span id="scoreDisplay">0</span>
+        </div>
+    </div>
+
+    <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND · waiting</div>
+    <div class="gesture-hint" id="gestureHint">
+        ✌️ peace = restart &nbsp; ✊ fist = STOP &nbsp; (hold)
+    </div>
+
+    <div id="gameover">
+        <div class="gameover-card">
+            <h1>GAME OVER</h1>
+            <p>🍊 <span id="finalScore">0</span></p>
+            <p>✌️ show peace sign to restart</p>
+            <button id="restartBtn">↻ PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <video id="video" autoplay playsinline></video>
+    <div id="permissionMessage" class="permission-message">📷 Camera access required<br><small>Please allow camera access</small></div>
+</div>
+
+<script>
+(function() {
+    // ----- DOM -----
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const video = document.getElementById('video');
+    const timerSpan = document.getElementById('timerDisplay');
+    const livesSpan = document.getElementById('livesDisplay');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const finalScoreSpan = document.getElementById('finalScore');
+    const timeFill = document.getElementById('timeFill');
+    const gameoverDiv = document.getElementById('gameover');
+    const restartBtn = document.getElementById('restartBtn');
+    const pauseIndicator = document.getElementById('pauseIndicator');
+    const toggleBtn = document.getElementById('toggleGameBtn');
+    const musicBtn = document.getElementById('musicBtn');
+    const hintEl = document.getElementById('gestureHint');
+    const permissionMsg = document.getElementById('permissionMessage');
+
+    // Mobile detection and optimization
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Adjust for mobile
+    if (isMobile) {
+        document.body.style.padding = '0';
+        document.querySelector('.game-container').style.borderRadius = '0';
+    }
+
+    setTimeout(() => hintEl.classList.add('fade'), 4000);
+
+    // ----- AUDIO (simplified for mobile) -----
+    let audioCtx = null;
+    let musicGain = null;
+    let musicOscillator = null;
+    let isMusicPlaying = false;
+    let musicEnabled = true;
+    let soundEnabled = true;
+
+    function initAudio() {
+        if (audioCtx) return;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            musicGain = audioCtx.createGain();
+            musicGain.gain.value = 0;
+            musicGain.connect(audioCtx.destination);
+        } catch (e) { console.warn('Audio not supported'); }
+    }
+
+    function startMusic() {
+        if (!audioCtx) initAudio();
+        if (!audioCtx || isMusicPlaying) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => playMusicTone()).catch(() => {});
+        } else {
+            playMusicTone();
+        }
+    }
+
+    function playMusicTone() {
+        if (musicOscillator) try { musicOscillator.stop(); } catch(e) {}
+        musicOscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.08; // Lower volume for mobile
+        musicOscillator.type = 'sine';
+        musicOscillator.frequency.value = 175;
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 4;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 20;
+        lfo.connect(lfoGain);
+        lfoGain.connect(musicOscillator.frequency);
+        lfo.start();
+        musicOscillator.connect(gainNode);
+        gainNode.connect(musicGain);
+        musicGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        musicOscillator.start();
+        isMusicPlaying = true;
+        musicOscillator.lfo = lfo;
+    }
+
+    function stopMusic() {
+        if (musicOscillator) {
+            try { musicOscillator.stop(); if (musicOscillator.lfo) musicOscillator.lfo.stop(); } catch(e) {}
+            musicOscillator = null;
+        }
+        isMusicPlaying = false;
+    }
+
+    function setMusicEnabled(enable) {
+        musicEnabled = enable;
+        if (enable) { 
+            if (audioCtx?.state === 'suspended') audioCtx.resume(); 
+            startMusic(); 
+            musicBtn.innerHTML = '🎵 ON'; 
+            musicBtn.classList.add('playing'); 
+        } else { 
+            stopMusic(); 
+            musicBtn.innerHTML = '🎵 OFF'; 
+            musicBtn.classList.remove('playing'); 
+        }
+    }
+
+    function playPopSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; 
+            osc.frequency.value = 620; 
+            gain.gain.value = 0.08;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.15);
+        } catch(e) {}
+    }
+
+    function playRedHitSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; 
+            osc.frequency.value = 220; 
+            gain.gain.value = 0.15;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.25);
+        } catch(e) {}
+    }
+
+    function playFistStopSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle'; 
+            osc.frequency.value = 140; 
+            gain.gain.value = 0.2;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.4);
+        } catch(e) {}
+    }
+
+    function initAudioOnUserGesture() {
+        if (!audioCtx) initAudio();
+        if (audioCtx?.state === 'suspended') {
+            audioCtx.resume().then(() => { 
+                if (musicEnabled && !isMusicPlaying) startMusic(); 
+            }).catch(() => {});
+        } else if (musicEnabled && !isMusicPlaying) startMusic();
+    }
+
+    // Handle mobile touch events for audio
+    document.body.addEventListener('touchstart', initAudioOnUserGesture, { once: true });
+    document.body.addEventListener('click', initAudioOnUserGesture, { once: true });
+
+    // ----- GAME CONSTANTS (adjusted for mobile) -----
+    const INIT_TIME = 30;
+    const INIT_LIVES = 3;
+    const TIME_PER_POP = 2;
+    const ORANGE_RADIUS = isMobile ? 25 : 30; // Smaller on mobile
+    const RED_RADIUS = isMobile ? 23 : 28;
+
+    // ----- GAME STATE -----
+    let score = 0;
+    let lives = INIT_LIVES;
+    let timeLeft = INIT_TIME;
+    let gameActive = true;         
+    let gameOverFlag = false;       
+    let manualStop = false;         
+    let cameraInitialized = false;
+
+    // Hand tracking
+    let handDetected = false;
+    let fingerPos = { x: -100, y: -100, valid: false };
+    let smoothedX = -100, smoothedY = -100;
+
+    // ----- GESTURE STATE MACHINE (adjusted for mobile performance) -----
+    const GESTURE_FRAMES_REQUIRED = 4;  // Lower threshold for mobile
+    let peaceCounter = 0;
+    let fistCounter = 0;
+    let lastProcessedPeace = 0;
+    let lastProcessedFist = 0;
+    const GESTURE_COOLDOWN = 1500;
+
+    // Ball objects
+    let orange = { x: 300, y: 200, r: ORANGE_RADIUS, vx: 0.2, vy: 0.15 };
+    let redBall = { active: true, x: 150, y: 400, r: RED_RADIUS, vx: -0.3, vy: 0.25 };
+
+    // ----- HELPER FUNCTIONS -----
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Reposition balls if they're out of bounds
+        [orange, redBall].forEach(b => {
+            const margin = b.r + 20;
+            if (b.x < margin || b.x > canvas.width - margin || 
+                b.y < margin || b.y > canvas.height - margin) {
+                b.x = canvas.width / 2;
+                b.y = canvas.height / 2;
+            }
+        });
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(resizeCanvas, 100);
+    });
+    resizeCanvas();
+
+    function spawnOrange() {
+        const margin = orange.r + 25;
+        orange.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        orange.y = Math.random() * (canvas.height - 2 * margin) + margin;
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 0.15 + Math.random() * 0.25; // Slower on mobile
+        orange.vx = Math.cos(angle) * speed;
+        orange.vy = Math.sin(angle) * speed;
+    }
+
+    function spawnRed() {
+        const margin = redBall.r + 25;
+        redBall.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        redBall.y = Math.random() * (canvas.height - 2 * margin) + margin;
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 0.2 + Math.random() * 0.25; // Slower on mobile
+        redBall.vx = Math.cos(angle) * speed;
+        redBall.vy = Math.sin(angle) * speed;
+        redBall.active = true;
+    }
+
+    function restartGame() {
+        gameActive = true;
+        gameOverFlag = false;
+        manualStop = false;
+        toggleBtn.innerHTML = '⏹️ STOP';
+        toggleBtn.classList.add('active');
+        gameoverDiv.style.visibility = 'hidden';
+        score = 0; lives = INIT_LIVES; timeLeft = INIT_TIME;
+        scoreSpan.innerText = score; 
+        livesSpan.innerText = lives; 
+        timerSpan.innerText = timeLeft;
+        updateTimeBar();
+        spawnOrange(); 
+        spawnRed();
+        handDetected = false; 
+        fingerPos.valid = false; 
+        pauseIndicator.style.opacity = '0';
+        smoothedX = smoothedY = -100;
+        peaceCounter = 0; 
+        fistCounter = 0;
+    }
+
+    function triggerGameOver(byFist = false) {
+        if (gameOverFlag) return;
+        gameActive = false; 
+        gameOverFlag = true; 
+        manualStop = false;
+        toggleBtn.innerHTML = '▶️ START'; 
+        toggleBtn.classList.remove('active');
+        finalScoreSpan.innerText = score;
+        gameoverDiv.style.visibility = 'visible';
+        pauseIndicator.style.opacity = '0';
+        if (byFist) playFistStopSound();
+    }
+
+    function manualGameStop() {
+        if (!gameActive) return;
+        gameActive = false; 
+        manualStop = true; 
+        gameOverFlag = false;
+        toggleBtn.innerHTML = '▶️ START'; 
+        toggleBtn.classList.remove('active');
+        gameoverDiv.style.visibility = 'hidden';
+        pauseIndicator.style.opacity = handDetected ? '0' : '1';
+    }
+
+    function manualGameStart() {
+        if (gameOverFlag) restartGame();
+        else { 
+            gameActive = true; 
+            manualStop = false; 
+            toggleBtn.innerHTML = '⏹️ STOP'; 
+            toggleBtn.classList.add('active'); 
+            pauseIndicator.style.opacity = '0'; 
+        }
+    }
+
+    function loseLife() {
+        if (!gameActive || gameOverFlag) return;
+        lives--; 
+        livesSpan.innerText = lives;
+        playRedHitSound();
+        if (lives <= 0) triggerGameOver(false);
+        else { 
+            spawnRed(); 
+            // Flash red effect
+            ctx.save(); 
+            ctx.fillStyle = 'rgba(255,80,80,0.3)'; 
+            ctx.fillRect(0,0,canvas.width,canvas.height); 
+            ctx.restore(); 
+        }
+    }
+
+    function updateTimeBar() {
+        let percent = Math.max(0, (timeLeft / INIT_TIME) * 100);
+        timeFill.style.width = percent + '%';
+    }
+
+    // ----- GESTURE DETECTION (optimized for mobile) -----
+    function isPeaceLike(landmarks) {
+        // Simplified peace detection for mobile
+        const indexTip = landmarks[8].y;
+        const indexPip = landmarks[6].y;
+        const middleTip = landmarks[12].y;
+        const middlePip = landmarks[10].y;
+        const ringTip = landmarks[16].y;
+        const ringPip = landmarks[14].y;
+        const pinkyTip = landmarks[20].y;
+        const pinkyPip = landmarks[18].y;
+        
+        // More tolerant thresholds for mobile
+        const extendedIndex = indexTip < indexPip - 0.01;
+        const extendedMiddle = middleTip < middlePip - 0.01;
+        const curledRing = ringTip > ringPip + 0.01;
+        const curledPinky = pinkyTip > pinkyPip + 0.01;
+        
+        return extendedIndex && extendedMiddle && curledRing && curledPinky;
+    }
+
+    function isFistLike(landmarks) {
+        // Simplified fist detection for mobile
+        const fingers = [8, 12, 16, 20];
+        const pips = [6, 10, 14, 18];
+        let curledCount = 0;
+        for (let i = 0; i < 4; i++) {
+            if (landmarks[fingers[i]].y > landmarks[pips[i]].y + 0.01) curledCount++;
+        }
+        const thumbTip = landmarks[4].y;
+        const thumbIp = landmarks[3].y;
+        const thumbCurled = thumbTip > thumbIp - 0.01;
+        
+        return curledCount >= 3 && thumbCurled;
+    }
+
+    // ----- MediaPipe setup (optimized for mobile) -----
+    const hands = new Hands({ 
+        locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` 
+    });
+    
+    hands.setOptions({ 
+        maxNumHands: 1, 
+        modelComplexity: 0, // Use simpler model for mobile
+        minDetectionConfidence: 0.5, // Lower threshold
+        minTrackingConfidence: 0.5,
+        selfieMode: true 
+    });
+
+    hands.onResults((results) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw background
+        ctx.fillStyle = '#141a26';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (results.multiHandLandmarks?.length) {
+            handDetected = true;
+            const lm = results.multiHandLandmarks[0];
+            const now = Date.now();
+
+            initAudioOnUserGesture();
+
+            // Gesture detection with counters
+            if (isPeaceLike(lm)) {
+                peaceCounter = Math.min(peaceCounter + 1, GESTURE_FRAMES_REQUIRED);
+            } else {
+                peaceCounter = Math.max(peaceCounter - 1, 0);
+            }
+
+            if (isFistLike(lm)) {
+                fistCounter = Math.min(fistCounter + 1, GESTURE_FRAMES_REQUIRED);
+            } else {
+                fistCounter = Math.max(fistCounter - 1, 0);
+            }
+
+            // Trigger gestures
+            if (gameOverFlag && peaceCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedPeace) > GESTURE_COOLDOWN) {
+                lastProcessedPeace = now;
+                restartGame();
+            }
+
+            if (gameActive && !gameOverFlag && fistCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedFist) > GESTURE_COOLDOWN) {
+                lastProcessedFist = now;
+                triggerGameOver(true);
+            }
+
+            // Finger position smoothing
+            const idx = lm[8];
+            let rawX = idx.x * canvas.width, rawY = idx.y * canvas.height;
+            
+            // Clamp to canvas
+            rawX = Math.max(0, Math.min(canvas.width, rawX));
+            rawY = Math.max(0, Math.min(canvas.height, rawY));
+            
+            if (smoothedX < 0) { 
+                smoothedX = rawX; 
+                smoothedY = rawY; 
+            } else { 
+                const a = 0.4; // More smoothing for mobile
+                smoothedX = smoothedX * a + rawX * (1 - a); 
+                smoothedY = smoothedY * a + rawY * (1 - a); 
+            }
+            fingerPos.x = smoothedX; 
+            fingerPos.y = smoothedY; 
+            fingerPos.valid = true;
+
+            // Draw fingertip (smaller on mobile)
+            const tipRadius = isMobile ? 15 : 18;
+            ctx.beginPath(); 
+            ctx.arc(fingerPos.x, fingerPos.y, tipRadius, 0, 2*Math.PI);
+            ctx.fillStyle = '#55ffb0'; 
+            ctx.shadowColor = '#00cc88'; 
+            ctx.shadowBlur = 20; 
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+            ctx.strokeStyle = 'white'; 
+            ctx.lineWidth = 2; 
+            ctx.stroke();
+            ctx.beginPath(); 
+            ctx.arc(fingerPos.x, fingerPos.y, 5, 0, 2*Math.PI); 
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fill();
+        } else {
+            handDetected = false; 
+            fingerPos.valid = false; 
+            smoothedX = smoothedY = -100;
+            peaceCounter = 0; 
+            fistCounter = 0;
+        }
+
+        // Draw orange
+        ctx.shadowColor = '#ffaa33'; 
+        ctx.shadowBlur = 20;
+        ctx.beginPath(); 
+        ctx.arc(orange.x, orange.y, orange.r, 0, 2*Math.PI); 
+        ctx.fillStyle = '#ff8c00'; 
+        ctx.fill();
+        ctx.shadowBlur = 6;
+        ctx.beginPath(); 
+        ctx.arc(orange.x-3, orange.y-3, orange.r-8, 0, 2*Math.PI); 
+        ctx.fillStyle = '#ffb86b'; 
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (redBall.active) {
+            ctx.shadowColor = '#ff3a3a'; 
+            ctx.shadowBlur = 25;
+            ctx.beginPath(); 
+            ctx.arc(redBall.x, redBall.y, redBall.r, 0, 2*Math.PI); 
+            ctx.fillStyle = '#d83030'; 
+            ctx.fill();
+            ctx.shadowBlur = 8;
+            ctx.beginPath(); 
+            ctx.arc(redBall.x-3, redBall.y-3, redBall.r-8, 0, 2*Math.PI); 
+            ctx.fillStyle = '#ff7777'; 
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    });
+
+    // Camera setup with mobile optimizations
+    async function startCamera() {
+        try {
+            const constraints = {
+                video: {
+                    width: { ideal: isMobile ? 480 : 640 },
+                    height: { ideal: isMobile ? 360 : 480 },
+                    facingMode: 'user',
+                    frameRate: { ideal: 15, max: 20 } // Lower framerate for mobile
+                }
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = stream;
+            
+            await video.play();
+            
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await hands.send({ image: video });
+                },
+                width: isMobile ? 480 : 640,
+                height: isMobile ? 360 : 480
+            });
+            
+            camera.start().catch(e => {
+                console.warn('Camera start error:', e);
+                permissionMsg.style.display = 'block';
+            });
+            
+            cameraInitialized = true;
+            permissionMsg.style.display = 'none';
+            
+        } catch (err) {
+            console.error('Camera access error:', err);
+            permissionMsg.style.display = 'block';
+        }
+    }
+
+    // Start camera with user interaction
+    function initCamera() {
+        if (!cameraInitialized) {
+            startCamera();
+        }
+    }
+
+    document.body.addEventListener('touchstart', initCamera, { once: true });
+    document.body.addEventListener('click', initCamera, { once: true });
+
+    // ----- GAME LOOP (optimized for mobile) -----
+    let lastTimestamp = 0;
+    let frameCount = 0;
+    
+    function gameLoop(now) {
+        if (!lastTimestamp) { 
+            lastTimestamp = now; 
+            requestAnimationFrame(gameLoop); 
+            return; 
+        }
+        
+        const delta = Math.min(now - lastTimestamp, 100); // Cap delta to prevent huge jumps
+        lastTimestamp = now;
+
+        // Update pause indicator
+        if (!handDetected && gameActive && !gameOverFlag && !manualStop) {
+            pauseIndicator.style.opacity = '1';
+        } else {
+            pauseIndicator.style.opacity = '0';
+        }
+
+        if (gameActive && !gameOverFlag) {
+            // Only update time when hand is detected
+            if (handDetected) {
+                timeLeft -= delta / 1000;
+            }
+            
+            if (timeLeft <= 0) { 
+                timeLeft = INIT_TIME; 
+                lives--; 
+                livesSpan.innerText = lives; 
+                if (lives <= 0) triggerGameOver(false);
+            }
+            
+            timerSpan.innerText = timeLeft.toFixed(1); 
+            updateTimeBar();
+
+            // Move balls
+            orange.x += orange.vx; 
+            orange.y += orange.vy;
+            
+            // Bounce with damping
+            if (orange.x < orange.r) { 
+                orange.x = orange.r; 
+                orange.vx *= -0.8; 
+            }
+            if (orange.x > canvas.width - orange.r) { 
+                orange.x = canvas.width - orange.r; 
+                orange.vx *= -0.8; 
+            }
+            if (orange.y < orange.r) { 
+                orange.y = orange.r; 
+                orange.vy *= -0.8; 
+            }
+            if (orange.y > canvas.height - orange.r) { 
+                orange.y = canvas.height - orange.r; 
+                orange.vy *= -0.8; 
+            }
+
+            if (redBall.active) {
+                redBall.x += redBall.vx; 
+                redBall.y += redBall.vy;
+                
+                if (redBall.x < redBall.r) { 
+                    redBall.x = redBall.r; 
+                    redBall.vx *= -0.8; 
+                }
+                if (redBall.x > canvas.width - redBall.r) { 
+                    redBall.x = canvas.width - redBall.r; 
+                    redBall.vx *= -0.8; 
+                }
+                if (redBall.y < redBall.r) { 
+                    redBall.y = redBall.r; 
+                    redBall.vy *= -0.8; 
+                }
+                if (redBall.y > canvas.height - redBall.r) { 
+                    redBall.y = canvas.height - redBall.r; 
+                    redBall.vy *= -0.8; 
+                }
+            }
+
+            // Collision detection with finger
+            if (fingerPos.valid) {
+                // Orange collision
+                const dx = fingerPos.x - orange.x, dy = fingerPos.y - orange.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < orange.r + (isMobile ? 15 : 18)) {
+                    score++; 
+                    scoreSpan.innerText = score;
+                    timeLeft = Math.min(timeLeft + TIME_PER_POP, 45);
+                    timerSpan.innerText = timeLeft.toFixed(1); 
+                    updateTimeBar();
+                    playPopSound(); 
+                    spawnOrange();
+                }
+                
+                // Red ball collision
+                if (redBall.active) {
+                    const dxR = fingerPos.x - redBall.x, dyR = fingerPos.y - redBall.y;
+                    if (Math.sqrt(dxR*dxR + dyR*dyR) < redBall.r + (isMobile ? 15 : 18)) {
+                        loseLife(); 
+                        spawnRed();
+                    }
+                }
+            }
+        }
+        
+        requestAnimationFrame(gameLoop);
+    }
+    
+    requestAnimationFrame(gameLoop);
+
+    // UI buttons
+    toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture();
+        if (gameActive && !gameOverFlag) manualGameStop();
+        else { 
+            if (gameOverFlag) restartGame(); 
+            else manualGameStart(); 
+        }
+    });
+    
+    toggleBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture();
+        if (gameActive && !gameOverFlag) manualGameStop();
+        else { 
+            if (gameOverFlag) restartGame(); 
+            else manualGameStart(); 
+        }
+    });
+
+    musicBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture(); 
+        setMusicEnabled(!musicEnabled);
+    });
+    
+    musicBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture(); 
+        setMusicEnabled(!musicEnabled);
+    });
+    
+    restartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture(); 
+        restartGame();
+    });
+    
+    restartBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture(); 
+        restartGame();
+    });
+
+    // Initialize
+    setMusicEnabled(true);
+    spawnOrange(); 
+    spawnRed();
+    
+    // Show permission message if needed
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        permissionMsg.innerHTML = '📷 Camera not supported<br><small>On mobile, use HTTPS or enable camera permissions</small>';
+        permissionMsg.style.display = 'block';
+    }
+})();
+</script>
+</body>
+</html>
