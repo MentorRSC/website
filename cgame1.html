@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GESTURE STATES · temporal confidence · real hands ok</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GESTURE BATTLE · fixed calibration</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body {
             background: #0a0d14;
             display: flex;
@@ -16,16 +16,18 @@
             min-height: 100vh;
             font-family: 'Segoe UI', Roboto, sans-serif;
             touch-action: none;
-            padding: 6px;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
         }
         .game-container {
             position: relative;
-            width: 92vw;
-            height: 96vh;
-            border-radius: 32px;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
             overflow: hidden;
-            box-shadow: 0 20px 45px rgba(0,0,0,0.9);
-            border: 2px solid #ffaa3366;
+            box-shadow: none;
+            border: none;
         }
         #canvas {
             width: 100%;
@@ -33,48 +35,52 @@
             display: block;
             background: #141a26;
             cursor: none;
+            touch-action: none;
+            position: relative;
+            z-index: 1;
         }
         #dashboard {
             position: absolute;
-            top: 16px;
+            top: 10px;
             left: 0;
             right: 0;
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 8px;
             pointer-events: none;
             z-index: 20;
             flex-wrap: wrap;
-            padding: 0 10px;
+            padding: 0 5px;
         }
         .panel {
-            background: rgba(8, 12, 24, 0.8);
-            backdrop-filter: blur(6px);
+            background: rgba(8, 12, 24, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             border: 1px solid rgba(255, 180, 70, 0.4);
-            border-radius: 40px;
-            padding: 8px 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            border-radius: 30px;
+            padding: 6px 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             color: white;
             font-weight: 600;
-            font-size: 1.4rem;
+            font-size: 1.1rem;
         }
         .panel span {
             color: #ffb347;
             font-weight: 800;
-            margin-left: 4px;
-            min-width: 40px;
+            margin-left: 3px;
+            min-width: 30px;
             text-align: center;
         }
         .time-bar-bg {
-            width: 90px;
-            height: 10px;
+            width: 60px;
+            height: 8px;
             background: rgba(255,255,255,0.2);
             border-radius: 20px;
             overflow: hidden;
-            margin-left: 5px;
+            margin-left: 3px;
             border: 1px solid rgba(255,200,100,0.3);
         }
         .time-fill {
@@ -86,10 +92,10 @@
         }
         .control-bar {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             z-index: 60;
             pointer-events: auto;
         }
@@ -97,18 +103,20 @@
             background: #1e2a3a;
             border: 2px solid #ffb347;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: bold;
-            padding: 10px 18px;
-            border-radius: 50px;
+            padding: 8px 14px;
+            border-radius: 40px;
             cursor: pointer;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 8px 20px black;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 10px black;
             transition: 0.2s;
             line-height: 1;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
+            -webkit-tap-highlight-color: transparent;
         }
         .ctrl-btn.active {
             background: #2f6b3e;
@@ -125,16 +133,17 @@
         }
         .pause-indicator {
             position: absolute;
-            top: 100px;
+            top: 80px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(200, 50, 50, 0.95);
             color: white;
-            padding: 6px 22px;
+            padding: 6px 18px;
             border-radius: 40px;
-            font-size: 1.3rem;
+            font-size: 1rem;
             font-weight: bold;
             backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             border: 1px solid #ff8a8a;
             z-index: 25;
             opacity: 0;
@@ -144,14 +153,15 @@
         }
         .gesture-hint {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            bottom: 15px;
+            left: 15px;
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             color: #eee;
-            padding: 10px 22px;
-            border-radius: 40px;
-            font-size: 1rem;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
             border: 1px solid #ffaa3380;
             z-index: 30;
             pointer-events: none;
@@ -161,52 +171,289 @@
         .gesture-hint.fade {
             opacity: 0;
         }
+        .start-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2a3a4a, #1a2a3a);
+            border: 3px solid #ffaa33;
+            border-radius: 60px;
+            padding: 20px 40px;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 50px #ffaa33;
+            z-index: 200;
+            animation: pulse 1.5s infinite;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .start-prompt span {
+            color: #ffaa33;
+            font-size: 3rem;
+            display: block;
+        }
+        .camera-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a2a3a, #0a1a2a);
+            border: 3px solid #44aaff;
+            border-radius: 40px;
+            padding: 30px 50px;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 60px #44aaff;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .camera-prompt:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            border-color: #88ddff;
+        }
+        .camera-prompt span {
+            color: #44aaff;
+            font-size: 4rem;
+            display: block;
+            margin: 10px 0;
+        }
+        .camera-prompt small {
+            font-size: 1rem;
+            color: #aaccff;
+            display: block;
+            margin-top: 10px;
+        }
+        .popup-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 900;
+            display: none;
+        }
+        .instructions-popup {
+            background: linear-gradient(135deg, #1e2a3a, #0e1a2a);
+            border: 3px solid #ffaa33;
+            border-radius: 40px;
+            padding: 30px 40px;
+            color: white;
+            font-size: 1.2rem;
+            text-align: left;
+            box-shadow: 0 0 80px #ffaa33;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            max-width: 90%;
+            width: 400px;
+            position: relative;
+            z-index: 1000;
+        }
+        .instructions-popup h2 {
+            text-align: center;
+            color: #ffaa33;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        .instruction-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 30px;
+        }
+        .instruction-icon {
+            font-size: 2rem;
+            width: 60px;
+            text-align: center;
+        }
+        .instruction-text {
+            flex: 1;
+            font-size: 1.1rem;
+        }
+        .instruction-text small {
+            color: #ffaa33;
+            font-size: 0.9rem;
+        }
+        .gesture-demo {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 30px;
+        }
+        .gesture-demo-item {
+            text-align: center;
+        }
+        .gesture-demo-item span {
+            font-size: 2.5rem;
+        }
+        .gesture-demo-item p {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        .next-btn {
+            background: #ffaa33;
+            border: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 40px;
+            color: #0b0e14;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .next-btn:hover {
+            background: #ffbf5e;
+            transform: scale(1.02);
+        }
+        .calibration-popup {
+            background: linear-gradient(135deg, #2a1a1a, #1a0a0a);
+            border: 3px solid #ff5555;
+            border-radius: 40px;
+            padding: 30px 40px;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            box-shadow: 0 0 80px #ff5555;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            max-width: 90%;
+            width: 400px;
+            position: relative;
+            z-index: 1000;
+        }
+        .calibration-popup h2 {
+            color: #ff5555;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        .calibration-popup.green {
+            border-color: #55ff55;
+            box-shadow: 0 0 80px #55ff55;
+        }
+        .calibration-popup.green h2 {
+            color: #55ff55;
+        }
+        .calibration-gesture {
+            font-size: 5rem;
+            margin: 20px 0;
+            animation: pulse 1.5s infinite;
+        }
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid #ff5555;
+            border-top-color: transparent;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         #gameover {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(6px);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 800;
             visibility: hidden;
-            border-radius: 32px;
+            border-radius: 0;
         }
         .gameover-card {
             background: #1a1f2e;
-            padding: 40px 50px;
-            border-radius: 50px;
+            padding: 30px 40px;
+            border-radius: 40px;
             border: 2px solid #ffaa33;
             text-align: center;
-            box-shadow: 0 20px 40px black;
+            box-shadow: 0 15px 30px black;
+            max-width: 90%;
         }
         .gameover-card h1 {
-            font-size: 3rem;
+            font-size: 2.2rem;
             color: #ffc164;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .gameover-card p {
-            font-size: 2rem;
+            font-size: 1.6rem;
             color: white;
         }
         #restartBtn {
             background: #ffaa33;
             border: none;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
-            padding: 15px 40px;
-            border-radius: 50px;
+            padding: 12px 30px;
+            border-radius: 40px;
             color: #0b0e14;
             cursor: pointer;
-            margin-top: 25px;
+            margin-top: 15px;
             transition: 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         #restartBtn:hover {
             background: #ffbf5e;
             transform: scale(1.03);
         }
-        video { display: none; }
+        video { 
+            display: none; 
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .permission-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1100;
+            display: none;
+        }
+        .finger-tip-demo {
+            background: #55ffb0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            box-shadow: 0 0 10px #00ffaa;
+        }
     </style>
 </head>
 <body>
@@ -215,7 +462,7 @@
     <canvas id="canvas"></canvas>
 
     <div class="control-bar">
-        <div id="toggleGameBtn" class="ctrl-btn active">⏹️ STOP</div>
+        <div id="toggleGameBtn" class="ctrl-btn">⏸️ PAUSE</div>
         <div id="musicBtn" class="ctrl-btn playing">🎵 ON</div>
     </div>
 
@@ -234,7 +481,132 @@
 
     <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND · waiting</div>
     <div class="gesture-hint" id="gestureHint">
-        ✌️ peace = restart &nbsp; ✊ fist = STOP &nbsp; (hold 0.3s)
+        ✌️ peace = start/restart &nbsp; ✊ fist = STOP &nbsp; (hold)
+    </div>
+
+    <!-- Camera Permission Popup -->
+    <div id="cameraPrompt" class="camera-prompt">
+        📷 CAMERA ACCESS NEEDED
+        <span>👆</span>
+        TAP TO REQUEST PERMISSION
+        <small>Camera required for hand tracking</small>
+    </div>
+
+    <!-- Instructions Popup Overlay -->
+    <div id="instructionsOverlay" class="popup-overlay">
+        <div class="instructions-popup">
+            <h2>🎮 HOW TO PLAY</h2>
+            
+            <div class="gesture-demo">
+                <div class="gesture-demo-item">
+                    <span>👉</span>
+                    <p>Index Finger</p>
+                </div>
+                <div class="gesture-demo-item">
+                    <span>✌️</span>
+                    <p>Peace Sign</p>
+                </div>
+                <div class="gesture-demo-item">
+                    <span>✊</span>
+                    <p>Fist</p>
+                </div>
+            </div>
+
+            <div class="instruction-item">
+                <div class="instruction-icon"><span class="finger-tip-demo"></span></div>
+                <div class="instruction-text">
+                    <strong>Green fingertip</strong> - Your cursor<br>
+                    <small>Move your index finger to control</small>
+                </div>
+            </div>
+
+            <div class="instruction-item">
+                <div class="instruction-icon">🍊</div>
+                <div class="instruction-text">
+                    <strong>Orange ball</strong> - +1 point & +2 seconds<br>
+                    <small>Touch with fingertip to collect</small>
+                </div>
+            </div>
+
+            <div class="instruction-item">
+                <div class="instruction-icon">🔴</div>
+                <div class="instruction-text">
+                    <strong>Red ball</strong> - Lose 1 life ❤️<br>
+                    <small>Avoid touching! Pulses dangerously</small>
+                </div>
+            </div>
+
+            <div class="instruction-item">
+                <div class="instruction-icon">✊</div>
+                <div class="instruction-text">
+                    <strong>Fist gesture</strong> - Stop game immediately<br>
+                    <small>Hold fist to trigger</small>
+                </div>
+            </div>
+
+            <div class="instruction-item">
+                <div class="instruction-icon">✌️</div>
+                <div class="instruction-text">
+                    <strong>Peace sign</strong> - Start / Restart game<br>
+                    <small>Hold peace to begin</small>
+                </div>
+            </div>
+
+            <button id="instructionsNextBtn" class="next-btn">NEXT → CALIBRATION</button>
+        </div>
+    </div>
+
+    <!-- Fist Calibration Popup Overlay -->
+    <div id="fistCalibrationOverlay" class="popup-overlay">
+        <div class="calibration-popup">
+            <h2>✊ FIST CALIBRATION</h2>
+            
+            <div class="calibration-gesture">
+                ✊
+            </div>
+            
+            <p style="font-size: 1.3rem; margin-bottom: 20px;">
+                Show a <strong style="color: #ff5555;">FIST</strong> to your camera
+            </p>
+            
+            <div id="fistProgressRing" class="progress-ring" style="display: block;"></div>
+            
+            <p style="color: #aaa; margin: 20px 0;">
+                Hold your fist steady until detected<br>
+                <small style="color: #ffaaaa;">Progress ring will spin when fist is detected</small>
+            </p>
+
+            <button id="fistCalibrationSkipBtn" class="next-btn" style="background: #555;">
+                SKIP CALIBRATION
+            </button>
+        </div>
+    </div>
+
+    <!-- Peace Calibration Popup Overlay -->
+    <div id="peaceCalibrationOverlay" class="popup-overlay">
+        <div class="calibration-popup green">
+            <h2 style="color: #55ff55;">✌️ PEACE SIGN</h2>
+            
+            <div class="calibration-gesture">
+                ✌️
+            </div>
+            
+            <p style="font-size: 1.3rem; margin-bottom: 20px;">
+                Show <strong style="color: #55ff55;">PEACE SIGN</strong> to start
+            </p>
+            
+            <div id="peaceProgressRing" class="progress-ring" style="display: block; border-color: #55ff55; border-top-color: transparent;"></div>
+            
+            <p style="color: #aaa; margin: 20px 0;">
+                Hold peace sign to begin game<br>
+                <small style="color: #aaffaa;">Game will start automatically</small>
+            </p>
+        </div>
+    </div>
+
+    <div id="startPrompt" class="start-prompt">
+        SHOW ✌️ TO START
+        <span>✌️</span>
     </div>
 
     <div id="gameover">
@@ -247,6 +619,7 @@
     </div>
 
     <video id="video" autoplay playsinline></video>
+    <div id="permissionMessage" class="permission-message">❌ Camera access denied<br><small>Please enable camera permissions</small></div>
 </div>
 
 <script>
@@ -266,10 +639,42 @@
     const toggleBtn = document.getElementById('toggleGameBtn');
     const musicBtn = document.getElementById('musicBtn');
     const hintEl = document.getElementById('gestureHint');
+    const permissionMsg = document.getElementById('permissionMessage');
+    const cameraPrompt = document.getElementById('cameraPrompt');
+    
+    // Overlays
+    const instructionsOverlay = document.getElementById('instructionsOverlay');
+    const fistCalibrationOverlay = document.getElementById('fistCalibrationOverlay');
+    const peaceCalibrationOverlay = document.getElementById('peaceCalibrationOverlay');
+    
+    const startPrompt = document.getElementById('startPrompt');
+    const instructionsNextBtn = document.getElementById('instructionsNextBtn');
+    const fistCalibrationSkipBtn = document.getElementById('fistCalibrationSkipBtn');
+
+    // Mobile detection
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Game state
+    let gameStarted = false;
+    let gamePaused = false;
+    let gameActive = false;
+    let gameOverFlag = false;
+    let cameraInitialized = false;
+    let cameraPermissionGranted = false;
+    
+    // Calibration states
+    let calibrationStep = 0; // 0: none, 1: fist, 2: peace
+    let fistDetected = false;
+    let peaceDetected = false;
+    
+    if (isMobile) {
+        document.body.style.padding = '0';
+        document.querySelector('.game-container').style.borderRadius = '0';
+    }
 
     setTimeout(() => hintEl.classList.add('fade'), 4000);
 
-    // ----- AUDIO (same as before, but keep it) -----
+    // ----- AUDIO -----
     let audioCtx = null;
     let musicGain = null;
     let musicOscillator = null;
@@ -291,7 +696,7 @@
         if (!audioCtx) initAudio();
         if (!audioCtx || isMusicPlaying) return;
         if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => playMusicTone());
+            audioCtx.resume().then(() => playMusicTone()).catch(() => {});
         } else {
             playMusicTone();
         }
@@ -301,7 +706,7 @@
         if (musicOscillator) try { musicOscillator.stop(); } catch(e) {}
         musicOscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-        gainNode.gain.value = 0.12;
+        gainNode.gain.value = 0.08;
         musicOscillator.type = 'sine';
         musicOscillator.frequency.value = 175;
         const lfo = audioCtx.createOscillator();
@@ -314,7 +719,7 @@
         lfo.start();
         musicOscillator.connect(gainNode);
         gainNode.connect(musicGain);
-        musicGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        musicGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
         musicOscillator.start();
         isMusicPlaying = true;
         musicOscillator.lfo = lfo;
@@ -330,68 +735,136 @@
 
     function setMusicEnabled(enable) {
         musicEnabled = enable;
-        if (enable) { if (audioCtx?.state === 'suspended') audioCtx.resume(); startMusic(); musicBtn.innerHTML = '🎵 ON'; musicBtn.classList.add('playing'); } 
-        else { stopMusic(); musicBtn.innerHTML = '🎵 OFF'; musicBtn.classList.remove('playing'); }
+        if (enable) { 
+            if (audioCtx?.state === 'suspended') audioCtx.resume(); 
+            startMusic(); 
+            musicBtn.innerHTML = '🎵 ON'; 
+            musicBtn.classList.add('playing'); 
+        } else { 
+            stopMusic(); 
+            musicBtn.innerHTML = '🎵 OFF'; 
+            musicBtn.classList.remove('playing'); 
+        }
     }
 
     function playPopSound() {
         if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'sine'; osc.frequency.value = 620; gain.gain.value = 0.1;
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; 
+            osc.frequency.value = 620; 
+            gain.gain.value = 0.08;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.15);
+        } catch(e) {}
     }
 
     function playRedHitSound() {
         if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'sawtooth'; osc.frequency.value = 220; gain.gain.value = 0.25;
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth'; 
+            osc.frequency.value = 220; 
+            gain.gain.value = 0.15;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.25);
+        } catch(e) {}
     }
 
     function playFistStopSound() {
         if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'triangle'; osc.frequency.value = 140; gain.gain.value = 0.3;
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle'; 
+            osc.frequency.value = 140; 
+            gain.gain.value = 0.2;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.4);
+        } catch(e) {}
+    }
+
+    function playStartSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; 
+            osc.frequency.value = 880; 
+            gain.gain.value = 0.15;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.3);
+        } catch(e) {}
+    }
+
+    function playCalibrationSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        try {
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; 
+            osc.frequency.value = 660; 
+            gain.gain.value = 0.1;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination); 
+            osc.start(); 
+            osc.stop(audioCtx.currentTime + 0.2);
+        } catch(e) {}
     }
 
     function initAudioOnUserGesture() {
         if (!audioCtx) initAudio();
-        if (audioCtx?.state === 'suspended') audioCtx.resume().then(() => { if (musicEnabled && !isMusicPlaying) startMusic(); }).catch(() => {});
-        else if (musicEnabled && !isMusicPlaying) startMusic();
+        if (audioCtx?.state === 'suspended') {
+            audioCtx.resume().then(() => { 
+                if (musicEnabled && !isMusicPlaying) startMusic(); 
+            }).catch(() => {});
+        } else if (musicEnabled && !isMusicPlaying) startMusic();
     }
-    document.body.addEventListener('click', initAudioOnUserGesture, { once: true });
 
     // ----- GAME CONSTANTS -----
     const INIT_TIME = 30;
     const INIT_LIVES = 3;
     const TIME_PER_POP = 2;
-    const ORANGE_RADIUS = 30;
-    const RED_RADIUS = 28;
+    const ORANGE_RADIUS = isMobile ? 25 : 30;
+    const RED_RADIUS = isMobile ? 23 : 28;
 
     // ----- GAME STATE -----
     let score = 0;
     let lives = INIT_LIVES;
     let timeLeft = INIT_TIME;
-    let gameActive = true;         
-    let gameOverFlag = false;       
-    let manualStop = false;         
 
     // Hand tracking
     let handDetected = false;
     let fingerPos = { x: -100, y: -100, valid: false };
     let smoothedX = -100, smoothedY = -100;
 
-    // ----- ROBUST GESTURE STATE MACHINE (temporal, not per-frame fragile) -----
-    const GESTURE_FRAMES_REQUIRED = 6;  // need ~6 consecutive detections (at ~30fps = 0.2s)
+    // ----- GESTURE STATE MACHINE -----
+    const GESTURE_FRAMES_REQUIRED = 5;
     let peaceCounter = 0;
     let fistCounter = 0;
     let lastProcessedPeace = 0;
     let lastProcessedFist = 0;
-    const GESTURE_COOLDOWN = 1500; // ms between trigger actions
+    const GESTURE_COOLDOWN = 1500;
+
+    // Alert states
+    let redAlertIntensity = 0;
+    let yellowAlertIntensity = 0;
+    let alertDecay = 0.95;
 
     // Ball objects
     let orange = { x: 300, y: 200, r: ORANGE_RADIUS, vx: 0.2, vy: 0.15 };
@@ -400,17 +873,23 @@
     // ----- HELPER FUNCTIONS -----
     function resizeCanvas() {
         const container = canvas.parentElement;
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
         [orange, redBall].forEach(b => {
             const margin = b.r + 20;
-            if (b.x < margin) b.x = margin;
-            if (b.x > canvas.width - margin) b.x = canvas.width - margin;
-            if (b.y < margin) b.y = margin;
-            if (b.y > canvas.height - margin) b.y = canvas.height - margin;
+            if (b.x < margin || b.x > canvas.width - margin || 
+                b.y < margin || b.y > canvas.height - margin) {
+                b.x = canvas.width / 2;
+                b.y = canvas.height / 2;
+            }
         });
     }
+    
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(resizeCanvas, 100);
+    });
     resizeCanvas();
 
     function spawnOrange() {
@@ -418,7 +897,7 @@
         orange.x = Math.random() * (canvas.width - 2 * margin) + margin;
         orange.y = Math.random() * (canvas.height - 2 * margin) + margin;
         const angle = Math.random() * 2 * Math.PI;
-        const speed = 0.18 + Math.random() * 0.3;
+        const speed = 0.15 + Math.random() * 0.25;
         orange.vx = Math.cos(angle) * speed;
         orange.vy = Math.sin(angle) * speed;
     }
@@ -428,68 +907,123 @@
         redBall.x = Math.random() * (canvas.width - 2 * margin) + margin;
         redBall.y = Math.random() * (canvas.height - 2 * margin) + margin;
         const angle = Math.random() * 2 * Math.PI;
-        const speed = 0.24 + Math.random() * 0.3;
+        const speed = 0.2 + Math.random() * 0.25;
         redBall.vx = Math.cos(angle) * speed;
         redBall.vy = Math.sin(angle) * speed;
         redBall.active = true;
     }
 
-    function restartGame() {
+    function startGame() {
+        console.log('Starting game...');
+        gameStarted = true;
         gameActive = true;
+        gamePaused = false;
         gameOverFlag = false;
-        manualStop = false;
         toggleBtn.innerHTML = '⏹️ STOP';
         toggleBtn.classList.add('active');
-        gameoverDiv.style.visibility = 'hidden';
-        score = 0; lives = INIT_LIVES; timeLeft = INIT_TIME;
-        scoreSpan.innerText = score; livesSpan.innerText = lives; timerSpan.innerText = timeLeft;
+        startPrompt.style.display = 'none';
+        
+        // Hide all calibration overlays
+        fistCalibrationOverlay.style.display = 'none';
+        peaceCalibrationOverlay.style.display = 'none';
+        
+        playStartSound();
+        
+        score = 0;
+        lives = INIT_LIVES;
+        timeLeft = INIT_TIME;
+        scoreSpan.innerText = score;
+        livesSpan.innerText = lives;
+        timerSpan.innerText = timeLeft;
         updateTimeBar();
-        spawnOrange(); spawnRed();
-        handDetected = false; fingerPos.valid = false; pauseIndicator.style.opacity = '0';
-        smoothedX = smoothedY = -100;
-        peaceCounter = 0; fistCounter = 0; // reset gesture counters
+        spawnOrange();
+        spawnRed();
     }
 
-    function triggerGameOver(byFist = false) {
+    function pauseGame() {
+        gamePaused = true;
+        gameActive = false;
+        toggleBtn.innerHTML = '▶️ START';
+        toggleBtn.classList.remove('active');
+    }
+
+    function resumeGame() {
+        gamePaused = false;
+        gameActive = true;
+        toggleBtn.innerHTML = '⏹️ STOP';
+        toggleBtn.classList.add('active');
+    }
+
+    function restartGame() {
+        gameoverDiv.style.visibility = 'hidden';
+        startPrompt.style.display = 'none';
+        
+        gameStarted = true;
+        gameActive = true;
+        gamePaused = false;
+        gameOverFlag = false;
+        
+        toggleBtn.innerHTML = '⏹️ STOP';
+        toggleBtn.classList.add('active');
+        
+        score = 0;
+        lives = INIT_LIVES;
+        timeLeft = INIT_TIME;
+        scoreSpan.innerText = score;
+        livesSpan.innerText = lives;
+        timerSpan.innerText = timeLeft;
+        updateTimeBar();
+        
+        spawnOrange();
+        spawnRed();
+        
+        peaceCounter = 0;
+        fistCounter = 0;
+        
+        playStartSound();
+    }
+
+    function triggerGameOver() {
         if (gameOverFlag) return;
-        gameActive = false; gameOverFlag = true; manualStop = false;
-        toggleBtn.innerHTML = '▶️ START'; toggleBtn.classList.remove('active');
+        gameActive = false;
+        gameStarted = false;
+        gameOverFlag = true;
+        gamePaused = false;
+        toggleBtn.innerHTML = '▶️ START';
+        toggleBtn.classList.remove('active');
         finalScoreSpan.innerText = score;
         gameoverDiv.style.visibility = 'visible';
         pauseIndicator.style.opacity = '0';
-        if (byFist) playFistStopSound();
-    }
-
-    function manualGameStop() {
-        if (!gameActive) return;
-        gameActive = false; manualStop = true; gameOverFlag = false;
-        toggleBtn.innerHTML = '▶️ START'; toggleBtn.classList.remove('active');
-        gameoverDiv.style.visibility = 'hidden';
-        pauseIndicator.style.opacity = handDetected ? '0' : '1';
-    }
-
-    function manualGameStart() {
-        if (gameOverFlag) restartGame();
-        else { gameActive = true; manualStop = false; toggleBtn.innerHTML = '⏹️ STOP'; toggleBtn.classList.add('active'); pauseIndicator.style.opacity = '0'; }
+        playFistStopSound();
     }
 
     function loseLife() {
-        if (!gameActive || gameOverFlag) return;
-        lives--; livesSpan.innerText = lives;
+        if (!gameActive || gameOverFlag || gamePaused) return;
+        
+        redAlertIntensity = 1.0;
+        
+        lives--;
+        livesSpan.innerText = lives;
         playRedHitSound();
-        if (lives <= 0) triggerGameOver(false);
-        else { spawnRed(); ctx.save(); ctx.fillStyle = 'rgba(255,80,80,0.3)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore(); }
+        
+        if (lives <= 0) {
+            triggerGameOver();
+        } else {
+            spawnRed();
+        }
     }
 
     function updateTimeBar() {
         let percent = Math.max(0, (timeLeft / INIT_TIME) * 100);
         timeFill.style.width = percent + '%';
+        
+        if (timeLeft < 10 && gameActive) {
+            yellowAlertIntensity = Math.max(yellowAlertIntensity, 0.7);
+        }
     }
 
-    // ----- GESTURE DETECTION (tolerant, uses finger curl ratios instead of hard thresholds) -----
+    // ----- GESTURE DETECTION -----
     function isPeaceLike(landmarks) {
-        // Peace: index and middle extended, ring and pinky curled
-        // Use relative positions: tip above pip for extended, below for curled (with margin)
         const indexTip = landmarks[8].y;
         const indexPip = landmarks[6].y;
         const middleTip = landmarks[12].y;
@@ -499,169 +1033,506 @@
         const pinkyTip = landmarks[20].y;
         const pinkyPip = landmarks[18].y;
         
-        // Extended if tip is sufficiently above pip (negative in y up coordinate, but MediaPipe y increases downward)
-        // So "extended" means tip.y < pip.y - margin
-        const extendedIndex = indexTip < indexPip - 0.02;
-        const extendedMiddle = middleTip < middlePip - 0.02;
-        const curledRing = ringTip > ringPip + 0.015;
-        const curledPinky = pinkyTip > pinkyPip + 0.015;
+        const extendedIndex = indexTip < indexPip - 0.01;
+        const extendedMiddle = middleTip < middlePip - 0.01;
+        const curledRing = ringTip > ringPip + 0.01;
+        const curledPinky = pinkyTip > pinkyPip + 0.01;
         
         return extendedIndex && extendedMiddle && curledRing && curledPinky;
     }
 
     function isFistLike(landmarks) {
-        // Fist: all fingers curled (tip below pip)
-        const fingers = [8, 12, 16, 20]; // tips
-        const pips = [6, 10, 14, 18];
-        let curledCount = 0;
-        for (let i = 0; i < 4; i++) {
-            if (landmarks[fingers[i]].y > landmarks[pips[i]].y + 0.015) curledCount++;
-        }
-        // Thumb also curled (tip below ip)
-        const thumbTip = landmarks[4].y;
-        const thumbIp = landmarks[3].y;
-        const thumbCurled = thumbTip > thumbIp - 0.01;
+        const thumbTip = landmarks[4];
+        const thumbIp = landmarks[3];
+        const indexTip = landmarks[8];
+        const indexMcp = landmarks[5];
+        const middleTip = landmarks[12];
+        const middleMcp = landmarks[9];
+        const ringTip = landmarks[16];
+        const ringMcp = landmarks[13];
+        const pinkyTip = landmarks[20];
+        const pinkyMcp = landmarks[17];
         
-        return curledCount >= 3 && thumbCurled; // at least 3 of 4 fingers curled + thumb
+        const thumbCurled = thumbTip.y > thumbIp.y - 0.02;
+        const indexCurled = indexTip.y > indexMcp.y + 0.02;
+        const middleCurled = middleTip.y > middleMcp.y + 0.02;
+        const ringCurled = ringTip.y > ringMcp.y + 0.02;
+        const pinkyCurled = pinkyTip.y > pinkyMcp.y + 0.02;
+        
+        const fingerSpread = Math.abs(indexTip.x - pinkyTip.x) < 0.15;
+        const curledCount = [indexCurled, middleCurled, ringCurled, pinkyCurled].filter(Boolean).length;
+        
+        return (curledCount >= 3 && thumbCurled) || (curledCount >= 4 && fingerSpread);
     }
 
-    // ----- MediaPipe setup -----
-    const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6, selfieMode: true });
+    // ----- CAMERA SETUP -----
+    const hands = new Hands({ 
+        locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` 
+    });
+    
+    hands.setOptions({ 
+        maxNumHands: 1, 
+        modelComplexity: 0,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+        selfieMode: true 
+    });
 
     hands.onResults((results) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (results.image) ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-        else { ctx.fillStyle = '#141a26'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        
+        // Draw background
+        ctx.fillStyle = '#141a26';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Apply alerts
+        redAlertIntensity *= alertDecay;
+        yellowAlertIntensity *= alertDecay;
+        
+        if (redAlertIntensity > 0.01) {
+            ctx.save();
+            ctx.fillStyle = `rgba(255, 50, 50, ${redAlertIntensity * 0.3})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = `rgba(255, 0, 0, ${redAlertIntensity})`;
+            ctx.lineWidth = 10 * redAlertIntensity;
+            ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+            ctx.restore();
+        }
+        
+        if (yellowAlertIntensity > 0.01) {
+            ctx.save();
+            ctx.fillStyle = `rgba(255, 255, 50, ${yellowAlertIntensity * 0.2})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = 'bold 30px Arial';
+            ctx.fillStyle = `rgba(255, 200, 0, ${yellowAlertIntensity})`;
+            ctx.textAlign = 'center';
+            ctx.fillText('⚠️ LOW TIME ⚠️', canvas.width/2, 150);
+            ctx.restore();
+        }
 
         if (results.multiHandLandmarks?.length) {
             handDetected = true;
             const lm = results.multiHandLandmarks[0];
             const now = Date.now();
 
-            initAudioOnUserGesture(); // try init audio
+            initAudioOnUserGesture();
 
-            // ----- GESTURE STATE MACHINE (accumulate confidence) -----
-            if (isPeaceLike(lm)) {
+            // Gesture detection
+            const peaceNow = isPeaceLike(lm);
+            const fistNow = isFistLike(lm);
+            
+            if (peaceNow) {
                 peaceCounter = Math.min(peaceCounter + 1, GESTURE_FRAMES_REQUIRED);
+                fistCounter = Math.max(fistCounter - 1, 0);
+            } else if (fistNow) {
+                fistCounter = Math.min(fistCounter + 1, GESTURE_FRAMES_REQUIRED);
+                peaceCounter = Math.max(peaceCounter - 1, 0);
             } else {
                 peaceCounter = Math.max(peaceCounter - 1, 0);
-            }
-
-            if (isFistLike(lm)) {
-                fistCounter = Math.min(fistCounter + 1, GESTURE_FRAMES_REQUIRED);
-            } else {
                 fistCounter = Math.max(fistCounter - 1, 0);
             }
 
-            // Trigger peace only if game over and counter high enough
-            if (gameOverFlag && peaceCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedPeace) > GESTURE_COOLDOWN) {
-                lastProcessedPeace = now;
-                restartGame();
+            // Calibration steps
+            if (calibrationStep === 1) {
+                if (fistCounter >= GESTURE_FRAMES_REQUIRED && !fistDetected) {
+                    console.log('Fist detected! Moving to peace calibration');
+                    fistDetected = true;
+                    playCalibrationSound();
+                    
+                    // Move to peace calibration
+                    fistCalibrationOverlay.style.display = 'none';
+                    peaceCalibrationOverlay.style.display = 'flex';
+                    calibrationStep = 2;
+                }
+            }
+            
+            if (calibrationStep === 2) {
+                if (peaceCounter >= GESTURE_FRAMES_REQUIRED && !peaceDetected) {
+                    console.log('Peace detected! Starting game');
+                    peaceDetected = true;
+                    playCalibrationSound();
+                    
+                    // Start the game
+                    peaceCalibrationOverlay.style.display = 'none';
+                    calibrationStep = 0;
+                    startGame();
+                }
             }
 
-            // Trigger fist only if game active and counter high enough
-            if (gameActive && !gameOverFlag && fistCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedFist) > GESTURE_COOLDOWN) {
-                lastProcessedFist = now;
-                triggerGameOver(true);
+            // Regular game gestures (only after calibration)
+            if (calibrationStep === 0) {
+                // PEACE: Start game from initial state
+                if (cameraPermissionGranted && !gameStarted && !gameOverFlag && peaceCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedPeace) > GESTURE_COOLDOWN) {
+                    lastProcessedPeace = now;
+                    startGame();
+                }
+                
+                // PEACE: Restart from game over
+                if (cameraPermissionGranted && gameOverFlag && peaceCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedPeace) > GESTURE_COOLDOWN) {
+                    lastProcessedPeace = now;
+                    restartGame();
+                }
+
+                // FIST: Stop game
+                if (cameraPermissionGranted && gameActive && fistCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedFist) > GESTURE_COOLDOWN) {
+                    lastProcessedFist = now;
+                    triggerGameOver();
+                }
             }
 
-            // fingertip smoothing (same as before)
+            // Finger position smoothing
             const idx = lm[8];
-            let rawX = idx.x * canvas.width, rawY = idx.y * canvas.height;
-            if (smoothedX < 0) { smoothedX = rawX; smoothedY = rawY; }
-            else { const a = 0.35; smoothedX = smoothedX * a + rawX * (1 - a); smoothedY = smoothedY * a + rawY * (1 - a); }
-            fingerPos.x = smoothedX; fingerPos.y = smoothedY; fingerPos.valid = true;
+            let rawX = idx.x * canvas.width;
+            let rawY = idx.y * canvas.height;
+            
+            rawX = Math.max(0, Math.min(canvas.width, rawX));
+            rawY = Math.max(0, Math.min(canvas.height, rawY));
+            
+            if (smoothedX < 0) { 
+                smoothedX = rawX; 
+                smoothedY = rawY; 
+            } else { 
+                const a = 0.4;
+                smoothedX = smoothedX * a + rawX * (1 - a); 
+                smoothedY = smoothedY * a + rawY * (1 - a); 
+            }
+            fingerPos.x = smoothedX; 
+            fingerPos.y = smoothedY; 
+            fingerPos.valid = true;
 
-            // Draw fingertip
-            ctx.beginPath(); ctx.arc(fingerPos.x, fingerPos.y, 18, 0, 2*Math.PI);
-            ctx.fillStyle = '#55ffb0'; ctx.shadowColor = '#00cc88'; ctx.shadowBlur = 25; ctx.fill();
-            ctx.shadowBlur = 0; ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke();
-            ctx.beginPath(); ctx.arc(fingerPos.x, fingerPos.y, 6, 0, 2*Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
+            // Draw fingertip with gesture feedback
+            const tipRadius = isMobile ? 15 : 18;
+            
+            let tipColor = '#55ffb0';
+            if (fistCounter > 2) tipColor = '#ff5555';
+            else if (peaceCounter > 2) tipColor = '#55ff55';
+            
+            ctx.beginPath(); 
+            ctx.arc(fingerPos.x, fingerPos.y, tipRadius, 0, 2*Math.PI);
+            ctx.fillStyle = tipColor; 
+            ctx.shadowColor = fistCounter > 2 ? '#ff0000' : '#00cc88'; 
+            ctx.shadowBlur = 20; 
+            ctx.fill();
+            
+            ctx.shadowBlur = 0; 
+            ctx.strokeStyle = 'white'; 
+            ctx.lineWidth = 2; 
+            ctx.stroke();
+            ctx.beginPath(); 
+            ctx.arc(fingerPos.x, fingerPos.y, 5, 0, 2*Math.PI); 
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fill();
         } else {
-            handDetected = false; fingerPos.valid = false; smoothedX = smoothedY = -100;
-            peaceCounter = 0; fistCounter = 0; // decay counters when hand lost
+            handDetected = false; 
+            fingerPos.valid = false; 
+            smoothedX = smoothedY = -100;
+            peaceCounter = 0; 
+            fistCounter = 0;
         }
 
         // Draw orange
-        ctx.shadowColor = '#ffaa33'; ctx.shadowBlur = 25;
-        ctx.beginPath(); ctx.arc(orange.x, orange.y, orange.r, 0, 2*Math.PI); ctx.fillStyle = '#ff8c00'; ctx.fill();
-        ctx.shadowBlur = 8;
-        ctx.beginPath(); ctx.arc(orange.x-5, orange.y-5, orange.r-8, 0, 2*Math.PI); ctx.fillStyle = '#ffb86b'; ctx.fill();
+        ctx.shadowColor = '#ffaa33'; 
+        ctx.shadowBlur = 20;
+        ctx.beginPath(); 
+        ctx.arc(orange.x, orange.y, orange.r, 0, 2*Math.PI); 
+        ctx.fillStyle = '#ff8c00'; 
+        ctx.fill();
+        
+        ctx.shadowBlur = 6;
+        ctx.beginPath(); 
+        ctx.arc(orange.x-3, orange.y-3, orange.r-8, 0, 2*Math.PI); 
+        ctx.fillStyle = '#ffb86b'; 
+        ctx.fill();
         ctx.shadowBlur = 0;
 
         if (redBall.active) {
-            ctx.shadowColor = '#ff3a3a'; ctx.shadowBlur = 30;
-            ctx.beginPath(); ctx.arc(redBall.x, redBall.y, redBall.r, 0, 2*Math.PI); ctx.fillStyle = '#d83030'; ctx.fill();
+            const pulseScale = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+            ctx.shadowColor = '#ff0000'; 
+            ctx.shadowBlur = 30;
+            ctx.beginPath(); 
+            ctx.arc(redBall.x, redBall.y, redBall.r * pulseScale, 0, 2*Math.PI); 
+            ctx.fillStyle = '#ff0000'; 
+            ctx.fill();
+            
             ctx.shadowBlur = 12;
-            ctx.beginPath(); ctx.arc(redBall.x-5, redBall.y-5, redBall.r-8, 0, 2*Math.PI); ctx.fillStyle = '#ff7777'; ctx.fill();
+            ctx.beginPath(); 
+            ctx.arc(redBall.x-3, redBall.y-3, redBall.r-8, 0, 2*Math.PI); 
+            ctx.fillStyle = '#ff5555'; 
+            ctx.fill();
             ctx.shadowBlur = 0;
         }
     });
 
-    const camera = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 800, height: 600, facingMode: 'user' });
-    camera.start().catch(e => console.warn);
+    // Camera permission request function
+    async function requestCameraPermission() {
+        try {
+            permissionMsg.style.display = 'none';
+            
+            const constraints = {
+                video: {
+                    width: { ideal: isMobile ? 480 : 640 },
+                    height: { ideal: isMobile ? 360 : 480 },
+                    facingMode: 'user',
+                    frameRate: { ideal: 15, max: 20 }
+                }
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            cameraPermissionGranted = true;
+            video.srcObject = stream;
+            
+            await video.play();
+            
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await hands.send({ image: video });
+                },
+                width: isMobile ? 480 : 640,
+                height: isMobile ? 360 : 480
+            });
+            
+            await camera.start();
+            
+            cameraInitialized = true;
+            cameraPrompt.style.display = 'none';
+            
+            // Show instructions popup
+            instructionsOverlay.style.display = 'flex';
+            
+            initAudioOnUserGesture();
+            
+        } catch (err) {
+            console.error('Camera access error:', err);
+            permissionMsg.style.display = 'block';
+            cameraPrompt.style.display = 'block';
+        }
+    }
 
-    // ----- GAME LOOP (physics) -----
+    // Instructions next button
+    instructionsNextBtn.addEventListener('click', () => {
+        instructionsOverlay.style.display = 'none';
+        
+        // Start fist calibration
+        calibrationStep = 1;
+        fistDetected = false;
+        fistCalibrationOverlay.style.display = 'flex';
+    });
+    
+    instructionsNextBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        instructionsOverlay.style.display = 'none';
+        calibrationStep = 1;
+        fistDetected = false;
+        fistCalibrationOverlay.style.display = 'flex';
+    });
+
+    // Skip calibration button
+    fistCalibrationSkipBtn.addEventListener('click', () => {
+        fistCalibrationOverlay.style.display = 'none';
+        startPrompt.style.display = 'block';
+        calibrationStep = 0;
+    });
+    
+    fistCalibrationSkipBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        fistCalibrationOverlay.style.display = 'none';
+        startPrompt.style.display = 'block';
+        calibrationStep = 0;
+    });
+
+    // Camera prompt click handler
+    cameraPrompt.addEventListener('click', () => {
+        requestCameraPermission();
+    });
+    
+    cameraPrompt.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        requestCameraPermission();
+    });
+
+    // Show camera prompt immediately
+    cameraPrompt.style.display = 'block';
+
+    // ----- GAME LOOP -----
     let lastTimestamp = 0;
+    
     function gameLoop(now) {
-        if (!lastTimestamp) { lastTimestamp = now; requestAnimationFrame(gameLoop); return; }
-        const delta = now - lastTimestamp; lastTimestamp = now;
+        if (!lastTimestamp) { 
+            lastTimestamp = now; 
+            requestAnimationFrame(gameLoop); 
+            return; 
+        }
+        
+        const delta = Math.min(now - lastTimestamp, 100);
+        lastTimestamp = now;
 
-        if (!handDetected && gameActive && !gameOverFlag && !manualStop) pauseIndicator.style.opacity = '1';
-        else pauseIndicator.style.opacity = '0';
+        // Update pause indicator
+        if (cameraPermissionGranted && !handDetected && gameActive && !gameOverFlag && !gamePaused) {
+            pauseIndicator.style.opacity = '1';
+        } else {
+            pauseIndicator.style.opacity = '0';
+        }
 
-        if (gameActive && !gameOverFlag) {
-            if (handDetected) timeLeft -= delta / 1000;
-            if (timeLeft <= 0) { timeLeft = INIT_TIME * 0.8; lives--; livesSpan.innerText = lives; if (lives <= 0) triggerGameOver(false); }
-            timerSpan.innerText = timeLeft.toFixed(1); updateTimeBar();
+        if (gameActive && !gameOverFlag && !gamePaused) {
+            if (handDetected) {
+                timeLeft -= delta / 1000;
+            }
+            
+            if (timeLeft <= 0) { 
+                timeLeft = INIT_TIME; 
+                lives--; 
+                livesSpan.innerText = lives; 
+                if (lives <= 0) triggerGameOver();
+                else {
+                    yellowAlertIntensity = 1.0;
+                }
+            }
+            
+            timerSpan.innerText = timeLeft.toFixed(1); 
+            updateTimeBar();
 
-            orange.x += orange.vx; orange.y += orange.vy;
-            if (orange.x < orange.r) { orange.x = orange.r; orange.vx *= -0.8; }
-            if (orange.x > canvas.width - orange.r) { orange.x = canvas.width - orange.r; orange.vx *= -0.8; }
-            if (orange.y < orange.r) { orange.y = orange.r; orange.vy *= -0.8; }
-            if (orange.y > canvas.height - orange.r) { orange.y = canvas.height - orange.r; orange.vy *= -0.8; }
-
-            if (redBall.active) {
-                redBall.x += redBall.vx; redBall.y += redBall.vy;
-                if (redBall.x < redBall.r) { redBall.x = redBall.r; redBall.vx *= -0.8; }
-                if (redBall.x > canvas.width - redBall.r) { redBall.x = canvas.width - redBall.r; redBall.vx *= -0.8; }
-                if (redBall.y < redBall.r) { redBall.y = redBall.r; redBall.vy *= -0.8; }
-                if (redBall.y > canvas.height - redBall.r) { redBall.y = canvas.height - redBall.r; redBall.vy *= -0.8; }
+            // Move orange
+            orange.x += orange.vx; 
+            orange.y += orange.vy;
+            
+            if (orange.x < orange.r) { 
+                orange.x = orange.r; 
+                orange.vx *= -0.8; 
+            }
+            if (orange.x > canvas.width - orange.r) { 
+                orange.x = canvas.width - orange.r; 
+                orange.vx *= -0.8; 
+            }
+            if (orange.y < orange.r) { 
+                orange.y = orange.r; 
+                orange.vy *= -0.8; 
+            }
+            if (orange.y > canvas.height - orange.r) { 
+                orange.y = canvas.height - orange.r; 
+                orange.vy *= -0.8; 
             }
 
+            // Move red ball
+            if (redBall.active) {
+                redBall.x += redBall.vx; 
+                redBall.y += redBall.vy;
+                
+                if (redBall.x < redBall.r) { 
+                    redBall.x = redBall.r; 
+                    redBall.vx *= -0.8; 
+                }
+                if (redBall.x > canvas.width - redBall.r) { 
+                    redBall.x = canvas.width - redBall.r; 
+                    redBall.vx *= -0.8; 
+                }
+                if (redBall.y < redBall.r) { 
+                    redBall.y = redBall.r; 
+                    redBall.vy *= -0.8; 
+                }
+                if (redBall.y > canvas.height - redBall.r) { 
+                    redBall.y = canvas.height - redBall.r; 
+                    redBall.vy *= -0.8; 
+                }
+            }
+
+            // Collision detection
             if (fingerPos.valid) {
                 const dx = fingerPos.x - orange.x, dy = fingerPos.y - orange.y;
-                if (Math.sqrt(dx*dx + dy*dy) < orange.r + 18) {
-                    score++; scoreSpan.innerText = score;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < orange.r + (isMobile ? 15 : 18)) {
+                    score++; 
+                    scoreSpan.innerText = score;
                     timeLeft = Math.min(timeLeft + TIME_PER_POP, 45);
-                    timerSpan.innerText = timeLeft.toFixed(1); updateTimeBar();
-                    playPopSound(); spawnOrange();
+                    timerSpan.innerText = timeLeft.toFixed(1); 
+                    updateTimeBar();
+                    playPopSound(); 
+                    spawnOrange();
+                    
+                    yellowAlertIntensity = Math.max(yellowAlertIntensity, 0.3);
                 }
+                
                 if (redBall.active) {
                     const dxR = fingerPos.x - redBall.x, dyR = fingerPos.y - redBall.y;
-                    if (Math.sqrt(dxR*dxR + dyR*dyR) < redBall.r + 18) {
-                        loseLife(); spawnRed();
+                    if (Math.sqrt(dxR*dxR + dyR*dyR) < redBall.r + (isMobile ? 15 : 18)) {
+                        loseLife();
                     }
                 }
             }
         }
+        
         requestAnimationFrame(gameLoop);
     }
+    
     requestAnimationFrame(gameLoop);
 
     // UI buttons
-    toggleBtn.addEventListener('click', () => {
-        initAudioOnUserGesture();
-        if (gameActive && !gameOverFlag) manualGameStop();
-        else { if (gameOverFlag) restartGame(); else manualGameStart(); }
+    toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!cameraPermissionGranted) return;
+        
+        if (!gameStarted && !gameOverFlag) {
+            startGame();
+        } else if (gameActive && !gamePaused) {
+            pauseGame();
+        } else if (gamePaused) {
+            resumeGame();
+        } else if (gameOverFlag) {
+            restartGame();
+        }
+    });
+    
+    toggleBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!cameraPermissionGranted) return;
+        
+        if (!gameStarted && !gameOverFlag) {
+            startGame();
+        } else if (gameActive && !gamePaused) {
+            pauseGame();
+        } else if (gamePaused) {
+            resumeGame();
+        } else if (gameOverFlag) {
+            restartGame();
+        }
     });
 
-    musicBtn.addEventListener('click', () => { initAudioOnUserGesture(); setMusicEnabled(!musicEnabled); });
-    restartBtn.addEventListener('click', () => { initAudioOnUserGesture(); restartGame(); });
+    musicBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture(); 
+        setMusicEnabled(!musicEnabled);
+    });
+    
+    musicBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        initAudioOnUserGesture(); 
+        setMusicEnabled(!musicEnabled);
+    });
+    
+    restartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!cameraPermissionGranted) return;
+        restartGame();
+    });
+    
+    restartBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!cameraPermissionGranted) return;
+        restartGame();
+    });
 
+    // Initialize
     setMusicEnabled(true);
-    spawnOrange(); spawnRed();
+    spawnOrange(); 
+    spawnRed();
+    
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        permissionMsg.innerHTML = '📷 Camera not supported<br><small>On mobile, use HTTPS or enable camera permissions</small>';
+        permissionMsg.style.display = 'block';
+        cameraPrompt.style.display = 'none';
+    }
 })();
 </script>
 </body>
