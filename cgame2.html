@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shield & Strike – Timed</title>
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    html, body {
+      margin: 0;
+      background: #0b0e18;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    #canvas {
+      position: fixed;
+      inset: 0;
+      display: block;
+    }
+    /* HUD – glassmorphism */
+    #hud {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 24px;
+      background: rgba(20, 30, 45, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 10px 28px;
+      border-radius: 60px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      color: white;
+      z-index: 10;
+      font-size: 1.3rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    #hud div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-shadow: 0 2px 5px black;
+    }
+    /* Timer & toggle panel – floating right */
+    #control-panel {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      background: rgba(20, 30, 45, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 50px;
+      padding: 8px 16px 8px 24px;
+      border: 1px solid rgba(100, 200, 255, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 15;
+      color: white;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    }
+    .timer {
+      font-size: 1.8rem;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      background: #0a0e1a;
+      padding: 6px 14px;
+      border-radius: 40px;
+      border: 1px solid #3f5e8c;
+      text-shadow: 0 0 8px cyan;
+      letter-spacing: 2px;
+    }
+    /* Toggle button – beautiful 3D style */
+    #toggle-btn {
+      background: linear-gradient(145deg, #1f2a3f, #0e1422);
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 600;
+      padding: 12px 32px;
+      border-radius: 40px;
+      cursor: pointer;
+      box-shadow: 0 10px 0 #0b0f1a, 0 5px 20px rgba(0,200,255,0.4);
+      transition: all 0.08s ease-out;
+      letter-spacing: 1.5px;
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #toggle-btn:active {
+      transform: translateY(6px);
+      box-shadow: 0 4px 0 #0b0f1a, 0 8px 20px cyan;
+    }
+    #toggle-btn.running {
+      background: linear-gradient(145deg, #2b3b5a, #1a2440);
+      box-shadow: 0 10px 0 #0f1a2a, 0 0 20px #00a6ff;
+      border-color: #7fc9ff;
+    }
+    /* Game Over overlay – elegant */
+    #gameover {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 12, 25, 0.9);
+      backdrop-filter: blur(5px);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 3.5rem;
+      z-index: 30;
+      gap: 15px;
+      text-shadow: 0 0 30px cyan;
+    }
+    #gameover div:nth-child(2), #gameover div:nth-child(3) {
+      font-size: 2rem;
+      background: rgba(0,20,40,0.7);
+      padding: 8px 40px;
+      border-radius: 60px;
+      border: 1px solid gold;
+    }
+    #gameover button {
+      margin-top: 30px;
+      padding: 16px 48px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: gold;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 0 #b8860b;
+      transition: 0.07s;
+      color: #0b0e18;
+    }
+    #gameover button:active {
+      transform: translateY(6px);
+      box-shadow: 0 4px 0 #b8860b;
+    }
+    video { display: none; }
+  </style>
+</head>
+<body>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div>❤️ <span id="lives">5</span></div>
+  <div>⭐ <span id="score">0</span></div>
+  <div>🏆 <span id="high">0</span></div>
+  <div>⚔️ Lv <span id="level">1</span></div>
+</div>
+
+<!-- Control panel: timer + toggle -->
+<div id="control-panel">
+  <span class="timer" id="timerDisplay">01:00</span>
+  <button id="toggle-btn">⏸️ STOP</button>
+</div>
+
+<!-- Game over screen -->
+<div id="gameover">
+  <div>GAME OVER</div>
+  <div>Score: <span id="final"></span></div>
+  <div>Best: <span id="best"></span></div>
+  <button onclick="restart()">▶ PLAY AGAIN</button>
+</div>
+
+<script>
+  (function() {
+    // --- DOM elements ---
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const video = document.getElementById('video');
+    const livesEl = document.getElementById('lives');
+    const scoreEl = document.getElementById('score');
+    const highEl = document.getElementById('high');
+    const levelEl = document.getElementById('level');
+    const finalEl = document.getElementById('final');
+    const bestEl = document.getElementById('best');
+    const gameoverEl = document.getElementById('gameover');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const toggleBtn = document.getElementById('toggle-btn');
+
+    // --- resize ---
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- Audio (beep) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(freq, d = 0.1) {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.frequency.value = freq;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
+      o.stop(audioCtx.currentTime + d);
+    }
+
+    // --- Game state ---
+    let lives = 5;
+    let score = 0;
+    let level = 1;
+    let running = true;          // game logic on/off (starts running)
+    let roundActive = true;      // true = gameplay, false = paused (stop)
+    let highScore = parseInt(localStorage.getItem('shieldstrike_timed') || '0');
+    highEl.innerText = highScore;
+
+    // Time limit (60 seconds)
+    const TIME_LIMIT = 60; // seconds
+    let timeLeft = TIME_LIMIT;
+    let timerInterval = null;
+
+    // Hands
+    let left = null, right = null;
+    let smoothL = null, smoothR = null;
+    const SMOOTH = 0.75;
+
+    // Enemies & powerups
+    let enemies = [];
+    let powerups = [];
+    let boss = null;
+
+    // Power-up timers (frames)
+    let slowTime = 0;
+    let doubleScore = 0;
+    let shieldBoost = 0;
+
+    // --- Timer control ---
+    function updateTimerDisplay() {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!running || !roundActive) return; // pause when round not active
+        timeLeft--;
+        if (timeLeft < 0) timeLeft = 0;
+        updateTimerDisplay();
+
+        // Time's up → end game (loss)
+        if (timeLeft <= 0 && running) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      timeLeft = TIME_LIMIT;
+      updateTimerDisplay();
+    }
+
+    // --- toggle function (start/stop) ---
+    function toggleRound() {
+      if (!running) {
+        // if gameover, restart first? we can call restart implicitly, but better to handle.
+        // For simplicity, if gameover, restart then start.
+        if (!running && gameoverEl.style.display === 'flex') {
+          restart(); // this sets running=true, roundActive=true, resets stats
+          roundActive = true;
+          toggleBtn.innerHTML = '⏸️ STOP';
+          toggleBtn.classList.add('running');
+        } else {
+          // normal toggle
+          roundActive = !roundActive;
+          if (roundActive) {
+            toggleBtn.innerHTML = '⏸️ STOP';
+            toggleBtn.classList.add('running');
+          } else {
+            toggleBtn.innerHTML = '▶ START';
+            toggleBtn.classList.remove('running');
+          }
+        }
+      } else {
+        // running true, toggle roundActive
+        roundActive = !roundActive;
+        if (roundActive) {
+          toggleBtn.innerHTML = '⏸️ STOP';
+          toggleBtn.classList.add('running');
+        } else {
+          toggleBtn.innerHTML = '▶ START';
+          toggleBtn.classList.remove('running');
+        }
+      }
+    }
+
+    toggleBtn.addEventListener('click', toggleRound);
+
+    // --- spawn helpers ---
+    function spawnEnemy() {
+      if (!running || !roundActive || boss) return;
+      const speed = 2 + level * 0.5;
+      enemies.push({
+        x: Math.random() * canvas.width,
+        y: -30,
+        r: 16 + level * 2,
+        v: speed
+      });
+    }
+
+    function spawnPower() {
+      if (!running || !roundActive) return;
+      const types = ["slow", "double", "shield"];
+      powerups.push({
+        x: Math.random() * canvas.width,
+        y: -20,
+        r: 14,
+        v: 2,
+        type: types[Math.floor(Math.random() * 3)]
+      });
+    }
+
+    // spawn intervals (managed with setInterval, but will check roundActive inside)
+    let enemyInterval, powerInterval;
+    function startIntervals() {
+      if (enemyInterval) clearInterval(enemyInterval);
+      if (powerInterval) clearInterval(powerInterval);
+      enemyInterval = setInterval(() => { if (running && roundActive && !boss) spawnEnemy(); }, 700);
+      powerInterval = setInterval(() => { if (running && roundActive && Math.random() < 0.3) spawnPower(); }, 6000);
+    }
+
+    // Boss spawn condition (called in loop)
+    function checkBossSpawn() {
+      if (!running || !roundActive) return;
+      if (!boss && score > 0 && score % 20 === 0) {
+        boss = {
+          x: canvas.width / 2,
+          y: -100,
+          r: 80,
+          hp: 20 + level * 5,
+          v: 1
+        };
+        beep(150, 0.5);
+      }
+    }
+
+    // --- restart function (exposed globally) ---
+    window.restart = function() {
+      // reset state
+      lives = 5;
+      score = 0;
+      level = 1;
+      enemies = [];
+      powerups = [];
+      boss = null;
+      slowTime = 0;
+      doubleScore = 0;
+      shieldBoost = 0;
+      smoothL = null;
+      smoothR = null;
+      running = true;
+      roundActive = true;
+      timeLeft = TIME_LIMIT;
+      updateTimerDisplay();
+
+      livesEl.innerText = lives;
+      scoreEl.innerText = score;
+      levelEl.innerText = level;
+      gameoverEl.style.display = 'none';
+
+      toggleBtn.innerHTML = '⏸️ STOP';
+      toggleBtn.classList.add('running');
+
+      // restart timer if needed
+      if (timerInterval) clearInterval(timerInterval);
+      startTimer();
+
+      beep(400, 0.2);
+    };
+
+    // --- endGame ---
+    function endGame() {
+      if (!running) return;
+      running = false;
+      roundActive = false;
+      finalEl.innerText = score;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('shieldstrike_timed', highScore);
+        highEl.innerText = highScore;
+      }
+      bestEl.innerText = highScore;
+      gameoverEl.style.display = 'flex';
+      toggleBtn.innerHTML = '▶ START';
+      toggleBtn.classList.remove('running');
+      beep(80, 0.6);
+    }
+
+    // --- MediaPipe setup ---
+    const hands = new Hands({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+    });
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.85,
+      minTrackingConfidence: 0.85
+    });
+    hands.onResults(onResults);
+
+    const camera = new Camera(video, {
+      width: 1280,
+      height: 720,
+      onFrame: async () => {
+        await hands.send({ image: video });
+      }
+    });
+    camera.start();
+
+    // --- main drawing & logic ---
+    function onResults(res) {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw camera (mirror)
+      if (res.image) {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(res.image, -canvas.width, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      if (!running) {
+        // still draw hands if any but no game logic
+        drawHands(res);
+        return;
+      }
+
+      // Process game logic only if roundActive
+      if (roundActive) {
+        // Update hand tracking
+        updateHands(res);
+
+        // Enemy movement & collision
+        updateEnemies();
+
+        // Powerups
+        updatePowerups();
+
+        // Boss logic
+        checkBossSpawn();
+        updateBoss();
+
+        // Timers
+        if (slowTime > 0) slowTime--;
+        if (doubleScore > 0) doubleScore--;
+        if (shieldBoost > 0) shieldBoost--;
+      } else {
+        // paused: still update hand positions for visual (don't move enemies)
+        updateHands(res);
+      }
+
+      // Always draw hands, enemies, powerups (even paused, draw them static)
+      drawHands(res);
+      drawEnemiesAndPowerups();
+      if (boss) drawBoss();
+
+      // Update HUD if changed by paused collisions? collisions only happen when roundActive
+      // but we already updated inside update functions only if roundActive.
+    }
+
+    // --- hand tracking update (always, for visual) ---
+    function updateHands(res) {
+      left = null; right = null;
+      if (res.multiHandLandmarks && res.multiHandedness) {
+        res.multiHandLandmarks.forEach((lm, i) => {
+          const label = res.multiHandedness[i].label;
+          const tip = lm[8];
+          let x = (1 - tip.x) * canvas.width;
+          let y = tip.y * canvas.height;
+
+          if (label === 'Left') {
+            if (!smoothL) smoothL = { x, y };
+            smoothL.x = smoothL.x * SMOOTH + x * (1 - SMOOTH);
+            smoothL.y = smoothL.y * SMOOTH + y * (1 - SMOOTH);
+            left = { ...smoothL };
+          }
+          if (label === 'Right') {
+            if (!smoothR) smoothR = { x, y };
+            smoothR.x = smoothR.x * SMOOTH + x * (1 - SMOOTH);
+            smoothR.y = smoothR.y * SMOOTH + y * (1 - SMOOTH);
+            right = { ...smoothR };
+          }
+        });
+      }
+    }
+
+    function drawHands() {
+      if (left) {
+        ctx.beginPath();
+        ctx.arc(left.x, left.y, shieldBoost ? 40 : 28, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 150, 255, 0.4)';
+        ctx.fill();
+      }
+      if (right) {
+        ctx.beginPath();
+        ctx.arc(right.x, right.y, 14, 0, 2 * Math.PI);
+        ctx.fillStyle = 'lime';
+        ctx.fill();
+      }
+    }
+
+    function updateEnemies() {
+      if (!roundActive) return; // no movement/collision when paused
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.y += e.v * (slowTime ? 0.4 : 1);
+
+        let hit = false;
+
+        // Shield collision
+        if (left) {
+          const d = Math.hypot(e.x - left.x, e.y - left.y);
+          if (d < e.r + (shieldBoost ? 40 : 28)) {
+            hit = true;
+            beep(300);
+          }
+        }
+        // Sword collision
+        if (right && !hit) {
+          const d = Math.hypot(e.x - right.x, e.y - right.y);
+          if (d < e.r + 14) {
+            hit = true;
+            let pts = doubleScore ? 2 : 1;
+            score += pts;
+            scoreEl.innerText = score;
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem('shieldstrike_timed', highScore);
+              highEl.innerText = highScore;
+            }
+            beep(600);
+          }
+        }
+
+        if (hit) {
+          enemies.splice(i, 1);
+          continue;
+        }
+
+        // bottom out
+        if (e.y > canvas.height + 40) {
+          enemies.splice(i, 1);
+          lives--;
+          livesEl.innerText = lives;
+          beep(120);
+          if (lives <= 0) endGame();
+        }
+      }
+    }
+
+    function updatePowerups() {
+      if (!roundActive) return;
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        const p = powerups[i];
+        p.y += p.v;
+
+        let take = false;
+        if (right) {
+          if (Math.hypot(p.x - right.x, p.y - right.y) < p.r + 14) take = true;
+        }
+        if (take) {
+          if (p.type === 'slow') slowTime = 300;
+          if (p.type === 'double') doubleScore = 300;
+          if (p.type === 'shield') shieldBoost = 300;
+          beep(900, 0.2);
+          powerups.splice(i, 1);
+          continue;
+        }
+        if (p.y > canvas.height + 30) powerups.splice(i, 1);
+      }
+    }
+
+    function updateBoss() {
+      if (!boss || !roundActive) return;
+      boss.y += boss.v;
+      if (right) {
+        const d = Math.hypot(boss.x - right.x, boss.y - right.y);
+        if (d < boss.r + 14) {
+          boss.hp--;
+          beep(700, 0.05);
+        }
+      }
+      if (boss.hp <= 0) {
+        score += 10;
+        level++;
+        levelEl.innerText = level;
+        boss = null;
+        beep(1000, 0.4);
+      }
+      if (boss && boss.y > canvas.height) {
+        lives = 0;
+        endGame();
+      }
+    }
+
+    function drawEnemiesAndPowerups() {
+      enemies.forEach(e => {
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      });
+      powerups.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+        ctx.fillStyle = p.type === 'slow' ? 'cyan' : p.type === 'double' ? 'gold' : 'violet';
+        ctx.fill();
+      });
+    }
+
+    function drawBoss() {
+      if (!boss) return;
+      ctx.beginPath();
+      ctx.arc(boss.x, boss.y, boss.r, 0, 2 * Math.PI);
+      ctx.fillStyle = '#7b0000';
+      ctx.fill();
+    }
+
+    // --- initialise timer & intervals ---
+    resetTimer();
+    startTimer();
+    startIntervals();
+
+    // Ensure intervals restart after restart (but restart already clears and sets running)
+    // clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      clearInterval(enemyInterval);
+      clearInterval(powerInterval);
+      clearInterval(timerInterval);
+    });
+
+    // initial toggle button state
+    toggleBtn.innerHTML = '⏸️ STOP';
+    toggleBtn.classList.add('running');
+
+  })();
+</script>
+</body>
+</html>
