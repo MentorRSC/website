@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hand SOS · project Narendran</title>
     <style>
         * {
@@ -18,6 +18,7 @@
             align-items: center;
             justify-content: center;
             font-family: 'Segoe UI', system-ui, sans-serif;
+            touch-action: none;
         }
 
         /* main container: full height, 92% width */
@@ -30,12 +31,13 @@
             border-radius: 2rem 2rem 0 0;
             overflow: hidden;
             box-shadow: 0 25px 40px -10px black;
+            position: relative;
         }
 
         /* canvas occupies all available space, video is painted behind */
         .canvas-wrapper {
             flex: 1 1 0;
-            min-height: 0;   /* firefox flex overflow fix */
+            min-height: 0;
             position: relative;
             background: #202432;
         }
@@ -44,11 +46,11 @@
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover;          /* covers area without stretching, matches video */
-            background: #2a2f3a;         /* fallback while loading */
+            object-fit: cover;
+            background: #2a2f3a;
         }
 
-        /* status bar – small but visible */
+        /* status bar */
         .status-area {
             padding: 12px 20px;
             background: #10131c;
@@ -80,9 +82,9 @@
             box-shadow: inset 0 2px 3px #0a0e14;
         }
 
-        /* red emergency overlay – covers the whole frame, but hidden by default */
+        /* red emergency overlay */
         #emergencyOverlay {
-            position: fixed;          /* covers viewport independently */
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
@@ -121,12 +123,140 @@
             100% { opacity: 1; filter: brightness(1.3); }
         }
 
-        /* small watermark + name */
+        /* dropdown menu */
+        .menu-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .menu-btn {
+            background: #1e2a3a;
+            border: 2px solid #ffaa33;
+            color: white;
+            font-size: 1.8rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            box-shadow: 0 4px 10px black;
+            transition: 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: #2f3a4a;
+            transform: scale(1.05);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: #1a2535;
+            border: 2px solid #ffaa33;
+            border-radius: 20px;
+            padding: 10px;
+            display: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px black;
+            min-width: 200px;
+            z-index: 101;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover {
+            background: #2f4055;
+        }
+
+        .menu-item.active {
+            background: #2f6b3e;
+            color: #e8ffe8;
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: #ffaa3366;
+            margin: 8px 0;
+        }
+
+        /* camera permission prompt */
+        .camera-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a2a3a, #0a1a2a);
+            border: 3px solid #44aaff;
+            border-radius: 40px;
+            padding: 30px 50px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 60px #44aaff;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: 0.3s;
+            display: none;
+        }
+
+        .camera-prompt:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            border-color: #88ddff;
+        }
+
+        .camera-prompt span {
+            color: #44aaff;
+            font-size: 3rem;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .permission-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 2100;
+            display: none;
+        }
+
         .note {
             font-size: 0.9rem;
             color: #5d6f8f;
             margin-left: 1rem;
         }
+        
         .signature {
             color: #b3ceff;
             font-weight: 400;
@@ -137,6 +267,7 @@
             letter-spacing: 0.5px;
             border: 1px solid #3a4865;
         }
+        
         .signature i {
             color: #ffd966;
             font-style: normal;
@@ -147,6 +278,26 @@
 <body>
 
 <div class="camera-frame">
+    <!-- Dropdown Menu -->
+    <div class="menu-container">
+        <div class="menu-btn" id="menuBtn">☰</div>
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="menu-item" id="menuStartStop">
+                <span>⏸️</span> Pause Detection
+            </div>
+            <div class="menu-item" id="menuLiveStream">
+                <span>📹</span> Live Stream: ON
+            </div>
+            <div class="menu-item" id="menuSkeleton">
+                <span>🦴</span> Skeleton: ON
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item" id="menuReset">
+                <span>↻</span> Reset Emergency
+            </div>
+        </div>
+    </div>
+
     <div class="canvas-wrapper">
         <canvas id="handCanvas"></canvas>
     </div>
@@ -156,6 +307,15 @@
         <div class="signature"><i>✋</i> project by Narendran</div>
     </div>
 </div>
+
+<!-- Camera Permission Prompt -->
+<div id="cameraPrompt" class="camera-prompt">
+    📷 CAMERA ACCESS NEEDED
+    <span>👆</span>
+    TAP TO REQUEST PERMISSION
+</div>
+
+<div id="permissionMessage" class="permission-message">❌ Camera access denied<br><small>Please enable camera permissions</small></div>
 
 <!-- fullscreen red emergency overlay -->
 <div id="emergencyOverlay">
@@ -175,42 +335,60 @@
         const gestureEl = document.getElementById('gestureDisplay');
         const timerEl = document.getElementById('timerDisplay');
         const emergencyOverlay = document.getElementById('emergencyOverlay');
+        const cameraPrompt = document.getElementById('cameraPrompt');
+        const permissionMsg = document.getElementById('permissionMessage');
+        
+        // Menu elements
+        const menuBtn = document.getElementById('menuBtn');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const menuStartStop = document.getElementById('menuStartStop');
+        const menuLiveStream = document.getElementById('menuLiveStream');
+        const menuSkeleton = document.getElementById('menuSkeleton');
+        const menuReset = document.getElementById('menuReset');
 
         // ---------- state variables ----------
         let lastGesture = 'unknown';
-        let openHandStartTime = null;          // timestamp when open hand first detected (ms)
-        const OPEN_HAND_DURATION_MS = 3000;     // 3 seconds
-        let emergencyActive = false;            // is red screen & alarm on?
-        let alarmSound = null;                  // will be created after user interaction
+        let openHandStartTime = null;
+        const OPEN_HAND_DURATION_MS = 3000;
+        let emergencyActive = false;
+        let alarmSound = null;
+        
+        // Menu states
+        let detectionPaused = false;
+        let liveStreamEnabled = true;
+        let skeletonEnabled = true;
+        let cameraInitialized = false;
+        let cameraPermissionGranted = false;
+        
+        // Mobile detection
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // Hand tracking variables
+        let handDetected = false;
+        let fingerPos = { x: -100, y: -100, valid: false };
+        let videoElement = null;
 
         // ---------- audio (alarm) ----------
         function initAlarm() {
             if (alarmSound) return;
             try {
-                // create a simple oscillating tone (web audio api) to avoid external files
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const gainNode = audioCtx.createGain();
                 const oscillator = audioCtx.createOscillator();
                 oscillator.type = 'sawtooth';
-                oscillator.frequency.value = 440; // A4
-                gainNode.gain.value = 0.3;        // comfortable but alarming
+                oscillator.frequency.value = 440;
+                gainNode.gain.value = 0.3;
 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
 
-                // loop manually? we want continuous alarm. we'll use a simple loop by restarting
-                // but easier: store context and create looping scheduled buffer?
-                // for simplicity, we'll create an AudioBuffer with a harsh tone and loop it.
-                // But Web Audio loop is cleaner: use AudioBufferSourceNode with loop = true.
-                // However we need to stop it later. Let's build a loopable buffer.
                 const sampleRate = audioCtx.sampleRate;
-                const duration = 1.0; // 1 second sample
+                const duration = 1.0;
                 const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
                 const channel = buffer.getChannelData(0);
-                // fill with alternating square-ish wave to sound like alarm
+                
                 for (let i = 0; i < buffer.length; i++) {
                     const t = i / sampleRate;
-                    // alternating 300 Hz and 450 Hz harsh
                     const freq = (Math.floor(t * 6) % 2 === 0) ? 380 : 520;
                     channel[i] = Math.sin(2 * Math.PI * freq * t) * 0.5 + Math.sin(4 * Math.PI * 280 * t) * 0.2;
                 }
@@ -227,7 +405,6 @@
                     isPlaying: false
                 };
 
-                // note: audio context starts suspended. we'll resume on first interaction or emergency
                 document.addEventListener('click', () => {
                     if (alarmSound && alarmSound.context.state === 'suspended') {
                         alarmSound.context.resume();
@@ -260,10 +437,9 @@
             try {
                 alarmSound.source.stop();
             } catch (e) {}
-            // recreate source for next alarm
             const audioCtx = alarmSound.context;
             const gainNode = alarmSound.gain;
-            const newBuffer = alarmSound.source.buffer; // same buffer
+            const newBuffer = alarmSound.source.buffer;
             const newSource = audioCtx.createBufferSource();
             newSource.buffer = newBuffer;
             newSource.loop = true;
@@ -272,177 +448,186 @@
             alarmSound.isPlaying = false;
         }
 
-        // ---------- hand detection logic (MediaPipe) ----------
-        const hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
+        // ---------- Camera permission request ----------
+        async function requestCameraPermission() {
+            try {
+                permissionMsg.style.display = 'none';
+                
+                const constraints = {
+                    video: {
+                        width: { ideal: isMobile ? 640 : 1280 },
+                        height: { ideal: isMobile ? 480 : 720 },
+                        facingMode: 'user',
+                        frameRate: { ideal: 15, max: 20 }
+                    }
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                cameraPermissionGranted = true;
+                
+                // Create video element
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true;
+                videoElement = video;
+                
+                await video.play();
+                
+                // Initialize hands
+                initHandTracking(video);
+                
+                cameraInitialized = true;
+                cameraPrompt.style.display = 'none';
+                
+                initAlarm();
+                
+            } catch (err) {
+                console.error('Camera access error:', err);
+                permissionMsg.style.display = 'block';
+                cameraPrompt.style.display = 'block';
+            }
+        }
 
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
+        // ---------- Hand tracking initialization ----------
+        function initHandTracking(video) {
+            const hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
 
-        hands.onResults(onHandResults);
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
 
-        // camera init
-        const camera = new Camera(document.createElement('video'), {
-            onFrame: async () => {
-                if (!emergencyActive) { // we still process hands to detect reset even when emergency is active? yes: we want to detect 2-finger stop.
-                    await hands.send({ image: video });
-                } else {
-                    // even in emergency, we process hands so we can exit on two fingers
-                    await hands.send({ image: video });
-                }
-            },
-            width: 1280,
-            height: 720
-        });
+            hands.onResults(onHandResults);
 
-        // we need the video element created by Camera, but we also need its reference
-        let video;
-        camera.video.addEventListener('loadedmetadata', () => {
-            video = camera.video;
-        });
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    if (!detectionPaused) {
+                        await hands.send({ image: video });
+                    }
+                },
+                width: isMobile ? 640 : 1280,
+                height: isMobile ? 480 : 720
+            });
 
-        // start camera
-        camera.start().then(() => {
-            initAlarm(); // prepare audio after user interaction (camera asks permission, that's a user gesture)
-        }).catch(e => {
-            gestureEl.innerText = '🚫 camera access denied';
-        });
+            camera.start();
+        }
 
         // ---------- drawing and landmark detection ----------
         function onHandResults(results) {
-            // clear canvas and draw video
+            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (results.image) {
+            
+            // Draw live stream if enabled
+            if (liveStreamEnabled && results.image) {
                 ctx.save();
                 ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
                 ctx.restore();
+            } else if (!liveStreamEnabled) {
+                // Fill with dark background
+                ctx.fillStyle = '#1a1f2b';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // default no gesture
             let currentGesture = 'no hand';
             let fingerCount = 0;
 
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                // we take the first hand
                 const landmarks = results.multiHandLandmarks[0];
 
-                // draw landmarks + dotted lines
-                drawHandConnections(landmarks, results.multiHandedness?.[0]?.index);
+                // Draw skeleton if enabled
+                if (skeletonEnabled) {
+                    drawHandConnections(landmarks);
+                }
 
-                // count extended fingers (simple heuristic)
-                // indices: thumb: 4, index: 8, middle: 12, ring: 16, pinky: 20
+                // Count extended fingers
                 const tipIds = [4, 8, 12, 16, 20];
                 const fingerTips = tipIds.map(id => landmarks[id]);
-                const fingerBase = [2, 5, 9, 13, 17].map(id => landmarks[id]); // approximate base
+                const fingerBase = [2, 5, 9, 13, 17].map(id => landmarks[id]);
 
                 let extended = 0;
-                // thumb: compare x coordinate (for right/left handedness) – simplified: check if tip.x is more left/right relative to base?
-                // we do rough: if hand is right, thumb extended when tip.x > base.x; if left, opposite.
-                // for demo we count all fingers if tip y < base y (except thumb we use x)
                 for (let i = 0; i < 5; i++) {
                     const tip = fingerTips[i];
                     const base = fingerBase[i];
-                    if (i === 0) { // thumb
-                        // compare x: depends on handedness. we use wrist (0) and index base to guess orientation
-                        const wrist = landmarks[0];
-                        const indexBase = landmarks[5];
-                        // if wrist.x < indexBase.x => palm facing? Actually simpler: if tip.x > base.x for right hand? but we just trust y? no, thumb is sideways.
-                        // we use a very common approach: if thumb tip is left of thumb base for left hand etc. but we skip precise, we treat all fingers with y compare except thumb? 
-                        // But to make open hand reliable we combine with simple logic: open hand = all fingers extended with approx direction.
-                        // easier: count fingers if tip.y < base.y for index,middle,ring,pinky (typical) and for thumb use separate rule:
-                        // assume right hand by default, and if tip.x > base.x then extended. 
-                        // we'll consider thumb extended if tip.x > base.x + 0.03 (heuristic)
+                    if (i === 0) {
                         if (tip.x > base.x + 0.03) extended++;
                     } else {
-                        // for other four: tip y should be higher (smaller y) than base y (since y=0 is top)
-                        if (tip.y < base.y - 0.03) extended++; 
+                        if (tip.y < base.y - 0.03) extended++;
                     }
                 }
 
                 fingerCount = extended;
-
-                // determine gesture:
-                if (fingerCount === 5) currentGesture = 'open hand';
-                else if (fingerCount === 2) currentGesture = 'two fingers';
-                else currentGesture = `${fingerCount} fingers`;
-            } else {
-                currentGesture = 'no hand';
+                currentGesture = fingerCount === 5 ? 'open hand' : 
+                               fingerCount === 2 ? 'two fingers' : 
+                               `${fingerCount} fingers`;
             }
 
-            // update UI
+            // Update UI
             gestureEl.innerText = `✋ ${currentGesture}`;
 
-            // ---------- emergency logic ----------
-            const now = performance.now(); // milliseconds
+            // Emergency logic (only if detection not paused)
+            if (!detectionPaused) {
+                const now = performance.now();
 
-            if (!emergencyActive) {
-                if (currentGesture === 'open hand') {
-                    if (openHandStartTime === null) {
-                        openHandStartTime = now;
-                    } else {
-                        const elapsed = (now - openHandStartTime) / 1000;
-                        timerEl.innerText = `⏱️ ${elapsed.toFixed(1)}s`;
-                        if (elapsed >= 3.0) {
-                            // trigger emergency
-                            emergencyActive = true;
-                            emergencyOverlay.style.display = 'flex';
-                            playAlarm();
-                            openHandStartTime = null; // reset timer
+                if (!emergencyActive) {
+                    if (currentGesture === 'open hand') {
+                        if (openHandStartTime === null) {
+                            openHandStartTime = now;
+                        } else {
+                            const elapsed = (now - openHandStartTime) / 1000;
+                            timerEl.innerText = `⏱️ ${elapsed.toFixed(1)}s`;
+                            if (elapsed >= 3.0) {
+                                emergencyActive = true;
+                                emergencyOverlay.style.display = 'flex';
+                                playAlarm();
+                                openHandStartTime = null;
+                            }
                         }
+                    } else {
+                        openHandStartTime = null;
+                        timerEl.innerText = '⏱️ 0.0s';
                     }
                 } else {
-                    // gesture lost or different → reset timer
+                    timerEl.innerText = '⏱️ 🔴 SOS';
+                    if (currentGesture === 'two fingers') {
+                        emergencyActive = false;
+                        emergencyOverlay.style.display = 'none';
+                        stopAlarm();
+                        openHandStartTime = null;
+                        timerEl.innerText = '⏱️ 0.0s';
+                    }
+                }
+
+                if (!emergencyActive && currentGesture === 'no hand') {
                     openHandStartTime = null;
                     timerEl.innerText = '⏱️ 0.0s';
                 }
-            } else {
-                // EMERGENCY ACTIVE: check for two fingers to reset
-                timerEl.innerText = '⏱️ 🔴 SOS';
-                if (currentGesture === 'two fingers') {
-                    // stop emergency, hide red, stop alarm
-                    emergencyActive = false;
-                    emergencyOverlay.style.display = 'none';
-                    stopAlarm();
-                    openHandStartTime = null; // also reset timer
-                    timerEl.innerText = '⏱️ 0.0s';
-                }
-            }
-
-            // If no hand, ensure timer reset if not emergency
-            if (!emergencyActive && currentGesture === 'no hand') {
-                openHandStartTime = null;
-                timerEl.innerText = '⏱️ 0.0s';
             }
         }
 
-        // draw landmarks and dotted lines
-        function drawHandConnections(landmarks, handedness) {
+        // Draw hand connections
+        function drawHandConnections(landmarks) {
             if (!landmarks) return;
 
             const w = canvas.width;
             const h = canvas.height;
 
-            // connections for hand (from MediaPipe)
             const connections = [
-                [0,1],[1,2],[2,3],[3,4],       // thumb
-                [0,5],[5,6],[6,7],[7,8],       // index
-                [5,9],[9,10],[10,11],[11,12],  // middle
-                [9,13],[13,14],[14,15],[15,16],// ring
-                [13,17],[17,18],[18,19],[19,20],// pinky
-                [0,17],[2,5]                    // palm
+                [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8],
+                [5,9],[9,10],[10,11],[11,12], [9,13],[13,14],[14,15],[15,16],
+                [13,17],[17,18],[18,19],[19,20], [0,17],[2,5]
             ];
 
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#fff9d0';
-            ctx.setLineDash([8, 6]); // dotted line
+            ctx.setLineDash([8, 6]);
             ctx.beginPath();
 
-            // draw dotted lines
             for (let [i, j] of connections) {
                 const p1 = landmarks[i];
                 const p2 = landmarks[j];
@@ -453,7 +638,6 @@
             }
             ctx.stroke();
 
-            // draw points (solid)
             ctx.setLineDash([]);
             ctx.fillStyle = '#80deea';
             ctx.strokeStyle = '#01579b';
@@ -468,7 +652,7 @@
             }
         }
 
-        // adjust canvas size to wrapper
+        // Resize canvas
         function resizeCanvas() {
             const wrapper = document.querySelector('.canvas-wrapper');
             if (wrapper) {
@@ -479,10 +663,86 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // also ensure video stream is drawn even before hand detection
-        // but hand results already draw image.
+        // ---------- Menu functionality ----------
+        menuBtn.addEventListener('click', () => {
+            dropdownMenu.classList.toggle('show');
+        });
 
-        // additional: stop alarm if emergency overlay hidden via two fingers already handled.
+        menuBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            dropdownMenu.classList.toggle('show');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+
+        // Start/Stop detection
+        menuStartStop.addEventListener('click', () => {
+            detectionPaused = !detectionPaused;
+            menuStartStop.innerHTML = detectionPaused ? 
+                '<span>▶️</span> Start Detection' : 
+                '<span>⏸️</span> Pause Detection';
+            dropdownMenu.classList.remove('show');
+            
+            if (!detectionPaused) {
+                openHandStartTime = null;
+                timerEl.innerText = '⏱️ 0.0s';
+            }
+        });
+
+        // Live Stream toggle
+        menuLiveStream.addEventListener('click', () => {
+            liveStreamEnabled = !liveStreamEnabled;
+            menuLiveStream.innerHTML = liveStreamEnabled ? 
+                '<span>📹</span> Live Stream: ON' : 
+                '<span>🚫</span> Live Stream: OFF';
+            dropdownMenu.classList.remove('show');
+        });
+
+        // Skeleton toggle
+        menuSkeleton.addEventListener('click', () => {
+            skeletonEnabled = !skeletonEnabled;
+            menuSkeleton.innerHTML = skeletonEnabled ? 
+                '<span>🦴</span> Skeleton: ON' : 
+                '<span>🚫</span> Skeleton: OFF';
+            dropdownMenu.classList.remove('show');
+        });
+
+        // Reset emergency
+        menuReset.addEventListener('click', () => {
+            if (emergencyActive) {
+                emergencyActive = false;
+                emergencyOverlay.style.display = 'none';
+                stopAlarm();
+            }
+            openHandStartTime = null;
+            timerEl.innerText = '⏱️ 0.0s';
+            dropdownMenu.classList.remove('show');
+        });
+
+        // Camera prompt click handler
+        cameraPrompt.addEventListener('click', () => {
+            requestCameraPermission();
+        });
+        
+        cameraPrompt.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            requestCameraPermission();
+        });
+
+        // Show camera prompt
+        cameraPrompt.style.display = 'block';
+
+        // Check if camera is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            permissionMsg.innerHTML = '📷 Camera not supported<br><small>Please use a device with camera</small>';
+            permissionMsg.style.display = 'block';
+            cameraPrompt.style.display = 'none';
+        }
     })();
 </script>
 </body>
