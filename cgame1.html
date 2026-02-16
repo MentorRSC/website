@@ -1,660 +1,668 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shield & Strike – Timed</title>
-  <!-- MediaPipe -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-    }
-    html, body {
-      margin: 0;
-      background: #0b0e18;
-      overflow: hidden;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-    #canvas {
-      position: fixed;
-      inset: 0;
-      display: block;
-    }
-    /* HUD – glassmorphism */
-    #hud {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 24px;
-      background: rgba(20, 30, 45, 0.6);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 10px 28px;
-      border-radius: 60px;
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      color: white;
-      z-index: 10;
-      font-size: 1.3rem;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    #hud div {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      text-shadow: 0 2px 5px black;
-    }
-    /* Timer & toggle panel – floating right */
-    #control-panel {
-      position: fixed;
-      top: 18px;
-      right: 20px;
-      background: rgba(20, 30, 45, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 50px;
-      padding: 8px 16px 8px 24px;
-      border: 1px solid rgba(100, 200, 255, 0.5);
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      z-index: 15;
-      color: white;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-    }
-    .timer {
-      font-size: 1.8rem;
-      font-family: 'Courier New', monospace;
-      font-weight: 700;
-      background: #0a0e1a;
-      padding: 6px 14px;
-      border-radius: 40px;
-      border: 1px solid #3f5e8c;
-      text-shadow: 0 0 8px cyan;
-      letter-spacing: 2px;
-    }
-    /* Toggle button – beautiful 3D style */
-    #toggle-btn {
-      background: linear-gradient(145deg, #1f2a3f, #0e1422);
-      border: none;
-      color: white;
-      font-size: 1.3rem;
-      font-weight: 600;
-      padding: 12px 32px;
-      border-radius: 40px;
-      cursor: pointer;
-      box-shadow: 0 10px 0 #0b0f1a, 0 5px 20px rgba(0,200,255,0.4);
-      transition: all 0.08s ease-out;
-      letter-spacing: 1.5px;
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    #toggle-btn:active {
-      transform: translateY(6px);
-      box-shadow: 0 4px 0 #0b0f1a, 0 8px 20px cyan;
-    }
-    #toggle-btn.running {
-      background: linear-gradient(145deg, #2b3b5a, #1a2440);
-      box-shadow: 0 10px 0 #0f1a2a, 0 0 20px #00a6ff;
-      border-color: #7fc9ff;
-    }
-    /* Game Over overlay – elegant */
-    #gameover {
-      position: fixed;
-      inset: 0;
-      background: rgba(8, 12, 25, 0.9);
-      backdrop-filter: blur(5px);
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 3.5rem;
-      z-index: 30;
-      gap: 15px;
-      text-shadow: 0 0 30px cyan;
-    }
-    #gameover div:nth-child(2), #gameover div:nth-child(3) {
-      font-size: 2rem;
-      background: rgba(0,20,40,0.7);
-      padding: 8px 40px;
-      border-radius: 60px;
-      border: 1px solid gold;
-    }
-    #gameover button {
-      margin-top: 30px;
-      padding: 16px 48px;
-      font-size: 1.8rem;
-      font-weight: bold;
-      background: gold;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 10px 0 #b8860b;
-      transition: 0.07s;
-      color: #0b0e18;
-    }
-    #gameover button:active {
-      transform: translateY(6px);
-      box-shadow: 0 4px 0 #b8860b;
-    }
-    video { display: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESTURE STATES · temporal confidence · real hands ok</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            background: #0a0d14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            touch-action: none;
+            padding: 6px;
+        }
+        .game-container {
+            position: relative;
+            width: 92vw;
+            height: 96vh;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.9);
+            border: 2px solid #ffaa3366;
+        }
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #141a26;
+            cursor: none;
+        }
+        #dashboard {
+            position: absolute;
+            top: 16px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            pointer-events: none;
+            z-index: 20;
+            flex-wrap: wrap;
+            padding: 0 10px;
+        }
+        .panel {
+            background: rgba(8, 12, 24, 0.8);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 180, 70, 0.4);
+            border-radius: 40px;
+            padding: 8px 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+        .panel span {
+            color: #ffb347;
+            font-weight: 800;
+            margin-left: 4px;
+            min-width: 40px;
+            text-align: center;
+        }
+        .time-bar-bg {
+            width: 90px;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-left: 5px;
+            border: 1px solid rgba(255,200,100,0.3);
+        }
+        .time-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #6ef0a0, #ffcd7e);
+            border-radius: 20px;
+            transition: width 0.1s linear;
+        }
+        .control-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 60;
+            pointer-events: auto;
+        }
+        .ctrl-btn {
+            background: #1e2a3a;
+            border: 2px solid #ffb347;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px black;
+            transition: 0.2s;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ctrl-btn.active {
+            background: #2f6b3e;
+            border-color: #a0ff9e;
+            color: #e8ffe8;
+        }
+        #musicBtn {
+            background: #2a2a4a;
+            border-color: #aa88ff;
+        }
+        #musicBtn.playing {
+            background: #4a3a8a;
+            border-color: #cc99ff;
+        }
+        .pause-indicator {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(200, 50, 50, 0.95);
+            color: white;
+            padding: 6px 22px;
+            border-radius: 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            backdrop-filter: blur(4px);
+            border: 1px solid #ff8a8a;
+            z-index: 25;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .gesture-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            color: #eee;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-size: 1rem;
+            border: 1px solid #ffaa3380;
+            z-index: 30;
+            pointer-events: none;
+            font-weight: 500;
+            transition: opacity 0.8s;
+        }
+        .gesture-hint.fade {
+            opacity: 0;
+        }
+        #gameover {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            visibility: hidden;
+            border-radius: 32px;
+        }
+        .gameover-card {
+            background: #1a1f2e;
+            padding: 40px 50px;
+            border-radius: 50px;
+            border: 2px solid #ffaa33;
+            text-align: center;
+            box-shadow: 0 20px 40px black;
+        }
+        .gameover-card h1 {
+            font-size: 3rem;
+            color: #ffc164;
+            margin-bottom: 15px;
+        }
+        .gameover-card p {
+            font-size: 2rem;
+            color: white;
+        }
+        #restartBtn {
+            background: #ffaa33;
+            border: none;
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 15px 40px;
+            border-radius: 50px;
+            color: #0b0e14;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: 0.2s;
+        }
+        #restartBtn:hover {
+            background: #ffbf5e;
+            transform: scale(1.03);
+        }
+        video { display: none; }
+    </style>
 </head>
 <body>
 
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
+<div class="game-container">
+    <canvas id="canvas"></canvas>
 
-<!-- HUD -->
-<div id="hud">
-  <div>❤️ <span id="lives">5</span></div>
-  <div>⭐ <span id="score">0</span></div>
-  <div>🏆 <span id="high">0</span></div>
-  <div>⚔️ Lv <span id="level">1</span></div>
-</div>
+    <div class="control-bar">
+        <div id="toggleGameBtn" class="ctrl-btn active">⏹️ STOP</div>
+        <div id="musicBtn" class="ctrl-btn playing">🎵 ON</div>
+    </div>
 
-<!-- Control panel: timer + toggle -->
-<div id="control-panel">
-  <span class="timer" id="timerDisplay">01:00</span>
-  <button id="toggle-btn">⏸️ STOP</button>
-</div>
+    <div id="dashboard">
+        <div class="panel">
+            ⏳<span id="timerDisplay">30</span>s
+            <div class="time-bar-bg"><div id="timeFill" class="time-fill" style="width:100%"></div></div>
+        </div>
+        <div class="panel">
+            ❤️ <span id="livesDisplay">3</span>
+        </div>
+        <div class="panel">
+            🍊<span id="scoreDisplay">0</span>
+        </div>
+    </div>
 
-<!-- Game over screen -->
-<div id="gameover">
-  <div>GAME OVER</div>
-  <div>Score: <span id="final"></span></div>
-  <div>Best: <span id="best"></span></div>
-  <button onclick="restart()">▶ PLAY AGAIN</button>
+    <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND · waiting</div>
+    <div class="gesture-hint" id="gestureHint">
+        ✌️ peace = restart &nbsp; ✊ fist = STOP &nbsp; (hold 0.3s)
+    </div>
+
+    <div id="gameover">
+        <div class="gameover-card">
+            <h1>GAME OVER</h1>
+            <p>🍊 <span id="finalScore">0</span></p>
+            <p>✌️ show peace sign to restart</p>
+            <button id="restartBtn">↻ PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <video id="video" autoplay playsinline></video>
 </div>
 
 <script>
-  (function() {
-    // --- DOM elements ---
+(function() {
+    // ----- DOM -----
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const video = document.getElementById('video');
-    const livesEl = document.getElementById('lives');
-    const scoreEl = document.getElementById('score');
-    const highEl = document.getElementById('high');
-    const levelEl = document.getElementById('level');
-    const finalEl = document.getElementById('final');
-    const bestEl = document.getElementById('best');
-    const gameoverEl = document.getElementById('gameover');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const toggleBtn = document.getElementById('toggle-btn');
+    const timerSpan = document.getElementById('timerDisplay');
+    const livesSpan = document.getElementById('livesDisplay');
+    const scoreSpan = document.getElementById('scoreDisplay');
+    const finalScoreSpan = document.getElementById('finalScore');
+    const timeFill = document.getElementById('timeFill');
+    const gameoverDiv = document.getElementById('gameover');
+    const restartBtn = document.getElementById('restartBtn');
+    const pauseIndicator = document.getElementById('pauseIndicator');
+    const toggleBtn = document.getElementById('toggleGameBtn');
+    const musicBtn = document.getElementById('musicBtn');
+    const hintEl = document.getElementById('gestureHint');
 
-    // --- resize ---
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    setTimeout(() => hintEl.classList.add('fade'), 4000);
+
+    // ----- AUDIO (same as before, but keep it) -----
+    let audioCtx = null;
+    let musicGain = null;
+    let musicOscillator = null;
+    let isMusicPlaying = false;
+    let musicEnabled = true;
+    let soundEnabled = true;
+
+    function initAudio() {
+        if (audioCtx) return;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            musicGain = audioCtx.createGain();
+            musicGain.gain.value = 0;
+            musicGain.connect(audioCtx.destination);
+        } catch (e) { console.warn('Audio not supported'); }
     }
-    window.addEventListener('resize', resize);
-    resize();
 
-    // --- Audio (beep) ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(freq, d = 0.1) {
-      if (!audioCtx) return;
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.frequency.value = freq;
-      o.connect(g);
-      g.connect(audioCtx.destination);
-      o.start();
-      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-      o.stop(audioCtx.currentTime + d);
+    function startMusic() {
+        if (!audioCtx) initAudio();
+        if (!audioCtx || isMusicPlaying) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => playMusicTone());
+        } else {
+            playMusicTone();
+        }
     }
 
-    // --- Game state ---
-    let lives = 5;
+    function playMusicTone() {
+        if (musicOscillator) try { musicOscillator.stop(); } catch(e) {}
+        musicOscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.12;
+        musicOscillator.type = 'sine';
+        musicOscillator.frequency.value = 175;
+        const lfo = audioCtx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 4;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 20;
+        lfo.connect(lfoGain);
+        lfoGain.connect(musicOscillator.frequency);
+        lfo.start();
+        musicOscillator.connect(gainNode);
+        gainNode.connect(musicGain);
+        musicGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        musicOscillator.start();
+        isMusicPlaying = true;
+        musicOscillator.lfo = lfo;
+    }
+
+    function stopMusic() {
+        if (musicOscillator) {
+            try { musicOscillator.stop(); if (musicOscillator.lfo) musicOscillator.lfo.stop(); } catch(e) {}
+            musicOscillator = null;
+        }
+        isMusicPlaying = false;
+    }
+
+    function setMusicEnabled(enable) {
+        musicEnabled = enable;
+        if (enable) { if (audioCtx?.state === 'suspended') audioCtx.resume(); startMusic(); musicBtn.innerHTML = '🎵 ON'; musicBtn.classList.add('playing'); } 
+        else { stopMusic(); musicBtn.innerHTML = '🎵 OFF'; musicBtn.classList.remove('playing'); }
+    }
+
+    function playPopSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.value = 620; gain.gain.value = 0.1;
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+    }
+
+    function playRedHitSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.value = 220; gain.gain.value = 0.25;
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+    }
+
+    function playFistStopSound() {
+        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'triangle'; osc.frequency.value = 140; gain.gain.value = 0.3;
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    function initAudioOnUserGesture() {
+        if (!audioCtx) initAudio();
+        if (audioCtx?.state === 'suspended') audioCtx.resume().then(() => { if (musicEnabled && !isMusicPlaying) startMusic(); }).catch(() => {});
+        else if (musicEnabled && !isMusicPlaying) startMusic();
+    }
+    document.body.addEventListener('click', initAudioOnUserGesture, { once: true });
+
+    // ----- GAME CONSTANTS -----
+    const INIT_TIME = 30;
+    const INIT_LIVES = 3;
+    const TIME_PER_POP = 2;
+    const ORANGE_RADIUS = 30;
+    const RED_RADIUS = 28;
+
+    // ----- GAME STATE -----
     let score = 0;
-    let level = 1;
-    let running = true;          // game logic on/off (starts running)
-    let roundActive = true;      // true = gameplay, false = paused (stop)
-    let highScore = parseInt(localStorage.getItem('shieldstrike_timed') || '0');
-    highEl.innerText = highScore;
+    let lives = INIT_LIVES;
+    let timeLeft = INIT_TIME;
+    let gameActive = true;         
+    let gameOverFlag = false;       
+    let manualStop = false;         
 
-    // Time limit (60 seconds)
-    const TIME_LIMIT = 60; // seconds
-    let timeLeft = TIME_LIMIT;
-    let timerInterval = null;
+    // Hand tracking
+    let handDetected = false;
+    let fingerPos = { x: -100, y: -100, valid: false };
+    let smoothedX = -100, smoothedY = -100;
 
-    // Hands
-    let left = null, right = null;
-    let smoothL = null, smoothR = null;
-    const SMOOTH = 0.75;
+    // ----- ROBUST GESTURE STATE MACHINE (temporal, not per-frame fragile) -----
+    const GESTURE_FRAMES_REQUIRED = 6;  // need ~6 consecutive detections (at ~30fps = 0.2s)
+    let peaceCounter = 0;
+    let fistCounter = 0;
+    let lastProcessedPeace = 0;
+    let lastProcessedFist = 0;
+    const GESTURE_COOLDOWN = 1500; // ms between trigger actions
 
-    // Enemies & powerups
-    let enemies = [];
-    let powerups = [];
-    let boss = null;
+    // Ball objects
+    let orange = { x: 300, y: 200, r: ORANGE_RADIUS, vx: 0.2, vy: 0.15 };
+    let redBall = { active: true, x: 150, y: 400, r: RED_RADIUS, vx: -0.3, vy: 0.25 };
 
-    // Power-up timers (frames)
-    let slowTime = 0;
-    let doubleScore = 0;
-    let shieldBoost = 0;
-
-    // --- Timer control ---
-    function updateTimerDisplay() {
-      const mins = Math.floor(timeLeft / 60);
-      const secs = timeLeft % 60;
-      timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function startTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        if (!running || !roundActive) return; // pause when round not active
-        timeLeft--;
-        if (timeLeft < 0) timeLeft = 0;
-        updateTimerDisplay();
-
-        // Time's up → end game (loss)
-        if (timeLeft <= 0 && running) {
-          endGame();
-        }
-      }, 1000);
-    }
-
-    function resetTimer() {
-      timeLeft = TIME_LIMIT;
-      updateTimerDisplay();
-    }
-
-    // --- toggle function (start/stop) ---
-    function toggleRound() {
-      if (!running) {
-        // if gameover, restart first? we can call restart implicitly, but better to handle.
-        // For simplicity, if gameover, restart then start.
-        if (!running && gameoverEl.style.display === 'flex') {
-          restart(); // this sets running=true, roundActive=true, resets stats
-          roundActive = true;
-          toggleBtn.innerHTML = '⏸️ STOP';
-          toggleBtn.classList.add('running');
-        } else {
-          // normal toggle
-          roundActive = !roundActive;
-          if (roundActive) {
-            toggleBtn.innerHTML = '⏸️ STOP';
-            toggleBtn.classList.add('running');
-          } else {
-            toggleBtn.innerHTML = '▶ START';
-            toggleBtn.classList.remove('running');
-          }
-        }
-      } else {
-        // running true, toggle roundActive
-        roundActive = !roundActive;
-        if (roundActive) {
-          toggleBtn.innerHTML = '⏸️ STOP';
-          toggleBtn.classList.add('running');
-        } else {
-          toggleBtn.innerHTML = '▶ START';
-          toggleBtn.classList.remove('running');
-        }
-      }
-    }
-
-    toggleBtn.addEventListener('click', toggleRound);
-
-    // --- spawn helpers ---
-    function spawnEnemy() {
-      if (!running || !roundActive || boss) return;
-      const speed = 2 + level * 0.5;
-      enemies.push({
-        x: Math.random() * canvas.width,
-        y: -30,
-        r: 16 + level * 2,
-        v: speed
-      });
-    }
-
-    function spawnPower() {
-      if (!running || !roundActive) return;
-      const types = ["slow", "double", "shield"];
-      powerups.push({
-        x: Math.random() * canvas.width,
-        y: -20,
-        r: 14,
-        v: 2,
-        type: types[Math.floor(Math.random() * 3)]
-      });
-    }
-
-    // spawn intervals (managed with setInterval, but will check roundActive inside)
-    let enemyInterval, powerInterval;
-    function startIntervals() {
-      if (enemyInterval) clearInterval(enemyInterval);
-      if (powerInterval) clearInterval(powerInterval);
-      enemyInterval = setInterval(() => { if (running && roundActive && !boss) spawnEnemy(); }, 700);
-      powerInterval = setInterval(() => { if (running && roundActive && Math.random() < 0.3) spawnPower(); }, 6000);
-    }
-
-    // Boss spawn condition (called in loop)
-    function checkBossSpawn() {
-      if (!running || !roundActive) return;
-      if (!boss && score > 0 && score % 20 === 0) {
-        boss = {
-          x: canvas.width / 2,
-          y: -100,
-          r: 80,
-          hp: 20 + level * 5,
-          v: 1
-        };
-        beep(150, 0.5);
-      }
-    }
-
-    // --- restart function (exposed globally) ---
-    window.restart = function() {
-      // reset state
-      lives = 5;
-      score = 0;
-      level = 1;
-      enemies = [];
-      powerups = [];
-      boss = null;
-      slowTime = 0;
-      doubleScore = 0;
-      shieldBoost = 0;
-      smoothL = null;
-      smoothR = null;
-      running = true;
-      roundActive = true;
-      timeLeft = TIME_LIMIT;
-      updateTimerDisplay();
-
-      livesEl.innerText = lives;
-      scoreEl.innerText = score;
-      levelEl.innerText = level;
-      gameoverEl.style.display = 'none';
-
-      toggleBtn.innerHTML = '⏸️ STOP';
-      toggleBtn.classList.add('running');
-
-      // restart timer if needed
-      if (timerInterval) clearInterval(timerInterval);
-      startTimer();
-
-      beep(400, 0.2);
-    };
-
-    // --- endGame ---
-    function endGame() {
-      if (!running) return;
-      running = false;
-      roundActive = false;
-      finalEl.innerText = score;
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('shieldstrike_timed', highScore);
-        highEl.innerText = highScore;
-      }
-      bestEl.innerText = highScore;
-      gameoverEl.style.display = 'flex';
-      toggleBtn.innerHTML = '▶ START';
-      toggleBtn.classList.remove('running');
-      beep(80, 0.6);
-    }
-
-    // --- MediaPipe setup ---
-    const hands = new Hands({
-      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
-    });
-    hands.setOptions({
-      maxNumHands: 2,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.85,
-      minTrackingConfidence: 0.85
-    });
-    hands.onResults(onResults);
-
-    const camera = new Camera(video, {
-      width: 1280,
-      height: 720,
-      onFrame: async () => {
-        await hands.send({ image: video });
-      }
-    });
-    camera.start();
-
-    // --- main drawing & logic ---
-    function onResults(res) {
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw camera (mirror)
-      if (res.image) {
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.drawImage(res.image, -canvas.width, 0, canvas.width, canvas.height);
-        ctx.restore();
-      }
-
-      if (!running) {
-        // still draw hands if any but no game logic
-        drawHands(res);
-        return;
-      }
-
-      // Process game logic only if roundActive
-      if (roundActive) {
-        // Update hand tracking
-        updateHands(res);
-
-        // Enemy movement & collision
-        updateEnemies();
-
-        // Powerups
-        updatePowerups();
-
-        // Boss logic
-        checkBossSpawn();
-        updateBoss();
-
-        // Timers
-        if (slowTime > 0) slowTime--;
-        if (doubleScore > 0) doubleScore--;
-        if (shieldBoost > 0) shieldBoost--;
-      } else {
-        // paused: still update hand positions for visual (don't move enemies)
-        updateHands(res);
-      }
-
-      // Always draw hands, enemies, powerups (even paused, draw them static)
-      drawHands(res);
-      drawEnemiesAndPowerups();
-      if (boss) drawBoss();
-
-      // Update HUD if changed by paused collisions? collisions only happen when roundActive
-      // but we already updated inside update functions only if roundActive.
-    }
-
-    // --- hand tracking update (always, for visual) ---
-    function updateHands(res) {
-      left = null; right = null;
-      if (res.multiHandLandmarks && res.multiHandedness) {
-        res.multiHandLandmarks.forEach((lm, i) => {
-          const label = res.multiHandedness[i].label;
-          const tip = lm[8];
-          let x = (1 - tip.x) * canvas.width;
-          let y = tip.y * canvas.height;
-
-          if (label === 'Left') {
-            if (!smoothL) smoothL = { x, y };
-            smoothL.x = smoothL.x * SMOOTH + x * (1 - SMOOTH);
-            smoothL.y = smoothL.y * SMOOTH + y * (1 - SMOOTH);
-            left = { ...smoothL };
-          }
-          if (label === 'Right') {
-            if (!smoothR) smoothR = { x, y };
-            smoothR.x = smoothR.x * SMOOTH + x * (1 - SMOOTH);
-            smoothR.y = smoothR.y * SMOOTH + y * (1 - SMOOTH);
-            right = { ...smoothR };
-          }
+    // ----- HELPER FUNCTIONS -----
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        [orange, redBall].forEach(b => {
+            const margin = b.r + 20;
+            if (b.x < margin) b.x = margin;
+            if (b.x > canvas.width - margin) b.x = canvas.width - margin;
+            if (b.y < margin) b.y = margin;
+            if (b.y > canvas.height - margin) b.y = canvas.height - margin;
         });
-      }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function spawnOrange() {
+        const margin = orange.r + 25;
+        orange.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        orange.y = Math.random() * (canvas.height - 2 * margin) + margin;
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 0.18 + Math.random() * 0.3;
+        orange.vx = Math.cos(angle) * speed;
+        orange.vy = Math.sin(angle) * speed;
     }
 
-    function drawHands() {
-      if (left) {
-        ctx.beginPath();
-        ctx.arc(left.x, left.y, shieldBoost ? 40 : 28, 0, 2 * Math.PI);
-        ctx.fillStyle = 'rgba(0, 150, 255, 0.4)';
-        ctx.fill();
-      }
-      if (right) {
-        ctx.beginPath();
-        ctx.arc(right.x, right.y, 14, 0, 2 * Math.PI);
-        ctx.fillStyle = 'lime';
-        ctx.fill();
-      }
+    function spawnRed() {
+        const margin = redBall.r + 25;
+        redBall.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        redBall.y = Math.random() * (canvas.height - 2 * margin) + margin;
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 0.24 + Math.random() * 0.3;
+        redBall.vx = Math.cos(angle) * speed;
+        redBall.vy = Math.sin(angle) * speed;
+        redBall.active = true;
     }
 
-    function updateEnemies() {
-      if (!roundActive) return; // no movement/collision when paused
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        const e = enemies[i];
-        e.y += e.v * (slowTime ? 0.4 : 1);
+    function restartGame() {
+        gameActive = true;
+        gameOverFlag = false;
+        manualStop = false;
+        toggleBtn.innerHTML = '⏹️ STOP';
+        toggleBtn.classList.add('active');
+        gameoverDiv.style.visibility = 'hidden';
+        score = 0; lives = INIT_LIVES; timeLeft = INIT_TIME;
+        scoreSpan.innerText = score; livesSpan.innerText = lives; timerSpan.innerText = timeLeft;
+        updateTimeBar();
+        spawnOrange(); spawnRed();
+        handDetected = false; fingerPos.valid = false; pauseIndicator.style.opacity = '0';
+        smoothedX = smoothedY = -100;
+        peaceCounter = 0; fistCounter = 0; // reset gesture counters
+    }
 
-        let hit = false;
+    function triggerGameOver(byFist = false) {
+        if (gameOverFlag) return;
+        gameActive = false; gameOverFlag = true; manualStop = false;
+        toggleBtn.innerHTML = '▶️ START'; toggleBtn.classList.remove('active');
+        finalScoreSpan.innerText = score;
+        gameoverDiv.style.visibility = 'visible';
+        pauseIndicator.style.opacity = '0';
+        if (byFist) playFistStopSound();
+    }
 
-        // Shield collision
-        if (left) {
-          const d = Math.hypot(e.x - left.x, e.y - left.y);
-          if (d < e.r + (shieldBoost ? 40 : 28)) {
-            hit = true;
-            beep(300);
-          }
+    function manualGameStop() {
+        if (!gameActive) return;
+        gameActive = false; manualStop = true; gameOverFlag = false;
+        toggleBtn.innerHTML = '▶️ START'; toggleBtn.classList.remove('active');
+        gameoverDiv.style.visibility = 'hidden';
+        pauseIndicator.style.opacity = handDetected ? '0' : '1';
+    }
+
+    function manualGameStart() {
+        if (gameOverFlag) restartGame();
+        else { gameActive = true; manualStop = false; toggleBtn.innerHTML = '⏹️ STOP'; toggleBtn.classList.add('active'); pauseIndicator.style.opacity = '0'; }
+    }
+
+    function loseLife() {
+        if (!gameActive || gameOverFlag) return;
+        lives--; livesSpan.innerText = lives;
+        playRedHitSound();
+        if (lives <= 0) triggerGameOver(false);
+        else { spawnRed(); ctx.save(); ctx.fillStyle = 'rgba(255,80,80,0.3)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore(); }
+    }
+
+    function updateTimeBar() {
+        let percent = Math.max(0, (timeLeft / INIT_TIME) * 100);
+        timeFill.style.width = percent + '%';
+    }
+
+    // ----- GESTURE DETECTION (tolerant, uses finger curl ratios instead of hard thresholds) -----
+    function isPeaceLike(landmarks) {
+        // Peace: index and middle extended, ring and pinky curled
+        // Use relative positions: tip above pip for extended, below for curled (with margin)
+        const indexTip = landmarks[8].y;
+        const indexPip = landmarks[6].y;
+        const middleTip = landmarks[12].y;
+        const middlePip = landmarks[10].y;
+        const ringTip = landmarks[16].y;
+        const ringPip = landmarks[14].y;
+        const pinkyTip = landmarks[20].y;
+        const pinkyPip = landmarks[18].y;
+        
+        // Extended if tip is sufficiently above pip (negative in y up coordinate, but MediaPipe y increases downward)
+        // So "extended" means tip.y < pip.y - margin
+        const extendedIndex = indexTip < indexPip - 0.02;
+        const extendedMiddle = middleTip < middlePip - 0.02;
+        const curledRing = ringTip > ringPip + 0.015;
+        const curledPinky = pinkyTip > pinkyPip + 0.015;
+        
+        return extendedIndex && extendedMiddle && curledRing && curledPinky;
+    }
+
+    function isFistLike(landmarks) {
+        // Fist: all fingers curled (tip below pip)
+        const fingers = [8, 12, 16, 20]; // tips
+        const pips = [6, 10, 14, 18];
+        let curledCount = 0;
+        for (let i = 0; i < 4; i++) {
+            if (landmarks[fingers[i]].y > landmarks[pips[i]].y + 0.015) curledCount++;
         }
-        // Sword collision
-        if (right && !hit) {
-          const d = Math.hypot(e.x - right.x, e.y - right.y);
-          if (d < e.r + 14) {
-            hit = true;
-            let pts = doubleScore ? 2 : 1;
-            score += pts;
-            scoreEl.innerText = score;
-            if (score > highScore) {
-              highScore = score;
-              localStorage.setItem('shieldstrike_timed', highScore);
-              highEl.innerText = highScore;
+        // Thumb also curled (tip below ip)
+        const thumbTip = landmarks[4].y;
+        const thumbIp = landmarks[3].y;
+        const thumbCurled = thumbTip > thumbIp - 0.01;
+        
+        return curledCount >= 3 && thumbCurled; // at least 3 of 4 fingers curled + thumb
+    }
+
+    // ----- MediaPipe setup -----
+    const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6, selfieMode: true });
+
+    hands.onResults((results) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (results.image) ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        else { ctx.fillStyle = '#141a26'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+
+        if (results.multiHandLandmarks?.length) {
+            handDetected = true;
+            const lm = results.multiHandLandmarks[0];
+            const now = Date.now();
+
+            initAudioOnUserGesture(); // try init audio
+
+            // ----- GESTURE STATE MACHINE (accumulate confidence) -----
+            if (isPeaceLike(lm)) {
+                peaceCounter = Math.min(peaceCounter + 1, GESTURE_FRAMES_REQUIRED);
+            } else {
+                peaceCounter = Math.max(peaceCounter - 1, 0);
             }
-            beep(600);
-          }
+
+            if (isFistLike(lm)) {
+                fistCounter = Math.min(fistCounter + 1, GESTURE_FRAMES_REQUIRED);
+            } else {
+                fistCounter = Math.max(fistCounter - 1, 0);
+            }
+
+            // Trigger peace only if game over and counter high enough
+            if (gameOverFlag && peaceCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedPeace) > GESTURE_COOLDOWN) {
+                lastProcessedPeace = now;
+                restartGame();
+            }
+
+            // Trigger fist only if game active and counter high enough
+            if (gameActive && !gameOverFlag && fistCounter >= GESTURE_FRAMES_REQUIRED && (now - lastProcessedFist) > GESTURE_COOLDOWN) {
+                lastProcessedFist = now;
+                triggerGameOver(true);
+            }
+
+            // fingertip smoothing (same as before)
+            const idx = lm[8];
+            let rawX = idx.x * canvas.width, rawY = idx.y * canvas.height;
+            if (smoothedX < 0) { smoothedX = rawX; smoothedY = rawY; }
+            else { const a = 0.35; smoothedX = smoothedX * a + rawX * (1 - a); smoothedY = smoothedY * a + rawY * (1 - a); }
+            fingerPos.x = smoothedX; fingerPos.y = smoothedY; fingerPos.valid = true;
+
+            // Draw fingertip
+            ctx.beginPath(); ctx.arc(fingerPos.x, fingerPos.y, 18, 0, 2*Math.PI);
+            ctx.fillStyle = '#55ffb0'; ctx.shadowColor = '#00cc88'; ctx.shadowBlur = 25; ctx.fill();
+            ctx.shadowBlur = 0; ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke();
+            ctx.beginPath(); ctx.arc(fingerPos.x, fingerPos.y, 6, 0, 2*Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
+        } else {
+            handDetected = false; fingerPos.valid = false; smoothedX = smoothedY = -100;
+            peaceCounter = 0; fistCounter = 0; // decay counters when hand lost
         }
 
-        if (hit) {
-          enemies.splice(i, 1);
-          continue;
+        // Draw orange
+        ctx.shadowColor = '#ffaa33'; ctx.shadowBlur = 25;
+        ctx.beginPath(); ctx.arc(orange.x, orange.y, orange.r, 0, 2*Math.PI); ctx.fillStyle = '#ff8c00'; ctx.fill();
+        ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(orange.x-5, orange.y-5, orange.r-8, 0, 2*Math.PI); ctx.fillStyle = '#ffb86b'; ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (redBall.active) {
+            ctx.shadowColor = '#ff3a3a'; ctx.shadowBlur = 30;
+            ctx.beginPath(); ctx.arc(redBall.x, redBall.y, redBall.r, 0, 2*Math.PI); ctx.fillStyle = '#d83030'; ctx.fill();
+            ctx.shadowBlur = 12;
+            ctx.beginPath(); ctx.arc(redBall.x-5, redBall.y-5, redBall.r-8, 0, 2*Math.PI); ctx.fillStyle = '#ff7777'; ctx.fill();
+            ctx.shadowBlur = 0;
         }
-
-        // bottom out
-        if (e.y > canvas.height + 40) {
-          enemies.splice(i, 1);
-          lives--;
-          livesEl.innerText = lives;
-          beep(120);
-          if (lives <= 0) endGame();
-        }
-      }
-    }
-
-    function updatePowerups() {
-      if (!roundActive) return;
-      for (let i = powerups.length - 1; i >= 0; i--) {
-        const p = powerups[i];
-        p.y += p.v;
-
-        let take = false;
-        if (right) {
-          if (Math.hypot(p.x - right.x, p.y - right.y) < p.r + 14) take = true;
-        }
-        if (take) {
-          if (p.type === 'slow') slowTime = 300;
-          if (p.type === 'double') doubleScore = 300;
-          if (p.type === 'shield') shieldBoost = 300;
-          beep(900, 0.2);
-          powerups.splice(i, 1);
-          continue;
-        }
-        if (p.y > canvas.height + 30) powerups.splice(i, 1);
-      }
-    }
-
-    function updateBoss() {
-      if (!boss || !roundActive) return;
-      boss.y += boss.v;
-      if (right) {
-        const d = Math.hypot(boss.x - right.x, boss.y - right.y);
-        if (d < boss.r + 14) {
-          boss.hp--;
-          beep(700, 0.05);
-        }
-      }
-      if (boss.hp <= 0) {
-        score += 10;
-        level++;
-        levelEl.innerText = level;
-        boss = null;
-        beep(1000, 0.4);
-      }
-      if (boss && boss.y > canvas.height) {
-        lives = 0;
-        endGame();
-      }
-    }
-
-    function drawEnemiesAndPowerups() {
-      enemies.forEach(e => {
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.r, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-      });
-      powerups.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-        ctx.fillStyle = p.type === 'slow' ? 'cyan' : p.type === 'double' ? 'gold' : 'violet';
-        ctx.fill();
-      });
-    }
-
-    function drawBoss() {
-      if (!boss) return;
-      ctx.beginPath();
-      ctx.arc(boss.x, boss.y, boss.r, 0, 2 * Math.PI);
-      ctx.fillStyle = '#7b0000';
-      ctx.fill();
-    }
-
-    // --- initialise timer & intervals ---
-    resetTimer();
-    startTimer();
-    startIntervals();
-
-    // Ensure intervals restart after restart (but restart already clears and sets running)
-    // clean up on page unload
-    window.addEventListener('beforeunload', () => {
-      clearInterval(enemyInterval);
-      clearInterval(powerInterval);
-      clearInterval(timerInterval);
     });
 
-    // initial toggle button state
-    toggleBtn.innerHTML = '⏸️ STOP';
-    toggleBtn.classList.add('running');
+    const camera = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 800, height: 600, facingMode: 'user' });
+    camera.start().catch(e => console.warn);
 
-  })();
+    // ----- GAME LOOP (physics) -----
+    let lastTimestamp = 0;
+    function gameLoop(now) {
+        if (!lastTimestamp) { lastTimestamp = now; requestAnimationFrame(gameLoop); return; }
+        const delta = now - lastTimestamp; lastTimestamp = now;
+
+        if (!handDetected && gameActive && !gameOverFlag && !manualStop) pauseIndicator.style.opacity = '1';
+        else pauseIndicator.style.opacity = '0';
+
+        if (gameActive && !gameOverFlag) {
+            if (handDetected) timeLeft -= delta / 1000;
+            if (timeLeft <= 0) { timeLeft = INIT_TIME * 0.8; lives--; livesSpan.innerText = lives; if (lives <= 0) triggerGameOver(false); }
+            timerSpan.innerText = timeLeft.toFixed(1); updateTimeBar();
+
+            orange.x += orange.vx; orange.y += orange.vy;
+            if (orange.x < orange.r) { orange.x = orange.r; orange.vx *= -0.8; }
+            if (orange.x > canvas.width - orange.r) { orange.x = canvas.width - orange.r; orange.vx *= -0.8; }
+            if (orange.y < orange.r) { orange.y = orange.r; orange.vy *= -0.8; }
+            if (orange.y > canvas.height - orange.r) { orange.y = canvas.height - orange.r; orange.vy *= -0.8; }
+
+            if (redBall.active) {
+                redBall.x += redBall.vx; redBall.y += redBall.vy;
+                if (redBall.x < redBall.r) { redBall.x = redBall.r; redBall.vx *= -0.8; }
+                if (redBall.x > canvas.width - redBall.r) { redBall.x = canvas.width - redBall.r; redBall.vx *= -0.8; }
+                if (redBall.y < redBall.r) { redBall.y = redBall.r; redBall.vy *= -0.8; }
+                if (redBall.y > canvas.height - redBall.r) { redBall.y = canvas.height - redBall.r; redBall.vy *= -0.8; }
+            }
+
+            if (fingerPos.valid) {
+                const dx = fingerPos.x - orange.x, dy = fingerPos.y - orange.y;
+                if (Math.sqrt(dx*dx + dy*dy) < orange.r + 18) {
+                    score++; scoreSpan.innerText = score;
+                    timeLeft = Math.min(timeLeft + TIME_PER_POP, 45);
+                    timerSpan.innerText = timeLeft.toFixed(1); updateTimeBar();
+                    playPopSound(); spawnOrange();
+                }
+                if (redBall.active) {
+                    const dxR = fingerPos.x - redBall.x, dyR = fingerPos.y - redBall.y;
+                    if (Math.sqrt(dxR*dxR + dyR*dyR) < redBall.r + 18) {
+                        loseLife(); spawnRed();
+                    }
+                }
+            }
+        }
+        requestAnimationFrame(gameLoop);
+    }
+    requestAnimationFrame(gameLoop);
+
+    // UI buttons
+    toggleBtn.addEventListener('click', () => {
+        initAudioOnUserGesture();
+        if (gameActive && !gameOverFlag) manualGameStop();
+        else { if (gameOverFlag) restartGame(); else manualGameStart(); }
+    });
+
+    musicBtn.addEventListener('click', () => { initAudioOnUserGesture(); setMusicEnabled(!musicEnabled); });
+    restartBtn.addEventListener('click', () => { initAudioOnUserGesture(); restartGame(); });
+
+    setMusicEnabled(true);
+    spawnOrange(); spawnRed();
+})();
 </script>
 </body>
 </html>
