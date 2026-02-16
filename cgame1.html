@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAND POP · restart with peace sign (after game over)</title>
-    <!-- MediaPipe -->
+    <title> FIST FIX · start/stop · red risk</title>
+    <!-- MediaPipe hands (light) -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <style>
@@ -15,19 +15,18 @@
             user-select: none;
         }
         body {
-            background: #0c0f16;
+            background: #0a0d14;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             font-family: 'Segoe UI', Roboto, sans-serif;
             touch-action: none;
-            padding: 8px;
+            padding: 6px;
         }
-        /* game container: width exactly 92% */
         .game-container {
             position: relative;
-            width: 92vw;                    /* exactly 92% of viewport width */
+            width: 92vw;
             height: 96vh;
             border-radius: 32px;
             overflow: hidden;
@@ -38,10 +37,10 @@
             width: 100%;
             height: 100%;
             display: block;
-            background: #1a1f2b;
+            background: #141a26;
             cursor: none;
         }
-        /* dashboard inside container */
+        /* dashboard */
         #dashboard {
             position: absolute;
             top: 16px;
@@ -92,21 +91,34 @@
             border-radius: 20px;
             transition: width 0.1s linear;
         }
-        .gesture-hint {
+
+        /* start/stop toggle (corner) - now acts as START/STOP, not pause */
+        #toggleGameBtn {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            color: #eee;
-            padding: 10px 22px;
-            border-radius: 40px;
-            font-size: 1rem;
-            border: 1px solid #ffaa3380;
-            z-index: 30;
-            pointer-events: none;
-            font-weight: 500;
+            top: 20px;
+            right: 20px;
+            background: #1e2a3a;
+            border: 2px solid #ffb347;
+            color: white;
+            font-size: 1.7rem;
+            font-weight: bold;
+            padding: 12px 22px;
+            border-radius: 60px;
+            cursor: pointer;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px black;
+            transition: 0.2s;
+            line-height: 1;
+            pointer-events: auto;
         }
+        #toggleGameBtn.active {
+            background: #2f6b3e;
+            border-color: #a0ff9e;
+            color: #e8ffe8;
+        }
+
+        /* pause indicator (no hand) */
         .pause-indicator {
             position: absolute;
             top: 90px;
@@ -126,6 +138,29 @@
             pointer-events: none;
             white-space: nowrap;
         }
+
+        /* temporary hint */
+        .gesture-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            color: #eee;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-size: 1rem;
+            border: 1px solid #ffaa3380;
+            z-index: 30;
+            pointer-events: none;
+            font-weight: 500;
+            transition: opacity 0.8s;
+        }
+        .gesture-hint.fade {
+            opacity: 0;
+        }
+
+        /* game over overlay */
         #gameover {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -179,7 +214,10 @@
 <div class="game-container">
     <canvas id="canvas"></canvas>
 
-    <!-- Dashboard inside container -->
+    <!-- START/STOP button (pure start/stop) -->
+    <div id="toggleGameBtn" class="active">⏹️ STOP</div>
+
+    <!-- Dashboard -->
     <div id="dashboard">
         <div class="panel">
             ⏳<span id="timerDisplay">30</span>s
@@ -194,11 +232,11 @@
     </div>
 
     <!-- Pause indicator (hand lost) -->
-    <div id="pauseIndicator" class="pause-indicator">⏸️ PAUSED · no hand</div>
+    <div id="pauseIndicator" class="pause-indicator">⏸️ NO HAND · waiting</div>
 
-    <!-- Gesture hint: only peace sign for restart after game over -->
-    <div class="gesture-hint">
-        ✌️ after GAME OVER · show peace sign (2 fingers) to restart
+    <!-- Bottom hint (fades) -->
+    <div class="gesture-hint" id="gestureHint">
+        ✌️ peace = restart (when over) &nbsp; ✊ CLOSE FIST = STOP now
     </div>
 
     <!-- Game over overlay -->
@@ -216,7 +254,7 @@
 
 <script>
 (function() {
-    // ----- DOM elements inside container -----
+    // ----- DOM -----
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const video = document.getElementById('video');
@@ -229,66 +267,95 @@
     const gameoverDiv = document.getElementById('gameover');
     const restartBtn = document.getElementById('restartBtn');
     const pauseIndicator = document.getElementById('pauseIndicator');
+    const toggleBtn = document.getElementById('toggleGameBtn');
+    const hintEl = document.getElementById('gestureHint');
 
-    // ----- Game constants -----
+    // fade out hint after 4 sec
+    setTimeout(() => {
+        hintEl.classList.add('fade');
+    }, 4000);
+
+    // ----- constants -----
     const INIT_TIME = 30;
     const INIT_LIVES = 3;
     const TIME_PER_POP = 2;
-    const BALL_RADIUS = 30;
+    const ORANGE_RADIUS = 30;
+    const RED_RADIUS = 28;
 
-    // ----- Game state -----
+    // ----- game state -----
     let score = 0;
     let lives = INIT_LIVES;
     let timeLeft = INIT_TIME;
-    let gameActive = true;
+    // gameActive: true = running, false = fully stopped (game over or manual stop)
+    let gameActive = true;         
+    let gameOverFlag = false;       // separate flag to distinguish manual stop vs game over
+    let manualStop = false;         // track if STOP button was pressed
 
-    // Hand tracking flags
+    // Hand tracking
     let handDetected = false;
     let fingerPos = { x: -100, y: -100, valid: false };
+    let smoothedX = -100, smoothedY = -100;
 
-    // For peace gesture detection (only after game over)
-    // No cooldown needed, but we add a small one to avoid spamming
+    // Gesture cooldown
     let lastPeaceTime = 0;
-    const PEACE_COOLDOWN = 1200; // ms
+    let lastFistStopTime = 0;
+    const GESTURE_COOLDOWN = 900; // ms
 
-    // Ball object
-    let ball = {
-        x: 300, y: 200, r: BALL_RADIUS,
+    // ----- balls -----
+    let orange = {
+        x: 300, y: 200, r: ORANGE_RADIUS,
         vx: 0.2, vy: 0.15,
     };
+    let redBall = {
+        active: true,
+        x: 150, y: 400, r: RED_RADIUS,
+        vx: -0.3, vy: 0.25,
+    };
 
-    // ----- resize canvas to container size (92vw) -----
+    // resize canvas
     function resizeCanvas() {
         const container = canvas.parentElement;
-        const w = container.clientWidth;
-        const h = container.clientHeight;
-        canvas.width = w;
-        canvas.height = h;
-
-        // reposition ball if outside
-        const margin = ball.r + 15;
-        if (ball.x < margin) ball.x = margin;
-        if (ball.x > canvas.width - margin) ball.x = canvas.width - margin;
-        if (ball.y < margin) ball.y = margin;
-        if (ball.y > canvas.height - margin) ball.y = canvas.height - margin;
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        [orange, redBall].forEach(b => {
+            const margin = b.r + 20;
+            if (b.x < margin) b.x = margin;
+            if (b.x > canvas.width - margin) b.x = canvas.width - margin;
+            if (b.y < margin) b.y = margin;
+            if (b.y > canvas.height - margin) b.y = canvas.height - margin;
+        });
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // ----- spawn ball with random direction inside container -----
-    function spawnBall() {
-        const margin = ball.r + 25;
-        ball.x = Math.random() * (canvas.width - 2 * margin) + margin;
-        ball.y = Math.random() * (canvas.height - 2 * margin) + margin;
+    function spawnOrange() {
+        const margin = orange.r + 25;
+        orange.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        orange.y = Math.random() * (canvas.height - 2 * margin) + margin;
         const angle = Math.random() * 2 * Math.PI;
         const speed = 0.18 + Math.random() * 0.3;
-        ball.vx = Math.cos(angle) * speed;
-        ball.vy = Math.sin(angle) * speed;
+        orange.vx = Math.cos(angle) * speed;
+        orange.vy = Math.sin(angle) * speed;
     }
 
-    // ----- restart game -----
+    function spawnRed() {
+        const margin = redBall.r + 25;
+        redBall.x = Math.random() * (canvas.width - 2 * margin) + margin;
+        redBall.y = Math.random() * (canvas.height - 2 * margin) + margin;
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 0.24 + Math.random() * 0.3;
+        redBall.vx = Math.cos(angle) * speed;
+        redBall.vy = Math.sin(angle) * speed;
+        redBall.active = true;
+    }
+
+    // restart full game (also called by peace sign)
     function restartGame() {
         gameActive = true;
+        gameOverFlag = false;
+        manualStop = false;
+        toggleBtn.innerText = '⏹️ STOP';
+        toggleBtn.classList.add('active');
         gameoverDiv.style.visibility = 'hidden';
         score = 0;
         lives = INIT_LIVES;
@@ -297,128 +364,188 @@
         livesSpan.innerText = lives;
         timerSpan.innerText = timeLeft;
         updateTimeBar();
-        spawnBall();
+        spawnOrange();
+        spawnRed();
         handDetected = false;
         fingerPos.valid = false;
         pauseIndicator.style.opacity = '0';
+        smoothedX = smoothedY = -100;
     }
 
-    // ----- game over trigger -----
-    function gameOver() {
-        if (!gameActive) return;
+    // game over (by red or fist or lives)
+    function triggerGameOver(byFist = false) {
+        if (gameOverFlag) return;          // already game over
         gameActive = false;
+        gameOverFlag = true;
+        manualStop = false;                // it's a real game over
+        toggleBtn.innerText = '▶️ START';
+        toggleBtn.classList.remove('active');
         finalScoreSpan.innerText = score;
         gameoverDiv.style.visibility = 'visible';
         pauseIndicator.style.opacity = '0';
     }
 
-    // update time bar
+    // manual STOP (button) – stops game without game over overlay
+    function manualGameStop() {
+        if (!gameActive) return;            // already stopped
+        gameActive = false;
+        manualStop = true;
+        gameOverFlag = false;               // not game over, just manual stop
+        toggleBtn.innerText = '▶️ START';
+        toggleBtn.classList.remove('active');
+        gameoverDiv.style.visibility = 'hidden';   // no overlay
+        pauseIndicator.style.opacity = handDetected ? '0' : '1'; 
+    }
+
+    // manual START (button)
+    function manualGameStart() {
+        if (gameOverFlag) {
+            // if game over, restart fully
+            restartGame();
+        } else {
+            // just resume from manual stop
+            gameActive = true;
+            manualStop = false;
+            toggleBtn.innerText = '⏹️ STOP';
+            toggleBtn.classList.add('active');
+            pauseIndicator.style.opacity = '0';
+        }
+    }
+
+    // lose life (red ball hit)
+    function loseLife() {
+        if (!gameActive || gameOverFlag) return;
+        lives--;
+        livesSpan.innerText = lives;
+        if (lives <= 0) {
+            triggerGameOver(false);
+        } else {
+            spawnRed();
+            // red flash
+            ctx.save();
+            ctx.fillStyle = 'rgba(255,80,80,0.3)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.restore();
+        }
+    }
+
     function updateTimeBar() {
         let percent = Math.max(0, (timeLeft / INIT_TIME) * 100);
         timeFill.style.width = percent + '%';
     }
 
-    // ----- PEACE SIGN DETECTION (exactly 2 fingers: index & middle extended, others down) -----
+    // ---------- GESTURES (strict) ----------
     function isPeaceSign(landmarks) {
-        // landmark indices: thumb:4, index:8, middle:12, ring:16, pinky:20
-        // reference joints: index:6 (dip), middle:10, ring:14, pinky:18, thumb:3 (ip)
-        
-        // Check index (tip higher than dip)
         const indexTip = landmarks[8];
         const indexDip = landmarks[6];
-        const indexUp = indexTip.y < indexDip.y - 0.02;
-        
-        // Check middle (tip higher than dip)
+        const indexUp = indexTip.y < indexDip.y - 0.018;
         const middleTip = landmarks[12];
         const middleDip = landmarks[10];
-        const middleUp = middleTip.y < middleDip.y - 0.02;
-        
-        // Ring should be down (tip lower than dip)
+        const middleUp = middleTip.y < middleDip.y - 0.018;
         const ringTip = landmarks[16];
         const ringDip = landmarks[14];
-        const ringDown = ringTip.y > ringDip.y + 0.01;  // lower = bigger y
-        
-        // Pinky should be down
+        const ringDown = ringTip.y > ringDip.y + 0.015;
         const pinkyTip = landmarks[20];
         const pinkyDip = landmarks[18];
-        const pinkyDown = pinkyTip.y > pinkyDip.y + 0.01;
-        
-        // Thumb should be down (not extended) – use thumb IP vs tip
+        const pinkyDown = pinkyTip.y > pinkyDip.y + 0.015;
         const thumbTip = landmarks[4];
-        const thumbIp = landmarks[3];  // joint below tip
-        // Thumb is considered down if tip is close to hand (simple: tip y > ip y or tip x not too far)
-        // For simplicity, we require thumb not to be up: tip y > ip y - 0.02? 
-        // Usually thumb is "down" when it's not sticking out. We'll treat as down if tip y > ip y - 0.01 (rough)
-        const thumbDown = thumbTip.y > thumbIp.y - 0.02; 
-        
-        // Peace sign = index up, middle up, ring down, pinky down, thumb down
+        const thumbIp = landmarks[3];
+        const thumbDown = thumbTip.y > thumbIp.y - 0.02;
         return indexUp && middleUp && ringDown && pinkyDown && thumbDown;
     }
 
-    // ----- MediaPipe hands -----
+    // CLOSE FIST – all fingers clearly curled
+    function isCloseFist(landmarks) {
+        const indexTip = landmarks[8];
+        const indexDip = landmarks[6];
+        const indexDown = indexTip.y > indexDip.y + 0.025;
+        const middleTip = landmarks[12];
+        const middleDip = landmarks[10];
+        const middleDown = middleTip.y > middleDip.y + 0.025;
+        const ringTip = landmarks[16];
+        const ringDip = landmarks[14];
+        const ringDown = ringTip.y > ringDip.y + 0.025;
+        const pinkyTip = landmarks[20];
+        const pinkyDip = landmarks[18];
+        const pinkyDown = pinkyTip.y > pinkyDip.y + 0.025;
+        const thumbTip = landmarks[4];
+        const thumbIp = landmarks[3];
+        const thumbDown = thumbTip.y > thumbIp.y - 0.01; 
+        return indexDown && middleDown && ringDown && pinkyDown && thumbDown;
+    }
+
+    // ----- MediaPipe setup -----
     const hands = new Hands({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
-
     hands.setOptions({
         maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
+        modelComplexity: 0,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.65,
+        selfieMode: true
     });
 
     hands.onResults((results) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw mirrored camera
+        // draw camera
         if (results.image) {
-            ctx.save();
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
             ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-            ctx.restore();
         } else {
-            ctx.fillStyle = '#1e2433';
+            ctx.fillStyle = '#141a26';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Process hand landmarks
+        // HAND block
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             handDetected = true;
             const landmarks = results.multiHandLandmarks[0];
+            const now = Date.now();
 
-            // ----- PEACE GESTURE CHECK (only when game is NOT active) -----
-            if (!gameActive) {
-                const now = Date.now();
-                if (isPeaceSign(landmarks) && (now - lastPeaceTime > PEACE_COOLDOWN)) {
+            // --- PEACE (restart only when game over) ---
+            if (gameOverFlag && (now - lastPeaceTime > GESTURE_COOLDOWN)) {
+                if (isPeaceSign(landmarks)) {
                     lastPeaceTime = now;
-                    restartGame();  // peace sign restarts the game
+                    restartGame();
                 }
             }
 
-            // fingertip (index) for pointer (always draw for visual feedback)
-            const indexTip = landmarks[8];
-            const rawX = indexTip.x * canvas.width;
-            const rawY = indexTip.y * canvas.height;
-            const mirroredX = canvas.width - rawX;
+            // --- CLOSE FIST = immediate STOP (always if game active, regardless of toggle) ---
+            if (gameActive && !gameOverFlag && (now - lastFistStopTime > GESTURE_COOLDOWN)) {
+                if (isCloseFist(landmarks)) {
+                    lastFistStopTime = now;
+                    triggerGameOver(true);   // fist triggers game over
+                }
+            }
 
-            fingerPos.x = mirroredX;
-            fingerPos.y = rawY;
+            // fingertip smoothing
+            const indexTip = landmarks[8];
+            let rawX = indexTip.x * canvas.width;
+            let rawY = indexTip.y * canvas.height;
+            if (smoothedX < 0) {
+                smoothedX = rawX;
+                smoothedY = rawY;
+            } else {
+                const alpha = 0.35;
+                smoothedX = smoothedX * alpha + rawX * (1 - alpha);
+                smoothedY = smoothedY * alpha + rawY * (1 - alpha);
+            }
+            fingerPos.x = smoothedX;
+            fingerPos.y = smoothedY;
             fingerPos.valid = true;
 
-            // Draw fingertip pointer (bright)
+            // draw fingertip
             ctx.beginPath();
             ctx.arc(fingerPos.x, fingerPos.y, 18, 0, 2*Math.PI);
-            ctx.fillStyle = '#44ffb0';
-            ctx.shadowColor = '#0f0';
-            ctx.shadowBlur = 40;
+            ctx.fillStyle = '#55ffb0';
+            ctx.shadowColor = '#00cc88';
+            ctx.shadowBlur = 25;
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.strokeStyle = 'white';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 3;
             ctx.stroke();
-
-            // small central dot
             ctx.beginPath();
             ctx.arc(fingerPos.x, fingerPos.y, 6, 0, 2*Math.PI);
             ctx.fillStyle = '#ffffff';
@@ -426,42 +553,52 @@
         } else {
             handDetected = false;
             fingerPos.valid = false;
+            smoothedX = smoothedY = -100;
         }
 
-        // Draw ball
+        // draw orange
         ctx.shadowColor = '#ffaa33';
-        ctx.shadowBlur = 30;
+        ctx.shadowBlur = 25;
         ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.r, 0, 2*Math.PI);
+        ctx.arc(orange.x, orange.y, orange.r, 0, 2*Math.PI);
         ctx.fillStyle = '#ff8c00';
         ctx.fill();
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 8;
         ctx.beginPath();
-        ctx.arc(ball.x-5, ball.y-5, ball.r-8, 0, 2*Math.PI);
+        ctx.arc(orange.x-5, orange.y-5, orange.r-8, 0, 2*Math.PI);
         ctx.fillStyle = '#ffb86b';
         ctx.fill();
         ctx.shadowBlur = 0;
-        // highlight
-        ctx.beginPath();
-        ctx.arc(ball.x-10, ball.y-10, 8, 0, 2*Math.PI);
-        ctx.fillStyle = '#fff3d1';
-        ctx.globalAlpha = 0.4;
-        ctx.fill();
-        ctx.globalAlpha = 1;
+
+        // draw red ball
+        if (redBall.active) {
+            ctx.shadowColor = '#ff3a3a';
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(redBall.x, redBall.y, redBall.r, 0, 2*Math.PI);
+            ctx.fillStyle = '#d83030';
+            ctx.fill();
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(redBall.x-5, redBall.y-5, redBall.r-8, 0, 2*Math.PI);
+            ctx.fillStyle = '#ff7777';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
     });
 
-    // Camera (always sending frames for gesture detection)
+    // Camera
     const camera = new Camera(video, {
         onFrame: async () => {
-            await hands.send({ image: video }); // always process
+            await hands.send({ image: video });
         },
-        width: 1280,
-        height: 720,
+        width: 800,
+        height: 600,
         facingMode: 'user'
     });
-    camera.start().catch(e => console.warn('camera error', e));
+    camera.start().catch(e => console.warn);
 
-    // ----- game loop (timer, collisions) -----
+    // ----- game loop (physics) -----
     let lastTimestamp = 0;
 
     function gameLoop(now) {
@@ -470,78 +607,103 @@
             requestAnimationFrame(gameLoop);
             return;
         }
-
-        const deltaTime = now - lastTimestamp;
+        const delta = now - lastTimestamp;
         lastTimestamp = now;
 
-        if (gameActive) {
-            // Timer decreases only if hand detected
+        // update UI pause indicator
+        if (!handDetected && gameActive && !gameOverFlag && !manualStop) {
+            pauseIndicator.style.opacity = '1';
+        } else {
+            pauseIndicator.style.opacity = '0';
+        }
+
+        if (gameActive && !gameOverFlag) {
+            // timer countdown only if hand visible
             if (handDetected) {
-                timeLeft -= deltaTime / 1000;
-                pauseIndicator.style.opacity = '0';
-            } else {
-                pauseIndicator.style.opacity = '1';
+                timeLeft -= delta / 1000;
             }
 
-            // Time out?
+            // time out -> lose life
             if (timeLeft <= 0) {
-                timeLeft = 0;
+                timeLeft = INIT_TIME * 0.8;
                 lives--;
                 livesSpan.innerText = lives;
-                if (lives <= 0) {
-                    gameOver();
-                } else {
-                    timeLeft = INIT_TIME * 0.7; // partial refill
-                }
+                if (lives <= 0) { triggerGameOver(false); }
             }
 
-            // update displays
             timerSpan.innerText = timeLeft.toFixed(1);
             updateTimeBar();
 
-            // Move ball
-            ball.x += ball.vx;
-            ball.y += ball.vy;
+            // move orange
+            orange.x += orange.vx;
+            orange.y += orange.vy;
+            if (orange.x < orange.r) { orange.x = orange.r; orange.vx *= -0.8; }
+            if (orange.x > canvas.width - orange.r) { orange.x = canvas.width - orange.r; orange.vx *= -0.8; }
+            if (orange.y < orange.r) { orange.y = orange.r; orange.vy *= -0.8; }
+            if (orange.y > canvas.height - orange.r) { orange.y = canvas.height - orange.r; orange.vy *= -0.8; }
 
-            // Bounce off walls
-            if (ball.x < ball.r) { ball.x = ball.r; ball.vx *= -0.8; }
-            if (ball.x > canvas.width - ball.r) { ball.x = canvas.width - ball.r; ball.vx *= -0.8; }
-            if (ball.y < ball.r) { ball.y = ball.r; ball.vy *= -0.8; }
-            if (ball.y > canvas.height - ball.r) { ball.y = canvas.height - ball.r; ball.vy *= -0.8; }
+            // move red
+            if (redBall.active) {
+                redBall.x += redBall.vx;
+                redBall.y += redBall.vy;
+                if (redBall.x < redBall.r) { redBall.x = redBall.r; redBall.vx *= -0.8; }
+                if (redBall.x > canvas.width - redBall.r) { redBall.x = canvas.width - redBall.r; redBall.vx *= -0.8; }
+                if (redBall.y < redBall.r) { redBall.y = redBall.r; redBall.vy *= -0.8; }
+                if (redBall.y > canvas.height - redBall.r) { redBall.y = canvas.height - redBall.r; redBall.vy *= -0.8; }
+            }
 
-            // Pop detection (if finger valid)
+            // collisions
             if (fingerPos.valid) {
-                const dx = fingerPos.x - ball.x;
-                const dy = fingerPos.y - ball.y;
+                // orange pop
+                const dx = fingerPos.x - orange.x;
+                const dy = fingerPos.y - orange.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < ball.r + 20) {
+                if (dist < orange.r + 18) {
                     score++;
                     scoreSpan.innerText = score;
                     timeLeft = Math.min(timeLeft + TIME_PER_POP, 45);
                     timerSpan.innerText = timeLeft.toFixed(1);
                     updateTimeBar();
-                    spawnBall();
+                    spawnOrange();
+                }
 
-                    // visual flash
-                    ctx.save();
-                    ctx.fillStyle = 'rgba(255,255,200,0.4)';
-                    ctx.fillRect(0,0,canvas.width,canvas.height);
-                    ctx.restore();
+                // red danger
+                if (redBall.active) {
+                    const dxR = fingerPos.x - redBall.x;
+                    const dyR = fingerPos.y - redBall.y;
+                    const distR = Math.sqrt(dxR*dxR + dyR*dyR);
+                    if (distR < redBall.r + 18) {
+                        loseLife();
+                        spawnRed();
+                    }
                 }
             }
-
-            if (lives <= 0) gameOver();
         }
 
         requestAnimationFrame(gameLoop);
     }
     requestAnimationFrame(gameLoop);
 
-    // restart button click (manual fallback)
+    // ----- toggle button: START/STOP (pure) -----
+    toggleBtn.addEventListener('click', () => {
+        if (gameActive && !gameOverFlag) {
+            // if running -> STOP (manual stop, no game over)
+            manualGameStop();
+        } else {
+            // if stopped (manual stop or game over) -> START
+            if (gameOverFlag) {
+                restartGame();          // full restart
+            } else {
+                manualGameStart();       // resume from manual stop
+            }
+        }
+    });
+
     restartBtn.addEventListener('click', restartGame);
 
-    // initial spawn
-    spawnBall();
+    // init
+    spawnOrange();
+    spawnRed();
 })();
 </script>
 </body>
