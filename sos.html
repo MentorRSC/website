@@ -2,1102 +2,507 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hand SOS · Emergency Detector</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Hand SOS Detection — Scrollable & Responsive</title>
+<style>
+    /* RESET & BASE — ensure scrollability on all devices */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-        body {
-            background: #0b0e14;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            touch-action: none;
-        }
+    html, body {
+        width: 100%;
+        min-height: 100vh;
+        background: #0b0b0b;
+        font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;    /* make page scrollable */
+        -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+    }
 
-        /* main container */
-        .camera-frame {
-            height: 100vh;
-            width: 92%;
-            display: flex;
-            flex-direction: column;
-            background: #1a1f2b;
-            border-radius: 2rem 2rem 0 0;
-            overflow: hidden;
-            box-shadow: 0 25px 40px -10px black;
-            position: relative;
-        }
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* content starts at top, can scroll */
+        padding: 16px 12px;
+    }
 
-        .canvas-wrapper {
-            flex: 1 1 0;
-            min-height: 0;
-            position: relative;
-            background: #202432;
-        }
+    /* main card / container — respects safe area */
+    .detection-card {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto 20px auto;
+        background: #1a1a1a;
+        border-radius: 32px;
+        padding: 20px 16px 24px 16px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        border: 1px solid #333;
+    }
 
-        #handCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: #2a2f3a;
-        }
+    h2 {
+        color: #eee;
+        font-weight: 400;
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
 
-        .status-area {
-            padding: 12px 20px;
-            background: #10131c;
-            color: #b9c6db;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 1.2rem;
-            letter-spacing: 0.5px;
-            border-top: 1px solid #2f3a4b;
-        }
+    h2 span {
+        background: #2e7d32;
+        font-size: 0.9rem;
+        padding: 4px 14px;
+        border-radius: 40px;
+        color: white;
+        font-weight: 500;
+    }
 
-        .gesture-hint {
-            background: #262e3d;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-weight: 500;
-            color: #c6d9ff;
-        }
+    .info-row {
+        color: #aaa;
+        font-size: 0.95rem;
+        margin-bottom: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px 28px;
+        background: #252525;
+        padding: 12px 18px;
+        border-radius: 40px;
+    }
 
-        .timer-badge {
-            background: #1f2738;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-family: monospace;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #b1eaff;
-            box-shadow: inset 0 2px 3px #0a0e14;
-        }
+    .info-row .badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-        /* red emergency overlay */
-        #emergencyOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #ef4444;
-            background-image: repeating-linear-gradient(45deg, #ff0000 0px, #ff0000 25px, #cc0000 25px, #cc0000 50px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            font-size: 6vw;
-            font-weight: 900;
-            color: white;
-            text-shadow: 6px 6px 0 #4a0000;
-            letter-spacing: 8px;
-            flex-direction: column;
-            border: 12px solid #a30000;
-            box-sizing: border-box;
-            backdrop-filter: blur(2px);
-            animation: pulseAlarm 1.2s infinite alternate;
-        }
+    .info-row i { font-style: normal; color: #ffb74d; }
 
-        #emergencyOverlay span {
-            font-size: 3vw;
-            background: rgba(0,0,0,0.4);
-            padding: 0.5em 2em;
-            border-radius: 60px;
-            margin-top: 2rem;
-            font-weight: 400;
-            letter-spacing: 4px;
-            border: 2px dashed white;
-        }
+    /* video canvas container — aspect ratio locked, fills width */
+    .media-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;     /* consistent rectangle, no overflow */
+        background: black;
+        border-radius: 28px;
+        overflow: hidden;
+        border: 2px solid #3a3a3a;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.8);
+        margin-bottom: 20px;
+    }
 
-        @keyframes pulseAlarm {
-            0% { opacity: 0.95; filter: brightness(1); }
-            100% { opacity: 1; filter: brightness(1.3); }
-        }
+    video, canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;          /* covers area without stretching */
+        pointer-events: none;       /* camera feed not interactive */
+    }
 
-        /* dropdown menu */
-        .menu-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-        }
+    /* emergency overlay — now placed INSIDE the media wrapper, so it's always in view */
+    .emergency-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 0, 0, 0.92);
+        backdrop-filter: blur(4px);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 25;
+        font-size: clamp(1.8rem, 10vw, 4rem);
+        font-weight: 800;
+        text-align: center;
+        line-height: 1.4;
+        text-shadow: 2px 2px 12px black;
+        border-radius: 28px;        /* matches wrapper */
+        border: 4px solid #ffcccc;
+        box-shadow: inset 0 0 40px #b71c1c;
+        padding: 16px;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        pointer-events: none;       /* allow clicks to pass if needed (alert just visual) */
+    }
 
-        .menu-btn {
-            background: #1e2a3a;
-            border: 2px solid #ffaa33;
-            color: white;
-            font-size: 1.8rem;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            box-shadow: 0 4px 10px black;
-            transition: 0.2s;
-        }
+    .emergency-overlay.show {
+        opacity: 1;
+        pointer-events: all;        /* not interactive but visible */
+    }
 
-        .menu-btn:hover {
-            background: #2f3a4a;
-            transform: scale(1.05);
-        }
+    .emergency-overlay small {
+        font-size: 0.5em;
+        background: black;
+        padding: 8px 20px;
+        border-radius: 60px;
+        margin-top: 20px;
+        font-weight: 400;
+        letter-spacing: 1px;
+    }
 
-        .dropdown-menu {
-            position: absolute;
-            top: 60px;
-            right: 0;
-            background: #1a2535;
-            border: 2px solid #ffaa33;
-            border-radius: 20px;
-            padding: 10px;
-            display: none;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 10px 25px black;
-            min-width: 220px;
-            z-index: 101;
-        }
+    /* instruction panels — scrollable friendly */
+    .step-guide {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 24px 0 16px 0;
+        justify-content: center;
+    }
 
-        .dropdown-menu.show {
-            display: block;
-        }
+    .guide-card {
+        background: #262626;
+        border-radius: 60px;
+        padding: 12px 24px;
+        color: #ddd;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1 1 auto;
+        border: 1px solid #404040;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
 
-        .menu-item {
-            padding: 12px 20px;
-            color: white;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border-radius: 12px;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
-        }
+    .guide-card .emoji {
+        font-size: 1.8rem;
+        filter: drop-shadow(0 2px 2px black);
+    }
 
-        .menu-item:hover {
-            background: #2f4055;
-        }
+    .guide-card.highlight {
+        background: #2e3b2e;
+        border-color: #6fda6f;
+        color: #d0ffd0;
+    }
 
-        .menu-item.active {
-            background: #2f6b3e;
-            color: #e8ffe8;
-        }
+    .footer-note {
+        color: #777;
+        font-size: 0.85rem;
+        text-align: center;
+        margin-top: 10px;
+        border-top: 1px solid #2a2a2a;
+        padding-top: 16px;
+    }
 
-        .menu-divider {
-            height: 1px;
-            background: #ffaa3366;
-            margin: 8px 0;
-        }
+    /* hide audio element */
+    #alarm {
+        display: none;
+    }
 
-        /* popup messages */
-        .popup-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            display: none;
-        }
-
-        .info-popup {
-            background: linear-gradient(135deg, #1e2a3a, #0e1a2a);
-            border: 3px solid #ffaa33;
-            border-radius: 40px;
-            padding: 30px 40px;
-            color: white;
-            font-size: 1.2rem;
-            text-align: center;
-            box-shadow: 0 0 80px #ffaa33;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            max-width: 90%;
-            width: 450px;
-            animation: fadeIn 0.5s;
-        }
-
-        .info-popup h2 {
-            color: #ffaa33;
-            margin-bottom: 20px;
-            font-size: 2rem;
-        }
-
-        .info-popup p {
-            margin: 15px 0;
-            line-height: 1.6;
-        }
-
-        .info-popup .emergency-demo {
-            font-size: 3rem;
-            margin: 15px 0;
-            animation: pulse 1.5s infinite;
-        }
-
-        .info-popup .contact-input {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid #ffaa33;
-            border-radius: 30px;
-            padding: 12px 20px;
-            width: 100%;
-            margin: 10px 0;
-            color: white;
-            font-size: 1rem;
-        }
-
-        .info-popup .contact-input::placeholder {
-            color: #aaa;
-        }
-
-        .next-btn {
-            background: #ffaa33;
-            border: none;
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 12px 25px;
-            border-radius: 30px;
-            color: #0b0e14;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: 0.2s;
-            width: 100%;
-        }
-
-        .next-btn:hover {
-            background: #ffbf5e;
-            transform: scale(1.02);
-        }
-
-        .skip-btn {
-            background: transparent;
-            border: 1px solid #ffaa33;
-            color: #ffaa33;
-            padding: 8px 15px;
-            border-radius: 20px;
-            margin-top: 10px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.9; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .camera-prompt {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #1a2a3a, #0a1a2a);
-            border: 3px solid #44aaff;
-            border-radius: 40px;
-            padding: 30px 50px;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            box-shadow: 0 0 60px #44aaff;
-            z-index: 2000;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            cursor: pointer;
-            transition: 0.3s;
-            display: none;
-        }
-
-        .camera-prompt:hover {
-            transform: translate(-50%, -50%) scale(1.05);
-            border-color: #88ddff;
-        }
-
-        .camera-prompt span {
-            color: #44aaff;
-            font-size: 3rem;
-            display: block;
-            margin: 10px 0;
-        }
-
-        .permission-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            z-index: 2100;
-            display: none;
-        }
-
-        .note {
-            font-size: 0.9rem;
-            color: #5d6f8f;
-            margin-left: 1rem;
-        }
-        
-        .signature {
-            color: #b3ceff;
-            font-weight: 400;
-            background: #1e2638;
-            padding: 0.3rem 1.2rem;
-            border-radius: 30px;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-            border: 1px solid #3a4865;
-        }
-        
-        .signature i {
-            color: #ffd966;
-            font-style: normal;
-            margin-right: 4px;
-        }
-
-        .notification-badge {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: #ffaa33;
-            color: black;
-            padding: 8px 15px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            z-index: 50;
-            display: none;
-        }
-    </style>
+    /* no extra margins breaking scroll */
+    #container {
+        width: 100%;
+    }
+</style>
 </head>
 <body>
 
-<div class="camera-frame">
-    <!-- Dropdown Menu -->
-    <div class="menu-container">
-        <div class="menu-btn" id="menuBtn">☰</div>
-        <div class="dropdown-menu" id="dropdownMenu">
-            <div class="menu-item" id="menuStartStop">
-                <span>⏸️</span> Pause Detection
-            </div>
-            <div class="menu-item" id="menuLiveStream">
-                <span>📹</span> Live Stream: ON
-            </div>
-            <div class="menu-item" id="menuSkeleton">
-                <span>🦴</span> Skeleton: ON
-            </div>
-            <div class="menu-divider"></div>
-            <div class="menu-item" id="menuContacts">
-                <span>👥</span> Emergency Contacts
-            </div>
-            <div class="menu-item" id="menuReset">
-                <span>↻</span> Reset Emergency
-            </div>
-            <div class="menu-divider"></div>
-<div class="menu-item" id="menuHome">
-    <span>🏠</span> Home
-</div>
-            <div class="menu-item" id="menuback">
-    <span>🏠</span> back
-</div>
-      
+<div class="detection-card">
+    
+    <h2>
+        ✋ SOS Palm Detection 
+        <span>open palm 3s → SOS</span>
+    </h2>
+
+    <div class="info-row">
+        <div class="badge"><i>📱</i> scrollable & responsive</div>
+        <div class="badge"><i>🖐️</i> 4+ fingers = open palm</div>
+        <div class="badge"><i>✌️</i> 2 fingers stops alarm</div>
+    </div>
+
+    <!-- media container: video, canvas, and alert inside (fixed relative) -->
+    <div class="media-wrapper" id="mediaWrapper">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
+
+        <!-- alert now inside the same wrapper, always visible when active -->
+        <div id="alertOverlay" class="emergency-overlay">
+            🚨 SOS EMERGENCY 🚨<br>
+            <span style="font-size:0.7em;">HELP NEEDED</span>
+            <small>✌️ two fingers to stop</small>
         </div>
     </div>
 
-    <div class="canvas-wrapper">
-        <canvas id="handCanvas"></canvas>
-    </div>
-    <div class="status-area">
-        <div class="gesture-hint" id="gestureDisplay">✋ waiting for hand</div>
-        <div class="timer-badge" id="timerDisplay">⏱️ 0.0s</div>
-        <div class="signature"><i>✋</i> project by Narendran</div>
-    </div>
-
-    <div class="notification-badge" id="notificationBadge">
-        📱 Emergency contacts saved
-    </div>
-</div>
-
-<!-- Camera Permission Prompt -->
-<div id="cameraPrompt" class="camera-prompt">
-    📷 CAMERA ACCESS NEEDED
-    <span>👆</span>
-    TAP TO REQUEST PERMISSION
-</div>
-
-<!-- Info Popup after Camera Access -->
-<div id="infoPopup" class="popup-overlay">
-    <div class="info-popup">
-        <h2>🚨 SOS EMERGENCY DETECTOR</h2>
-        
-        <div class="emergency-demo">
-            ✋ → 🆘
+    <!-- quick status & guide (visible below video, no scroll clipping) -->
+    <div class="step-guide">
+        <div class="guide-card" id="guideOpen">
+            <span class="emoji">🖐️</span> hold open palm 3s
         </div>
-        
-        <p>
-            <strong>How it works:</strong><br>
-            Show <strong style="color: #ffaa33;">OPEN HAND</strong> to camera for <strong style="color: #ffaa33;">3 seconds</strong><br>
-            This will trigger an EMERGENCY ALERT
-        </p>
-
-        <p style="color: #ffaa33; font-size: 1.5rem;">⚠️</p>
-
-        <p>
-            <strong>When emergency is triggered:</strong><br>
-            • Red flashing screen appears<br>
-            • Loud alarm sound plays<br>
-            • <strong>Notifications sent to your emergency contacts</strong>
-        </p>
-
-        <p>
-            <strong>To cancel emergency:</strong><br>
-            Show <strong style="color: #55ff55;">TWO FINGERS</strong> (peace sign) to reset
-        </p>
-
-        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 20px; margin: 15px 0;">
-            <p style="margin-bottom: 10px;">📱 <strong>Emergency Contacts</strong></p>
-            <input type="email" id="emailInput" class="contact-input" placeholder="Email address (for alerts)">
-            <input type="tel" id="phoneInput" class="contact-input" placeholder="Phone number (for SMS)">
-            <p style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">* Notifications will be sent when emergency is triggered</p>
+        <div class="guide-card" id="guideStop">
+            <span class="emoji">✌️</span> show 2 fingers to stop
         </div>
+    </div>
 
-        <button id="saveContactsBtn" class="next-btn">💾 SAVE & CONTINUE</button>
-        <button id="skipContactsBtn" class="skip-btn">Skip for now</button>
+    <div class="footer-note">
+        ⚡ Make sure your hand is clearly visible. Alarm loops until 2 fingers raised.
     </div>
 </div>
 
-<div id="permissionMessage" class="permission-message">❌ Camera access denied<br><small>Please enable camera permissions</small></div>
+<!-- alarm audio (hidden) -->
+<audio id="alarm" loop>
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+</audio>
 
-<!-- fullscreen red emergency overlay -->
-<div id="emergencyOverlay">
-    🆘 SOS EMERGENCY 🆘
-    <span>🔊 alarm sound · show 2 fingers to reset</span>
-</div>
-
-<!-- Include MediaPipe Hands and Camera utilities -->
+<!-- MediaPipe & Camera helpers -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-    (function() {
-        // ---------- DOM elements ----------
-        const canvas = document.getElementById('handCanvas');
-        const ctx = canvas.getContext('2d');
-        const gestureEl = document.getElementById('gestureDisplay');
-        const timerEl = document.getElementById('timerDisplay');
-        const emergencyOverlay = document.getElementById('emergencyOverlay');
-        const cameraPrompt = document.getElementById('cameraPrompt');
-        const permissionMsg = document.getElementById('permissionMessage');
-        const infoPopup = document.getElementById('infoPopup');
-        const notificationBadge = document.getElementById('notificationBadge');
-        
-        // Menu elements
-        const menuBtn = document.getElementById('menuBtn');
-        const dropdownMenu = document.getElementById('dropdownMenu');
-        const menuStartStop = document.getElementById('menuStartStop');
-        const menuLiveStream = document.getElementById('menuLiveStream');
-        const menuSkeleton = document.getElementById('menuSkeleton');
-        const menuContacts = document.getElementById('menuContacts');
-        const menuReset = document.getElementById('menuReset');
+(function() {
+    // ----- DOM elements -----
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const alertOverlay = document.getElementById('alertOverlay');
+    const alarm = document.getElementById('alarm');
+    const guideOpen = document.getElementById('guideOpen');
+    const guideStop = document.getElementById('guideStop');
 
-        // Contact inputs
-        const emailInput = document.getElementById('emailInput');
-        const phoneInput = document.getElementById('phoneInput');
-        const saveContactsBtn = document.getElementById('saveContactsBtn');
-        const skipContactsBtn = document.getElementById('skipContactsBtn');
+    // ----- state -----
+    let emergency = false;
+    let openHandStart = null;          // timestamp when open hand first detected
 
-        // ---------- state variables ----------
-        let lastGesture = 'unknown';
-        let openHandStartTime = null;
-        const OPEN_HAND_DURATION_MS = 3000;
-        let emergencyActive = false;
-        let alarmSound = null;
-        
-        // Menu states
-        let detectionPaused = false;
-        let liveStreamEnabled = true;
-        let skeletonEnabled = true;
-        let cameraInitialized = false;
-        let cameraPermissionGranted = false;
-        
-        // Emergency contacts
-        let emergencyEmail = localStorage.getItem('emergencyEmail') || '';
-        let emergencyPhone = localStorage.getItem('emergencyPhone') || '';
-        
-        // Mobile detection
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        // Hand tracking variables
-        let handDetected = false;
-        let videoElement = null;
-
-        // Load saved contacts
-        if (emergencyEmail) emailInput.value = emergencyEmail;
-        if (emergencyPhone) phoneInput.value = emergencyPhone;
-
-        // ---------- audio (alarm) ----------
-        function initAlarm() {
-            if (alarmSound) return;
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const gainNode = audioCtx.createGain();
-                const oscillator = audioCtx.createOscillator();
-                oscillator.type = 'sawtooth';
-                oscillator.frequency.value = 440;
-                gainNode.gain.value = 0.3;
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                const sampleRate = audioCtx.sampleRate;
-                const duration = 1.0;
-                const buffer = audioCtx.createBuffer(1, sampleRate * duration, sampleRate);
-                const channel = buffer.getChannelData(0);
-                
-                for (let i = 0; i < buffer.length; i++) {
-                    const t = i / sampleRate;
-                    const freq = (Math.floor(t * 6) % 2 === 0) ? 380 : 520;
-                    channel[i] = Math.sin(2 * Math.PI * freq * t) * 0.5 + Math.sin(4 * Math.PI * 280 * t) * 0.2;
-                }
-
-                const sourceNode = audioCtx.createBufferSource();
-                sourceNode.buffer = buffer;
-                sourceNode.loop = true;
-                sourceNode.connect(gainNode);
-
-                alarmSound = {
-                    context: audioCtx,
-                    source: sourceNode,
-                    gain: gainNode,
-                    isPlaying: false
-                };
-
-                document.addEventListener('click', () => {
-                    if (alarmSound && alarmSound.context.state === 'suspended') {
-                        alarmSound.context.resume();
-                    }
-                }, { once: true });
-            } catch (e) {
-                console.warn('Web Audio not supported, no alarm sound.');
-                alarmSound = null;
-            }
+    // ----- resize canvas to match parent aspect (fills container) -----
+    function resizeCanvasToDisplay() {
+        const wrapper = document.querySelector('.media-wrapper');
+        if (!wrapper) return;
+        const rect = wrapper.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            canvas.width = rect.width;
+            canvas.height = rect.height;
         }
+    }
 
-        function playAlarm() {
-            if (!alarmSound) return;
-            const { context, source, gain } = alarmSound;
-            if (context.state === 'suspended') {
-                context.resume().then(() => {
-                    if (!alarmSound.isPlaying) {
-                        source.start(0);
-                        alarmSound.isPlaying = true;
-                    }
-                });
-            } else if (!alarmSound.isPlaying) {
-                source.start(0);
-                alarmSound.isPlaying = true;
-            }
-        }
-
-        function stopAlarm() {
-            if (!alarmSound || !alarmSound.isPlaying) return;
-            try {
-                alarmSound.source.stop();
-            } catch (e) {}
-            const audioCtx = alarmSound.context;
-            const gainNode = alarmSound.gain;
-            const newBuffer = alarmSound.source.buffer;
-            const newSource = audioCtx.createBufferSource();
-            newSource.buffer = newBuffer;
-            newSource.loop = true;
-            newSource.connect(gainNode);
-            alarmSound.source = newSource;
-            alarmSound.isPlaying = false;
-        }
-
-        // ---------- Send emergency notifications ----------
-        function sendEmergencyNotifications() {
-            console.log('🚨 EMERGENCY TRIGGERED! Sending notifications...');
-            
-            // Get current date/time
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString();
-            const dateStr = now.toLocaleDateString();
-            
-            const emergencyMessage = `🚨 SOS EMERGENCY ALERT! 🚨\nTime: ${timeStr} on ${dateStr}\nEmergency was triggered by open hand gesture. Please check immediately!`;
-            
-            // Show badge
-            notificationBadge.style.display = 'block';
-            notificationBadge.innerHTML = '📱 Sending emergency alerts...';
-            
-            // Send email if provided
-            if (emergencyEmail) {
-                sendEmail(emergencyEmail, emergencyMessage);
-            }
-            
-            // Send SMS if phone provided (using SMS protocol for mobile)
-            if (emergencyPhone && isMobile) {
-                sendSMS(emergencyPhone, emergencyMessage);
-            }
-            
-            // Also try to send via Web Push if available (would need service worker)
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('🚨 SOS EMERGENCY', {
-                    body: emergencyMessage,
-                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="red"/><text x="50" y="70" font-size="50" text-anchor="middle" fill="white">⚠️</text></svg>'
-                });
-            }
-            
-            // Simulate API call to emergency service (in real app, this would be your backend)
-            simulateEmergencyAPI(emergencyMessage);
-            
-            setTimeout(() => {
-                notificationBadge.innerHTML = '📱 Emergency alerts sent!';
-                setTimeout(() => {
-                    notificationBadge.style.display = 'none';
-                }, 3000);
-            }, 2000);
-        }
-// Home button (first one)
-const menuHome = document.getElementById('menuHome');
-if (menuHome) {
-    menuHome.addEventListener('click', () => {
-        window.location.href = 'https://mentorrsc.github.io/website/';
+    // initial + observer to handle orientation/resize
+    const resizeObserver = new ResizeObserver(() => {
+        resizeCanvasToDisplay();
     });
-    menuHome.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        window.location.href = 'https://mentorrsc.github.io/website/';
+    const wrapper = document.querySelector('.media-wrapper');
+    if (wrapper) resizeObserver.observe(wrapper);
+    window.addEventListener('resize', () => {
+        setTimeout(resizeCanvasToDisplay, 30);
     });
-}
 
-// Back button (second one)
-const menuBack = document.getElementById('menuback');
-if (menuBack) {
-    menuBack.addEventListener('click', () => {
-        window.location.href = 'https://mentorrsc.github.io/website/puzzles.html';
+    // also call after camera start
+    setTimeout(resizeCanvasToDisplay, 100);
+
+    // ----- camera permission -----
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            alert('Camera access is needed for hand detection. Please grant permission.');
+        });
+
+    // ----- MediaPipe setup -----
+    const hands = new Hands({
+        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
-    menuBack.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        window.location.href = 'https://mentorrsc.github.io/website/puzzles.html';
+
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.7
     });
-}
-        function sendEmail(email, message) {
-            // In production, this would be an API call to your backend
-            console.log(`Sending email to ${email}: ${message}`);
-            
-            // Simulate email via mailto:
-            const mailtoLink = `mailto:${email}?subject=🚨 SOS EMERGENCY ALERT&body=${encodeURIComponent(message)}`;
-            
-            // You could open in a new tab or use a backend service
-            // For demo, we'll just log it
-            console.log('Email would be sent via:', mailtoLink);
-            
-            // In real implementation, you'd use a service like:
-            // fetch('https://your-api.com/send-emergency-email', {
-            //     method: 'POST',
-            //     headers: {'Content-Type': 'application/json'},
-            //     body: JSON.stringify({email, message})
-            // });
-        }
 
-        function sendSMS(phone, message) {
-            // For mobile, can use SMS protocol
-            console.log(`Sending SMS to ${phone}: ${message}`);
-            
-            // On mobile, this opens SMS app (doesn't auto-send)
-            const smsLink = `sms:${phone}?body=${encodeURIComponent(message)}`;
-            
-            // You could open this in a new window
-            // window.location.href = smsLink;
-            
-            console.log('SMS would be sent via:', smsLink);
-            
-            // In production, use a service like Twilio via your backend
-        }
+    hands.onResults(onResults);
 
-        function simulateEmergencyAPI(message) {
-            // Simulate API call to emergency monitoring service
-            console.log('Calling emergency API:', message);
-            
-            // In production, you'd call your backend which then:
-            // 1. Sends emails via SMTP
-            // 2. Sends SMS via Twilio
-            // 3. Triggers phone calls if needed
-            // 4. Logs to emergency dashboard
-        }
+    const camera = new Camera(video, {
+        onFrame: async () => {
+            await hands.send({ image: video });
+        },
+        width: 1280,
+        height: 720
+    });
+    camera.start();
 
-        // ---------- Camera permission request ----------
-        async function requestCameraPermission() {
-            try {
-                permissionMsg.style.display = 'none';
-                
-                const constraints = {
-                    video: {
-                        width: { ideal: isMobile ? 640 : 1280 },
-                        height: { ideal: isMobile ? 480 : 720 },
-                        facingMode: 'user',
-                        frameRate: { ideal: 15, max: 20 }
-                    }
-                };
-                
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                cameraPermissionGranted = true;
-                
-                // Create video element
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.autoplay = true;
-                video.playsInline = true;
-                videoElement = video;
-                
-                await video.play();
-                
-                // Initialize hands
-                initHandTracking(video);
-                
-                cameraInitialized = true;
-                cameraPrompt.style.display = 'none';
-                
-                // Show info popup
-                infoPopup.style.display = 'flex';
-                
-                initAlarm();
-                
-                // Request notification permission
-                if ('Notification' in window && Notification.permission === 'default') {
-                    Notification.requestPermission();
-                }
-                
-            } catch (err) {
-                console.error('Camera access error:', err);
-                permissionMsg.style.display = 'block';
-                cameraPrompt.style.display = 'block';
+    // ----- helpers: dotted line, finger count -----
+    function drawDottedLine(p1, p2) {
+        ctx.save();
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = '#ffffffcc';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function countFingers(landmarks) {
+        // tips: 4 (thumb), 8, 12, 16, 20 ; bases: 2,6,10,14,18
+        let tips = [4, 8, 12, 16, 20];
+        let bases = [2, 6, 10, 14, 18];
+        let count = 0;
+
+        // index to pinky
+        for (let i = 1; i < 5; i++) {
+            if (landmarks[tips[i]].y < landmarks[bases[i]].y) {
+                count++;
             }
         }
+        // thumb (assuming right hand; for left might need reverse, but simple cross)
+        if (landmarks[4].x < landmarks[3].x) count++;   // works for right hand. acceptable for demo.
 
-        // Save contacts
-        function saveEmergencyContacts() {
-            emergencyEmail = emailInput.value;
-            emergencyPhone = phoneInput.value;
-            
-            localStorage.setItem('emergencyEmail', emergencyEmail);
-            localStorage.setItem('emergencyPhone', emergencyPhone);
-            
-            infoPopup.style.display = 'none';
-            
-            notificationBadge.style.display = 'block';
-            notificationBadge.innerHTML = '📱 Emergency contacts saved!';
-            setTimeout(() => {
-                notificationBadge.style.display = 'none';
-            }, 2000);
+        return count;
+    }
+
+    function isOpenHand(fingers) {
+        return fingers >= 4;
+    }
+
+    // ----- emergency activation / deactivation (UI & sound)-----
+    function activateEmergency() {
+        if (emergency) return;
+        emergency = true;
+        alertOverlay.classList.add('show');
+        alarm.play().catch(e => console.log('audio play blocked until user interaction', e));
+        // visual guide highlight
+        guideOpen.classList.remove('highlight');
+        guideStop.classList.add('highlight');
+        console.log('🚨 SOS ACTIVATED');
+    }
+
+    function deactivateEmergency() {
+        if (!emergency) return;
+        emergency = false;
+        alertOverlay.classList.remove('show');
+        alarm.pause();
+        alarm.currentTime = 0;
+        openHandStart = null;          // reset timer
+        guideStop.classList.remove('highlight');
+        guideOpen.classList.remove('highlight');
+        console.log('✅ Emergency stopped');
+    }
+
+    // ----- results handler -----
+    function onResults(results) {
+        // update canvas size if needed (ensuring correct drawing)
+        if (canvas.width === 0 || canvas.height === 0) {
+            resizeCanvasToDisplay();
         }
 
-        // ---------- Hand tracking initialization ----------
-        function initHandTracking(video) {
-            const hands = new Hands({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-            });
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            hands.setOptions({
-                maxNumHands: 1,
-                modelComplexity: 1,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5
-            });
-
-            hands.onResults(onHandResults);
-
-            const camera = new Camera(video, {
-                onFrame: async () => {
-                    if (!detectionPaused) {
-                        await hands.send({ image: video });
-                    }
-                },
-                width: isMobile ? 640 : 1280,
-                height: isMobile ? 480 : 720
-            });
-
-            camera.start();
+        // draw video frame
+        if (results.image) {
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
         }
 
-        // ---------- drawing and landmark detection ----------
-        function onHandResults(results) {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw live stream if enabled
-            if (liveStreamEnabled && results.image) {
-                ctx.save();
-                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
-            } else if (!liveStreamEnabled) {
-                // Fill with dark background
-                ctx.fillStyle = '#1a1f2b';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            let currentGesture = 'no hand';
-            let fingerCount = 0;
-
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                const landmarks = results.multiHandLandmarks[0];
-
-                // Draw skeleton if enabled
-                if (skeletonEnabled) {
-                    drawHandConnections(landmarks);
-                }
-
-                // Count extended fingers
-                const tipIds = [4, 8, 12, 16, 20];
-                const fingerTips = tipIds.map(id => landmarks[id]);
-                const fingerBase = [2, 5, 9, 13, 17].map(id => landmarks[id]);
-
-                let extended = 0;
-                for (let i = 0; i < 5; i++) {
-                    const tip = fingerTips[i];
-                    const base = fingerBase[i];
-                    if (i === 0) {
-                        if (tip.x > base.x + 0.03) extended++;
-                    } else {
-                        if (tip.y < base.y - 0.03) extended++;
-                    }
-                }
-
-                fingerCount = extended;
-                currentGesture = fingerCount === 5 ? 'open hand' : 
-                               fingerCount === 2 ? 'two fingers' : 
-                               `${fingerCount} fingers`;
-            }
-
-            // Update UI
-            gestureEl.innerText = `✋ ${currentGesture}`;
-
-            // Emergency logic (only if detection not paused)
-            if (!detectionPaused) {
-                const now = performance.now();
-
-                if (!emergencyActive) {
-                    if (currentGesture === 'open hand') {
-                        if (openHandStartTime === null) {
-                            openHandStartTime = now;
-                        } else {
-                            const elapsed = (now - openHandStartTime) / 1000;
-                            timerEl.innerText = `⏱️ ${elapsed.toFixed(1)}s`;
-                            if (elapsed >= 3.0) {
-                                emergencyActive = true;
-                                emergencyOverlay.style.display = 'flex';
-                                playAlarm();
-                                
-                                // Send emergency notifications
-                                sendEmergencyNotifications();
-                                
-                                openHandStartTime = null;
-                            }
-                        }
-                    } else {
-                        openHandStartTime = null;
-                        timerEl.innerText = '⏱️ 0.0s';
-                    }
-                } else {
-                    timerEl.innerText = '⏱️ 🔴 SOS';
-                    if (currentGesture === 'two fingers') {
-                        emergencyActive = false;
-                        emergencyOverlay.style.display = 'none';
-                        stopAlarm();
-                        openHandStartTime = null;
-                        timerEl.innerText = '⏱️ 0.0s';
-                    }
-                }
-
-                if (!emergencyActive && currentGesture === 'no hand') {
-                    openHandStartTime = null;
-                    timerEl.innerText = '⏱️ 0.0s';
-                }
-            }
+        // if no hand, reset openHandStart and skip
+        if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+            if (!emergency) openHandStart = null;   // no hand, reset timer
+            // still show any existing alert state unchanged
+            return;
         }
 
-        // Draw hand connections
-        function drawHandConnections(landmarks) {
-            if (!landmarks) return;
+        const landmarks = results.multiHandLandmarks[0]; // only one hand
 
-            const w = canvas.width;
-            const h = canvas.height;
+        // convert to canvas coordinates
+        const points = landmarks.map(p => ({
+            x: p.x * canvas.width,
+            y: p.y * canvas.height
+        }));
 
-            const connections = [
-                [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8],
-                [5,9],[9,10],[10,11],[11,12], [9,13],[13,14],[14,15],[15,16],
-                [13,17],[17,18],[18,19],[19,20], [0,17],[2,5]
-            ];
-
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#fff9d0';
-            ctx.setLineDash([8, 6]);
+        // draw landmarks
+        ctx.fillStyle = '#ff3333';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        points.forEach(p => {
             ctx.beginPath();
-
-            for (let [i, j] of connections) {
-                const p1 = landmarks[i];
-                const p2 = landmarks[j];
-                if (p1 && p2) {
-                    ctx.moveTo(p1.x * w, p1.y * h);
-                    ctx.lineTo(p2.x * w, p2.y * h);
-                }
-            }
+            ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
+            ctx.fill();
             ctx.stroke();
+        });
 
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#80deea';
-            ctx.strokeStyle = '#01579b';
-            ctx.lineWidth = 1.5;
-            for (let lm of landmarks) {
-                ctx.beginPath();
-                ctx.arc(lm.x * w, lm.y * h, 6, 0, 2 * Math.PI);
-                ctx.fillStyle = '#aaf0f0';
-                ctx.fill();
-                ctx.strokeStyle = '#002884';
-                ctx.stroke();
+        // draw skeleton (dotted)
+        const connections = [
+            [0,1],[1,2],[2,3],[3,4],
+            [0,5],[5,6],[6,7],[7,8],
+            [5,9],[9,10],[10,11],[11,12],
+            [9,13],[13,14],[14,15],[15,16],
+            [13,17],[17,18],[18,19],[19,20],
+            [0,17]
+        ];
+
+        ctx.strokeStyle = '#b0ffb0';
+        ctx.lineWidth = 2.5;
+        connections.forEach(conn => {
+            drawDottedLine(points[conn[0]], points[conn[1]]);
+        });
+
+        // count fingers
+        const fingers = countFingers(landmarks);
+
+        // logic
+        if (!emergency) {
+            if (isOpenHand(fingers)) {
+                if (openHandStart === null) {
+                    openHandStart = Date.now();
+                } else if (Date.now() - openHandStart >= 3000) {
+                    activateEmergency();
+                }
+                // visual hint: highlight open guide
+                guideOpen.classList.add('highlight');
+                guideStop.classList.remove('highlight');
+            } else {
+                openHandStart = null;
+                guideOpen.classList.remove('highlight');
+            }
+        } else {
+            // emergency mode: check for two fingers to stop
+            if (fingers === 2) {
+                deactivateEmergency();
+            } else {
+                // keep highlight on stop guide
+                guideStop.classList.add('highlight');
+                guideOpen.classList.remove('highlight');
             }
         }
 
-        // Resize canvas
-        function resizeCanvas() {
-            const wrapper = document.querySelector('.canvas-wrapper');
-            if (wrapper) {
-                canvas.width = wrapper.clientWidth;
-                canvas.height = wrapper.clientHeight;
-            }
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        // optional: show finger count on canvas? not needed but small debug
+        ctx.font = 'bold 24px monospace';
+        ctx.fillStyle = 'yellow';
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 10;
+        ctx.fillText('🖐️'+fingers, 30, 70);
+        ctx.shadowBlur = 0;
+    }
 
-        // ---------- Menu functionality ----------
-        menuBtn.addEventListener('click', () => {
-            dropdownMenu.classList.toggle('show');
-        });
+    // extra: ensure alert overlay click doesn't block (but user might tap to allow audio)
+    // Chrome often needs user interaction to play audio. If alarm doesn't play,
+    // we can attempt to play on first hand detection with user gesture.
+    // but since alarm is inside 'activateEmergency', we catch errors silently.
+    // improve: preload audio context little?
+    document.body.addEventListener('touchstart', function initAudio() {
+        // just to unlock audio on mobile (any user interaction)
+        alarm.load(); 
+        console.log('audio context unlocked');
+    }, { once: true });
 
-        menuBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            dropdownMenu.classList.toggle('show');
-        });
+    // Also on first hand result we could trigger a silent play?
+    // but not needed — user will tap somewhere.
 
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                dropdownMenu.classList.remove('show');
-            }
-        });
+    // ensure canvas gets resize on orientation change
+    window.addEventListener('orientationchange', () => {
+        setTimeout(resizeCanvasToDisplay, 50);
+    });
 
-        // Start/Stop detection
-        menuStartStop.addEventListener('click', () => {
-            detectionPaused = !detectionPaused;
-            menuStartStop.innerHTML = detectionPaused ? 
-                '<span>▶️</span> Start Detection' : 
-                '<span>⏸️</span> Pause Detection';
-            dropdownMenu.classList.remove('show');
-            
-            if (!detectionPaused) {
-                openHandStartTime = null;
-                timerEl.innerText = '⏱️ 0.0s';
-            }
-        });
-
-        // Live Stream toggle
-        menuLiveStream.addEventListener('click', () => {
-            liveStreamEnabled = !liveStreamEnabled;
-            menuLiveStream.innerHTML = liveStreamEnabled ? 
-                '<span>📹</span> Live Stream: ON' : 
-                '<span>🚫</span> Live Stream: OFF';
-            dropdownMenu.classList.remove('show');
-        });
-
-        // Skeleton toggle
-        menuSkeleton.addEventListener('click', () => {
-            skeletonEnabled = !skeletonEnabled;
-            menuSkeleton.innerHTML = skeletonEnabled ? 
-                '<span>🦴</span> Skeleton: ON' : 
-                '<span>🚫</span> Skeleton: OFF';
-            dropdownMenu.classList.remove('show');
-        });
-
-        // Emergency contacts
-        menuContacts.addEventListener('click', () => {
-            infoPopup.style.display = 'flex';
-            dropdownMenu.classList.remove('show');
-        });
-
-        // Reset emergency
-        menuReset.addEventListener('click', () => {
-            if (emergencyActive) {
-                emergencyActive = false;
-                emergencyOverlay.style.display = 'none';
-                stopAlarm();
-            }
-            openHandStartTime = null;
-            timerEl.innerText = '⏱️ 0.0s';
-            dropdownMenu.classList.remove('show');
-        });
-
-        // Save contacts button
-        saveContactsBtn.addEventListener('click', () => {
-            saveEmergencyContacts();
-        });
-
-        saveContactsBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            saveEmergencyContacts();
-        });
-
-        // Skip contacts button
-        skipContactsBtn.addEventListener('click', () => {
-            infoPopup.style.display = 'none';
-        });
-
-        skipContactsBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            infoPopup.style.display = 'none';
-        });
-
-        // Camera prompt click handler
-        cameraPrompt.addEventListener('click', () => {
-            requestCameraPermission();
-        });
-        
-        cameraPrompt.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            requestCameraPermission();
-        });
-
-        // Show camera prompt
-        cameraPrompt.style.display = 'block';
-
-        // Check if camera is supported
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            permissionMsg.innerHTML = '📷 Camera not supported<br><small>Please use a device with camera</small>';
-            permissionMsg.style.display = 'block';
-            cameraPrompt.style.display = 'none';
-        }
-    })();
+})();
 </script>
+
+<!-- small note: due to mobile auto-play policies, user may need to tap once for alarm -->
 </body>
 </html>
