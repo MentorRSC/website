@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gesture Planets – dual hand | button-only skeleton toggle</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* top left status */
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(8px);
+            border: 1px solid #4a6c8f;
+            z-index: 30;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+        }
+        #info span {
+            background: #1e4a6b;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #b6e6ff;
+        }
+        /* top-right: planet dropdown + toggle */
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 35;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .dropdown {
+            background: rgba(20,20,30,0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: 6px;
+            border: 1px solid #3a6f8c;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+        select {
+            background: #1e3b4a;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            border: 1px solid #4f9ac7;
+            appearance: none;
+            -webkit-appearance: none;
+            min-width: 180px;
+            text-align: center;
+            text-align-last: center;
+        }
+        select option {
+            background: #1a2a33;
+            color: white;
+        }
+        #toggle-btn {
+            background: #1e3b4a;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.2s;
+            min-width: 160px;
+            text-align: center;
+            border: 1px solid #4f9ac7;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.2);
+        }
+        #toggle-btn.on {
+            background: #1b5e3f;
+            border-color: #8bda8b;
+        }
+        #toggle-btn.off {
+            background: #3a2c2c;
+            border-color: #b66f6f;
+        }
+        #stats-note {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #ccc;
+            background: rgba(0,0,0,0.5);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 30;
+            backdrop-filter: blur(4px);
+            border: 1px solid #3f5e7a;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="info">
+        🪐 <span>dual‑hand</span> move = rotate · pinch = zoom · two fists = pan
+    </div>
+
+    <div id="controls">
+        <div class="dropdown">
+            <select id="planet-select">
+                <option value="earth" selected>🌍 Earth</option>
+                <option value="mars">🔴 Mars</option>
+                <option value="jupiter">🪐 Jupiter</option>
+                <option value="moon">🌑 Moon</option>
+                <option value="venus">🟡 Venus</option>
+            </select>
+        </div>
+        <button id="toggle-btn" class="on">🔴 skeleton ON</button>
+    </div>
+
+    <div id="stats-note">✊ fists = pan · button only toggles skeleton (two-finger removed)</div>
+
+    <!-- three.js imports -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <!-- MediaPipe Hands (global) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        
+        // --- setup scene ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        
+        // --- lights ---
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(1, 2, 4);
+        scene.add(dirLight);
+        const backLight = new THREE.PointLight(0x4466aa, 0.8);
+        backLight.position.set(-2, 1, -3);
+        scene.add(backLight);
+        
+        // stars
+        const starsGeo = new THREE.BufferGeometry();
+        const starsCount = 2500;
+        const starsPos = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount * 3; i += 3) {
+            starsPos[i] = (Math.random() - 0.5) * 200;
+            starsPos[i+1] = (Math.random() - 0.5) * 200;
+            starsPos[i+2] = (Math.random() - 0.5) * 200 - 50;
+        }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+        const starsMat = new THREE.PointsMaterial({color: 0xffffff, size: 0.2});
+        const stars = new THREE.Points(starsGeo, starsMat);
+        scene.add(stars);
+        
+        // planet group
+        const planetGroup = new THREE.Group();
+        scene.add(planetGroup);
+        
+        // planet textures (using threejs examples + fallback)
+        const textureLoader = new THREE.TextureLoader();
+        const texMap = {
+            earth: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
+            mars: 'https://threejs.org/examples/textures/planets/mars.jpg',
+            jupiter: 'https://threejs.org/examples/textures/planets/jupiter.jpg',
+            moon: 'https://threejs.org/examples/textures/planets/moon_1024.jpg',
+            venus: 'https://threejs.org/examples/textures/planets/venus.jpg'
+        };
+        
+        let currentPlanetMesh = null;
+        let cloudMesh = null; // only for earth
+        
+        function loadPlanet(planetId) {
+            // remove old
+            while(planetGroup.children.length > 0) planetGroup.remove(planetGroup.children[0]);
+            
+            const geo = new THREE.SphereGeometry(2, 64, 64);
+            const mat = new THREE.MeshPhongMaterial({
+                map: textureLoader.load(texMap[planetId]),
+                shininess: 5,
+                emissive: new THREE.Color(0x112233)
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            planetGroup.add(mesh);
+            currentPlanetMesh = mesh;
+            
+            // add clouds only for earth
+            if (planetId === 'earth') {
+                const cloudGeo = new THREE.SphereGeometry(2.01, 64, 64);
+                textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png', (cloudTex) => {
+                    const cloudMat = new THREE.MeshPhongMaterial({
+                        map: cloudTex,
+                        transparent: true,
+                        opacity: 0.3,
+                        blending: THREE.AdditiveBlending,
+                        side: THREE.DoubleSide
+                    });
+                    cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+                    planetGroup.add(cloudMesh);
+                });
+            } else {
+                cloudMesh = null;
+            }
+        }
+        loadPlanet('earth');
+        
+        document.getElementById('planet-select').addEventListener('change', (e) => {
+            loadPlanet(e.target.value);
+        });
+        
+        // --- gesture variables (dual hand) ---
+        let targetRotationY = 0;
+        let targetRotationX = 0;
+        let targetZoom = 8;
+        let targetPanX = 0;
+        let targetPanY = 0;
+        
+        let currentRotY = 0;
+        let currentRotX = 0;
+        let currentZoom = 8;
+        let currentPanX = 0;
+        let currentPanY = 0;
+        
+        let skeletonVisible = true;
+        const toggleBtn = document.getElementById('toggle-btn');
+        
+        // hand data
+        let handLandmarks = [];
+        let lastFingerCounts = [0, 0];
+        
+        // ONLY button toggles skeleton (two-finger gesture removed)
+        toggleBtn.addEventListener('click', () => {
+            skeletonVisible = !skeletonVisible;
+            toggleBtn.textContent = skeletonVisible ? '🔴 skeleton ON' : '⚫ skeleton OFF';
+            toggleBtn.className = skeletonVisible ? 'on' : 'off';
+        });
+        
+        // --- overlay canvas for skeleton (dual hand) ---
+        const overlayCanvas = document.createElement('canvas');
+        overlayCanvas.style.position = 'absolute';
+        overlayCanvas.style.top = '0';
+        overlayCanvas.style.left = '0';
+        overlayCanvas.style.width = '100%';
+        overlayCanvas.style.height = '100%';
+        overlayCanvas.style.zIndex = '25';
+        overlayCanvas.style.pointerEvents = 'none';
+        document.body.appendChild(overlayCanvas);
+        const ctx = overlayCanvas.getContext('2d');
+        
+        function resizeOverlay() {
+            overlayCanvas.width = window.innerWidth;
+            overlayCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeOverlay);
+        resizeOverlay();
+        
+        // --- MediaPipe Hands (dual hand) ---
+        const video = document.createElement('video');
+        video.setAttribute('autoplay', '');
+        video.setAttribute('muted', '');
+        video.setAttribute('playsinline', '');
+        video.style.position = 'absolute';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+        video.style.zIndex = '20';
+        video.style.pointerEvents = 'none';
+        video.style.opacity = '0';
+        document.body.appendChild(video);
+        
+        const hands = new Hands({
+            locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.6,
+            minTrackingConfidence: 0.6
+        });
+        
+        hands.onResults((results) => {
+            handLandmarks = results.multiHandLandmarks || [];
+            
+            // default targets (no hands = no change)
+            if (handLandmarks.length === 0) return;
+            
+            // --- finger counting for both hands (only used for fist detection, not for toggle) ---
+            let counts = [];
+            handLandmarks.forEach(lm => {
+                let c = 0;
+                const tips = [4,8,12,16,20];
+                const bases = [2,6,10,14,18];
+                for (let i=1; i<5; i++) if (lm[tips[i]].y < lm[bases[i]].y) c++;
+                if (lm[4].x < lm[3].x) c++;
+                counts.push(c);
+            });
+            lastFingerCounts = counts;
+            
+            // --- dual hand functions (no two-finger toggle) ---
+            if (handLandmarks.length === 1) {
+                // single hand: rotation + zoom (pinch)
+                const lm = handLandmarks[0];
+                targetRotationY = (lm[0].x * 2 - 1) * Math.PI;
+                targetRotationX = (lm[0].y * 2 - 1) * 0.8;
+                
+                if (lm[8] && lm[4]) {
+                    const dx = lm[8].x - lm[4].x;
+                    const dy = lm[8].y - lm[4].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    targetZoom = 4 + (1 - Math.min(1, Math.max(0, (dist - 0.03) / 0.25))) * 8;
+                }
+                // reset pan when only one hand
+                targetPanX = 0;
+                targetPanY = 0;
+            }
+            else if (handLandmarks.length >= 2) {
+                // two hands: use first two
+                const hand1 = handLandmarks[0];
+                const hand2 = handLandmarks[1];
+                
+                // check if both are fists (fingers ≤ 1) -> pan mode
+                const isFist1 = counts[0] <= 1;
+                const isFist2 = counts[1] <= 1;
+                
+                if (isFist1 && isFist2) {
+                    // PAN: use average palm position offset from center
+                    const palm1 = hand1[0];
+                    const palm2 = hand2[0];
+                    const avgX = (palm1.x + palm2.x) / 2;
+                    const avgY = (palm1.y + palm2.y) / 2;
+                    // map 0..1 to -2..2 pan offset
+                    targetPanX = (avgX * 2 - 1) * 3;
+                    targetPanY = (avgY * 2 - 1) * -2; // inverted Y
+                    
+                    // keep rotation/zoom from first hand (optional)
+                    targetRotationY = (hand1[0].x * 2 - 1) * Math.PI;
+                    targetRotationX = (hand1[0].y * 2 - 1) * 0.8;
+                    if (hand1[8] && hand1[4]) {
+                        const dx = hand1[8].x - hand1[4].x;
+                        const dy = hand1[8].y - hand1[4].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        targetZoom = 4 + (1 - Math.min(1, Math.max(0, (dist - 0.03) / 0.25))) * 8;
+                    }
+                } else {
+                    // not both fists -> just rotation/zoom from first hand, no pan
+                    targetPanX = 0;
+                    targetPanY = 0;
+                    const lm = handLandmarks[0];
+                    targetRotationY = (lm[0].x * 2 - 1) * Math.PI;
+                    targetRotationX = (lm[0].y * 2 - 1) * 0.8;
+                    if (lm[8] && lm[4]) {
+                        const dx = lm[8].x - lm[4].x;
+                        const dy = lm[8].y - lm[4].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        targetZoom = 4 + (1 - Math.min(1, Math.max(0, (dist - 0.03) / 0.25))) * 8;
+                    }
+                }
+            }
+            
+            // draw skeleton if visible (controlled ONLY by button)
+            if (skeletonVisible) {
+                ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                drawSkeletons(ctx, handLandmarks, overlayCanvas.width, overlayCanvas.height);
+            } else {
+                ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            }
+        });
+        
+        // camera start
+        const cameraUtil = new Camera(video, {
+            onFrame: async () => {
+                await hands.send({ image: video });
+            },
+            width: 640,
+            height: 480
+        });
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+            cameraUtil.start();
+        }).catch(e => {
+            alert('camera needed for gestures');
+        });
+        
+        function drawSkeletons(ctx, handsList, w, h) {
+            if (!handsList.length) return;
+            ctx.strokeStyle = '#00ffaa';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 10;
+            
+            const connections = [
+                [0,1],[1,2],[2,3],[3,4], [0,5],[5,6],[6,7],[7,8],
+                [5,9],[9,10],[10,11],[11,12], [9,13],[13,14],[14,15],[15,16],
+                [13,17],[17,18],[18,19],[19,20], [0,17]
+            ];
+            
+            handsList.forEach(lm => {
+                // draw lines
+                connections.forEach(conn => {
+                    const p1 = lm[conn[0]];
+                    const p2 = lm[conn[1]];
+                    if (p1 && p2) {
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x * w, p1.y * h);
+                        ctx.lineTo(p2.x * w, p2.y * h);
+                        ctx.stroke();
+                    }
+                });
+                // draw points
+                ctx.fillStyle = '#ff44aa';
+                lm.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x * w, p.y * h, 6, 0, 2*Math.PI);
+                    ctx.fill();
+                });
+            });
+        }
+        
+        // --- animation loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // smooth all parameters
+            currentRotY += (targetRotationY - currentRotY) * 0.1;
+            currentRotX += (targetRotationX - currentRotX) * 0.1;
+            currentZoom += (targetZoom - currentZoom) * 0.1;
+            currentPanX += (targetPanX - currentPanX) * 0.05;
+            currentPanY += (targetPanY - currentPanY) * 0.05;
+            
+            // apply to planet group: rotation first, then position for pan
+            planetGroup.rotation.y = currentRotY;
+            planetGroup.rotation.x = currentRotX * 0.5;
+            
+            // camera position: combine zoom and pan
+            camera.position.x = currentPanX;
+            camera.position.y = currentPanY;
+            camera.position.z = currentZoom;
+            
+            // slowly rotate stars
+            stars.rotation.y += 0.0001;
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        // resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
