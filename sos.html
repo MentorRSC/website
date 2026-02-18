@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Hand SOS — 3‑mode dropdown + manual stop</title>
+    <title>Hand SOS — 4‑mode dropdown + skeleton only</title>
 <style>
     /* RESET & BASE — scrollable */
     * {
@@ -79,7 +79,7 @@
         flex-wrap: wrap;
     }
 
-    /* three‑mode dropdown (camera control) */
+    /* four‑mode dropdown */
     .camera-mode-selector {
         background: #252525;
         padding: 5px 10px;
@@ -106,7 +106,7 @@
         background: #2a2a2a;
     }
 
-    /* manual stop button – always visible, stops alarm immediately */
+    /* manual stop button */
     .manual-stop-btn {
         background: #b71c1c;
         border: none;
@@ -250,19 +250,20 @@
 <body>
 
 <div class="detection-card">
-    <!-- header with dropdown (3 functions) + manual stop button -->
+    <!-- header with 4‑mode dropdown + manual stop button -->
     <div class="header-row">
         <h2>
             ✋ SOS Palm Detection
-          
+           
         </h2>
         <div class="control-panel">
-            <!-- 3‑mode dropdown: LIVE / PAUSED / OFF (camera) -->
+            <!-- 4‑mode dropdown: LIVE / PAUSED / OFF / SKELETON ONLY -->
             <div class="camera-mode-selector">
-                <span>📷 CAM</span>
+                <span>📷 MODE</span>
                 <select id="cameraModeSelect">
                     <option value="live" selected>🔴 LIVE (detection on)</option>
                     <option value="pause">⏸️ PAUSED (freeze frame)</option>
+                    <option value="skeleton">🦴 SKELETON ONLY (no video)</option>
                     <option value="off">⚫ OFF (camera off)</option>
                 </select>
             </div>
@@ -321,7 +322,7 @@
     let emergency = false;               // SOS active?
     let openHandStart = null;             // timestamp for open hand detection
     let cameraActive = true;              // reflects if camera stream is ON (for OFF mode)
-    let detectionActive = true;           // true when in LIVE mode (detection on), false for PAUSED
+    let detectionActive = true;           // true when in LIVE mode (detection on), false for PAUSED / SKELETON (but detection still runs in skeleton? yes detection runs but we draw skeleton on black)
     let currentCamera = null;             // mediapipe camera instance
     let cameraStream = null;              // raw stream from getUserMedia
     let animationFrame = null;             // for fallback freeze frame
@@ -348,7 +349,7 @@
     });
     setTimeout(resizeCanvasToDisplay, 100);
 
-    // ----- camera handling with three modes -----
+    // ----- camera handling with four modes -----
     async function initCamera() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -368,14 +369,12 @@
         currentCamera = new Camera(video, {
             onFrame: async () => {
                 if (!cameraActive) return;           // OFF mode: no frames processed
-                if (!detectionActive) {
-                    // PAUSED mode: we don't run detection, but we could store a frame? 
-                    // We'll handle separately: just do nothing, but video is live – we want to freeze.
-                    // So in paused mode we ignore sending to hands, but we also need to keep a static image.
-                    // The paused logic is inside the fallback drawer.
+                // For SKELETON mode, we still need detection but we'll hide video (draw black background in onResults)
+                if (!detectionActive && cameraModeSelect.value !== 'skeleton') {
+                    // PAUSED mode: we don't run detection
                     return;
                 }
-                // LIVE mode: send for detection
+                // LIVE or SKELETON: send for detection
                 await hands.send({ image: video });
             },
             width: 1280,
@@ -397,10 +396,9 @@
         }
     }
 
-    // restart camera from OFF to LIVE/PAUSE
+    // restart camera from OFF to LIVE/PAUSE/SKELETON
     async function restartCamera() {
         if (cameraStream) {
-            // already have stream? might be off, so ensure stopped
             stopCameraStream();
         }
         await initCamera();
@@ -410,42 +408,44 @@
     cameraModeSelect.addEventListener('change', async (e) => {
         const mode = e.target.value;
         if (mode === 'live') {
-            // LIVE: camera active, detection on
             cameraActive = true;
             detectionActive = true;
             if (!cameraStream) {
                 await restartCamera();
             } else {
-                // if stream exists but was paused, just set flags; ensure camera running
                 if (!currentCamera) startMediaPipeCamera();
-                else detectionActive = true; // it's already sending frames? we need to ensure onFrame uses flag
+                detectionActive = true;
             }
-            // reset any freeze overlay
         } else if (mode === 'pause') {
-            // PAUSED: camera live but detection off → we will display a frozen frame (the last processed image)
             cameraActive = true;
             detectionActive = false;   // stop sending to hands
-            // we need to capture current video frame to freeze
-            if (video.readyState >= 2) {
-                // draw current video onto canvas and keep it
-                if (canvas.width && canvas.height) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    // store that frame in lastVideoFrame?
-                    lastVideoFrame = new Image();
-                    lastVideoFrame.src = canvas.toDataURL('image/jpeg'); // crude but works
-                }
+            // capture a freeze frame
+            if (video.readyState >= 2 && canvas.width && canvas.height) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // store as image
+                lastVideoFrame = new Image();
+                lastVideoFrame.src = canvas.toDataURL('image/jpeg');
             }
             // ensure camera keeps running (for when we go back to live)
             if (!currentCamera && cameraStream) {
                 startMediaPipeCamera();
             }
+        } else if (mode === 'skeleton') {
+            // SKELETON ONLY: camera active, detection on, but we clear video background in onResults
+            cameraActive = true;
+            detectionActive = true;    // we need detection for skeleton
+            if (!cameraStream) {
+                await restartCamera();
+            } else {
+                if (!currentCamera) startMediaPipeCamera();
+                detectionActive = true;
+            }
         } else if (mode === 'off') {
-            // OFF: release camera, stop all tracks
             cameraActive = false;
             detectionActive = false;
             stopCameraStream();
-            // clear canvas to black or show "camera off"
+            // clear canvas to black
             ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.font = 'bold 30px monospace';
@@ -462,7 +462,6 @@
         if (emergency) {
             deactivateEmergency('manual stop button');
         } else {
-            // even if no emergency, we can provide feedback (maybe disable alarm)
             console.log('no active emergency');
         }
     });
@@ -491,7 +490,7 @@
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
-        ctx.strokeStyle = '#ffffffcc';
+        ctx.strokeStyle = '#b0ffb0';
         ctx.lineWidth = 2.5;
         ctx.stroke();
         ctx.restore();
@@ -538,20 +537,28 @@
         console.log(`✅ Emergency stopped (${source})`);
     }
 
-    // ----- results handler (only called when detectionActive = true) -----
+    // ----- results handler (called when detectionActive = true) -----
     function onResults(results) {
         // update canvas size
         if (canvas.width === 0 || canvas.height === 0) {
             resizeCanvasToDisplay();
         }
 
-        // draw video frame
-        if (results.image) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+        const mode = cameraModeSelect.value;
+
+        // if mode is SKELETON ONLY: fill black background first
+        if (mode === 'skeleton') {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else {
+            // normal: draw video frame
+            if (results.image) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            }
         }
 
-        // if no hand, reset timer
+        // if no hand, reset timer and return (but still may have black background)
         if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
             if (!emergency) openHandStart = null;
             return;
@@ -563,7 +570,7 @@
             y: p.y * canvas.height
         }));
 
-        // draw landmarks + skeleton
+        // draw landmarks (always)
         ctx.fillStyle = '#ff3333';
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
@@ -574,6 +581,7 @@
             ctx.stroke();
         });
 
+        // draw skeleton (dotted lines)
         const connections = [
             [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
             [5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],
@@ -587,7 +595,7 @@
 
         const fingers = countFingers(landmarks);
 
-        // detection logic (only if not emergency)
+        // detection logic (only if live or skeleton mode – but detectionActive is true)
         if (!emergency) {
             if (isOpenHand(fingers)) {
                 if (openHandStart === null) {
@@ -611,7 +619,7 @@
             }
         }
 
-        // finger count overlay
+        // finger count overlay (always show)
         ctx.font = 'bold 24px monospace';
         ctx.fillStyle = 'yellow';
         ctx.shadowColor = 'black';
@@ -620,24 +628,20 @@
         ctx.shadowBlur = 0;
     }
 
-    // ----- fallback drawer for PAUSED mode (freeze frame) and OFF mode cleanup -----
+    // ----- fallback drawer for PAUSED mode and OFF mode cleanup -----
     function drawLoop() {
         const mode = cameraModeSelect.value;
         if (mode === 'pause' && cameraActive && !detectionActive) {
-            // paused mode: we want to show a static image (last video frame)
-            // but video is still live, we need to keep the canvas static.
+            // paused mode: show static image
             if (lastVideoFrame && lastVideoFrame.complete) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(lastVideoFrame, 0, 0, canvas.width, canvas.height);
             } else if (video.readyState >= 2) {
-                // capture fresh frame
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                // store it
                 lastVideoFrame = new Image();
                 lastVideoFrame.src = canvas.toDataURL('image/jpeg');
             }
-            // add paused overlay text
             ctx.font = 'bold 36px monospace';
             ctx.fillStyle = '#cccccc';
             ctx.shadowColor = 'black';
@@ -646,7 +650,7 @@
             ctx.shadowBlur = 0;
         }
         else if (mode === 'off') {
-            // already drawn black in handler, but we can refresh
+            // already drawn in handler, but keep
             ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.font = 'bold 30px monospace';
@@ -655,11 +659,12 @@
             ctx.fillText('📷 CAMERA OFF', canvas.width/2-130, canvas.height/2);
             ctx.shadowBlur = 0;
         }
+        // skeleton mode is handled by onResults, no need extra
         requestAnimationFrame(drawLoop);
     }
     drawLoop();
 
-    // unlock audio on first touch
+    // unlock audio on first touch/click
     document.body.addEventListener('touchstart', function unlock() {
         alarm.load();
     }, { once: true });
