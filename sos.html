@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Hand SOS Detection — Scrollable & Responsive</title>
+    <title>Hand SOS — 3‑mode dropdown + manual stop</title>
 <style>
-    /* RESET & BASE — ensure scrollability on all devices */
+    /* RESET & BASE — scrollable */
     * {
         box-sizing: border-box;
         margin: 0;
@@ -18,19 +18,18 @@
         background: #0b0b0b;
         font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
         overflow-x: hidden;
-        overflow-y: auto;    /* make page scrollable */
-        -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     body {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start; /* content starts at top, can scroll */
+        justify-content: flex-start;
         padding: 16px 12px;
     }
 
-    /* main card / container — respects safe area */
     .detection-card {
         width: 100%;
         max-width: 1000px;
@@ -42,16 +41,26 @@
         border: 1px solid #333;
     }
 
+    /* header with controls */
+    .header-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
     h2 {
         color: #eee;
         font-weight: 400;
         font-size: 1.5rem;
         letter-spacing: 1px;
-        margin: 0 0 8px 0;
         display: flex;
         align-items: center;
         gap: 10px;
         flex-wrap: wrap;
+        margin: 0;
     }
 
     h2 span {
@@ -63,31 +72,72 @@
         font-weight: 500;
     }
 
-    .info-row {
-        color: #aaa;
-        font-size: 0.95rem;
-        margin-bottom: 18px;
+    .control-panel {
         display: flex;
+        gap: 12px;
+        align-items: center;
         flex-wrap: wrap;
-        gap: 16px 28px;
-        background: #252525;
-        padding: 12px 18px;
-        border-radius: 40px;
     }
 
-    .info-row .badge {
+    /* three‑mode dropdown (camera control) */
+    .camera-mode-selector {
+        background: #252525;
+        padding: 5px 10px;
+        border-radius: 40px;
+        border: 1px solid #444;
+        color: #ccc;
+        font-size: 0.9rem;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
+    }
+    .camera-mode-selector select {
+        background: #3a3a3a;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        outline: 1px solid #666;
+        cursor: pointer;
+    }
+    .camera-mode-selector select option {
+        background: #2a2a2a;
     }
 
-    .info-row i { font-style: normal; color: #ffb74d; }
+    /* manual stop button – always visible, stops alarm immediately */
+    .manual-stop-btn {
+        background: #b71c1c;
+        border: none;
+        color: white;
+        font-weight: 700;
+        padding: 8px 28px;
+        border-radius: 40px;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(180, 0, 0, 0.6);
+        cursor: pointer;
+        border: 1px solid #ffaaaa;
+        transition: background 0.1s ease;
+    }
+    .manual-stop-btn:active {
+        background: #7a0f0f;
+    }
+    .manual-stop-btn:disabled {
+        background: #555;
+        box-shadow: none;
+        border-color: #777;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
 
-    /* video canvas container — aspect ratio locked, fills width */
     .media-wrapper {
         position: relative;
         width: 100%;
-        aspect-ratio: 16 / 9;     /* consistent rectangle, no overflow */
+        aspect-ratio: 16 / 9;
         background: black;
         border-radius: 28px;
         overflow: hidden;
@@ -102,11 +152,11 @@
         left: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;          /* covers area without stretching */
-        pointer-events: none;       /* camera feed not interactive */
+        object-fit: cover;
+        pointer-events: none;
     }
 
-    /* emergency overlay — now placed INSIDE the media wrapper, so it's always in view */
+    /* emergency overlay */
     .emergency-overlay {
         position: absolute;
         top: 0;
@@ -126,18 +176,17 @@
         text-align: center;
         line-height: 1.4;
         text-shadow: 2px 2px 12px black;
-        border-radius: 28px;        /* matches wrapper */
+        border-radius: 28px;
         border: 4px solid #ffcccc;
         box-shadow: inset 0 0 40px #b71c1c;
         padding: 16px;
         opacity: 0;
         transition: opacity 0.15s ease;
-        pointer-events: none;       /* allow clicks to pass if needed (alert just visual) */
+        pointer-events: none;
     }
 
     .emergency-overlay.show {
         opacity: 1;
-        pointer-events: all;        /* not interactive but visible */
     }
 
     .emergency-overlay small {
@@ -150,7 +199,6 @@
         letter-spacing: 1px;
     }
 
-    /* instruction panels — scrollable friendly */
     .step-guide {
         display: flex;
         flex-direction: row;
@@ -194,53 +242,59 @@
         padding-top: 16px;
     }
 
-    /* hide audio element */
     #alarm {
         display: none;
-    }
-
-    /* no extra margins breaking scroll */
-    #container {
-        width: 100%;
     }
 </style>
 </head>
 <body>
 
 <div class="detection-card">
-    
-    <h2>
-        ✋ SOS Palm Detection 
-        <span>open palm 3s → SOS</span>
-    </h2>
-
-   
-
-    <!-- media container: video, canvas, and alert inside (fixed relative) -->
-    <div class="media-wrapper" id="mediaWrapper">
-        <video id="video" autoplay muted playsinline></video>
-        <canvas id="canvas"></canvas>
-
-        <!-- alert now inside the same wrapper, always visible when active -->
-        <div id="alertOverlay" class="emergency-overlay">
-            🚨 SOS EMERGENCY 🚨<br>
-            <span style="font-size:0.7em;">HELP NEEDED</span>
-            <small>✌️ two fingers to stop</small>
+    <!-- header with dropdown (3 functions) + manual stop button -->
+    <div class="header-row">
+        <h2>
+            ✋ SOS Palm Detection
+            <span></span>
+        </h2>
+        <div class="control-panel">
+            <!-- 3‑mode dropdown: LIVE / PAUSED / OFF (camera) -->
+            <div class="camera-mode-selector">
+                <span>📷 CAM</span>
+                <select id="cameraModeSelect">
+                    <option value="live" selected>🔴 LIVE (detection on)</option>
+                    <option value="pause">⏸️ PAUSED (freeze frame)</option>
+                    <option value="off">⚫ OFF (camera off)</option>
+                </select>
+            </div>
+            <!-- manual stop button – stops alarm and exits emergency -->
+            <button id="manualStopBtn" class="manual-stop-btn">⏹️ STOP ALARM</button>
         </div>
     </div>
 
-    <!-- quick status & guide (visible below video, no scroll clipping) -->
+    <!-- media container -->
+    <div class="media-wrapper" id="mediaWrapper">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
+        <div id="alertOverlay" class="emergency-overlay">
+            🚨 SOS EMERGENCY 🚨<br>
+            <span style="font-size:0.7em;">HELP NEEDED</span>
+            <small>✌️ two fingers or STOP button</small>
+        </div>
+    </div>
+
+    <!-- instruction panels -->
     <div class="step-guide">
         <div class="guide-card" id="guideOpen">
             <span class="emoji">🖐️</span> hold open palm 3s
         </div>
         <div class="guide-card" id="guideStop">
-            <span class="emoji">✌️</span> show 2 fingers to stop
+            <span class="emoji">✌️</span> two fingers (or STOP button)
         </div>
     </div>
 
     <div class="footer-note">
-        ⚡ Make sure your hand is clearly visible. Alarm loops until 2 fingers raised.
+        ⚡ 3‑mode dropdown: LIVE (detection), PAUSED (image frozen), OFF (camera released).<br>
+        STOP ALARM button always works.
     </div>
 </div>
 
@@ -263,12 +317,20 @@
     const alarm = document.getElementById('alarm');
     const guideOpen = document.getElementById('guideOpen');
     const guideStop = document.getElementById('guideStop');
+    const manualStopBtn = document.getElementById('manualStopBtn');
+    const cameraModeSelect = document.getElementById('cameraModeSelect');
 
     // ----- state -----
-    let emergency = false;
-    let openHandStart = null;          // timestamp when open hand first detected
+    let emergency = false;               // SOS active?
+    let openHandStart = null;             // timestamp for open hand detection
+    let cameraActive = true;              // reflects if camera stream is ON (for OFF mode)
+    let detectionActive = true;           // true when in LIVE mode (detection on), false for PAUSED
+    let currentCamera = null;             // mediapipe camera instance
+    let cameraStream = null;              // raw stream from getUserMedia
+    let animationFrame = null;             // for fallback freeze frame
+    let lastVideoFrame = null;            // stored image for pause mode
 
-    // ----- resize canvas to match parent aspect (fills container) -----
+    // ----- resize canvas to match wrapper -----
     function resizeCanvasToDisplay() {
         const wrapper = document.querySelector('.media-wrapper');
         if (!wrapper) return;
@@ -279,7 +341,6 @@
         }
     }
 
-    // initial + observer to handle orientation/resize
     const resizeObserver = new ResizeObserver(() => {
         resizeCanvasToDisplay();
     });
@@ -288,18 +349,126 @@
     window.addEventListener('resize', () => {
         setTimeout(resizeCanvasToDisplay, 30);
     });
-
-    // also call after camera start
     setTimeout(resizeCanvasToDisplay, 100);
 
-    // ----- camera permission -----
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
+    // ----- camera handling with three modes -----
+    async function initCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            cameraStream = stream;
             video.srcObject = stream;
-        })
-        .catch(err => {
-            alert('Camera access is needed for hand detection. Please grant permission.');
+            // after stream is set, start mediapipe camera
+            startMediaPipeCamera();
+        } catch (err) {
+            alert('Camera access is needed for hand detection.');
+        }
+    }
+
+    function startMediaPipeCamera() {
+        if (currentCamera) {
+            currentCamera.stop();
+        }
+        currentCamera = new Camera(video, {
+            onFrame: async () => {
+                if (!cameraActive) return;           // OFF mode: no frames processed
+                if (!detectionActive) {
+                    // PAUSED mode: we don't run detection, but we could store a frame? 
+                    // We'll handle separately: just do nothing, but video is live – we want to freeze.
+                    // So in paused mode we ignore sending to hands, but we also need to keep a static image.
+                    // The paused logic is inside the fallback drawer.
+                    return;
+                }
+                // LIVE mode: send for detection
+                await hands.send({ image: video });
+            },
+            width: 1280,
+            height: 720
         });
+        currentCamera.start();
+    }
+
+    // stop entire camera stream (release)
+    function stopCameraStream() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+            video.srcObject = null;
+        }
+        if (currentCamera) {
+            currentCamera.stop();
+            currentCamera = null;
+        }
+    }
+
+    // restart camera from OFF to LIVE/PAUSE
+    async function restartCamera() {
+        if (cameraStream) {
+            // already have stream? might be off, so ensure stopped
+            stopCameraStream();
+        }
+        await initCamera();
+    }
+
+    // mode change handler
+    cameraModeSelect.addEventListener('change', async (e) => {
+        const mode = e.target.value;
+        if (mode === 'live') {
+            // LIVE: camera active, detection on
+            cameraActive = true;
+            detectionActive = true;
+            if (!cameraStream) {
+                await restartCamera();
+            } else {
+                // if stream exists but was paused, just set flags; ensure camera running
+                if (!currentCamera) startMediaPipeCamera();
+                else detectionActive = true; // it's already sending frames? we need to ensure onFrame uses flag
+            }
+            // reset any freeze overlay
+        } else if (mode === 'pause') {
+            // PAUSED: camera live but detection off → we will display a frozen frame (the last processed image)
+            cameraActive = true;
+            detectionActive = false;   // stop sending to hands
+            // we need to capture current video frame to freeze
+            if (video.readyState >= 2) {
+                // draw current video onto canvas and keep it
+                if (canvas.width && canvas.height) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    // store that frame in lastVideoFrame?
+                    lastVideoFrame = new Image();
+                    lastVideoFrame.src = canvas.toDataURL('image/jpeg'); // crude but works
+                }
+            }
+            // ensure camera keeps running (for when we go back to live)
+            if (!currentCamera && cameraStream) {
+                startMediaPipeCamera();
+            }
+        } else if (mode === 'off') {
+            // OFF: release camera, stop all tracks
+            cameraActive = false;
+            detectionActive = false;
+            stopCameraStream();
+            // clear canvas to black or show "camera off"
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 30px monospace';
+            ctx.fillStyle = '#aaa';
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 10;
+            ctx.fillText('📷 CAMERA OFF', canvas.width/2-130, canvas.height/2);
+            ctx.shadowBlur = 0;
+        }
+    });
+
+    // manual stop button: deactivate emergency
+    manualStopBtn.addEventListener('click', () => {
+        if (emergency) {
+            deactivateEmergency('manual stop button');
+        } else {
+            // even if no emergency, we can provide feedback (maybe disable alarm)
+            console.log('no active emergency');
+        }
+    });
 
     // ----- MediaPipe setup -----
     const hands = new Hands({
@@ -315,16 +484,10 @@
 
     hands.onResults(onResults);
 
-    const camera = new Camera(video, {
-        onFrame: async () => {
-            await hands.send({ image: video });
-        },
-        width: 1280,
-        height: 720
-    });
-    camera.start();
+    // start camera automatically after page load
+    initCamera();
 
-    // ----- helpers: dotted line, finger count -----
+    // ----- helpers: finger count, drawing -----
     function drawDottedLine(p1, p2) {
         ctx.save();
         ctx.setLineDash([6, 6]);
@@ -338,20 +501,16 @@
     }
 
     function countFingers(landmarks) {
-        // tips: 4 (thumb), 8, 12, 16, 20 ; bases: 2,6,10,14,18
         let tips = [4, 8, 12, 16, 20];
         let bases = [2, 6, 10, 14, 18];
         let count = 0;
-
-        // index to pinky
         for (let i = 1; i < 5; i++) {
             if (landmarks[tips[i]].y < landmarks[bases[i]].y) {
                 count++;
             }
         }
-        // thumb (assuming right hand; for left might need reverse, but simple cross)
-        if (landmarks[4].x < landmarks[3].x) count++;   // works for right hand. acceptable for demo.
-
+        // thumb heuristic (right hand bias, acceptable for demo)
+        if (landmarks[4].x < landmarks[3].x) count++;
         return count;
     }
 
@@ -359,60 +518,55 @@
         return fingers >= 4;
     }
 
-    // ----- emergency activation / deactivation (UI & sound)-----
-    function activateEmergency() {
+    // ----- emergency control -----
+    function activateEmergency(source = 'auto') {
         if (emergency) return;
         emergency = true;
         alertOverlay.classList.add('show');
-        alarm.play().catch(e => console.log('audio play blocked until user interaction', e));
-        // visual guide highlight
+        alarm.play().catch(e => console.log('audio play needs interaction', e));
         guideOpen.classList.remove('highlight');
         guideStop.classList.add('highlight');
-        console.log('🚨 SOS ACTIVATED');
+        console.log(`🚨 SOS ACTIVATED (${source})`);
     }
 
-    function deactivateEmergency() {
+    function deactivateEmergency(source = 'auto') {
         if (!emergency) return;
         emergency = false;
         alertOverlay.classList.remove('show');
         alarm.pause();
         alarm.currentTime = 0;
-        openHandStart = null;          // reset timer
+        openHandStart = null;
         guideStop.classList.remove('highlight');
         guideOpen.classList.remove('highlight');
-        console.log('✅ Emergency stopped');
+        console.log(`✅ Emergency stopped (${source})`);
     }
 
-    // ----- results handler -----
+    // ----- results handler (only called when detectionActive = true) -----
     function onResults(results) {
-        // update canvas size if needed (ensuring correct drawing)
+        // update canvas size
         if (canvas.width === 0 || canvas.height === 0) {
             resizeCanvasToDisplay();
         }
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         // draw video frame
         if (results.image) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
         }
 
-        // if no hand, reset openHandStart and skip
+        // if no hand, reset timer
         if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-            if (!emergency) openHandStart = null;   // no hand, reset timer
-            // still show any existing alert state unchanged
+            if (!emergency) openHandStart = null;
             return;
         }
 
-        const landmarks = results.multiHandLandmarks[0]; // only one hand
-
-        // convert to canvas coordinates
+        const landmarks = results.multiHandLandmarks[0];
         const points = landmarks.map(p => ({
             x: p.x * canvas.width,
             y: p.y * canvas.height
         }));
 
-        // draw landmarks
+        // draw landmarks + skeleton
         ctx.fillStyle = '#ff3333';
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
@@ -423,34 +577,27 @@
             ctx.stroke();
         });
 
-        // draw skeleton (dotted)
         const connections = [
-            [0,1],[1,2],[2,3],[3,4],
-            [0,5],[5,6],[6,7],[7,8],
-            [5,9],[9,10],[10,11],[11,12],
-            [9,13],[13,14],[14,15],[15,16],
-            [13,17],[17,18],[18,19],[19,20],
-            [0,17]
+            [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+            [5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],
+            [13,17],[17,18],[18,19],[19,20],[0,17]
         ];
-
         ctx.strokeStyle = '#b0ffb0';
         ctx.lineWidth = 2.5;
         connections.forEach(conn => {
             drawDottedLine(points[conn[0]], points[conn[1]]);
         });
 
-        // count fingers
         const fingers = countFingers(landmarks);
 
-        // logic
+        // detection logic (only if not emergency)
         if (!emergency) {
             if (isOpenHand(fingers)) {
                 if (openHandStart === null) {
                     openHandStart = Date.now();
                 } else if (Date.now() - openHandStart >= 3000) {
-                    activateEmergency();
+                    activateEmergency('auto');
                 }
-                // visual hint: highlight open guide
                 guideOpen.classList.add('highlight');
                 guideStop.classList.remove('highlight');
             } else {
@@ -458,17 +605,16 @@
                 guideOpen.classList.remove('highlight');
             }
         } else {
-            // emergency mode: check for two fingers to stop
+            // emergency active: two fingers stops
             if (fingers === 2) {
-                deactivateEmergency();
+                deactivateEmergency('auto (two fingers)');
             } else {
-                // keep highlight on stop guide
                 guideStop.classList.add('highlight');
                 guideOpen.classList.remove('highlight');
             }
         }
 
-        // optional: show finger count on canvas? not needed but small debug
+        // finger count overlay
         ctx.font = 'bold 24px monospace';
         ctx.fillStyle = 'yellow';
         ctx.shadowColor = 'black';
@@ -477,28 +623,58 @@
         ctx.shadowBlur = 0;
     }
 
-    // extra: ensure alert overlay click doesn't block (but user might tap to allow audio)
-    // Chrome often needs user interaction to play audio. If alarm doesn't play,
-    // we can attempt to play on first hand detection with user gesture.
-    // but since alarm is inside 'activateEmergency', we catch errors silently.
-    // improve: preload audio context little?
-    document.body.addEventListener('touchstart', function initAudio() {
-        // just to unlock audio on mobile (any user interaction)
-        alarm.load(); 
-        console.log('audio context unlocked');
+    // ----- fallback drawer for PAUSED mode (freeze frame) and OFF mode cleanup -----
+    function drawLoop() {
+        const mode = cameraModeSelect.value;
+        if (mode === 'pause' && cameraActive && !detectionActive) {
+            // paused mode: we want to show a static image (last video frame)
+            // but video is still live, we need to keep the canvas static.
+            if (lastVideoFrame && lastVideoFrame.complete) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(lastVideoFrame, 0, 0, canvas.width, canvas.height);
+            } else if (video.readyState >= 2) {
+                // capture fresh frame
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // store it
+                lastVideoFrame = new Image();
+                lastVideoFrame.src = canvas.toDataURL('image/jpeg');
+            }
+            // add paused overlay text
+            ctx.font = 'bold 36px monospace';
+            ctx.fillStyle = '#cccccc';
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 10;
+            ctx.fillText('⏸️ PAUSED', canvas.width/2-100, canvas.height/2);
+            ctx.shadowBlur = 0;
+        }
+        else if (mode === 'off') {
+            // already drawn black in handler, but we can refresh
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 30px monospace';
+            ctx.fillStyle = '#aaa';
+            ctx.shadowBlur = 10;
+            ctx.fillText('📷 CAMERA OFF', canvas.width/2-130, canvas.height/2);
+            ctx.shadowBlur = 0;
+        }
+        requestAnimationFrame(drawLoop);
+    }
+    drawLoop();
+
+    // unlock audio on first touch
+    document.body.addEventListener('touchstart', function unlock() {
+        alarm.load();
+    }, { once: true });
+    document.body.addEventListener('click', function unlock() {
+        alarm.load();
     }, { once: true });
 
-    // Also on first hand result we could trigger a silent play?
-    // but not needed — user will tap somewhere.
-
-    // ensure canvas gets resize on orientation change
     window.addEventListener('orientationchange', () => {
         setTimeout(resizeCanvasToDisplay, 50);
     });
 
 })();
 </script>
-
-<!-- small note: due to mobile auto-play policies, user may need to tap once for alarm -->
 </body>
 </html>
