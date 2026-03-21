@@ -1,67 +1,653 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Member List</title>
-  <style>
-    body { font-family: Arial; padding: 20px; background:#f4f6f8;}
-    h2 { text-align:center; }
-    table {
-      width:100%;
-      border-collapse:collapse;
-      background:white;
-    }
-    th, td {
-      padding:10px;
-      border:1px solid #ddd;
-      text-align:center;
-    }
-    th {
-      background:#2c3e50;
-      color:white;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innovation Hub | Where Ideas Become Reality</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/common.css">
+    <style>
+        /* Additional styles for members page */
+        .header-section {
+            background: linear-gradient(135deg, var(--primary) 0%, #6c8ef5 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .header-section h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .header-section p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        /* Search Bar Styles */
+        .search-section {
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .search-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 142, 245, 0.1);
+        }
+        
+        .search-input::placeholder {
+            color: #bbb;
+        }
+        
+        .search-stats {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .clear-search {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            display: none;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .clear-search:hover {
+            color: var(--primary);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 20px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .table-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 50px auto;
+            overflow-x: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            color: var(--text);
+        }
+        
+        tr:hover {
+            background-color: #f5f7fa;
+        }
+        
+        .valid-active {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .valid-expired {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .valid-expiring {
+            color: #f39c12;
+            font-weight: 600;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #777;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
+        @media (max-width: 768px) {
+            .header-section {
+                padding: 50px 20px;
+            }
+            
+            .header-section h1 {
+                font-size: 2rem;
+            }
+            
+            .search-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-wrapper {
+                max-width: 100%;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+            
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr {
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            
+            td:before {
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: var(--primary);
+            }
+            
+            td:nth-of-type(1):before { content: "Sl.No"; }
+            td:nth-of-type(2):before { content: "Name"; }
+            td:nth-of-type(3):before { content: "Reg No"; }
+            td:nth-of-type(4):before { content: "Validity"; }
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #777;
+            font-size: 1.1rem;
+        }
+        
+        .loader {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .loader i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats-section {
+            background-color: #f5f7fa;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            min-width: 200px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: var(--text);
+            margin-top: 10px;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            transition: background-color 0.3s ease;
+        }
+    </style>
 </head>
 <body>
+    <!-- Header Section -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="linktree.html"><i class="fa-solid fa-share-nodes"></i> Social Media</a></li>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                    <li><a href="puzzles.html">Puzzles</a></li>
+                    <li><a href="members.html" class="active">Members</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-<h2>Member List</h2>
+    <!-- Members Header Section -->
+    <section class="header-section">
+        <h1>Our Members</h1>
+        <p>Meet the brilliant minds driving innovation at Regional Science Centre and Planetarium, Calicut</p>
+    </section>
 
-<table>
-  <thead>
-    <tr>
-      <th>Sl.No</th>
-      <th>Name</th>
-      <th>Validity</th>
-      <th>Reg No</th>
-    </tr>
-  </thead>
-  <tbody id="data"></tbody>
-</table>
+    <!-- Search Bar Section - Below Header -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, registration number, or validity...">
+                <button id="clearSearch" class="clear-search">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="expiring">Expiring Soon</button>
+                <button class="filter-btn" data-filter="expired">Expired</button>
+            </div>
+            <div class="search-stats" id="searchStats">
+                Showing all members
+            </div>
+        </div>
+    </section>
 
-<script>
-const url = "https://docs.google.com/spreadsheets/d/1WRtwYpQ7jsnwYaQUGivSZTrAOOHZyxS8s0-P8aAaiow/gviz/tq?tqx=out:json";
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid" id="statsContainer">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalMembers">-</div>
+                    <div class="stat-label">Total Members</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeMembers">-</div>
+                    <div class="stat-label">Active Members</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="expiringSoon">-</div>
+                    <div class="stat-label">Expiring in 30 Days</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-fetch(url)
-.then(res => res.text())
-.then(rep => {
-  const json = JSON.parse(rep.substring(47).slice(0,-2));
-  const rows = json.table.rows;
+    <!-- Members Table -->
+    <div class="container table-container">
+        <h2 style="margin-bottom: 25px; color: var(--dark); text-align: center;">Registered Members List</h2>
+        <div style="overflow-x: auto;">
+            <table id="membersTable">
+                <thead>
+                    <tr>
+                        <th>Sl.No</th>
+                        <th>Name</th>
+                        <th>Reg No</th>
+                        <th>Validity</th>
+                    </tr>
+                </thead>
+                <tbody id="data">
+                    <tr class="loader">
+                        <td colspan="4"><i class="fas fa-spinner"></i> Loading member data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-  let html = "";
+    <!-- CTA Section for New Members -->
+    <section class="section" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%); color: white; text-align: center;">
+        <div class="container">
+            <h2 style="font-size: 2rem; margin-bottom: 20px;">Want to Join Our Innovation Community?</h2>
+            <p style="max-width: 700px; margin: 0 auto 30px; font-size: 1.1rem;">Become part of a vibrant community of innovators and makers</p>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846" class="btn btn-primary" style="background: white; color: var(--primary);">Apply Now</a>
+        </div>
+    </section>
 
-  rows.forEach((r, i) => {
-    if(i < 6) return; // skip rows before row 7
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and collaborative spaces.</p>
+                    <div class="social-links">
+                        <a href="linktree.html"><i class="fa-solid fa-share-nodes"></i></a>
+                        <a href="https://www.facebook.com/profile.php?id=61587870266976"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/innovation_hub_kerala/"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.linkedin.com/in/innovation-hub-b7091b3ab/"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="members.html">Members</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Innovation Tracks</h3>
+                    <ul>
+                        <li><a href="#">Tech Innovation</a></li>
+                        <li><a href="#">Social Innovation</a></li>
+                        <li><a href="#">Product Design</a></li>
+                        <li><a href="#">Sustainable Tech</a></li>
+                        <li><a href="#">Health Innovation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentorinnovationhub@gmail.com</li>
+                        <li><i class="fas fa-clock"></i> TUESDAY - SUNDAY: 11AM-4PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
-    html += `<tr>
-      <td>${r.c[2]?.v || ""}</td>  <!-- Sl.No -->
-      <td>${r.c[3]?.v || ""}</td>  <!-- Name -->
-      <td>${r.c[7]?.v || ""}</td>  <!-- Validity -->
-      <td>${r.c[8]?.v || ""}</td>  <!-- Reg No -->
-    </tr>`;
-  });
-
-  document.getElementById("data").innerHTML = html;
-});
-</script>
-
+    <script>
+        let allMembers = [];
+        let currentFilter = "all";
+        let currentSearchTerm = "";
+        
+        // Function to check validity status
+        function getValidityStatus(validityDate) {
+            if (!validityDate || validityDate === "") return { class: "valid-active", text: "Not Specified", status: "active" };
+            
+            const today = new Date();
+            const expiry = new Date(validityDate);
+            const diffTime = expiry - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) {
+                return { class: "valid-expired", text: "Expired", status: "expired" };
+            } else if (diffDays <= 30) {
+                return { class: "valid-expiring", text: `Expires in ${diffDays} days`, status: "expiring" };
+            } else {
+                return { class: "valid-active", text: `Valid until ${validityDate}`, status: "active" };
+            }
+        }
+        
+        // Function to render members based on search and filter
+        function renderMembers() {
+            let filteredMembers = allMembers;
+            
+            // Apply filter
+            if (currentFilter !== "all") {
+                filteredMembers = filteredMembers.filter(member => member.status === currentFilter);
+            }
+            
+            // Apply search
+            if (currentSearchTerm.trim() !== "") {
+                const searchLower = currentSearchTerm.toLowerCase();
+                filteredMembers = filteredMembers.filter(member => 
+                    member.name.toLowerCase().includes(searchLower) ||
+                    member.reg.toLowerCase().includes(searchLower) ||
+                    member.validityText.toLowerCase().includes(searchLower)
+                );
+            }
+            
+            // Update search stats
+            const statsText = document.getElementById("searchStats");
+            if (filteredMembers.length === allMembers.length) {
+                statsText.textContent = `Showing all ${allMembers.length} members`;
+            } else {
+                statsText.textContent = `Showing ${filteredMembers.length} of ${allMembers.length} members`;
+            }
+            
+            // Render table
+            let html = "";
+            if (filteredMembers.length === 0) {
+                html = `
+                    <tr>
+                        <td colspan="4" class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>No members found</h3>
+                            <p>Try adjusting your search or filter criteria</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                filteredMembers.forEach((member, index) => {
+                    const highlightClass = currentSearchTerm ? "highlight" : "";
+                    html += `
+                        <tr class="${highlightClass}">
+                            <td>${member.sl || index + 1}</td>
+                            <td><strong>${member.name}</strong></td>
+                            <td>${member.reg || "—"}</td>
+                            <td class="${member.statusClass}">${member.validityText}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            document.getElementById("data").innerHTML = html;
+        }
+        
+        // Fetch and display member data
+        const url = "https://docs.google.com/spreadsheets/d/1WRtwYpQ7jsnwYaQUGivSZTrAOOHZyxS8s0-P8aAaiow/gviz/tq?tqx=out:json";
+        
+        fetch(url)
+            .then(res => res.text())
+            .then(rep => {
+                const json = JSON.parse(rep.substring(47).slice(0, -2));
+                const rows = json.table.rows;
+                
+                let totalCount = 0;
+                let activeCount = 0;
+                let expiringCount = 0;
+                
+                rows.forEach((r, i) => {
+                    if (i < 6) return; // Skip header rows
+                    
+                    const sl = r.c[2]?.v || "";
+                    const name = r.c[3]?.v || "";
+                    const validity = r.c[7]?.v || "";
+                    const reg = r.c[8]?.v || "";
+                    
+                    // Only show rows with valid names
+                    if (name && name !== "") {
+                        totalCount++;
+                        const status = getValidityStatus(validity);
+                        
+                        if (status.status === "active") activeCount++;
+                        if (status.status === "expiring") expiringCount++;
+                        
+                        allMembers.push({
+                            sl: sl || totalCount,
+                            name: name,
+                            reg: reg || "—",
+                            validityText: status.text,
+                            statusClass: status.class,
+                            status: status.status
+                        });
+                    }
+                });
+                
+                // Update stats
+                document.getElementById("totalMembers").textContent = totalCount;
+                document.getElementById("activeMembers").textContent = activeCount;
+                document.getElementById("expiringSoon").textContent = expiringCount;
+                
+                // Show message if no data
+                if (allMembers.length === 0) {
+                    document.getElementById("data").innerHTML = `
+                        <tr><td colspan="4" class="no-data"><i class="fas fa-users"></i> No members found. Be the first to join!</td></tr>
+                    `;
+                } else {
+                    renderMembers();
+                }
+            })
+            .catch(error => {
+                console.error("Error loading member data:", error);
+                document.getElementById("data").innerHTML = `
+                    <tr>
+                        <td colspan="4" class="no-data">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Unable to load member data. Please try again later.
+                        </td>
+                    </tr>
+                `;
+                document.getElementById("totalMembers").textContent = "0";
+                document.getElementById("activeMembers").textContent = "0";
+                document.getElementById("expiringSoon").textContent = "0";
+            });
+        
+        // Search functionality
+        const searchInput = document.getElementById("searchInput");
+        const clearSearch = document.getElementById("clearSearch");
+        
+        searchInput.addEventListener("input", (e) => {
+            currentSearchTerm = e.target.value;
+            clearSearch.style.display = currentSearchTerm ? "block" : "none";
+            renderMembers();
+        });
+        
+        clearSearch.addEventListener("click", () => {
+            searchInput.value = "";
+            currentSearchTerm = "";
+            clearSearch.style.display = "none";
+            renderMembers();
+        });
+        
+        // Filter functionality
+        const filterBtns = document.querySelectorAll(".filter-btn");
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
+                renderMembers();
+            });
+        });
+    </script>
+    
+    <script src="scripts/common.js"></script>
 </body>
 </html>
