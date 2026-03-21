@@ -5,9 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Innovation Hub | Where Ideas Become Reality</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/common.css">
     <style>
-        /* Additional styles for members page */
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --text: #2d3436;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: #f5f7fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .nav-menu ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white !important;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: transform 0.3s !important;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            background: #2c4ed8;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Header Section */
         .header-section {
             background: linear-gradient(135deg, var(--primary) 0%, #6c8ef5 100%);
             color: white;
@@ -32,8 +137,8 @@
             border-bottom: 1px solid #e0e0e0;
             padding: 20px 0;
             position: sticky;
-            top: 0;
-            z-index: 100;
+            top: 70px;
+            z-index: 99;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         
@@ -74,16 +179,7 @@
         
         .search-input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(108, 142, 245, 0.1);
-        }
-        
-        .search-input::placeholder {
-            color: #bbb;
-        }
-        
-        .search-stats {
-            color: #666;
-            font-size: 0.9rem;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
         
         .clear-search {
@@ -107,6 +203,7 @@
         .filter-buttons {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .filter-btn {
@@ -130,6 +227,40 @@
             border-color: var(--primary);
         }
         
+        /* Stats Section */
+        .stats-section {
+            background-color: #f5f7fa;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            min-width: 200px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            color: var(--text);
+            margin-top: 10px;
+        }
+        
+        /* Table Styles */
         .table-container {
             background-color: white;
             border-radius: 15px;
@@ -137,6 +268,12 @@
             margin: 50px auto;
             overflow-x: auto;
             padding: 20px;
+        }
+        
+        .table-container h2 {
+            margin-bottom: 25px;
+            color: var(--dark);
+            text-align: center;
         }
         
         table {
@@ -164,17 +301,17 @@
         }
         
         .valid-active {
-            color: #27ae60;
+            color: var(--success);
             font-weight: 600;
         }
         
         .valid-expired {
-            color: #e74c3c;
+            color: var(--danger);
             font-weight: 600;
         }
         
         .valid-expiring {
-            color: #f39c12;
+            color: var(--warning);
             font-weight: 600;
         }
         
@@ -190,7 +327,169 @@
             color: #ccc;
         }
         
+        .loader {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .loader i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--danger);
+        }
+        
+        .error-message i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            transition: background-color 0.3s ease;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 60px 0 20px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-column h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .footer-column h3 span {
+            color: var(--primary);
+        }
+        
+        .footer-column p {
+            color: #aaa;
+            line-height: 1.8;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column ul li a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-column ul li a:hover {
+            color: var(--primary);
+        }
+        
+        .footer-column ul li i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .social-links a:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+        }
+        
         @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+            
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 20px;
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            }
+            
+            .nav-menu.active {
+                display: block;
+            }
+            
+            .nav-menu ul {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
             .header-section {
                 padding: 50px 20px;
             }
@@ -252,67 +551,6 @@
             td:nth-of-type(3):before { content: "Reg No"; }
             td:nth-of-type(4):before { content: "Validity"; }
         }
-        
-        .no-data {
-            text-align: center;
-            padding: 40px;
-            color: #777;
-            font-size: 1.1rem;
-        }
-        
-        .loader {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
-            color: var(--primary);
-        }
-        
-        .loader i {
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .stats-section {
-            background-color: #f5f7fa;
-            padding: 40px 0;
-            text-align: center;
-        }
-        
-        .stats-grid {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            flex-wrap: wrap;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            min-width: 200px;
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        
-        .stat-label {
-            color: var(--text);
-            margin-top: 10px;
-        }
-        
-        .highlight {
-            background-color: #fff3cd;
-            transition: background-color 0.3s ease;
-        }
     </style>
 </head>
 <body>
@@ -334,7 +572,7 @@
                     <li><a href="projects.html">Projects</a></li>
                     <li><a href="puzzles.html">Puzzles</a></li>
                     <li><a href="members.html" class="active">Members</a></li>
-                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846" class="cta-button">Join Now</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform" class="cta-button">Join Now</a></li>
                 </ul>
             </nav>
         </div>
@@ -346,7 +584,7 @@
         <p>Meet the brilliant minds driving innovation at Regional Science Centre and Planetarium, Calicut</p>
     </section>
 
-    <!-- Search Bar Section - Below Header -->
+    <!-- Search Bar Section -->
     <section class="search-section">
         <div class="search-container">
             <div class="search-wrapper">
@@ -363,7 +601,7 @@
                 <button class="filter-btn" data-filter="expired">Expired</button>
             </div>
             <div class="search-stats" id="searchStats">
-                Showing all members
+                Loading members...
             </div>
         </div>
     </section>
@@ -373,16 +611,16 @@
         <div class="container">
             <div class="stats-grid" id="statsContainer">
                 <div class="stat-card">
-                    <div class="stat-number" id="totalMembers">-</div>
+                    <div class="stat-number" id="totalMembers">0</div>
                     <div class="stat-label">Total Members</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="activeMembers">-</div>
+                    <div class="stat-number" id="activeMembers">0</div>
                     <div class="stat-label">Active Members</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="expiringSoon">-</div>
-                    <div class="stat-label">Expiring in 30 Days</div>
+                    <div class="stat-number" id="expiringSoon">0</div>
+                    <div class="stat-label">Expiring Soon</div>
                 </div>
             </div>
         </div>
@@ -390,7 +628,7 @@
 
     <!-- Members Table -->
     <div class="container table-container">
-        <h2 style="margin-bottom: 25px; color: var(--dark); text-align: center;">Registered Members List</h2>
+        <h2>Registered Members List</h2>
         <div style="overflow-x: auto;">
             <table id="membersTable">
                 <thead>
@@ -403,7 +641,7 @@
                 </thead>
                 <tbody id="data">
                     <tr class="loader">
-                        <td colspan="4"><i class="fas fa-spinner"></i> Loading member data...</td>
+                        <td colspan="4"><i class="fas fa-spinner"></i> Loading member data... Please ensure the Google Sheet is publicly accessible</td>
                     </tr>
                 </tbody>
             </table>
@@ -415,7 +653,7 @@
         <div class="container">
             <h2 style="font-size: 2rem; margin-bottom: 20px;">Want to Join Our Innovation Community?</h2>
             <p style="max-width: 700px; margin: 0 auto 30px; font-size: 1.1rem;">Become part of a vibrant community of innovators and makers</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846" class="btn btn-primary" style="background: white; color: var(--primary);">Apply Now</a>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform" class="btn btn-primary" style="background: white; color: var(--primary);">Apply Now</a>
         </div>
     </section>
 
@@ -442,7 +680,7 @@
                         <li><a href="resources.html">Resources</a></li>
                         <li><a href="projects.html">Projects Gallery</a></li>
                         <li><a href="members.html">Members</a></li>
-                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846">Join Now</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform">Join Now</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
@@ -478,19 +716,32 @@
         
         // Function to check validity status
         function getValidityStatus(validityDate) {
-            if (!validityDate || validityDate === "") return { class: "valid-active", text: "Not Specified", status: "active" };
+            if (!validityDate || validityDate === "" || validityDate === "null" || validityDate === "undefined") { 
+                return { class: "valid-active", text: "Lifetime Member", status: "active" };
+            }
             
-            const today = new Date();
-            const expiry = new Date(validityDate);
-            const diffTime = expiry - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays < 0) {
-                return { class: "valid-expired", text: "Expired", status: "expired" };
-            } else if (diffDays <= 30) {
-                return { class: "valid-expiring", text: `Expires in ${diffDays} days`, status: "expiring" };
-            } else {
-                return { class: "valid-active", text: `Valid until ${validityDate}`, status: "active" };
+            try {
+                const today = new Date();
+                // Parse date in YYYY-MM-DD format
+                const expiry = new Date(validityDate);
+                
+                // Check if date is valid
+                if (isNaN(expiry.getTime())) {
+                    return { class: "valid-active", text: validityDate, status: "active" };
+                }
+                
+                const diffTime = expiry - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 0) {
+                    return { class: "valid-expired", text: `Expired on ${validityDate}`, status: "expired" };
+                } else if (diffDays <= 30) {
+                    return { class: "valid-expiring", text: `Expires in ${diffDays} days (${validityDate})`, status: "expiring" };
+                } else {
+                    return { class: "valid-active", text: `Valid until ${validityDate}`, status: "active" };
+                }
+            } catch (e) {
+                return { class: "valid-active", text: validityDate || "Active", status: "active" };
             }
         }
         
@@ -539,9 +790,9 @@
                     html += `
                         <tr class="${highlightClass}">
                             <td>${member.sl || index + 1}</td>
-                            <td><strong>${member.name}</strong></td>
-                            <td>${member.reg || "—"}</td>
-                            <td class="${member.statusClass}">${member.validityText}</td>
+                            <td><strong>${escapeHtml(member.name)}</strong></td>
+                            <td>${escapeHtml(member.reg || "—")}</td>
+                            <td class="${member.statusClass}">${escapeHtml(member.validityText)}</td>
                         </tr>
                     `;
                 });
@@ -550,91 +801,163 @@
             document.getElementById("data").innerHTML = html;
         }
         
-        // Fetch and display member data
-        const url = "https://docs.google.com/spreadsheets/d/1WRtwYpQ7jsnwYaQUGivSZTrAOOHZyxS8s0-P8aAaiow/gviz/tq?tqx=out:json";
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return "";
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // CORRECTED URL - Using the gviz API endpoint
+        const sheetId = "1WRtwYpQ7jsnwYaQUGivSZTrAOOHZyxS8s0-P8aAaiow";
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+        
+        console.log("Fetching data from:", url);
         
         fetch(url)
-            .then(res => res.text())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.text();
+            })
             .then(rep => {
-                const json = JSON.parse(rep.substring(47).slice(0, -2));
-                const rows = json.table.rows;
+                console.log("Raw response received, length:", rep.length);
                 
-                let totalCount = 0;
-                let activeCount = 0;
-                let expiringCount = 0;
-                
-                rows.forEach((r, i) => {
-                    if (i < 6) return; // Skip header rows
+                // Parse the JSONP response
+                let jsonString;
+                try {
+                    // Remove the Google callback wrapper
+                    jsonString = rep.substring(47).slice(0, -2);
+                    const json = JSON.parse(jsonString);
+                    const rows = json.table.rows;
                     
-                    const sl = r.c[2]?.v || "";
-                    const name = r.c[3]?.v || "";
-                    const validity = r.c[7]?.v || "";
-                    const reg = r.c[8]?.v || "";
+                    console.log("Parsed rows count:", rows.length);
                     
-                    // Only show rows with valid names
-                    if (name && name !== "") {
-                        totalCount++;
-                        const status = getValidityStatus(validity);
+                    let totalCount = 0;
+                    let activeCount = 0;
+                    let expiringCount = 0;
+                    
+                    // Skip header rows - look for actual data starting from row 0
+                    // Based on your sheet structure, data likely starts at row 0
+                    rows.forEach((r, i) => {
+                        // Get values from columns (0-indexed)
+                        // Adjust these indices based on your actual sheet columns
+                        const sl = r.c[0]?.v || "";
+                        const name = r.c[1]?.v || r.c[2]?.v || ""; // Try column 1 or 2 for name
+                        const reg = r.c[2]?.v || r.c[3]?.v || ""; // Registration number
+                        const validity = r.c[3]?.v || r.c[4]?.v || ""; // Validity date
                         
-                        if (status.status === "active") activeCount++;
-                        if (status.status === "expiring") expiringCount++;
+                        // Log first few rows for debugging
+                        if (i < 5) {
+                            console.log(`Row ${i}:`, { sl, name, reg, validity, raw: r.c });
+                        }
                         
-                        allMembers.push({
-                            sl: sl || totalCount,
-                            name: name,
-                            reg: reg || "—",
-                            validityText: status.text,
-                            statusClass: status.class,
-                            status: status.status
-                        });
+                        // Only show rows with valid names (skip empty rows and headers)
+                        if (name && name !== "" && name !== "Name" && name !== "name") {
+                            totalCount++;
+                            const status = getValidityStatus(validity);
+                            
+                            if (status.status === "active") activeCount++;
+                            if (status.status === "expiring") expiringCount++;
+                            
+                            allMembers.push({
+                                sl: sl || totalCount,
+                                name: String(name).trim(),
+                                reg: reg && reg !== "" ? String(reg).trim() : "—",
+                                validityText: status.text,
+                                statusClass: status.class,
+                                status: status.status
+                            });
+                        }
+                    });
+                    
+                    // Sort members by name
+                    allMembers.sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    console.log("Total members loaded:", totalCount);
+                    
+                    // Update stats
+                    document.getElementById("totalMembers").textContent = totalCount;
+                    document.getElementById("activeMembers").textContent = activeCount;
+                    document.getElementById("expiringSoon").textContent = expiringCount;
+                    
+                    // Show message if no data
+                    if (allMembers.length === 0) {
+                        document.getElementById("data").innerHTML = `
+                            <tr><td colspan="4" class="no-results">
+                                <i class="fas fa-users"></i>
+                                <h3>No members found</h3>
+                                <p>Make sure your Google Sheet has data and is publicly accessible.<br>
+                                Current sheet ID: ${sheetId}</p>
+                                <p style="margin-top: 15px; font-size: 0.9rem;">
+                                    <strong>Troubleshooting:</strong><br>
+                                    1. Go to your Google Sheet<br>
+                                    2. Click "Share" → "Anyone with the link" → "Viewer"<br>
+                                    3. Make sure columns contain: Name, Registration Number, Validity Date
+                                </p>
+                            </td></tr>
+                        `;
+                    } else {
+                        renderMembers();
                     }
-                });
-                
-                // Update stats
-                document.getElementById("totalMembers").textContent = totalCount;
-                document.getElementById("activeMembers").textContent = activeCount;
-                document.getElementById("expiringSoon").textContent = expiringCount;
-                
-                // Show message if no data
-                if (allMembers.length === 0) {
-                    document.getElementById("data").innerHTML = `
-                        <tr><td colspan="4" class="no-data"><i class="fas fa-users"></i> No members found. Be the first to join!</td></tr>
-                    `;
-                } else {
-                    renderMembers();
+                } catch (e) {
+                    console.error("JSON parsing error:", e);
+                    console.log("Raw response snippet:", rep.substring(0, 200));
+                    throw new Error("Failed to parse spreadsheet data");
                 }
             })
             .catch(error => {
                 console.error("Error loading member data:", error);
                 document.getElementById("data").innerHTML = `
                     <tr>
-                        <td colspan="4" class="no-data">
-                            <i class="fas fa-exclamation-triangle"></i> 
-                            Unable to load member data. Please try again later.
+                        <td colspan="4" class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Unable to Load Member Data</h3>
+                            <p>${error.message}</p>
+                            <p style="margin-top: 15px; font-size: 0.9rem;">
+                                <strong>Please check:</strong><br>
+                                • Google Sheet is set to "Anyone with the link can view"<br>
+                                • The sheet ID is correct<br>
+                                • Your internet connection is active
+                            </p>
+                            <p style="margin-top: 10px;">
+                                <small>Sheet ID: ${sheetId}</small>
+                            </p>
                         </td>
                     </tr>
                 `;
                 document.getElementById("totalMembers").textContent = "0";
                 document.getElementById("activeMembers").textContent = "0";
                 document.getElementById("expiringSoon").textContent = "0";
+                document.getElementById("searchStats").textContent = "Error loading data";
             });
         
         // Search functionality
         const searchInput = document.getElementById("searchInput");
-        const clearSearch = document.getElementById("clearSearch");
+        const clearSearchBtn = document.getElementById("clearSearch");
         
-        searchInput.addEventListener("input", (e) => {
-            currentSearchTerm = e.target.value;
-            clearSearch.style.display = currentSearchTerm ? "block" : "none";
-            renderMembers();
-        });
+        if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+                currentSearchTerm = e.target.value;
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = currentSearchTerm ? "block" : "none";
+                }
+                renderMembers();
+            });
+        }
         
-        clearSearch.addEventListener("click", () => {
-            searchInput.value = "";
-            currentSearchTerm = "";
-            clearSearch.style.display = "none";
-            renderMembers();
-        });
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener("click", () => {
+                if (searchInput) {
+                    searchInput.value = "";
+                    currentSearchTerm = "";
+                    clearSearchBtn.style.display = "none";
+                    renderMembers();
+                }
+            });
+        }
         
         // Filter functionality
         const filterBtns = document.querySelectorAll(".filter-btn");
@@ -646,8 +969,16 @@
                 renderMembers();
             });
         });
+        
+        // Mobile menu toggle
+        const mobileMenu = document.querySelector(".mobile-menu");
+        const navMenu = document.querySelector(".nav-menu");
+        
+        if (mobileMenu && navMenu) {
+            mobileMenu.addEventListener("click", () => {
+                navMenu.classList.toggle("active");
+            });
+        }
     </script>
-    
-    <script src="scripts/common.js"></script>
 </body>
 </html>
