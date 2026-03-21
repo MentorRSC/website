@@ -26,6 +26,110 @@
             margin: 0 auto;
         }
         
+        /* Search Bar Styles */
+        .search-section {
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .search-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 142, 245, 0.1);
+        }
+        
+        .search-input::placeholder {
+            color: #bbb;
+        }
+        
+        .search-stats {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .clear-search {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            display: none;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .clear-search:hover {
+            color: var(--primary);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 20px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
         .table-container {
             background-color: white;
             border-radius: 15px;
@@ -74,6 +178,18 @@
             font-weight: 600;
         }
         
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #777;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
         @media (max-width: 768px) {
             .header-section {
                 padding: 50px 20px;
@@ -81,6 +197,19 @@
             
             .header-section h1 {
                 font-size: 2rem;
+            }
+            
+            .search-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-wrapper {
+                max-width: 100%;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
             }
             
             table, thead, tbody, th, td, tr {
@@ -179,6 +308,47 @@
             color: var(--text);
             margin-top: 10px;
         }
+        
+        .highlight {
+            background-color: #fff3cd;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Debug panel - optional, remove in production */
+        .debug-panel {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px auto;
+            padding: 15px;
+            max-width: 1200px;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+        
+        .debug-panel.show {
+            display: block;
+        }
+        
+        .debug-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .debug-toggle:hover {
+            background: var(--secondary);
+        }
     </style>
 </head>
 <body>
@@ -210,6 +380,28 @@
     <section class="header-section">
         <h1>Our Members</h1>
         <p>Meet the brilliant minds driving innovation at Regional Science Centre and Planetarium, Calicut</p>
+    </section>
+
+    <!-- Search Bar Section - Below Header -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, registration number, or validity...">
+                <button id="clearSearch" class="clear-search">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="expiring">Expiring Soon</button>
+                <button class="filter-btn" data-filter="expired">Expired</button>
+            </div>
+            <div class="search-stats" id="searchStats">
+                Showing all members
+            </div>
+        </div>
     </section>
 
     <!-- Stats Section -->
@@ -262,6 +454,17 @@
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846" class="btn btn-primary" style="background: white; color: var(--primary);">Apply Now</a>
         </div>
     </section>
+
+    <!-- Debug Toggle Button (Optional - can be removed) -->
+    <button class="debug-toggle" id="debugToggle" title="Show/Hide Debug Info">
+        <i class="fas fa-bug"></i>
+    </button>
+    
+    <!-- Debug Panel (Optional - can be removed) -->
+    <div class="debug-panel" id="debugPanel">
+        <h4>Debug Information</h4>
+        <div id="debugContent">Click the bug button to see debug info</div>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -316,9 +519,13 @@
     </footer>
 
     <script>
+        let allMembers = [];
+        let currentFilter = "all";
+        let currentSearchTerm = "";
+        
         // Function to check validity status
         function getValidityStatus(validityDate) {
-            if (!validityDate || validityDate === "") return { class: "", text: "Not Specified" };
+            if (!validityDate || validityDate === "") return { class: "valid-active", text: "Not Specified", status: "active" };
             
             const today = new Date();
             const expiry = new Date(validityDate);
@@ -326,12 +533,77 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
             if (diffDays < 0) {
-                return { class: "valid-expired", text: "Expired" };
+                return { class: "valid-expired", text: "Expired", status: "expired" };
             } else if (diffDays <= 30) {
-                return { class: "valid-expiring", text: `Expires in ${diffDays} days` };
+                return { class: "valid-expiring", text: `Expires in ${diffDays} days`, status: "expiring" };
             } else {
-                return { class: "valid-active", text: `Valid until ${validityDate}` };
+                return { class: "valid-active", text: `Valid until ${validityDate}`, status: "active" };
             }
+        }
+        
+        // Function to render members based on search and filter
+        function renderMembers() {
+            let filteredMembers = allMembers;
+            
+            // Apply filter
+            if (currentFilter !== "all") {
+                filteredMembers = filteredMembers.filter(member => member.status === currentFilter);
+            }
+            
+            // Apply search
+            if (currentSearchTerm.trim() !== "") {
+                const searchLower = currentSearchTerm.toLowerCase();
+                filteredMembers = filteredMembers.filter(member => 
+                    member.name.toLowerCase().includes(searchLower) ||
+                    member.reg.toLowerCase().includes(searchLower) ||
+                    member.validityText.toLowerCase().includes(searchLower)
+                );
+            }
+            
+            // Update search stats
+            const statsText = document.getElementById("searchStats");
+            if (filteredMembers.length === allMembers.length) {
+                statsText.textContent = `Showing all ${allMembers.length} members`;
+            } else {
+                statsText.textContent = `Showing ${filteredMembers.length} of ${allMembers.length} members`;
+            }
+            
+            // Render table
+            let html = "";
+            if (filteredMembers.length === 0) {
+                html = `
+                    <tr>
+                        <td colspan="4" class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>No members found</h3>
+                            <p>Try adjusting your search or filter criteria</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                filteredMembers.forEach((member, index) => {
+                    const highlightClass = currentSearchTerm ? "highlight" : "";
+                    html += `
+                        <tr class="${highlightClass}">
+                            <td>${member.sl || index + 1}</td>
+                            <td><strong>${member.name}</strong></td>
+                            <td>${member.reg || "—"}</td>
+                            <td class="${member.statusClass}">${member.validityText}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            document.getElementById("data").innerHTML = html;
+        }
+        
+        // Function to check if a value is likely a header
+        function isHeaderValue(value) {
+            if (!value || typeof value !== 'string') return false;
+            const headerKeywords = ['name', 'sl.no', 'slno', 'register', 'reg', 'validity', 'student', 'member', 'list', 'date'];
+            const lowerValue = value.toLowerCase().trim();
+            return headerKeywords.some(keyword => lowerValue.includes(keyword)) || 
+                   (value.length < 20 && /^[A-Z\s]{3,}$/.test(value)); // All caps short text
         }
         
         // Fetch and display member data
@@ -340,40 +612,111 @@
         fetch(url)
             .then(res => res.text())
             .then(rep => {
-                const json = JSON.parse(rep.substring(47).slice(0, -2));
+                // Parse the JSON response
+                const jsonString = rep.substring(47).slice(0, -2);
+                const json = JSON.parse(jsonString);
                 const rows = json.table.rows;
                 
-                let html = "";
+                // Debug info
+                let debugInfo = [];
+                debugInfo.push(`Total rows from Google Sheets: ${rows.length}`);
+                debugInfo.push(`First 20 rows preview:`);
+                
+                // Find where actual data starts
+                let dataStartIndex = -1;
+                let foundValidNames = 0;
+                
+                // Loop through all rows to find data start
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || !row.c) continue;
+                    
+                    const slNo = row.c[2]?.v;
+                    const name = row.c[3]?.v;
+                    const validity = row.c[7]?.v;
+                    const regNo = row.c[8]?.v;
+                    
+                    // Debug first 20 rows
+                    if (i < 20) {
+                        debugInfo.push(`Row ${i}: SlNo="${slNo || ''}", Name="${name || ''}", Validity="${validity || ''}", Reg="${regNo || ''}"`);
+                    }
+                    
+                    // Check if this is a data row (has a valid name that's not a header)
+                    if (name && name !== "" && !isHeaderValue(name) && !name.includes("Name") && name.length > 1) {
+                        foundValidNames++;
+                        if (dataStartIndex === -1) {
+                            dataStartIndex = i;
+                            debugInfo.push(`✓ Data starts at row ${i}`);
+                        }
+                    }
+                }
+                
+                // If no clear data start found, try to find first non-empty name
+                if (dataStartIndex === -1) {
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row && row.c && row.c[3]?.v && row.c[3]?.v !== "") {
+                            dataStartIndex = i;
+                            debugInfo.push(`⚠ Using row ${i} as data start (first non-empty name)`);
+                            break;
+                        }
+                    }
+                }
+                
+                // If still no data start, default to row 7 (index 6)
+                if (dataStartIndex === -1) {
+                    dataStartIndex = 6;
+                    debugInfo.push(`⚠ No data start found, defaulting to row ${dataStartIndex}`);
+                }
+                
                 let totalCount = 0;
                 let activeCount = 0;
                 let expiringCount = 0;
                 
-                rows.forEach((r, i) => {
-                    if (i < 6) return; // Skip header rows
+                // Process from the found data start index
+                for (let i = dataStartIndex; i < rows.length; i++) {
+                    const r = rows[i];
+                    
+                    // Skip empty rows or rows without cells
+                    if (!r || !r.c) continue;
                     
                     const sl = r.c[2]?.v || "";
                     const name = r.c[3]?.v || "";
                     const validity = r.c[7]?.v || "";
                     const reg = r.c[8]?.v || "";
                     
-                    // Only show rows with valid names
-                    if (name && name !== "") {
+                    // Only show rows with valid names and not empty
+                    if (name && name !== "" && !isHeaderValue(name)) {
                         totalCount++;
                         const status = getValidityStatus(validity);
                         
-                        if (status.class === "valid-active") activeCount++;
-                        if (status.class === "valid-expiring") expiringCount++;
+                        if (status.status === "active") activeCount++;
+                        if (status.status === "expiring") expiringCount++;
                         
-                        html += `
-                            <tr>
-                                <td>${sl || totalCount}</td>
-                                <td><strong>${name}</strong></td>
-                                <td>${reg || "—"}</td>
-                                <td class="${status.class}">${status.text}</td>
-                            </tr>
-                        `;
+                        allMembers.push({
+                            sl: sl || totalCount,
+                            name: name,
+                            reg: reg || "—",
+                            validityText: status.text,
+                            statusClass: status.class,
+                            status: status.status
+                        });
+                        
+                        // Debug first 5 loaded members
+                        if (allMembers.length <= 5) {
+                            debugInfo.push(`Loaded member ${allMembers.length}: ${name} (${reg})`);
+                        }
                     }
-                });
+                }
+                
+                debugInfo.push(`Total members loaded: ${totalCount}`);
+                debugInfo.push(`Active: ${activeCount}, Expiring: ${expiringCount}`);
+                
+                // Update debug panel
+                const debugContent = document.getElementById("debugContent");
+                if (debugContent) {
+                    debugContent.innerHTML = debugInfo.map(msg => `<div>${escapeHtml(msg)}</div>`).join('');
+                }
                 
                 // Update stats
                 document.getElementById("totalMembers").textContent = totalCount;
@@ -381,11 +724,13 @@
                 document.getElementById("expiringSoon").textContent = expiringCount;
                 
                 // Show message if no data
-                if (html === "") {
-                    html = `<tr><td colspan="4" class="no-data"><i class="fas fa-users"></i> No members found. Be the first to join!</td></tr>`;
+                if (allMembers.length === 0) {
+                    document.getElementById("data").innerHTML = `
+                        <tr><td colspan="4" class="no-data"><i class="fas fa-users"></i> No members found. Be the first to join!</td></tr>
+                    `;
+                } else {
+                    renderMembers();
                 }
-                
-                document.getElementById("data").innerHTML = html;
             })
             .catch(error => {
                 console.error("Error loading member data:", error);
@@ -393,14 +738,74 @@
                     <tr>
                         <td colspan="4" class="no-data">
                             <i class="fas fa-exclamation-triangle"></i> 
-                            Unable to load member data. Please try again later.
+                            Unable to load member data. Please try again later.<br>
+                            <small>Error: ${error.message}</small>
                         </td>
                     </tr>
                 `;
                 document.getElementById("totalMembers").textContent = "0";
                 document.getElementById("activeMembers").textContent = "0";
                 document.getElementById("expiringSoon").textContent = "0";
+                
+                // Update debug with error
+                const debugContent = document.getElementById("debugContent");
+                if (debugContent) {
+                    debugContent.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+                }
             });
+        
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Search functionality
+        const searchInput = document.getElementById("searchInput");
+        const clearSearch = document.getElementById("clearSearch");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+                currentSearchTerm = e.target.value;
+                if (clearSearch) {
+                    clearSearch.style.display = currentSearchTerm ? "block" : "none";
+                }
+                renderMembers();
+            });
+        }
+        
+        if (clearSearch) {
+            clearSearch.addEventListener("click", () => {
+                if (searchInput) {
+                    searchInput.value = "";
+                    currentSearchTerm = "";
+                    clearSearch.style.display = "none";
+                    renderMembers();
+                }
+            });
+        }
+        
+        // Filter functionality
+        const filterBtns = document.querySelectorAll(".filter-btn");
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
+                renderMembers();
+            });
+        });
+        
+        // Debug toggle functionality (optional)
+        const debugToggle = document.getElementById("debugToggle");
+        const debugPanel = document.getElementById("debugPanel");
+        
+        if (debugToggle && debugPanel) {
+            debugToggle.addEventListener("click", () => {
+                debugPanel.classList.toggle("show");
+            });
+        }
     </script>
     
     <script src="scripts/common.js"></script>
