@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Member List</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background:#f4f6f8;}
+    h2 { text-align:center; }
+    table {
+      width:100%;
+      border-collapse:collapse;
+      background:white;
+    }
+    th, td {
+      padding:10px;
+      border:1px solid #ddd;
+      text-align:center;
+    }
+    th {
+      background:#2c3e50;
+      color:white;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Member List</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Sl.No</th>
+      <th>Name</th>
+      <th>Phone</th>
+      <th>DOB</th>
+      <th>Reg Date</th>
+      <th>Validity</th>
+      <th>Reg No</th>
+    </tr>
+  </thead>
+  <tbody id="data"></tbody>
+</table>
+
+<script>
+const url = "https://docs.google.com/spreadsheets/d/1WRtwYpQ7jsnwYaQUGivSZTrAOOHZyxS8s0-P8aAaiow/gviz/tq?tqx=out:json";
+
+fetch(url)
+.then(res => res.text())
+.then(rep => {
+  const json = JSON.parse(rep.substring(47).slice(0,-2));
+  const rows = json.table.rows;
+
+  let html = "";
+
+  rows.forEach((r, i) => {
+    if(i < 6) return; // skip rows before row 7
+
+    html += `<tr>
+      <td>${r.c[2]?.v || ""}</td>
+      <td>${r.c[3]?.v || ""}</td>
+      <td>${r.c[4]?.v || ""}</td>
+      <td>${r.c[5]?.v || ""}</td>
+      <td>${r.c[6]?.v || ""}</td>
+      <td>${r.c[7]?.v || ""}</td>
+      <td>${r.c[8]?.v || ""}</td>
+    </tr>`;
+  });
+
+  document.getElementById("data").innerHTML = html;
+});
+</script>
+
+</body>
+</html>
