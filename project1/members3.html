@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Innovation Hub | Members</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- QR LIBRARY -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<style>
+body { font-family: Arial; margin:0; }
+
+.table-container { padding:20px; }
+
+table { width:100%; border-collapse: collapse; }
+
+th, td { padding:10px; border-bottom:1px solid #ddd; }
+
+th { background:#4a6cf7; color:white; }
+
+.export-btn {
+    background:#4a6cf7;
+    color:white;
+    border:none;
+    padding:6px 10px;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.export-btn:hover { background:#2f4de0; }
+
+td:nth-of-type(5):before { content: "ID Card"; }
+
+#qrPopup {
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:2000;
+}
+</style>
+</head>
+
+<body>
+
+<div class="table-container">
+<table id="membersTable">
+<thead>
+<tr>
+<th>Sl.No</th>
+<th>Name</th>
+<th>Reg No</th>
+<th>Validity</th>
+<th>ID Card</th>
+</tr>
+</thead>
+
+<tbody id="data">
+<tr><td colspan="5">Loading...</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- QR POPUP -->
+<div id="qrPopup">
+    <div style="background:white;padding:20px;border-radius:10px;text-align:center;">
+        <h3>ID Card QR</h3>
+        <canvas id="qrCanvas"></canvas>
+        <br><br>
+        <button onclick="downloadQR()" class="export-btn">Download PNG</button>
+        <button onclick="closeQR()" class="export-btn" style="background:red;">Close</button>
+    </div>
+</div>
+
+<script>
+
+let allMembers = [];
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function renderMembers() {
+    let html = "";
+
+    allMembers.forEach(member => {
+        html += `
+        <tr>
+            <td>${member.sl}</td>
+            <td><strong>${escapeHtml(member.name)}</strong></td>
+            <td>${escapeHtml(member.reg)}</td>
+            <td>${escapeHtml(member.validity)}</td>
+            <td>
+                <button class="export-btn" onclick="showQRCode('${member.reg}')">
+                    Download ID
+                </button>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById("data").innerHTML = html;
+}
+
+function loadData() {
+    const url = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
+
+    fetch(url)
+    .then(res => res.text())
+    .then(rep => {
+        const json = JSON.parse(rep.substring(47).slice(0, -2));
+        const rows = json.table.rows;
+
+        for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r || !r.c) continue;
+
+            const sl = r.c[2]?.v || "";
+            const name = r.c[3]?.v || "";
+            const validity = r.c[7]?.v || "";
+            const reg = r.c[8]?.v || "";
+
+            if (name && name !== "Name") {
+                allMembers.push({
+                    sl, name, reg, validity
+                });
+            }
+        }
+
+        renderMembers();
+    });
+}
+
+loadData();
+
+/* ================= QR FUNCTIONS ================= */
+
+let currentQRData = "";
+
+function showQRCode(id) {
+    const url = "https://mentorrsc.github.io/website/project1/qrscan3.html?id=" + id;
+
+    currentQRData = url;
+
+    QRCode.toCanvas(
+        document.getElementById("qrCanvas"),
+        url,
+        { width: 200 }
+    );
+
+    document.getElementById("qrPopup").style.display = "flex";
+}
+
+function closeQR() {
+    document.getElementById("qrPopup").style.display = "none";
+}
+
+function downloadQR() {
+    const canvas = document.getElementById("qrCanvas");
+
+    const link = document.createElement("a");
+    link.download = "id-card.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
+
+</script>
+
+</body>
+</html>
