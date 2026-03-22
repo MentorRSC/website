@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>QR Scanner</title>
+<title>Innovation Hub - Verification</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="app.js"></script>
@@ -13,16 +13,71 @@
 body {
   margin: 0;
   font-family: Arial;
-  text-align: center;
   background: #0f172a;
   color: white;
+  overflow: hidden;
 }
 
+/* Fullscreen camera */
 #reader {
-  width: 320px;
-  margin: 20px auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
+/* Center scan box */
+.scan-box {
+  position: fixed;
+  width: 250px;
+  height: 250px;
+  border: 3px solid #3b82f6;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 20px #3b82f6;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* Top title */
+.header {
+  position: fixed;
+  top: 10px;
+  width: 100%;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  z-index: 2;
+}
+
+/* Result text */
+#result {
+  position: fixed;
+  bottom: 80px;
+  width: 100%;
+  text-align: center;
+  font-size: 22px;
+  z-index: 2;
+}
+
+/* Toggle camera button */
+.toggle-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1e293b;
+  border: none;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* Flash feedback */
 .flash {
   position: fixed;
   top: 0;
@@ -35,25 +90,47 @@ body {
 
 .green { background: rgba(0,255,100,0.4); }
 .red { background: rgba(255,0,0,0.4); }
-
-#result {
-  font-size: 22px;
-  margin-top: 20px;
-}
 </style>
 </head>
 
 <body>
 
-<h2>Member Scanner</h2>
+<div class="header">Innovation Hub - Verification</div>
+
 <div id="reader"></div>
+<div class="scan-box"></div>
+
 <div id="result">Scanning...</div>
+<button class="toggle-btn" onclick="toggleCamera()">🔄 Camera</button>
+
 <div id="flash" class="flash"></div>
 
 <script>
 let rowsData = [];
+let html5QrCode;
+let currentCamera = "environment";
 
 fetchSheetData().then(rows => rowsData = rows);
+
+function startScanner(cameraFacing) {
+  html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: cameraFacing },
+    {
+      fps: 10,
+      qrbox: { width: 250, height: 250 }
+    },
+    handleScan
+  ).catch(err => console.error(err));
+}
+
+function toggleCamera() {
+  html5QrCode.stop().then(() => {
+    currentCamera = currentCamera === "environment" ? "user" : "environment";
+    startScanner(currentCamera);
+  });
+}
 
 function handleScan(decodedText) {
   try {
@@ -92,10 +169,10 @@ function show(msg, success) {
   }
 }
 
-new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 })
-  .render(handleScan);
+/* Start with back camera */
+startScanner(currentCamera);
 
-// PWA
+/* PWA */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
