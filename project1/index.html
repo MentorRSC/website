@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>QR Scanner</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="app.js"></script>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  text-align: center;
+  background: #0f172a;
+  color: white;
+}
+
+#reader {
+  width: 320px;
+  margin: 20px auto;
+}
+
+.flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.green { background: rgba(0,255,100,0.4); }
+.red { background: rgba(255,0,0,0.4); }
+
+#result {
+  font-size: 22px;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Member Scanner</h2>
+<div id="reader"></div>
+<div id="result">Scanning...</div>
+<div id="flash" class="flash"></div>
+
+<script>
+let rowsData = [];
+
+fetchSheetData().then(rows => rowsData = rows);
+
+function handleScan(decodedText) {
+  try {
+    const url = new URL(decodedText);
+    const memberId = url.searchParams.get("id");
+
+    if (!memberId) throw "Invalid";
+
+    const res = checkMember(rowsData, memberId);
+
+    if (!res.found) {
+      show("Not Found", false);
+      return;
+    }
+
+    if (res.status === "Active") {
+      show(res.name + " ✅ Active", true);
+    } else {
+      show(res.name + " ❌ Expired", false);
+    }
+
+  } catch {
+    show("Invalid QR", false);
+  }
+}
+
+function show(msg, success) {
+  document.getElementById("result").innerText = msg;
+
+  if (success) {
+    flashScreen("green");
+    speak("Member Verified");
+  } else {
+    flashScreen("red");
+    speak("Membership Expired");
+  }
+}
+
+new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 })
+  .render(handleScan);
+
+// PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
