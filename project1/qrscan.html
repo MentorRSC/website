@@ -2,17 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QR Scanner</title>
+  <title>QR Scanner with Camera Switch</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 30px;
+      margin-top: 20px;
     }
     #reader {
       width: 300px;
       margin: auto;
+    }
+    select {
+      margin: 10px;
+      padding: 5px;
     }
     #resultModal {
       display: none;
@@ -28,14 +32,15 @@
       padding: 20px;
       border-radius: 10px;
     }
-    button {
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
 
 <h2>QR Code Scanner</h2>
+
+<label>Select Camera:</label>
+<select id="cameraSelect"></select>
+
 <div id="reader"></div>
 
 <!-- Modal -->
@@ -48,6 +53,9 @@
 </div>
 
 <script>
+  let html5QrCode;
+  let currentCameraId = null;
+
   function showModal(text) {
     document.getElementById("qrResult").innerText = text;
     document.getElementById("resultModal").style.display = "flex";
@@ -57,29 +65,60 @@
     document.getElementById("resultModal").style.display = "none";
   }
 
-  function onScanSuccess(decodedText, decodedResult) {
+  function onScanSuccess(decodedText) {
     showModal(decodedText);
   }
 
-  function onScanError(errorMessage) {
-    // ignore frequent scan errors
+  function startScanner(cameraId) {
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+        initScanner(cameraId);
+      });
+    } else {
+      initScanner(cameraId);
+    }
   }
 
-  const html5QrCode = new Html5Qrcode("reader");
+  function initScanner(cameraId) {
+    html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      cameraId,
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    );
+    currentCameraId = cameraId;
+  }
+
+  function populateCameraList(devices) {
+    const select = document.getElementById("cameraSelect");
+    select.innerHTML = "";
+
+    devices.forEach(device => {
+      const option = document.createElement("option");
+      option.value = device.id;
+      option.text = device.label || `Camera ${select.length + 1}`;
+      select.appendChild(option);
+    });
+
+    // Auto start first camera
+    if (devices.length > 0) {
+      startScanner(devices[0].id);
+    }
+
+    select.onchange = function () {
+      startScanner(this.value);
+    };
+  }
 
   Html5Qrcode.getCameras().then(devices => {
     if (devices && devices.length) {
-      const cameraId = devices[0].id;
-
-      html5QrCode.start(
-        cameraId,
-        { fps: 10, qrbox: 250 },
-        onScanSuccess,
-        onScanError
-      );
+      populateCameraList(devices);
+    } else {
+      alert("No cameras found.");
     }
   }).catch(err => {
-    alert("Camera access denied or not available.");
+    alert("Camera permission denied or not available.");
   });
 </script>
 
