@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Member Verification</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #0f172a;
+  color: white;
+}
+
+.container {
+  padding: 50px;
+}
+
+#status {
+  font-size: 32px;
+  margin-top: 20px;
+}
+
+.valid {
+  color: #00ffae;
+}
+
+.invalid {
+  color: #ff4d4d;
+}
+
+.flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.green {
+  background: rgba(0,255,100,0.4);
+}
+
+.red {
+  background: rgba(255,0,0,0.4);
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+  <h1>Member Verification</h1>
+  <div id="status">Checking...</div>
+</div>
+
+<div id="flash" class="flash"></div>
+
+<script>
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq";
+
+async function fetchSheetData() {
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const json = JSON.parse(text.substr(47).slice(0, -2));
+  return json.table.rows;
+}
+
+function checkMember(rows, memberId) {
+  for (let row of rows) {
+    const id = row.c[0]?.v;
+    const name = row.c[1]?.v;
+    const status = row.c[2]?.v;
+
+    if (id == memberId) {
+      return { found: true, name, status };
+    }
+  }
+  return { found: false };
+}
+
+function speak(text) {
+  const msg = new SpeechSynthesisUtterance(text);
+  speechSynthesis.speak(msg);
+}
+
+function flashScreen(color) {
+  const flash = document.getElementById("flash");
+  flash.className = "flash " + color;
+  flash.style.opacity = 1;
+  setTimeout(() => flash.style.opacity = 0, 500);
+}
+
+// 🔍 GET MEMBER ID FROM URL
+const params = new URLSearchParams(window.location.search);
+const memberId = params.get("id");
+
+const statusEl = document.getElementById("status");
+
+if (!memberId) {
+  statusEl.innerText = "Invalid QR Code";
+  statusEl.className = "invalid";
+} else {
+  fetchSheetData().then(rows => {
+    const res = checkMember(rows, memberId);
+
+    if (!res.found) {
+      statusEl.innerText = "Member Not Found";
+      statusEl.className = "invalid";
+      flashScreen("red");
+      return;
+    }
+
+    if (res.status === "Active") {
+      statusEl.innerText = res.name + " ✅ VALID";
+      statusEl.className = "valid";
+      flashScreen("green");
+      speak("Member Verified");
+    } else {
+      statusEl.innerText = res.name + " ❌ EXPIRED";
+      statusEl.className = "invalid";
+      flashScreen("red");
+    }
+  }).catch(() => {
+    statusEl.innerText = "Error loading data";
+    statusEl.className = "invalid";
+  });
+}
+</script>
+
+</body>
+</html>
