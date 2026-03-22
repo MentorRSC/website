@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Innovation Hub | Member Validation Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ========== BASE & RESET (from original layout) ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a0f1e, #03050b);
+            color: #f0f3fa;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ========== HEADER STYLES (Innovation Hub) ========== */
+        header {
+            background-color: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: var(--primary);
+            margin-right: 10px;
+            filter: drop-shadow(0 0 5px rgba(26,115,232,0.5));
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            color: var(--white);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #e0e4f0;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #0d5bbb;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: white;
+        }
+
+        /* ========== FOOTER STYLES (Innovation Hub - enhanced) ========== */
+        footer {
+            background-color: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(12px);
+            color: var(--white);
+            padding: 60px 0 20px;
+            margin-top: auto;
+            border-top: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+            color: #fff;
+        }
+
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--primary);
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--white);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--white);
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .social-links a:hover {
+            background-color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #bbb;
+            font-size: 0.9rem;
+        }
+
+        /* ========== VALIDATION PORTAL CUSTOM STYLES (premium glass) ========== */
+        .wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 140px);
+            padding: 3rem 1.5rem;
+        }
+
+        .card {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 48px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 1100px;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(59,130,246,0.1) inset;
+            transition: all 0.3s ease;
+            animation: cardFloat 0.6s ease-out;
+        }
+
+        @keyframes cardFloat {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #ffffff, #c7d2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+            display: inline-block;
+            border-left: 5px solid #3b82f6;
+            padding-left: 24px;
+        }
+
+        .status {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 25px 0 20px;
+            text-align: center;
+            letter-spacing: -0.02em;
+            transition: 0.2s;
+        }
+
+        .valid {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(34,197,94,0.4);
+            animation: softPulse 1.2s infinite alternate;
+        }
+
+        .invalid {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        @keyframes softPulse {
+            0% { text-shadow: 0 0 0px rgba(34,197,94,0);}
+            100% { text-shadow: 0 0 12px rgba(34,197,94,0.5);}
+        }
+
+        .info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 30px;
+            padding: 20px 0;
+            border-radius: 32px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+        }
+
+        .info-left {
+            flex: 2;
+            min-width: 220px;
+            padding: 16px 28px;
+        }
+
+        .info-right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .detail-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 28px;
+            padding: 6px 0;
+        }
+
+        .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            color: #7e8bae;
+            margin-top: 18px;
+        }
+
+        .label:first-of-type {
+            margin-top: 0;
+        }
+
+        .value {
+            font-size: 1.7rem;
+            font-weight: 600;
+            background: linear-gradient(120deg, #f1f5f9, #cbd5e6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+            word-break: break-word;
+            line-height: 1.3;
+        }
+
+        .member-badge {
+            display: inline-block;
+            background: rgba(59,130,246,0.2);
+            border-radius: 60px;
+            padding: 6px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid #3b82f650;
+            margin-top: 12px;
+        }
+
+        #memberImage {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px black;
+            border: 3px solid rgba(59, 130, 246, 0.6);
+            transition: transform 0.3s ease, box-shadow 0.3s;
+            background: #0f172a;
+        }
+
+        #memberImage:hover {
+            transform: scale(1.02);
+            box-shadow: 0 25px 40px -12px #3b82f6;
+        }
+
+        .flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 999;
+        }
+
+        .green {
+            background: radial-gradient(circle at center, rgba(34,197,94,0.35), rgba(34,197,94,0.1));
+            backdrop-filter: blur(2px);
+        }
+
+        .red {
+            background: radial-gradient(circle at center, rgba(239,68,68,0.4), rgba(239,68,68,0.1));
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(59,130,246,0.2);
+            border-top: 5px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin: 30px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-check {
+            font-size: 1.3rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .badge {
+            background: rgba(59,130,246,0.2);
+            border-radius: 100px;
+            padding: 6px 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(59,130,246,0.4);
+            color: #b9e2ff;
+        }
+
+        /* responsive adjustments */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            nav ul {
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            nav ul li {
+                margin: 5px 10px;
+            }
+            .mobile-menu {
+                display: block;
+                position: absolute;
+                top: 20px;
+                right: 20px;
+            }
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+            .nav-menu.active {
+                display: block;
+            }
+            .card {
+                padding: 1.8rem;
+            }
+            h1 {
+                font-size: 1.9rem;
+                padding-left: 16px;
+            }
+            .status {
+                font-size: 2rem;
+            }
+            .value {
+                font-size: 1.3rem;
+            }
+            .info {
+                flex-direction: column;
+            }
+            #memberImage {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section (Innovation Hub) -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Parent</a></li>
+                    <li><a href="#">Resources</a></li>
+                    <li><a href="#">Projects</a></li>
+                    <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Portal Content (Member Validation) -->
+    <div class="wrapper">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                <h1>✦ Member Verification</h1>
+                <div class="badge" id="qrBadge">QR • secure link</div>
+            </div>
+
+            <div id="statusContainer">
+                <div id="status" class="status">⟡ Checking credentials ⟡</div>
+                <div id="loaderSpinner" class="loader"></div>
+            </div>
+
+            <div id="info" style="display: none;">
+                <div class="info">
+                    <div class="info-left">
+                        <div class="detail-card">
+                            <div class="label">Full name</div>
+                            <div id="name" class="value">—</div>
+                            
+                            <div class="label">Member ID</div>
+                            <div id="memberId" class="value">—</div>
+                            
+                            <div class="label">Membership expiry</div>
+                            <div id="validity" class="value">—</div>
+                            <div id="validityNote" class="member-badge"></div>
+                        </div>
+                    </div>
+                    <div class="info-right">
+                        <img id="memberImage" alt="member portrait" />
+                    </div>
+                </div>
+            </div>
+            <div id="notFoundMsg" style="text-align: center; padding: 20px; display: none;">
+                <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
+                <div style="font-size: 1.3rem; font-weight: 500;">No membership data found</div>
+                <div style="color: #9ca3af; margin-top: 8px;">Please verify the QR code or contact support.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section (Innovation Hub) -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and collaborative spaces.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="#">Resources</a></li>
+                        <li><a href="#">Projects Gallery</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSev3gYFPXHilQ4mj8lDwT_a7tHSGJmdhbSqok0Y4kVqM1yl1w/viewform?usp=dialog">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Innovation Tracks</h3>
+                    <ul>
+                        <li><a href="#">Tech Innovation</a></li>
+                        <li><a href="#">Social Innovation</a></li>
+                        <li><a href="#">Product Design</a></li>
+                        <li><a href="#">Sustainable Tech</a></li>
+                        <li><a href="#">Health Innovation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentor2hubrsc@gmail.com</li>
+                        <li><i class="fas fa-clock"></i> TUESDAY - SUNDAY: 11AM-4PM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="flash" class="flash"></div>
+
+    <script>
+        // ========== MOBILE MENU TOGGLE (from original layout) ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navMenu = document.querySelector('.nav-menu');
+            if(mobileMenu && navMenu) {
+                mobileMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    navMenu.classList.toggle('active');
+                });
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('.header-container')) {
+                        navMenu.classList.remove('active');
+                    }
+                });
+            }
+        });
+
+        // ========== VALIDATION PORTAL LOGIC (enhanced) ==========
+        // CONFIG - Google Sheet
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq";
+
+        // DOM elements
+        const statusEl = document.getElementById("status");
+        const infoEl = document.getElementById("info");
+        const notFoundDiv = document.getElementById("notFoundMsg");
+        const loaderSpinner = document.getElementById("loaderSpinner");
+        const nameEl = document.getElementById("name");
+        const memberIdEl = document.getElementById("memberId");
+        const validityEl = document.getElementById("validity");
+        const memberImg = document.getElementById("memberImage");
+        const validityNoteSpan = document.getElementById("validityNote");
+
+        // get id from URL
+        const params = new URLSearchParams(window.location.search);
+        const memberId = params.get("id");
+
+        // Helper: Text to speech with graceful fallback
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            try {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.95;
+                utterance.pitch = 1.05;
+                utterance.lang = 'en-US';
+                utterance.volume = 0.8;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            } catch(e) { console.warn(e); }
+        }
+
+        // Flash effect
+        function flashScreen(colorType) {
+            const flashDiv = document.getElementById("flash");
+            flashDiv.className = "flash " + (colorType === 'green' ? 'green' : 'red');
+            flashDiv.style.opacity = 1;
+            setTimeout(() => { flashDiv.style.opacity = 0; }, 520);
+        }
+
+        // Parse expiry like "January 2025", "Dec 2026"
+        function parseExpiry(text) {
+            if (!text || typeof text !== 'string') return null;
+            const trimmed = text.trim();
+            const parts = trimmed.split(/\s+/);
+            if (parts.length < 2) return null;
+            let monthName = parts[0].toLowerCase().replace(/[^a-z]/g, '');
+            let yearStr = parts[1];
+            let year = parseInt(yearStr, 10);
+            if (isNaN(year)) return null;
+            
+            const monthsMap = {
+                jan:0, january:0, feb:1, february:1, mar:2, march:2, apr:3, april:3,
+                may:4, jun:5, june:5, jul:6, july:6, aug:7, august:7, sep:8, september:8,
+                oct:9, october:9, nov:10, november:10, dec:11, december:11
+            };
+            let monthIdx = monthsMap[monthName];
+            if (monthIdx === undefined) return null;
+            return new Date(year, monthIdx + 1, 0, 23, 59, 59);
+        }
+
+        function formatExpiryReadable(expiryDate) {
+            if (!expiryDate) return "";
+            return expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+        }
+
+        // Fetch and validate from Google Sheets
+        async function fetchAndValidate() {
+            if (!memberId) {
+                statusEl.innerText = "⛔ Invalid Access Link";
+                statusEl.className = "status invalid";
+                if(loaderSpinner) loaderSpinner.style.display = "none";
+                flashScreen("red");
+                speak("Invalid QR code");
+                notFoundDiv.style.display = "block";
+                notFoundDiv.innerHTML = `<div style="font-size: 2rem;">📷</div><div>Missing member ID in URL</div><div style="font-size: 0.9rem; margin-top: 12px;">Please scan a valid QR code</div>`;
+                infoEl.style.display = "none";
+                return;
+            }
+
+            try {
+                const response = await fetch(SHEET_URL);
+                const text = await response.text();
+                const jsonStart = text.indexOf('(');
+                const jsonEnd = text.lastIndexOf(')');
+                if (jsonStart === -1 || jsonEnd === -1) throw new Error("Invalid sheet response");
+                const jsonStr = text.slice(jsonStart + 1, jsonEnd);
+                const data = JSON.parse(jsonStr);
+                const rows = data.table.rows;
+                
+                let foundMember = null;
+                // columns: index 3 = name, 7 = expiry, 8 = member ID, 9 = image
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row.c) continue;
+                    const idCell = row.c[8];
+                    const idValue = idCell ? idCell.v : null;
+                    if (idValue != null && String(idValue).trim() === String(memberId).trim()) {
+                        const name = row.c[3]?.v || "Member";
+                        const expiryRaw = row.c[7]?.v || "";
+                        const imageRaw = row.c[9]?.v || "";
+                        foundMember = { name, id: idValue, expiryRaw, imageRaw };
+                        break;
+                    }
+                }
+
+                if (!foundMember) {
+                    statusEl.innerText = "✘ Member Not Found";
+                    statusEl.className = "status invalid";
+                    if(loaderSpinner) loaderSpinner.style.display = "none";
+                    infoEl.style.display = "none";
+                    notFoundDiv.style.display = "block";
+                    flashScreen("red");
+                    speak("Member not found");
+                    return;
+                }
+
+                // Member found
+                notFoundDiv.style.display = "none";
+                infoEl.style.display = "block";
+                if(loaderSpinner) loaderSpinner.style.display = "none";
+
+                const { name, id, expiryRaw, imageRaw } = foundMember;
+                nameEl.innerText = name || "—";
+                memberIdEl.innerText = id;
+                validityEl.innerText = expiryRaw || "No expiry data";
+
+                // Handle profile image
+                if (imageRaw && imageRaw.trim() !== "") {
+                    let imgUrl = imageRaw.trim();
+                    if (imgUrl.startsWith("http") || imgUrl.startsWith("//")) {
+                        memberImg.src = imgUrl;
+                    } else {
+                        memberImg.src = "https://placehold.co/400x400/1e293b/3b82f6?text=Member";
+                    }
+                    memberImg.onerror = () => {
+                        memberImg.src = "https://placehold.co/400x400/1e293b/9ca3af?text=no+image";
+                    };
+                } else {
+                    memberImg.src = "https://placehold.co/400x400/1e293b/6b7280?text=Portrait";
+                }
+
+                const expiryDate = parseExpiry(expiryRaw);
+                const now = new Date();
+
+                if (!expiryDate) {
+                    statusEl.innerText = "⚠️ Data Corrupt";
+                    statusEl.className = "status invalid";
+                    validityNoteSpan.innerText = "Expiry format unrecognized";
+                    flashScreen("red");
+                    speak("Membership data error");
+                    return;
+                }
+
+                const isActive = now <= expiryDate;
+                if (isActive) {
+                    statusEl.innerText = "✓ VALID MEMBER";
+                    statusEl.className = "status valid";
+                    const formattedExp = formatExpiryReadable(expiryDate);
+                    validityNoteSpan.innerHTML = `✅ Active until ${formattedExp}`;
+                    flashScreen("green");
+                    speak(`Welcome ${name}. Member verified.`);
+                } else {
+                    statusEl.innerText = "⨀ MEMBERSHIP EXPIRED";
+                    statusEl.className = "status invalid";
+                    const expiredDateStr = formatExpiryReadable(expiryDate);
+                    validityNoteSpan.innerHTML = `⚠️ Expired on ${expiredDateStr} · Renewal required`;
+                    flashScreen("red");
+                    speak(`Membership expired. Please renew.`);
+                }
+
+            } catch (err) {
+                console.error(err);
+                statusEl.innerText = "⛔ Connection Error";
+                statusEl.className = "status invalid";
+                if(loaderSpinner) loaderSpinner.style.display = "none";
+                infoEl.style.display = "none";
+                notFoundDiv.style.display = "block";
+                notFoundDiv.innerHTML = `<div style="font-size:1.5rem;">⚠️ Server unreachable</div><div style="margin-top:8px;">Check network or refresh</div>`;
+                flashScreen("red");
+                speak("System error loading data");
+            }
+        }
+
+        // Initialize portal
+        fetchAndValidate();
+    </script>
+</body>
+</html>
