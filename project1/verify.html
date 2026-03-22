@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Verify Member</title>
+<script src="app.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  padding: 50px;
+}
+
+.valid {
+  color: green;
+  font-size: 32px;
+}
+
+.invalid {
+  color: red;
+  font-size: 32px;
+}
+</style>
+</head>
+
+<body>
+
+<h1 id="status">Checking...</h1>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const memberId = params.get("id");
+
+fetchSheetData().then(rows => {
+  const res = checkMember(rows, memberId);
+  const el = document.getElementById("status");
+
+  if (!res.found) {
+    el.innerText = "Member Not Found";
+    el.className = "invalid";
+    return;
+  }
+
+  if (res.status === "Active") {
+    el.innerText = res.name + " ✔ Valid";
+    el.className = "valid";
+  } else {
+    el.innerText = res.name + " ✖ Expired";
+    el.className = "invalid";
+  }
+});
+</script>
+
+</body>
+</html>
