@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Member Verification</title>
+<title>QR Member Validation</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   text-align: center;
   background: #0f172a;
   color: white;
@@ -22,13 +22,8 @@ body {
   margin-top: 20px;
 }
 
-.valid {
-  color: #00ffae;
-}
-
-.invalid {
-  color: #ff4d4d;
-}
+.valid { color: #00ffae; }
+.invalid { color: #ff4d4d; }
 
 .flash {
   position: fixed;
@@ -41,28 +36,25 @@ body {
   transition: opacity 0.3s;
 }
 
-.green {
-  background: rgba(0,255,100,0.4);
-}
-
-.red {
-  background: rgba(255,0,0,0.4);
-}
+.green { background: rgba(0,255,100,0.4); }
+.red { background: rgba(255,0,0,0.4); }
 </style>
-
 </head>
+
 <body>
 
 <div class="container">
-  <h1>Member Verification</h1>
+  <h1>Member Validation</h1>
   <div id="status">Checking...</div>
 </div>
 
 <div id="flash" class="flash"></div>
 
 <script>
+// 🔗 YOUR SHEET
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq";
 
+// 📥 FETCH DATA
 async function fetchSheetData() {
   const res = await fetch(SHEET_URL);
   const text = await res.text();
@@ -70,24 +62,13 @@ async function fetchSheetData() {
   return json.table.rows;
 }
 
-function checkMember(rows, memberId) {
-  for (let row of rows) {
-    const id = row.c[0]?.v;
-    const name = row.c[1]?.v;
-    const status = row.c[2]?.v;
-
-    if (id == memberId) {
-      return { found: true, name, status };
-    }
-  }
-  return { found: false };
-}
-
+// 🔊 SPEAK
 function speak(text) {
   const msg = new SpeechSynthesisUtterance(text);
   speechSynthesis.speak(msg);
 }
 
+// 🎨 FLASH
 function flashScreen(color) {
   const flash = document.getElementById("flash");
   flash.className = "flash " + color;
@@ -95,7 +76,26 @@ function flashScreen(color) {
   setTimeout(() => flash.style.opacity = 0, 500);
 }
 
-// 🔍 GET MEMBER ID FROM URL
+// 📅 CONVERT "March 2026" → Date
+function parseExpiry(text) {
+  if (!text) return null;
+
+  const parts = text.split(" ");
+  const monthName = parts[0];
+  const year = parseInt(parts[1]);
+
+  const months = {
+    january: 0, february: 1, march: 2, april: 3,
+    may: 4, june: 5, july: 6, august: 7,
+    september: 8, october: 9, november: 10, december: 11
+  };
+
+  const month = months[monthName.toLowerCase()];
+
+  return new Date(year, month + 1, 0); // end of month
+}
+
+// 🔍 GET ID FROM URL
 const params = new URLSearchParams(window.location.search);
 const memberId = params.get("id");
 
@@ -105,27 +105,59 @@ if (!memberId) {
   statusEl.innerText = "Invalid QR Code";
   statusEl.className = "invalid";
 } else {
-  fetchSheetData().then(rows => {
-    const res = checkMember(rows, memberId);
 
-    if (!res.found) {
+  fetchSheetData().then(rows => {
+
+    let found = false;
+
+    for (let i = 1; i < rows.length; i++) {
+
+      const row = rows[i];
+      if (!row.c[0]) continue;
+
+      const id = row.c[0]?.v;
+      const name = row.c[1]?.v;
+      const expiryText = row.c[7]?.v; // 🔥 COLUMN H
+
+      if (String(id) === String(memberId)) {
+        found = true;
+
+        const expiryDate = parseExpiry(expiryText);
+        const now = new Date();
+
+        console.log("Expiry:", expiryDate);
+        console.log("Now:", now);
+
+        if (!expiryDate) {
+          statusEl.innerText = name + " ❌ No Expiry Data";
+          statusEl.className = "invalid";
+          flashScreen("red");
+          return;
+        }
+
+        if (now <= expiryDate) {
+          statusEl.innerText = name + " ✅ VALID MEMBER";
+          statusEl.className = "valid";
+          flashScreen("green");
+          speak("Member Verified");
+        } else {
+          statusEl.innerText = name + " ❌ EXPIRED";
+          statusEl.className = "invalid";
+          flashScreen("red");
+        }
+
+        return;
+      }
+    }
+
+    if (!found) {
       statusEl.innerText = "Member Not Found";
       statusEl.className = "invalid";
       flashScreen("red");
-      return;
     }
 
-    if (res.status === "Active") {
-      statusEl.innerText = res.name + " ✅ VALID";
-      statusEl.className = "valid";
-      flashScreen("green");
-      speak("Member Verified");
-    } else {
-      statusEl.innerText = res.name + " ❌ EXPIRED";
-      statusEl.className = "invalid";
-      flashScreen("red");
-    }
-  }).catch(() => {
+  }).catch(err => {
+    console.error(err);
     statusEl.innerText = "Error loading data";
     statusEl.className = "invalid";
   });
