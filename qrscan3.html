@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Member Validation</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #fff;
+}
+
+.site-header, .site-footer {
+  text-align: center;
+  padding: 15px;
+  background: #020617;
+  color: #9ca3af;
+}
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 120px);
+}
+
+.card {
+  background: #111827;
+  padding: 40px;
+  border-radius: 20px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #e5e7eb;
+}
+
+.status {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.valid { color: #22c55e; }
+.invalid { color: #ef4444; }
+
+.info {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.label {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.value {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.green { background: rgba(34,197,94,0.25); }
+.red { background: rgba(239,68,68,0.25); }
+</style>
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="wrapper">
+  <div class="card">
+    <h1>Member Verification</h1>
+
+    <div id="status" class="status">Checking...</div>
+
+    <div class="info" id="info" style="display:none;">
+      <div class="label">Name</div>
+      <div id="name" class="value"></div>
+
+      <div class="label">Member ID</div>
+      <div id="memberId" class="value"></div>
+
+      <div class="label">Validity</div>
+      <div id="validity" class="value"></div>
+    </div>
+  </div>
+</div>
+
+<div id="footer"></div>
+
+<div id="flash" class="flash"></div>
+
+<script>
+
+// 🔗 GOOGLE SHEET
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq";
+
+// 📥 FETCH DATA
+async function fetchSheetData() {
+  const res = await fetch(SHEET_URL);
+  const text = await res.text();
+  const json = JSON.parse(text.substr(47).slice(0, -2));
+  return json.table.rows;
+}
+
+// 🔊 SPEAK
+function speak(text) {
+  const msg = new SpeechSynthesisUtterance(text);
+  speechSynthesis.speak(msg);
+}
+
+// 🎨 FLASH
+function flashScreen(color) {
+  const flash = document.getElementById("flash");
+  flash.className = "flash " + color;
+  flash.style.opacity = 1;
+  setTimeout(() => flash.style.opacity = 0, 500);
+}
+
+// 📅 PARSE EXPIRY
+function parseExpiry(text) {
+  if (!text) return null;
+
+  const parts = text.trim().split(" ");
+  if (parts.length < 2) return null;
+
+  let monthName = parts[0].toLowerCase();
+  const year = parseInt(parts[1]);
+
+  const months = {
+    jan: 0, january: 0,
+    feb: 1, february: 1,
+    mar: 2, march: 2,
+    apr: 3, april: 3,
+    may: 4,
+    jun: 5, june: 5,
+    jul: 6, july: 6,
+    aug: 7, august: 7,
+    sep: 8, september: 8,
+    oct: 9, october: 9,
+    nov: 10, november: 10,
+    dec: 11, december: 11
+  };
+
+  const month = months[monthName];
+  if (month === undefined) return null;
+
+  return new Date(year, month + 1, 0);
+}
+
+// 🔍 GET ID FROM URL
+const params = new URLSearchParams(window.location.search);
+const memberId = params.get("id");
+
+const statusEl = document.getElementById("status");
+const infoEl = document.getElementById("info");
+
+const nameEl = document.getElementById("name");
+const memberIdEl = document.getElementById("memberId");
+const validityEl = document.getElementById("validity");
+
+// 📦 LOAD HEADER & FOOTER
+async function loadLayout() {
+  const res = await fetch("/project1/header_footer.html");
+  const html = await res.text();
+
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+
+  document.getElementById("header").appendChild(temp.querySelector("header"));
+  document.getElementById("footer").appendChild(temp.querySelector("footer"));
+}
+
+loadLayout();
+
+if (!memberId) {
+  statusEl.innerText = "Invalid QR Code";
+  statusEl.className = "status invalid";
+} else {
+
+  fetchSheetData().then(rows => {
+
+    let found = false;
+
+    for (let i = 1; i < rows.length; i++) {
+
+      const row = rows[i];
+      if (!row.c[8]) continue;
+
+      const id = row.c[8]?.v;
+      const name = row.c[3]?.v;
+      const expiryText = row.c[7]?.v;
+
+      if (String(id) === String(memberId)) {
+
+        found = true;
+
+        const expiryDate = parseExpiry(expiryText);
+        const now = new Date();
+
+        nameEl.innerText = name || "-";
+        memberIdEl.innerText = id;
+        validityEl.innerText = expiryText || "No Data";
+
+        infoEl.style.display = "block";
+
+        if (!expiryDate) {
+          statusEl.innerText = "Invalid Data";
+          statusEl.className = "status invalid";
+          flashScreen("red");
+          return;
+        }
+
+        if (now <= expiryDate) {
+          statusEl.innerText = "VALID MEMBER";
+          statusEl.className = "status valid";
+          flashScreen("green");
+          speak("Member Verified");
+        } else {
+          statusEl.innerText = "EXPIRED";
+          statusEl.className = "status invalid";
+          flashScreen("red");
+        }
+
+        return;
+      }
+    }
+
+    if (!found) {
+      statusEl.innerText = "Member Not Found";
+      statusEl.className = "status invalid";
+      flashScreen("red");
+    }
+
+  }).catch(() => {
+    statusEl.innerText = "Error loading data";
+    statusEl.className = "status invalid";
+  });
+}
+</script>
+
+</body>
+</html>
