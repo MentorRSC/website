@@ -2,28 +2,58 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>QR Member Validation</title>
+<title>Member Validation</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background: #111827;
+  padding: 40px;
+  border-radius: 20px;
+  width: 350px;
   text-align: center;
-  background: #0f172a;
-  color: white;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
-.container {
-  padding: 50px;
+h1 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #e5e7eb;
 }
 
-#status {
-  font-size: 32px;
+.status {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.valid { color: #22c55e; }
+.invalid { color: #ef4444; }
+
+.info {
   margin-top: 20px;
+  text-align: left;
 }
 
-.valid { color: #00ffae; }
-.invalid { color: #ff4d4d; }
+.label {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.value {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
 
 .flash {
   position: fixed;
@@ -36,49 +66,42 @@ body {
   transition: opacity 0.3s;
 }
 
-.green { background: rgba(0,255,100,0.4); }
-.red { background: rgba(255,0,0,0.4); }
-
-#debugMsg {
-  margin-top: 20px;
-  font-size: 13px;
-  color: yellow;
-  max-height: 200px;
-  overflow-y: auto;
-}
+.green { background: rgba(34,197,94,0.25); }
+.red { background: rgba(239,68,68,0.25); }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h1>Member Validation</h1>
-  <div id="status">Checking...</div>
+<div class="card">
+  <h1>Member Verification</h1>
+
+  <div id="status" class="status">Checking...</div>
+
+  <div class="info" id="info" style="display:none;">
+    <div class="label">Name</div>
+    <div id="name" class="value"></div>
+
+    <div class="label">Member ID</div>
+    <div id="memberId" class="value"></div>
+
+    <div class="label">Validity</div>
+    <div id="validity" class="value"></div>
+  </div>
 </div>
 
 <div id="flash" class="flash"></div>
 
-<div id="debugMsg">DEBUG:</div>
-
 <script>
-
-// ✅ DEBUG FUNCTION (MULTI-LINE)
-function debug(msg) {
-  console.log(msg);
-  const el = document.getElementById("debugMsg");
-  el.innerHTML += "<br>• " + msg;
-}
 
 // 🔗 GOOGLE SHEET
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq";
 
 // 📥 FETCH DATA
 async function fetchSheetData() {
-  debug("Fetching sheet...");
   const res = await fetch(SHEET_URL);
   const text = await res.text();
   const json = JSON.parse(text.substr(47).slice(0, -2));
-  debug("Sheet loaded successfully");
   return json.table.rows;
 }
 
@@ -96,25 +119,16 @@ function flashScreen(color) {
   setTimeout(() => flash.style.opacity = 0, 500);
 }
 
-// 📅 PARSE "March 2026"
+// 📅 PARSE EXPIRY
 function parseExpiry(text) {
-  if (!text) {
-    debug("No expiry text found");
-    return null;
-  }
+  if (!text) return null;
 
   const parts = text.trim().split(" ");
-  if (parts.length < 2) {
-    debug("Invalid format: " + text);
-    return null;
-  }
+  if (parts.length < 2) return null;
 
   let monthName = parts[0].toLowerCase();
   const year = parseInt(parts[1]);
 
-  debug("Raw expiry: " + text);
-
-  // ✅ SUPPORT SHORT + FULL MONTHS
   const months = {
     jan: 0, january: 0,
     feb: 1, february: 1,
@@ -131,38 +145,28 @@ function parseExpiry(text) {
   };
 
   const month = months[monthName];
+  if (month === undefined) return null;
 
-  if (month === undefined) {
-    debug("Invalid month: " + monthName);
-    return null;
-  }
-
-  const expiryDate = new Date(year, month + 1, 0);
-
-  debug("Parsed expiry → " + expiryDate);
-
-  return expiryDate;
+  return new Date(year, month + 1, 0);
 }
 
 // 🔍 GET ID FROM URL
-//debug("Script started");
-
 const params = new URLSearchParams(window.location.search);
 const memberId = params.get("id");
 
-debug("URL ID = " + memberId);
-
 const statusEl = document.getElementById("status");
+const infoEl = document.getElementById("info");
+
+const nameEl = document.getElementById("name");
+const memberIdEl = document.getElementById("memberId");
+const validityEl = document.getElementById("validity");
 
 if (!memberId) {
   statusEl.innerText = "Invalid QR Code";
-  statusEl.className = "invalid";
-  debug("No ID in URL");
+  statusEl.className = "status invalid";
 } else {
 
   fetchSheetData().then(rows => {
-
-    debug("Total rows = " + rows.length);
 
     let found = false;
 
@@ -173,38 +177,36 @@ if (!memberId) {
 
       const id = row.c[8]?.v;
       const name = row.c[3]?.v;
-      const expiryText = row.c[7]?.v; // COLUMN H
-
-      debug("Row " + i + " → ID: " + id + " | Name: " + name + " | Expiry: " + expiryText);
+      const expiryText = row.c[7]?.v;
 
       if (String(id) === String(memberId)) {
- debug("Row " + i + " → ID: " + id + " | Name: " + name + " | Expiry: " + expiryText);
-        debug("MATCH FOUND at row " + i);
 
         found = true;
 
         const expiryDate = parseExpiry(expiryText);
         const now = new Date();
 
-        debug("Expiry Date = " + expiryDate);
-        debug("Current Date = " + now);
+        nameEl.innerText = name || "-";
+        memberIdEl.innerText = id;
+        validityEl.innerText = expiryText || "No Data";
+
+        infoEl.style.display = "block";
 
         if (!expiryDate) {
-          statusEl.innerText = name + " ❌ No Expiry Data";
-          statusEl.className = "invalid";
+          statusEl.innerText = "Invalid Data";
+          statusEl.className = "status invalid";
           flashScreen("red");
           return;
         }
 
         if (now <= expiryDate) {
-          statusEl.innerText = name + " ✅ VALID MEMBER";
-          statusEl.className = "valid";
+          statusEl.innerText = "VALID MEMBER";
+          statusEl.className = "status valid";
           flashScreen("green");
           speak("Member Verified");
         } else {
-          debug("No matching ID found"+name);
-          statusEl.innerText = name + " ❌ EXPIRED";
-          statusEl.className = "invalid";
+          statusEl.innerText = "EXPIRED";
+          statusEl.className = "status invalid";
           flashScreen("red");
         }
 
@@ -213,18 +215,14 @@ if (!memberId) {
     }
 
     if (!found) {
-      debug("No matching ID found");
-      
       statusEl.innerText = "Member Not Found";
-      statusEl.className = "invalid";
+      statusEl.className = "status invalid";
       flashScreen("red");
     }
 
-  }).catch(err => {
-    console.error(err);
-    debug("Error loading sheet");
+  }).catch(() => {
     statusEl.innerText = "Error loading data";
-    statusEl.className = "invalid";
+    statusEl.className = "status invalid";
   });
 }
 </script>
