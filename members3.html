@@ -660,7 +660,40 @@
             div.textContent = text;
             return div.innerHTML;
         }
-        
+ /* ================= QR ID CARD FUNCTIONS ================= */
+
+// Store current QR data
+let currentQRData = "";
+
+// Show QR popup
+function showQRCode(id) {
+    const url = "https://mentorrsc.github.io/website/project1/qrscan3.html?id=" + id;
+
+    currentQRData = url;
+
+    QRCode.toCanvas(
+        document.getElementById("qrCanvas"),
+        url,
+        { width: 200 }
+    );
+
+    document.getElementById("qrPopup").style.display = "flex";
+}
+
+// Close popup
+function closeQR() {
+    document.getElementById("qrPopup").style.display = "none";
+}
+
+// Download QR
+function downloadQR() {
+    const canvas = document.getElementById("qrCanvas");
+
+    const link = document.createElement("a");
+    link.download = "id-card.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}       
         // Function to load data from Google Sheets
         function loadData() {
             const url = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
