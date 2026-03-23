@@ -727,7 +727,13 @@ function downloadQR() {
     const qrCanvas = document.getElementById("qrCanvas");
     const name = document.getElementById("qrName").innerText;
 
-    // Create new canvas (ID card)
+    // 🔴 Ensure QR is ready
+    if (!qrCanvas || qrCanvas.width === 0) {
+        alert("QR not ready. Please wait a moment.");
+        return;
+    }
+
+    // Create new canvas
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -738,11 +744,10 @@ function downloadQR() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Top Header (optional styling)
+    // Header
     ctx.fillStyle = "#6c8ef5";
     ctx.fillRect(0, 0, canvas.width, 60);
 
-    // Title
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 16px Arial";
     ctx.textAlign = "center";
@@ -753,19 +758,22 @@ function downloadQR() {
     ctx.font = "bold 18px Arial";
     ctx.fillText(name, canvas.width / 2, 90);
 
-    // Draw QR (centered)
-    ctx.drawImage(qrCanvas, 50, 110, 200, 200);
+    // 🟢 CRITICAL FIX: use image instead of direct canvas
+    const img = new Image();
+    img.src = qrCanvas.toDataURL("image/png");
 
-    // Footer text
-    ctx.fillStyle = "#555";
-    ctx.font = "12px Arial";
-    ctx.fillText("Scan for verification", canvas.width / 2, 340);
+    img.onload = function () {
+        ctx.drawImage(img, 50, 110, 200, 200);
 
-    // Download
-    const link = document.createElement("a");
-    link.download = name.replace(/\s+/g, "_") + "_ID.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+        ctx.fillStyle = "#555";
+        ctx.font = "12px Arial";
+        ctx.fillText("Scan for verification", canvas.width / 2, 340);
+
+        const link = document.createElement("a");
+        link.download = name.replace(/\s+/g, "_") + "_ID.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    };
 }    
         // Function to load data from Google Sheets
         function loadData() {
