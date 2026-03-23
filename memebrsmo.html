@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Innovation Hub | Digital ID Cards - Member Directory</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Inter', 'Roboto', sans-serif;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d5bbb;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --border-light: #eef2f6;
+            --gray-50: #f8fafc;
+            --gray-200: #e2e8f0;
+            --gray-500: #64748b;
+        }
+
+        body {
+            background: #f5f9ff;
+            color: var(--dark);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 94%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            gap: 8px;
+        }
+
+        .logo i {
+            font-size: 26px;
+            color: var(--primary);
+        }
+
+        .logo h1 {
+            font-size: 1.4rem;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+
+        .cta-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 26px;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(125deg, var(--primary) 0%, #4285f4 100%);
+            color: white;
+            padding: 48px 0 44px;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .hero-section p {
+            font-size: 1rem;
+            max-width: 650px;
+            margin: 0 auto;
+            opacity: 0.92;
+        }
+
+        /* Stats Row */
+        .stats-section {
+            background: white;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            padding: 12px 24px;
+            border-radius: 60px;
+            text-align: center;
+            min-width: 130px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* FIXED STICKY HEADER AREA (combined controls) */
+        .sticky-controls {
+            position: sticky;
+            top: 68px;
+            z-index: 99;
+            background: white;
+            border-radius: 28px 28px 0 0;
+            margin-top: 28px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .controls-panel {
+            padding: 18px 20px 12px 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .title-search-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .title-icon {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-icon h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .title-icon i {
+            font-size: 1.6rem;
+            color: var(--primary);
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 260px;
+            flex: 1;
+            max-width: 340px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px 38px 10px 42px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 48px;
+            font-size: 0.9rem;
+            background: white;
+            transition: 0.2s;
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            display: none;
+            font-size: 1rem;
+        }
+
+        .filter-stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 6px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 6px 18px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .result-badge {
+            background: var(--gray-50);
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-500);
+        }
+
+        /* Column Headers (fixed) */
+        .grid-header {
+            background: var(--primary);
+            border-radius: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 70px 1fr 1.1fr 1.3fr 130px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 12px 16px;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Table container — NO internal scroll, natural page flow */
+        .members-list-container {
+            background: white;
+            border-radius: 0 0 28px 28px;
+            overflow-x: auto;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 48px;
+        }
+
+        .member-grid {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .member-row {
+            display: grid;
+            grid-template-columns: 70px 1fr 1.1fr 1.3fr 130px;
+            gap: 8px;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.15s;
+        }
+
+        .member-row:hover {
+            background: var(--gray-50);
+        }
+
+        /* Typography & status */
+        .member-name {
+            font-weight: 600;
+            color: var(--dark);
+            word-break: break-word;
+        }
+
+        .member-reg {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #2c3e66;
+            word-break: break-word;
+        }
+
+        .valid-active {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .valid-expired {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .valid-expiring {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .id-btn {
+            background: linear-gradient(100deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 7px 12px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .id-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .id-btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--gray-500);
+        }
+
+        /* QR Popup */
+        #qrPopup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .popup-card {
+            background: white;
+            border-radius: 36px;
+            max-width: 460px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            animation: fadeScale 0.25s ease;
+        }
+
+        @keyframes fadeScale {
+            from { opacity: 0; transform: scale(0.95);}
+            to { opacity: 1; transform: scale(1);}
+        }
+
+        .preview-img {
+            background: #f1f5f9;
+            border-radius: 24px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .preview-img img {
+            max-width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: var(--gray-500);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 48px 0 24px;
+            margin-top: auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .footer-col h3 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .footer-col h3:after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 2px;
+            background: var(--primary);
+            margin-top: 6px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col li {
+            margin-bottom: 8px;
+        }
+
+        .footer-col a {
+            color: #cbd5e1;
+            text-decoration: none;
+        }
+
+        .footer-col a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* Debug (optional) */
+        .debug-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            z-index: 999;
+        }
+
+        .debug-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #0f172a;
+            color: #a5f3fc;
+            font-family: monospace;
+            font-size: 10px;
+            padding: 12px;
+            border-radius: 16px;
+            width: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 998;
+            border: 1px solid #334155;
+        }
+
+        /* Responsive: mobile layout rewrite */
+        @media (max-width: 780px) {
+            .grid-header, .member-row {
+                grid-template-columns: 50px 1fr 1.1fr 1.2fr 100px;
+                gap: 6px;
+                padding: 12px 12px;
+            }
+            .id-btn {
+                padding: 5px 8px;
+                font-size: 0.65rem;
+                white-space: normal;
+                word-break: keep-all;
+            }
+            .title-icon h2 {
+                font-size: 1.3rem;
+            }
+            .search-box {
+                max-width: 100%;
+                width: 100%;
+            }
+            .title-search-flex {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-stats-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .stat-card {
+                padding: 8px 16px;
+                min-width: 100px;
+            }
+            .hero-section h1 {
+                font-size: 1.6rem;
+            }
+            nav ul {
+                display: none;
+                flex-direction: column;
+                background: white;
+                width: 100%;
+                padding: 16px;
+                border-radius: 20px;
+                box-shadow: var(--shadow-md);
+                position: absolute;
+                top: 60px;
+                left: 0;
+                z-index: 100;
+            }
+            nav ul.show {
+                display: flex;
+            }
+            .mobile-menu {
+                display: block;
+            }
+            .header-container {
+                position: relative;
+            }
+            .sticky-controls {
+                top: 60px;
+            }
+        }
+
+        @media (max-width: 580px) {
+            .grid-header, .member-row {
+                grid-template-columns: 40px 1.2fr 1fr 1.4fr 85px;
+                font-size: 0.75rem;
+            }
+            .member-name {
+                font-size: 0.8rem;
+            }
+            .member-reg {
+                font-size: 0.7rem;
+            }
+            .valid-active, .valid-expiring {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container header-container">
+        <a href="#" class="logo">
+            <i class="fas fa-microchip"></i>
+            <h1>Innovation<span>Hub</span></h1>
+        </a>
+        <div class="mobile-menu" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </div>
+        <nav class="nav-menu" id="navMenu">
+                <ul>
+                    <li>
+                      <a href="linktree.html">
+                        <i class="fa-solid fa-share-nodes"></i> Social Media
+                      </a>
+                    </li>
+                    <li><a href="https://rscpcalicut.org.in/"  class="active">Home</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                    <li><a href="puzzles.html">Puzzles</a></li>
+                    <li><a href="members.html">Members</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846" class="cta-button">Join Now</a></li>
+                </ul>
+        </nav>
+    </div>
+</header>
+
+<section class="hero-section">
+    <div class="container">
+        <h1>📇 Digital ID Card System</h1>
+        <p>Meet the brilliant minds driving innovation at Regional Science Centre and Planetarium, Calicut</p>
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="container stats-grid">
+        <div class="stat-card"><div class="stat-number" id="totalMembers">0</div><div class="stat-label">Total Members</div></div>
+        <div class="stat-card"><div class="stat-number" id="activeMembers">0</div><div class="stat-label">Active Members</div></div>
+        <div class="stat-card"><div class="stat-number" id="expiringSoon">0</div><div class="stat-label">Expiring Soon</div></div>
+    </div>
+</section>
+
+<div class="container">
+    <!-- Sticky controls + column headers -->
+    <div class="sticky-controls">
+        <div class="controls-panel">
+            <div class="title-search-flex">
+                <div class="title-icon">
+                    <i class="fas fa-id-card"></i>
+                    <h2>Member Directory</h2>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search name or reg no...">
+                    <button id="clearSearchBtn" class="clear-search"><i class="fas fa-times-circle"></i></button>
+                </div>
+            </div>
+            <div class="filter-stats-row">
+                <div class="filter-group" id="filterGroup">
+                    <button class="filter-chip" data-filter="all">All</button>
+                    <button class="filter-chip active" data-filter="active">Active</button>
+                    <button class="filter-chip" data-filter="expiring">Expiring Soon</button>
+                </div>
+                <div class="result-badge" id="searchStats">—</div>
+            </div>
+        </div>
+        <!-- Column headers (grid) -->
+        <div class="grid-header">
+            <span>#</span>
+            <span>Full Name</span>
+            <span>Registration No</span>
+            <span>Validity</span>
+            <span>ID Card</span>
+        </div>
+    </div>
+
+    <!-- Members List (dynamic grid) -->
+    <div class="members-list-container">
+        <div id="membersList" class="member-grid">
+            <div class="no-results"><i class="fas fa-spinner fa-spin"></i> Loading members...</div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Popup -->
+<div id="qrPopup">
+    <div class="popup-card">
+        <h3><i class="fas fa-id-card"></i> Digital ID Card</h3>
+        <div class="preview-img">
+            <img id="cardPreviewImage" alt="ID Card Preview">
+        </div>
+        <div class="popup-actions">
+            <button id="downloadCardBtn" class="btn-primary"><i class="fas fa-download"></i> Download PNG</button>
+            <button onclick="closePopup()" class="btn-secondary"><i class="fas fa-times"></i> Close</button>
+        </div>
+    </div>
+</div>
+
+<button class="debug-toggle" id="debugToggle"><i class="fas fa-bug"></i></button>
+<div class="debug-panel" id="debugPanel"><div id="debugMsg">✅ System ready</div></div>
+
+<footer>
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h3>Innovation Hub</h3>
+                <p>Empowering students to transform ideas into reality.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Programs</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="https://rscpcalicut.org.in/">Events</a></li>
+                        <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846">Join Now</a></li>
+                    </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <p><i class="fas fa-envelope"></i> mentorinnovationhub@gmail.com</p>
+                <p><i class="fas fa-phone"></i> 0495 2770571</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // ---------- CONFIG ----------
+    const CARD_W = 416;
+    const CARD_H = 636;
+    const BG_URL = "https://lh3.googleusercontent.com/d/1Un6KVWQgNJo0oIbjhXMXfk6v55hwcTdb";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
+
+    let masterMembers = [];
+    let currentFilter = "active";
+    let currentSearch = "";
+    let activeCardBlob = null;
+
+    // Helpers
+    function escapeHtml(str) { if(!str) return ""; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    function parseDateFromStr(dateStr) {
+        if(!dateStr) return null;
+        const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+        const match = dateStr.match(/([A-Za-z]{3})\s+(\d{4})/);
+        if(match && monthMap[match[1]] !== undefined) return new Date(parseInt(match[2]), monthMap[match[1]] + 1, 0);
+        const d = new Date(dateStr);
+        return isNaN(d) ? null : d;
+    }
+
+    function getValidityStatus(raw) {
+        if(!raw || raw === "") return { class: "valid-active", text: "Active Member", status: "active" };
+        const expiry = parseDateFromStr(raw);
+        if(!expiry) return { class: "valid-active", text: raw, status: "active" };
+        const today = new Date(); today.setHours(0,0,0,0);
+        const diffDays = Math.ceil((expiry - today) / (1000*3600*24));
+        if(diffDays < 0) return { class: "valid-expired", text: `Expired (${raw})`, status: "expired" };
+        if(diffDays <= 30) return { class: "valid-expiring", text: `Expires in ${diffDays} days (${raw})`, status: "expiring" };
+        return { class: "valid-active", text: `Valid till ${raw}`, status: "active" };
+    }
+function generateQRCanvas(text, size) {
+    return new Promise((resolve) => {
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "absolute";
+        wrapper.style.left = "-9999px";
+        document.body.appendChild(wrapper);
+
+        new QRCode(wrapper, {
+            text: text,
+            width: size,
+            height: size,
+            colorDark: "#000",
+            colorLight: "#FFF",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+
+        // ✅ WAIT until QR actually exists (no timeout guessing)
+        const checkQR = setInterval(() => {
+            const img = wrapper.querySelector("img") || wrapper.querySelector("canvas");
+
+            if (img) {
+                clearInterval(checkQR);
+
+                const canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(0, 0, size, size);
+                ctx.drawImage(img, 0, 0, size, size);
+
+                document.body.removeChild(wrapper);
+                resolve(canvas);
+            }
+        }, 50); // check every 50ms
+    });
+}
+
+  
+    async function buildIDCardBlob(memberName, regNo, validityText, qrDataUrl) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = CARD_W;
+            canvas.height = CARD_H;
+            const ctx = canvas.getContext('2d');
+            const bg = new Image();
+            bg.crossOrigin = "Anonymous";
+            bg.onload = () => {
+                ctx.drawImage(bg, 0, 0, CARD_W, CARD_H);
+                const qrSize = Math.min(CARD_W * 0.38, 152);
+                const qrX = (CARD_W - qrSize)/2;
+                const qrY = (CARD_H - qrSize)/2 + 18;
+                const qrImg = new Image();
+                qrImg.onload = () => {
+                    ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+                    const bottomBase = CARD_H - 98;
+                    ctx.font = `bold ${Math.floor(CARD_W * 0.055)}px "Segoe UI", system-ui`;
+                    ctx.fillStyle = "#0f172a";
+                    ctx.textAlign = "center";
+                    const shortName = memberName.length > 28 ? memberName.slice(0,26)+".." : memberName;
+                    ctx.fillText(shortName, CARD_W/2, bottomBase -62);
+                    ctx.font = `${Math.floor(CARD_W * 0.038)}px monospace`;
+                    ctx.fillStyle = "#1e3a5f";
+                    ctx.fillText(`ID: ${regNo}`, CARD_W/2, bottomBase -30);
+                    ctx.font = `${Math.floor(CARD_W * 0.033)}px system-ui`;
+                    ctx.fillStyle = validityText.includes("Expired") ? "#dc2626" : "#2b6e3c";
+                    ctx.fillText(validityText, CARD_W/2, bottomBase-10 );
+                    ctx.font = `10px monospace`;
+                    ctx.fillStyle = "#4b5563";
+                    ctx.fillText("Scan to verify membership", CARD_W/2, CARD_H - 22);
+                    canvas.toBlob(blob => resolve(blob));
+                };
+                qrImg.src = qrDataUrl;
+            };
+            bg.onerror = () => {
+                ctx.fillStyle = "#eef2ff";
+                ctx.fillRect(0,0,CARD_W,CARD_H);
+                ctx.fillStyle = "#1a73e8";
+                ctx.font = "bold 20px sans-serif";
+                ctx.fillText("Innovation Hub", CARD_W/2, 70);
+                canvas.toBlob(blob => resolve(blob));
+            };
+            bg.src = BG_URL;
+        });
+    }
+
+    async function showIDCard(member, isExpired) {
+        if(isExpired) { alert("⚠️ Membership expired. ID card cannot be generated."); return; }
+        const verifyLink = `https://mentorrsc.github.io/website/qrscan.html?id=${encodeURIComponent(member.reg)}`;
+        const qrCanvas = await generateQRCanvas(verifyLink, 280);
+        const qrData = qrCanvas.toDataURL();
+        const cardBlob = await buildIDCardBlob(member.name, member.reg, member.validityText, qrData);
+        activeCardBlob = cardBlob;
+        const previewUrl = URL.createObjectURL(cardBlob);
+        document.getElementById("cardPreviewImage").src = previewUrl;
+        document.getElementById("qrPopup").style.display = "flex";
+        document.getElementById("debugMsg").innerHTML = `🎫 Card generated for ${member.name}`;
+    }
+
+    function downloadCard() {
+        if(activeCardBlob) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(activeCardBlob);
+            link.download = `id_innovationhub.png`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+    }
+    window.closePopup = () => {
+        document.getElementById("qrPopup").style.display = "none";
+        if(activeCardBlob) URL.revokeObjectURL(activeCardBlob);
+        activeCardBlob = null;
+    };
+    window.showIDCardGlobal = (memberObj, expiredFlag) => showIDCard(memberObj, expiredFlag);
+
+    // Fetch & Render
+    async function loadData() {
+        try {
+            const resp = await fetch(SHEET_URL);
+            const txt = await resp.text();
+            const jsonStr = txt.substring(47).slice(0, -2);
+            const json = JSON.parse(jsonStr);
+            const rows = json.table.rows;
+            let membersRaw = [];
+            for(let i=0; i<rows.length; i++) {
+                const r = rows[i];
+                if(!r?.c) continue;
+                const name = r.c[3]?.v || "";
+                const validityRaw = r.c[7]?.v || "";
+                const reg = r.c[8]?.v || `IH${String(i+1).padStart(4,'0')}`;
+                if(name && name !== "Name" && name.trim() !== "") {
+                    const status = getValidityStatus(validityRaw);
+                    membersRaw.push({
+                        name: name.toString().trim(),
+                        reg: reg.toString().trim(),
+                        validityText: status.text,
+                        statusClass: status.class,
+                        status: status.status
+                    });
+                }
+            }
+            membersRaw.sort((a,b) => a.name.localeCompare(b.name));
+            masterMembers = membersRaw.map((m, idx) => ({ ...m, sl: idx+1 }));
+            const activeCount = masterMembers.filter(m => m.status === "active").length;
+            const expiringCount = masterMembers.filter(m => m.status === "expiring").length;
+            document.getElementById("totalMembers").innerText = masterMembers.length;
+            document.getElementById("activeMembers").innerText = activeCount;
+            document.getElementById("expiringSoon").innerText = expiringCount;
+            renderMembers();
+            document.getElementById("debugMsg").innerHTML = `✅ ${masterMembers.length} members loaded (A-Z)`;
+        } catch(e) {
+            document.getElementById("membersList").innerHTML = `<div class="no-results">⚠️ Failed to load data</div>`;
+        }
+    }
+
+    function renderMembers() {
+        let filtered = [...masterMembers];
+        if(currentFilter !== "all") filtered = filtered.filter(m => m.status === currentFilter);
+        if(currentSearch.trim()) {
+            const s = currentSearch.toLowerCase();
+            filtered = filtered.filter(m => m.name.toLowerCase().includes(s) || m.reg.toLowerCase().includes(s));
+        }
+        document.getElementById("searchStats").innerHTML = `${filtered.length} of ${masterMembers.length}`;
+        const container = document.getElementById("membersList");
+        if(filtered.length === 0) {
+            container.innerHTML = `<div class="no-results"><i class="fas fa-user-slash"></i> No members match</div>`;
+            return;
+        }
+        container.innerHTML = filtered.map((m, idx) => {
+            const expiredFlag = m.status === "expired";
+            const memberData = { name: m.name, reg: m.reg, validityText: m.validityText, status: m.status };
+            return `
+                <div class="member-row">
+                    <span style="color: #5f6c80;">${idx+1}</span>
+                    <span class="member-name">${escapeHtml(m.name)}</span>
+                    <span class="member-reg">${escapeHtml(m.reg)}</span>
+                    <span class="${m.statusClass}">${escapeHtml(m.validityText)}</span>
+                    <span><button class="id-btn" ${expiredFlag ? 'disabled' : ''} onclick="showIDCardGlobal(${JSON.stringify(memberData).replace(/"/g, '&quot;')}, ${expiredFlag})"><i class="fas fa-id-card"></i> Get ID</button></span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Event binding
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+        currentSearch = e.target.value;
+        document.getElementById("clearSearchBtn").style.display = currentSearch ? "block" : "none";
+        if(currentSearch.trim()) {
+            currentFilter = "all";
+            document.querySelectorAll(".filter-chip").forEach(btn => btn.classList.remove("active"));
+            document.querySelector('[data-filter="all"]').classList.add("active");
+        }
+        renderMembers();
+    });
+    document.getElementById("clearSearchBtn").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        currentSearch = "";
+        document.getElementById("clearSearchBtn").style.display = "none";
+        renderMembers();
+    });
+    document.querySelectorAll(".filter-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentFilter = btn.dataset.filter;
+            renderMembers();
+        });
+    });
+    document.getElementById("downloadCardBtn")?.addEventListener("click", downloadCard);
+    // Mobile nav toggle
+    const mobileBtn = document.getElementById("mobileMenuBtn");
+    const navMenu = document.getElementById("navMenu");
+    if(mobileBtn) {
+        mobileBtn.addEventListener("click", () => {
+            navMenu.querySelector("ul").classList.toggle("show");
+        });
+    }
+    // Debug
+    document.getElementById("debugToggle")?.addEventListener("click", () => {
+        document.getElementById("debugPanel").classList.toggle("show");
+    });
+    
+    loadData();
+</script>
+</body>
+</html>
