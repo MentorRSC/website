@@ -651,7 +651,27 @@ function generateQRToCanvas(canvas, text, size) {
                 
                 bgImage.onload = () => {
                     // Draw background (cover entire card)
-                    ctx.drawImage(bgImage, 0, 0, CARD_WIDTH_PX, CARD_HEIGHT_PX);
+                    const imgAspect = bgImage.width / bgImage.height;
+const canvasAspect = CARD_WIDTH_PX / CARD_HEIGHT_PX;
+
+let drawWidth, drawHeight, offsetX, offsetY;
+
+if (imgAspect > canvasAspect) {
+    // Image is wider → crop sides
+    drawHeight = CARD_HEIGHT_PX;
+    drawWidth = drawHeight * imgAspect;
+    offsetX = (CARD_WIDTH_PX - drawWidth) / 2;
+    offsetY = 0;
+} else {
+    // Image is taller → crop top/bottom
+    drawWidth = CARD_WIDTH_PX;
+    drawHeight = drawWidth / imgAspect;
+    offsetX = 0;
+    offsetY = (CARD_HEIGHT_PX - drawHeight) / 2;
+}
+
+// Draw like CSS "cover"
+ctx.drawImage(bgImage, offsetX, offsetY, drawWidth, drawHeight);
                     
                     // QR Code dimensions and positioning (absolute center of card)
                     const qrSize = Math.min(CARD_WIDTH_PX * 0.4, 170); // ~40% of width
