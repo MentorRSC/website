@@ -721,43 +721,196 @@ function showQRCode(id, name) {
 function closeQR() {
     document.getElementById("qrPopup").style.display = "none";
 }
+
+// Download QR
 function downloadQR() {
-    const qrCanvas = document.getElementById("qrCanvas");
+    const canvas = document.getElementById("qrCanvas");
 
-    // Create a new canvas for final image
-    const finalCanvas = document.createElement("canvas");
-    const ctx = finalCanvas.getContext("2d");
-
-    // Set size (you can adjust)
-    finalCanvas.width = 300;
-    finalCanvas.height = 350;
-
-    // Background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-    // Add Name
-    const name = document.getElementById("qrName").innerText;
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 18px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(name, finalCanvas.width / 2, 40);
-
-    // Draw QR (centered)
-    ctx.drawImage(qrCanvas, 50, 70, 200, 200);
-
-    // Optional label
-    ctx.font = "14px Arial";
-    ctx.fillStyle = "#555";
-    ctx.fillText("Innovation Hub ID", finalCanvas.width / 2, 300);
-
-    // Download
     const link = document.createElement("a");
-    link.download = name.replace(/\s+/g, "_") + "_ID.png";
-    link.href = finalCanvas.toDataURL("image/png");
+    link.download = "id-card.png";
+    link.href = canvas.toDataURL("image/png");
     link.click();
-}
-
+}       
+        // Function to load data from Google Sheets
+        function loadData() {
+            const url = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
+            
+            fetch(url)
+                .then(res => res.text())
+                .then(rep => {
+                    // Parse the JSON response
+                    const jsonString = rep.substring(47).slice(0, -2);
+                    const json = JSON.parse(jsonString);
+                    const rows = json.table.rows;
+                    
+                    let debugInfo = [];
+                    debugInfo.push(`Total rows from Google Sheets: ${rows.length}`);
+                    debugInfo.push(`All rows contain data starting from row 0 in API response`);
+                    debugInfo.push(`This means rows 1-35 in your sheet are being skipped by the API due to formatting issues`);
+                    debugInfo.push(`---`);
+                    
+                    let totalCount = 0;
+                    let activeCount = 0;
+                    let expiringCount = 0;
+                    
+                    // Process ALL rows that have valid data
+                    for (let i = 0; i < rows.length; i++) {
+                        const r = rows[i];
+                        if (!r || !r.c) continue;
+                        
+                        // Column mapping based on your sheet structure:
+                        // Col 0: Timestamp (might be empty)
+                        // Col 1: Email (might be empty)
+                        // Col 2: Sl.No
+                        // Col 3: Name
+                        // Col 4: Phone No
+                        // Col 5: Date of Birth
+                        // Col 6: Reg.Date
+                        // Col 7: Validity
+                        // Col 8: Reg no.
+                        
+                        const sl = r.c[2]?.v || "";
+                        const name = r.c[3]?.v || "";
+                        const validity = r.c[7]?.v || "";
+                        const reg = r.c[8]?.v || "";
+                        
+                        // Only include rows with valid names (non-empty and not headers)
+                        if (name && name !== "" && name !== "Name" && !name.includes("Name")) {
+                            totalCount++;
+                            const status = getValidityStatus(validity);
+                            
+                            if (status.status === "active") activeCount++;
+                            if (status.status === "expiring") expiringCount++;
+                            
+                            allMembers.push({
+                                sl: sl || totalCount,
+                                name: name,
+                                reg: reg || "—",
+                                validityText: status.text,
+                                statusClass: status.class,
+                                status: status.status
+                            });
+                            
+                            if (allMembers.length <= 10) {
+                                debugInfo.push(`Loaded member ${allMembers.length}: Sl.No ${sl} - ${name} (${reg}) - ${validity}`);
+                            }
+                        }
+                    }
+                    
+                    debugInfo.push(`---`);
+                    debugInfo.push(`Total members loaded: ${totalCount}`);
+                    debugInfo.push(`Active: ${activeCount}, Expiring: ${expiringCount}`);
+                    
+                    if (totalCount === 0) {
+                        debugInfo.push(`⚠ No members loaded! This might be because:`);
+                        debugInfo.push(`1. The sheet is empty`);
+                        debugInfo.push(`2. Column indices are incorrect`);
+                        debugInfo.push(`3. The sheet format has changed`);
+                        debugInfo.push(`\n📊 Showing all raw data from API for debugging:`);
+                        
+                        // Show first 5 rows raw data
+                        for (let i = 0; i < Math.min(5, rows.length); i++) {
+                            if (rows[i] && rows[i].c) {
+                                const rowData = rows[i].c.map((cell, idx) => `[${idx}]:${cell?.v || 'empty'}`).join(', ');
+                                debugInfo.push(`Row ${i}: ${rowData}`);
+                            }
+                        }
+                    }
+                    
+                    // Update debug panel
+                    const debugContent = document.getElementById("debugContent");
+                    if (debugContent) {
+                        debugContent.innerHTML = debugInfo.map(msg => `<div>${escapeHtml(msg)}</div>`).join('');
+                    }
+                    
+                    // Update stats
+                    document.getElementById("totalMembers").textContent = totalCount;
+                    document.getElementById("activeMembers").textContent = activeCount;
+                    document.getElementById("expiringSoon").textContent = expiringCount;
+                    
+                    // Show message if no data
+                    if (allMembers.length === 0) {
+                        document.getElementById("data").innerHTML = `
+                            <tr><td colspan="4" class="no-data">
+                                <i class="fas fa-users"></i> No members found. Be the first to join!
+                                <br><br>
+                                <small>Debug: Check the bug icon for more information</small>
+                            </td></tr>
+                        `;
+                    } else {
+                        renderMembers();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading member data:", error);
+                    document.getElementById("data").innerHTML = `
+                        <tr>
+                            <td colspan="4" class="no-data">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Unable to load member data. Please try again later.<br>
+                                <small>Error: ${error.message}</small>
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById("totalMembers").textContent = "0";
+                    document.getElementById("activeMembers").textContent = "0";
+                    document.getElementById("expiringSoon").textContent = "0";
+                    
+                    const debugContent = document.getElementById("debugContent");
+                    if (debugContent) {
+                        debugContent.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+                    }
+                });
+        }
+        
+        // Search functionality
+        const searchInput = document.getElementById("searchInput");
+        const clearSearch = document.getElementById("clearSearch");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+                currentSearchTerm = e.target.value;
+                if (clearSearch) {
+                    clearSearch.style.display = currentSearchTerm ? "block" : "none";
+                }
+                renderMembers();
+            });
+        }
+        
+        if (clearSearch) {
+            clearSearch.addEventListener("click", () => {
+                if (searchInput) {
+                    searchInput.value = "";
+                    currentSearchTerm = "";
+                    clearSearch.style.display = "none";
+                    renderMembers();
+                }
+            });
+        }
+        
+        // Filter functionality
+        const filterBtns = document.querySelectorAll(".filter-btn");
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
+                renderMembers();
+            });
+        });
+        
+        // Debug toggle functionality
+        const debugToggle = document.getElementById("debugToggle");
+        const debugPanel = document.getElementById("debugPanel");
+        
+        if (debugToggle && debugPanel) {
+            debugToggle.addEventListener("click", () => {
+                debugPanel.classList.toggle("show");
+            });
+        }
+        
+        // Load data when page loads
+        loadData();
     </script>
     
     <script src="scripts/common.js"></script>
