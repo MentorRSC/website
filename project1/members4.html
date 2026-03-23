@@ -724,13 +724,49 @@ function closeQR() {
 
 // Download QR
 function downloadQR() {
-    const canvas = document.getElementById("qrCanvas");
+    const qrCanvas = document.getElementById("qrCanvas");
+    const name = document.getElementById("qrName").innerText;
 
+    // Create new canvas (ID card)
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 300;
+    canvas.height = 380;
+
+    // Background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Top Header (optional styling)
+    ctx.fillStyle = "#6c8ef5";
+    ctx.fillRect(0, 0, canvas.width, 60);
+
+    // Title
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Innovation Hub ID", canvas.width / 2, 35);
+
+    // Name
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 18px Arial";
+    ctx.fillText(name, canvas.width / 2, 90);
+
+    // Draw QR (centered)
+    ctx.drawImage(qrCanvas, 50, 110, 200, 200);
+
+    // Footer text
+    ctx.fillStyle = "#555";
+    ctx.font = "12px Arial";
+    ctx.fillText("Scan for verification", canvas.width / 2, 340);
+
+    // Download
     const link = document.createElement("a");
-    link.download = "id-card.png";
+    link.download = name.replace(/\s+/g, "_") + "_ID.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
-}       
+}    
         // Function to load data from Google Sheets
         function loadData() {
             const url = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
