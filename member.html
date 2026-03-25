@@ -1,109 +1,208 @@
+<!-- COMPLETE MERGED FILE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ID Card System</title>
+<title>Innovation Hub | Digital ID</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
-body { font-family: Arial; text-align:center; }
-button { padding:10px 20px; margin:5px; cursor:pointer; }
-#popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0008; justify-content:center; align-items:center; }
-.card { background:#fff; padding:20px; border-radius:10px; }
-img { max-width:100%; }
+body{font-family:sans-serif;background:#f5f9ff;margin:0}
+.container{width:95%;margin:auto}
+.member-row{display:grid;grid-template-columns:60px 1fr 1fr 1fr 120px;padding:10px;border-bottom:1px solid #ddd}
+.id-btn{background:#1a73e8;color:#fff;border:none;padding:6px 10px;border-radius:20px;cursor:pointer}
+#qrPopup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0008;justify-content:center;align-items:center}
+.popup-card{background:#fff;padding:20px;border-radius:12px;text-align:center}
 </style>
 </head>
+
 <body>
 
-<h2>Student ID System</h2>
-<button onclick="openPopup()">Generate ID</button>
+<div class="container">
+<h2>Member Directory</h2>
+<div id="membersList">Loading...</div>
+</div>
 
-<div id="popup">
-  <div class="card">
-    <h3>Select ID Type</h3>
-    <button onclick="generateCard('photo')">With Photo</button>
-    <button onclick="generateCard('qr')">QR Only</button>
-    <br><br>
-    <img id="preview">
-    <br><br>
-    <button onclick="downloadCard()">Download</button>
-    <button onclick="closePopup()">Close</button>
-  </div>
+<!-- POPUP -->
+<div id="qrPopup">
+<div class="popup-card">
+
+<h3>ID Card</h3>
+
+<!-- NEW OPTION -->
+<select id="idTypeSelect">
+<option value="full">Photo + QR</option>
+<option value="qr">Only QR</option>
+</select>
+
+<br><br>
+<img id="cardPreviewImage" width="250">
+
+<br><br>
+<button onclick="downloadCard()">Download</button>
+<button onclick="closePopup()">Close</button>
+
+</div>
 </div>
 
 <script>
-const CARD_W = 400;
-const CARD_H = 600;
-let activeBlob = null;
+const SHEET_URL="https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
 
-const member = {
-  name: "John Doe",
-  reg: "IH001",
-  photo: "https://ui-avatars.com/api/?name=John+Doe",
-  validity: "Valid"
-};
+let masterMembers=[];
+let activeCardBlob=null;
+let currentMember=null;
+let currentQR=null;
 
-function openPopup() {
-  document.getElementById("popup").style.display = "flex";
+// LOAD DATA
+async function loadData(){
+ const resp=await fetch(SHEET_URL);
+ const txt=await resp.text();
+ const json=JSON.parse(txt.substring(47).slice(0,-2));
+
+ masterMembers=json.table.rows.map((r,i)=>({
+  name:r.c[3]?.v||"",
+  reg:r.c[8]?.v||("IH"+i),
+  validityText:r.c[7]?.v||"Active",
+  photo:r.c[9]?.v||""
+ }));
+
+ renderMembers();
 }
 
-function closePopup() {
-  document.getElementById("popup").style.display = "none";
+// RENDER TABLE
+function renderMembers(){
+ const list=document.getElementById("membersList");
+ list.innerHTML=masterMembers.map((m,i)=>`
+  <div class="member-row">
+    <span>${i+1}</span>
+    <span>${m.name}</span>
+    <span>${m.reg}</span>
+    <span>${m.validityText}</span>
+    <button class="id-btn" onclick='showIDCard(${JSON.stringify(m)})'>Get ID</button>
+  </div>
+ `).join("");
 }
 
-function generateQR(text, size) {
-  return new Promise(resolve => {
-    const div = document.createElement("div");
-    new QRCode(div, { text, width:size, height:size });
-    setTimeout(() => {
-      const canvas = div.querySelector("canvas");
-      resolve(canvas);
-    }, 200);
-  });
+// QR
+function generateQRCanvas(text,size){
+ return new Promise(res=>{
+  const div=document.createElement("div");
+  new QRCode(div,{text,width:size,height:size});
+  setTimeout(()=>res(div.querySelector("canvas")),200);
+ });
 }
 
-async function generateCard(type) {
-  const qr = await generateQR("ID:"+member.reg, 200);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = CARD_W;
-  canvas.height = CARD_H;
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0,0,CARD_W,CARD_H);
-
-  if(type === 'photo'){
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = member.photo;
-    await new Promise(r=>img.onload=r);
-
-    ctx.drawImage(img, 50, 150, 120,120);
-    ctx.drawImage(qr, 200,150,120,120);
-  } else {
-    ctx.drawImage(qr, 100,150,200,200);
-  }
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#000";
-  ctx.font = "20px Arial";
-  ctx.fillText(member.name, CARD_W/2, 400);
-  ctx.fillText(member.reg, CARD_W/2, 430);
-
-  canvas.toBlob(blob=>{
-    activeBlob = blob;
-    document.getElementById("preview").src = URL.createObjectURL(blob);
-  });
+// IMAGE LOAD
+function loadImage(src){
+ return new Promise(res=>{
+  const img=new Image();
+  img.crossOrigin="Anonymous";
+  img.onload=()=>res(img);
+  img.onerror=()=>res(null);
+  img.src=src;
+ });
 }
 
+// BUILD CARD (UPDATED)
+async function buildIDCardBlob(name,reg,validity,qrCanvas,photo,type="full"){
+ const canvas=document.createElement("canvas");
+ canvas.width=400;canvas.height=600;
+ const ctx=canvas.getContext("2d");
+
+ ctx.fillStyle="#fff";ctx.fillRect(0,0,400,600);
+
+ const centerX=200;
+
+ if(type==="full"){
+  const img=await loadImage(photo||("https://ui-avatars.com/api/?name="+name));
+  if(img) ctx.drawImage(img,40,150,120,120);
+  ctx.drawImage(qrCanvas,200,150,120,120);
+ }else{
+  ctx.drawImage(qrCanvas,100,150,200,200);
+ }
+
+ ctx.textAlign="center";
+ ctx.fillStyle="#000";
+ ctx.font="20px sans-serif";
+ ctx.fillText(name,centerX,420);
+ ctx.fillText(reg,centerX,450);
+ ctx.fillText(validity,centerX,480);
+
+ return new Promise(r=>canvas.toBlob(r));
+}
+
+// SHOW ID
+async function showIDCard(member){
+ currentMember=member;
+
+ const qr=await generateQRCanvas("https://example.com?id="+member.reg,200);
+ currentQR=qr;
+
+ const type=document.getElementById("idTypeSelect").value;
+
+ const blob=await buildIDCardBlob(member.name,member.reg,member.validityText,qr,member.photo,type);
+
+ activeCardBlob=blob;
+
+ document.getElementById("cardPreviewImage").src=URL.createObjectURL(blob);
+ document.getElementById("qrPopup").style.display="flex";
+}
+
+// LIVE SWITCH
+document.getElementById("idTypeSelect").addEventListener("change", async()=>{
+ if(!currentMember)return;
+
+ const type=document.getElementById("idTypeSelect").value;
+
+ const blob=await buildIDCardBlob(
+  currentMember.name,
+  currentMember.reg,
+  currentMember.validityText,
+  currentQR,
+  currentMember.photo,
+  type
+ );
+
+ activeCardBlob=blob;
+ document.getElementById("cardPreviewImage").src=URL.createObjectURL(blob);
+});
+
+// DOWNLOAD
 function downloadCard(){
-  if(!activeBlob) return;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(activeBlob);
-  a.download = "id.png";
-  a.click();
+ if(!activeCardBlob)return;
+
+ const full=confirm("OK = Full ID\nCancel = Only QR");
+
+ if(!full){
+  const canvas=document.createElement("canvas");
+  canvas.width=300;canvas.height=300;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(currentQR,0,0);
+  canvas.toBlob(b=>{
+   const a=document.createElement("a");
+   a.href=URL.createObjectURL(b);
+   a.download="qr.png";
+   a.click();
+  });
+  return;
+ }
+
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(activeCardBlob);
+ a.download="id.png";
+ a.click();
 }
+
+// CLOSE
+function closePopup(){
+ document.getElementById("qrPopup").style.display="none";
+}
+
+// INIT
+loadData();
 </script>
 
 </body>
