@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Join Innovation Hub | Membership Application</title>
+    <iframe name="hidden_iframe" style="display:none;"></iframe>
     <!-- Google Fonts for modern typography -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <!-- Font Awesome 6 (free icons) -->
@@ -709,56 +710,40 @@
     }
 
     // Submit data to Google Sheets via Apps Script
-    function submitData() {
-        // gather all details (name, phone, dob, school, email optional)
-        let nameVal = nameInput.value.trim();
-        let phoneVal = phoneInput.value.trim();
-        let dobVal = dobInput.value;
-        let schoolVal = schoolInput.value.trim() || "Not provided";
-        let emailVal = emailInput.value.trim() || "No email";
-        let paymentMethod = paymentModeSelect.value === "offline" ? "Offline (Hub Visit)" : "Online UPI";
-        
-        let today = new Date();
-        let formattedDate = today.toLocaleDateString('en-US', { month: 'short', year: 'numeric', day: 'numeric' });
-        
-        // optional: photo file handling (just simulate, Apps Script can process base64 if needed, but we avoid complexity)
-        // In original design, photo upload isn't sent to sheets, we keep metadata
+function submitData() {
 
-        const payload = {
-            name: nameVal,
-            phone: phoneVal,
-            email: emailVal,
-            dob: dobVal,
-            school: schoolVal,
-            payment_mode: paymentMethod,
-            registration_date: formattedDate,
-            device: deviceType
-        };
+let today = new Date();
+let formattedDate = today.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
-        // Show loading / disable buttons (optional but polite)
-        let btns = document.querySelectorAll('.done-btn');
-        btns.forEach(btn => btn.disabled = true);
+// create hidden form
+let form = document.createElement("form");
+form.method = "POST";
+form.action = "https://script.google.com/macros/s/AKfycbxcZevMydALeH1bvS9wXPZkKzhy5cqpTKNeZ2BC0PL-NyIR4yj4zumKZ0RSqHApzeAguQ/exec";
+form.target = "hidden_iframe";
 
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("Network error");
-            return response.text();
-        })
-        .then(() => {
-            alert("✅ Membership application submitted successfully! Welcome to Innovation Hub. We'll contact you soon.");
-            // reset and redirect or reload to main page?
-            location.reload();  // refresh to start fresh
-        })
-        .catch((err) => {
-            console.error(err);
-            alert("⚠️ Error submitting data. Please check your connection or try again. You may also contact the Hub directly.");
-            btns.forEach(btn => btn.disabled = false);
-        });
-    }
+// helper
+function addField(name, value) {
+  let input = document.createElement("input");
+  input.type = "hidden";
+  input.name = name;
+  input.value = value;
+  form.appendChild(input);
+}
+
+// add data
+addField("name", name.value);
+addField("phone", phone.value);
+addField("dob", dob.value);
+addField("date", formattedDate);
+
+// submit
+document.body.appendChild(form);
+form.submit();
+
+// success UI
+alert("Submitted Successfully ✅");
+location.reload();
+}
 
     // small extra: ensure no accidental double submission; assign functions to window
     window.nextPage = nextPage;
