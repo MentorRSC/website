@@ -891,52 +891,94 @@
         });
     }
 
-    async function buildIDCardBlob(memberName, regNo, validityText, qrDataUrl) {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = CARD_W;
-            canvas.height = CARD_H;
-            const ctx = canvas.getContext('2d');
-            const bg = new Image();
-            bg.crossOrigin = "Anonymous";
-            bg.onload = () => {
-                ctx.drawImage(bg, 0, 0, CARD_W, CARD_H);
-                const qrSize = Math.min(CARD_W * 0.38, 152);
-                const qrX = (CARD_W - qrSize)/2;
-                const qrY = (CARD_H - qrSize)/2 + 18;
+  async function buildIDCardBlob(memberName, regNo, validityText, qrDataUrl, photoUrl) {
+    return new Promise((resolve) => {
+
+        const canvas = document.createElement('canvas');
+        canvas.width = CARD_W;
+        canvas.height = CARD_H;
+        const ctx = canvas.getContext('2d');
+
+        const bg = new Image();
+        bg.crossOrigin = "Anonymous";
+
+        bg.onload = () => {
+            ctx.drawImage(bg, 0, 0, CARD_W, CARD_H);
+
+            const centerX = CARD_W / 2;
+
+            // ========== PHOTO ==========
+            const photoSize = 110;
+            const photoY = CARD_H * 0.28;
+
+            const photoImg = new Image();
+            photoImg.crossOrigin = "Anonymous";
+
+            photoImg.onload = () => {
+
+                // Draw circular photo
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(centerX, photoY, photoSize / 2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+
+                ctx.drawImage(
+                    photoImg,
+                    centerX - photoSize / 2,
+                    photoY - photoSize / 2,
+                    photoSize,
+                    photoSize
+                );
+                ctx.restore();
+
+                // ========== QR ==========
+                const qrSize = 140;
+                const qrY = photoY + photoSize / 2 + 30;
+
                 const qrImg = new Image();
                 qrImg.onload = () => {
-                    ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-                    const bottomBase = CARD_H - 98;
-                    ctx.font = `bold ${Math.floor(CARD_W * 0.055)}px "Segoe UI", system-ui`;
-                    ctx.fillStyle = "#0f172a";
+
+                    ctx.drawImage(
+                        qrImg,
+                        centerX - qrSize / 2,
+                        qrY,
+                        qrSize,
+                        qrSize
+                    );
+
+                    // ========== TEXT ==========
                     ctx.textAlign = "center";
-                    const shortName = memberName.length > 28 ? memberName.slice(0,26)+".." : memberName;
-                    ctx.fillText(shortName, CARD_W/2, bottomBase -62);
-                    ctx.font = `${Math.floor(CARD_W * 0.038)}px monospace`;
+
+                    ctx.font = "bold 20px sans-serif";
+                    ctx.fillStyle = "#0f172a";
+                    ctx.fillText(memberName, centerX, qrY + qrSize + 40);
+
+                    ctx.font = "14px monospace";
                     ctx.fillStyle = "#1e3a5f";
-                    ctx.fillText(`ID: ${regNo}`, CARD_W/2, bottomBase -30);
-                    ctx.font = `${Math.floor(CARD_W * 0.033)}px system-ui`;
-                    ctx.fillStyle = validityText.includes("Expired") ? "#dc2626" : "#2b6e3c";
-                    ctx.fillText(validityText, CARD_W/2, bottomBase-10 );
-                    ctx.font = `10px monospace`;
-                    ctx.fillStyle = "#4b5563";
-                    ctx.fillText("Scan to verify membership", CARD_W/2, CARD_H - 22);
+                    ctx.fillText(`ID: ${regNo}`, centerX, qrY + qrSize + 65);
+
+                    ctx.font = "13px sans-serif";
+                    ctx.fillStyle = validityText.includes("Expired") ? "#dc2626" : "#16a34a";
+                    ctx.fillText(validityText, centerX, qrY + qrSize + 85);
+
                     canvas.toBlob(blob => resolve(blob));
                 };
+
                 qrImg.src = qrDataUrl;
             };
-            bg.onerror = () => {
-                ctx.fillStyle = "#eef2ff";
-                ctx.fillRect(0,0,CARD_W,CARD_H);
-                ctx.fillStyle = "#1a73e8";
-                ctx.font = "bold 20px sans-serif";
-                ctx.fillText("Innovation Hub", CARD_W/2, 70);
-                canvas.toBlob(blob => resolve(blob));
+
+            // fallback if no photo
+            photoImg.onerror = () => {
+                photoImg.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(memberName);
             };
-            bg.src = BG_URL;
-        });
-    }
+
+            photoImg.src = photoUrl || "";
+        };
+
+        bg.src = BG_URL;
+    });
+}
 
     async function showIDCard(member, isExpired) {
         if(isExpired) { alert("⚠️ Membership expired. ID card cannot be generated."); return; }
