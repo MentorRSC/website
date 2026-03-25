@@ -905,84 +905,108 @@
         bg.onload = () => {
             ctx.drawImage(bg, 0, 0, CARD_W, CARD_H);
 
-// ===== CENTER LAYOUT =====
-const centerX = CARD_W / 2;
-const centerY = CARD_H * 0.42;
+            // ===== CREATE IMAGES =====
+            const photoImg = new Image();
+            photoImg.crossOrigin = "Anonymous";
 
-const photoSize = 110;
-const qrSize = 110;
-const gap = 20;
+            const qrImg = new Image();
 
-const totalWidth = photoSize + gap + qrSize;
-const startX = centerX - totalWidth / 2;
+            // ===== LOAD PHOTO =====
+            photoImg.onload = () => {
 
-const photoX = startX;
-const qrX = startX + photoSize + gap;
+                // ===== LOAD QR =====
+                qrImg.onload = () => {
 
-const elementY = centerY;
+                    // ===== LAYOUT =====
+                    const centerX = CARD_W / 2;
+                    const centerY = CARD_H * 0.42;
 
-// ===== PHOTO =====
-ctx.save();
-ctx.beginPath();
-ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
-ctx.closePath();
-ctx.clip();
+                    const photoSize = 110;
+                    const qrSize = 110;
+                    const gap = 20;
 
-ctx.drawImage(
-    photoImg,
-    photoX,
-    elementY - photoSize/2,
-    photoSize,
-    photoSize
-);
+                    const totalWidth = photoSize + gap + qrSize;
+                    const startX = centerX - totalWidth / 2;
 
-ctx.restore();
+                    const photoX = startX;
+                    const qrX = startX + photoSize + gap;
 
-// OPTIONAL border (looks better)
-ctx.beginPath();
-ctx.lineWidth = 3;
-ctx.strokeStyle = "#1a73e8";
-ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI*2);
-ctx.stroke();
+                    const elementY = centerY;
 
-// ===== QR =====
-ctx.drawImage(
-    qrImg,
-    qrX,
-    elementY - qrSize/2,
-    qrSize,
-    qrSize
-);
+                    // ===== PHOTO =====
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
+                    ctx.closePath();
+                    ctx.clip();
 
-// ===== TEXT =====
-const textY = elementY + qrSize/2 + 45;
+                    ctx.drawImage(
+                        photoImg,
+                        photoX,
+                        elementY - photoSize/2,
+                        photoSize,
+                        photoSize
+                    );
 
-ctx.textAlign = "center";
+                    ctx.restore();
 
-ctx.font = "bold 20px sans-serif";
-ctx.fillStyle = "#0f172a";
-ctx.fillText(memberName, centerX, textY);
+                    // PHOTO BORDER
+                    ctx.beginPath();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "#1a73e8";
+                    ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI*2);
+                    ctx.stroke();
 
-ctx.font = "14px monospace";
-ctx.fillStyle = "#1e3a5f";
-ctx.fillText(`ID: ${regNo}`, centerX, textY + 25);
+                    // ===== QR =====
+                    ctx.drawImage(
+                        qrImg,
+                        qrX,
+                        elementY - qrSize/2,
+                        qrSize,
+                        qrSize
+                    );
 
-ctx.font = "13px sans-serif";
-ctx.fillStyle = validityText.includes("Expired") ? "#dc2626" : "#16a34a";
-ctx.fillText(validityText, centerX, textY + 45);
+                    // ===== TEXT =====
+                    const textY = elementY + qrSize/2 + 45;
 
+                    ctx.textAlign = "center";
+
+                    ctx.font = "bold 20px sans-serif";
+                    ctx.fillStyle = "#0f172a";
+                    ctx.fillText(memberName, centerX, textY);
+
+                    ctx.font = "14px monospace";
+                    ctx.fillStyle = "#1e3a5f";
+                    ctx.fillText(`ID: ${regNo}`, centerX, textY + 25);
+
+                    ctx.font = "13px sans-serif";
+                    ctx.fillStyle = validityText.includes("Expired") ? "#dc2626" : "#16a34a";
+                    ctx.fillText(validityText, centerX, textY + 45);
+
+                    // ===== FINAL OUTPUT =====
                     canvas.toBlob(blob => resolve(blob));
                 };
 
-                qrImg.src = qrDataUrl;
+                qrImg.src = qrDataUrl; // load QR after photo
             };
 
-            // fallback if no photo
+            // fallback if photo fails
             photoImg.onerror = () => {
                 photoImg.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(memberName);
             };
 
             photoImg.src = photoUrl || "";
+        };
+
+        // fallback background
+        bg.onerror = () => {
+            ctx.fillStyle = "#eef2ff";
+            ctx.fillRect(0,0,CARD_W,CARD_H);
+            ctx.fillStyle = "#1a73e8";
+            ctx.font = "bold 20px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("Innovation Hub", CARD_W/2, 60);
+            canvas.toBlob(blob => resolve(blob));
         };
 
         bg.src = BG_URL;
