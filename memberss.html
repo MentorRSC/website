@@ -905,11 +905,28 @@
         bg.onload = () => {
             ctx.drawImage(bg, 0, 0, CARD_W, CARD_H);
 
-            const centerX = CARD_W / 2;
+const centerX = CARD_W / 2;
+const centerY = CARD_H * 0.45;
 
-            // ========== PHOTO ==========
-            const photoSize = 110;
-            const photoY = CARD_H * 0.28;
+// Sizes
+const photoSize = 110;
+const qrSize = 110;
+
+// spacing between them
+const gap = 20;
+
+// total width of both elements
+const totalWidth = photoSize + gap + qrSize;
+
+// starting X (to center the group)
+const startX = centerX - totalWidth / 2;
+
+// positions
+const photoX = startX;
+const qrX = startX + photoSize + gap;
+
+// same Y for both (aligned center)
+const elementY = centerY;
 
             const photoImg = new Image();
             photoImg.crossOrigin = "Anonymous";
@@ -918,19 +935,26 @@
 
                 // Draw circular photo
                 ctx.save();
-                ctx.beginPath();
-                ctx.arc(centerX, photoY, photoSize / 2, 0, Math.PI * 2);
-                ctx.closePath();
-                ctx.clip();
+ctx.beginPath();
+ctx.arc(
+    photoX + photoSize / 2,
+    elementY,
+    photoSize / 2,
+    0,
+    Math.PI * 2
+);
+ctx.closePath();
+ctx.clip();
 
-                ctx.drawImage(
-                    photoImg,
-                    centerX - photoSize / 2,
-                    photoY - photoSize / 2,
-                    photoSize,
-                    photoSize
-                );
-                ctx.restore();
+ctx.drawImage(
+    photoImg,
+    photoX,
+    elementY - photoSize / 2,
+    photoSize,
+    photoSize
+);
+
+ctx.restore();
 
                 // ========== QR ==========
                 const qrSize = 140;
@@ -939,13 +963,13 @@
                 const qrImg = new Image();
                 qrImg.onload = () => {
 
-                    ctx.drawImage(
-                        qrImg,
-                        centerX - qrSize / 2,
-                        qrY,
-                        qrSize,
-                        qrSize
-                    );
+ctx.drawImage(
+    qrImg,
+    qrX,
+    elementY - qrSize / 2,
+    qrSize,
+    qrSize
+);
 
                     // ========== TEXT ==========
                     ctx.textAlign = "center";
