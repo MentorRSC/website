@@ -333,9 +333,9 @@
         .popup-card {
             background: white;
             border-radius: 36px;
-            max-width: 460px;
+            max-width: 520px;
             width: 100%;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
             animation: fadeScale 0.25s ease;
         }
@@ -345,16 +345,57 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        .preview-img {
+        .card-preview-area {
             background: #f1f5f9;
             border-radius: 24px;
             padding: 16px;
             margin: 16px 0;
         }
 
-        .preview-img img { max-width: 100%; border-radius: 16px; box-shadow: 0 12px 25px rgba(0,0,0,0.2); }
+        .preview-img img { 
+            max-width: 100%; 
+            border-radius: 20px; 
+            box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+            display: block;
+            margin: 0 auto;
+        }
 
-        .popup-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        /* Single Toggle Button Style */
+        .single-toggle-btn {
+            background: linear-gradient(135deg, #64748b, #475569);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .single-toggle-btn i { font-size: 1rem; }
+        
+        .single-toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+        
+        .single-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        .popup-actions { 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
 
         .btn-primary {
             background: var(--primary);
@@ -442,13 +483,6 @@
             .header-container { position: relative; }
             .sticky-controls { top: 60px; }
         }
-
-        @media (max-width: 580px) {
-            .grid-header, .member-row { grid-template-columns: 40px 1.2fr 1fr 1.4fr 85px; font-size: 0.75rem; }
-            .member-name { font-size: 0.8rem; }
-            .member-reg { font-size: 0.7rem; }
-            .valid-active, .valid-expiring { font-size: 0.7rem; }
-        }
     </style>
 </head>
 <body>
@@ -530,12 +564,18 @@
     </div>
 </div>
 
-<!-- QR Popup -->
+<!-- QR Popup with Single Toggle Button: Without Photo -->
 <div id="qrPopup">
     <div class="popup-card">
         <h3><i class="fas fa-id-card"></i> Digital ID Card</h3>
-        <div class="preview-img">
-            <img id="cardPreviewImage" alt="ID Card Preview">
+        <!-- Single Button: Without Photo Mode -->
+        <button id="withoutPhotoToggleBtn" class="single-toggle-btn">
+            <i class="fas fa-user-slash"></i> Without Photo (QR Centered)
+        </button>
+        <div class="card-preview-area">
+            <div class="preview-img">
+                <img id="cardPreviewImage" alt="ID Card Preview">
+            </div>
         </div>
         <div class="popup-actions">
             <button id="downloadCardBtn" class="btn-primary"><i class="fas fa-download"></i> Download PNG</button>
@@ -562,7 +602,7 @@
                     <li><a href="resources.html">Resources</a></li>
                     <li><a href="projects.html">Projects Gallery</a></li>
                     <li><a href="https://rscpcalicut.org.in/">Events</a></li>
-                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing&ouid=117126086225918702846">Join Now</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-Ph9MNjaGHah7bsieymDIJKiK5HP0YzsSS3-2YgadgU49og/viewform?usp=sharing">Join Now</a></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -578,7 +618,6 @@
 </footer>
 
 <script>
-    // ---------- CONFIG ----------
     const CARD_W = 416;
     const CARD_H = 636;
     const BG_URL = "https://lh3.googleusercontent.com/d/1e2f4G676r-kVVb9uba2O4SVHJIZvXGq9";
@@ -588,11 +627,11 @@
     let currentFilter = "active";
     let currentSearch = "";
     let activeCardBlob = null;
+    let currentMemberData = null;
+    let currentQrCanvas = null;
+    let withoutPhotoMode = false; // false = normal mode (with photo, QR on side), true = without photo & QR centered
 
-    function escapeHtml(str) {
-        if (!str) return "";
-        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
-    }
+    function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
     function parseDateFromStr(dateStr) {
         if (!dateStr) return null;
@@ -614,201 +653,188 @@
         return { class: "valid-active", text: `Valid till ${raw}`, status: "active" };
     }
 
-    // ===== QR GENERATOR =====
     function generateQRCanvas(text, size) {
         return new Promise((resolve) => {
             const tempDiv = document.createElement("div");
             tempDiv.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
             document.body.appendChild(tempDiv);
-
             try {
-                new QRCode(tempDiv, {
-                    text: text,
-                    width: size,
-                    height: size,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-
+                new QRCode(tempDiv, { text: text, width: size, height: size, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
                 setTimeout(() => {
                     const finalCanvas = document.createElement("canvas");
-                    finalCanvas.width = size;
-                    finalCanvas.height = size;
+                    finalCanvas.width = size; finalCanvas.height = size;
                     const ctx = finalCanvas.getContext("2d");
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, size, size);
-
+                    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, size, size);
                     const qrImg = tempDiv.querySelector("img");
                     const qrCanvas = tempDiv.querySelector("canvas");
-
-                    if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) {
-                        ctx.drawImage(qrImg, 0, 0, size, size);
-                    } else if (qrCanvas) {
-                        ctx.drawImage(qrCanvas, 0, 0, size, size);
-                    }
-
+                    if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) ctx.drawImage(qrImg, 0, 0, size, size);
+                    else if (qrCanvas) ctx.drawImage(qrCanvas, 0, 0, size, size);
                     document.body.removeChild(tempDiv);
                     resolve(finalCanvas);
                 }, 200);
-            } catch (e) {
-                if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv);
-                const canvas = document.createElement("canvas");
-                canvas.width = size; canvas.height = size;
-                const ctx = canvas.getContext("2d");
-                ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, size, size);
-                ctx.fillStyle = "#000"; ctx.font = "10px monospace";
-                ctx.fillText("QR Error", size / 2 - 20, size / 2);
-                resolve(canvas);
-            }
+            } catch(e) { if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv); resolve(null); }
         });
     }
 
-    // ===== LOAD IMAGE HELPER =====
     function loadImage(src) {
         return new Promise((resolve) => {
             const img = new Image();
             img.crossOrigin = "Anonymous";
             img.onload = () => resolve(img);
             img.onerror = () => {
-                // Fallback to avatar on error
-                const fallback = new Image();
-                fallback.crossOrigin = "Anonymous";
-                fallback.onload = () => resolve(fallback);
-                fallback.onerror = () => resolve(null);
-                fallback.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(src.split('name=')[1] || 'Member') + "&size=200&background=1a73e8&color=fff";
+                if(src && src.includes("ui-avatars")) resolve(null);
+                else loadImage(`https://ui-avatars.com/api/?name=${encodeURIComponent('Member')}&size=200&background=1a73e8&color=fff`).then(resolve);
             };
             img.src = src;
         });
     }
 
-    // ===== BUILD ID CARD — FIXED =====
-    async function buildIDCardBlob(memberName, regNo, validityText, qrCanvas, photoUrl) {
-        // 1. Load background
+    // Card builder: withoutPhotoMode = true -> hide photo, QR centered
+    // withoutPhotoMode = false -> normal layout (photo + QR side by side)
+    async function buildCard(member, qrCanvas, hidePhotoAndCenterQR) {
         const bgImg = await loadImage(BG_URL);
-
-        // 2. Load photo (with avatar fallback)
-        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(memberName)}&size=200&background=1a73e8&color=fff`;
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&size=200&background=1a73e8&color=fff`;
         let photoImg = null;
-        if (photoUrl) {
-            photoImg = await loadImage(photoUrl);
+        
+        if (!hidePhotoAndCenterQR) {
+            // Normal mode: try to load photo from URL, fallback to avatar
+            if (member.photo) photoImg = await loadImage(member.photo);
+            if (!photoImg) photoImg = await loadImage(avatarUrl);
         }
-        if (!photoImg) {
-            photoImg = await loadImage(avatarUrl);
+        
+        const canvas = document.createElement('canvas'); 
+        canvas.width = CARD_W; 
+        canvas.height = CARD_H;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw background
+        if (bgImg) ctx.drawImage(bgImg, 0, 0, CARD_W, CARD_H);
+        else { 
+            const grad = ctx.createLinearGradient(0, 0, CARD_W, CARD_H); 
+            grad.addColorStop(0, '#1a73e8'); 
+            grad.addColorStop(1, '#34a853'); 
+            ctx.fillStyle = grad; 
+            ctx.fillRect(0, 0, CARD_W, CARD_H); 
         }
-
-        // 3. Draw everything on canvas
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = CARD_W;
-            canvas.height = CARD_H;
-            const ctx = canvas.getContext('2d');
-
-            // Background
-            if (bgImg) {
-                ctx.drawImage(bgImg, 0, 0, CARD_W, CARD_H);
-            } else {
-                // Fallback gradient background
-                const grad = ctx.createLinearGradient(0, 0, CARD_W, CARD_H);
-                grad.addColorStop(0, '#1a73e8');
-                grad.addColorStop(1, '#34a853');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, CARD_W, CARD_H);
-            }
-
-            // Layout constants
-            const centerX = CARD_W / 2;
-            const centerY = CARD_H * 0.5;
+        
+        const centerX = CARD_W/2;
+        const textBaseY = CARD_H * 0.75;
+        const qrSize = 140;
+        
+        if (hidePhotoAndCenterQR) {
+            // WITHOUT PHOTO MODE: QR centered in the middle, no photo
+            const qrX = centerX - qrSize/2;
+            const qrY = CARD_H/2 - qrSize/2 - 15;
+            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        } else {
+            // NORMAL MODE: photo and QR side by side
             const photoSize = 140;
-            const qrSize = 140;
-            const gap = 25;
+            const gap = 30;
             const totalWidth = photoSize + gap + qrSize;
-            const startX = centerX - totalWidth / 2;
+            const startX = centerX - totalWidth/2;
             const photoX = startX;
             const qrX = startX + photoSize + gap;
-            const elementY = centerY;
-
-            // Draw circular photo
+            const elementY = CARD_H/2;
+            
             if (photoImg) {
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(photoX + photoSize / 2, elementY, photoSize / 2, 0, Math.PI * 2);
+                ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
                 ctx.closePath();
                 ctx.clip();
-                ctx.drawImage(photoImg, photoX, elementY - photoSize / 2, photoSize, photoSize);
+                ctx.drawImage(photoImg, photoX, elementY - photoSize/2, photoSize, photoSize);
                 ctx.restore();
+                // Photo border
+                ctx.beginPath();
+                ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
+                ctx.strokeStyle = "#1a73e8";
+                ctx.lineWidth = 3;
+                ctx.stroke();
             }
-
-            // Photo border
-            ctx.beginPath();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = "#1a73e8";
-            ctx.arc(photoX + photoSize / 2, elementY, photoSize / 2, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Draw QR code
-            ctx.drawImage(qrCanvas, qrX, elementY - qrSize / 2, qrSize, qrSize);
-
-            // Draw text
-            const textY = elementY + qrSize / 2 + 45;
-            ctx.textAlign = "center";
-
-            ctx.font = "bold 28px sans-serif";
-            ctx.fillStyle = "#0f172a";
-            ctx.fillText(memberName, centerX, textY+ 45);
-
-            ctx.font = "18px monospace";
-            ctx.fillStyle = "#1e3a5f";
-            ctx.fillText(`ID: ${regNo}`, centerX, textY + 75);
-
-            ctx.font = "18px sans-serif";
-            ctx.fillStyle = validityText.includes("Expired") ? "#dc2626" : "#16a34a";
-            ctx.fillText(validityText, centerX, textY + 110);
-            
-            ctx.font = "13px sans-serif";
-            ctx.fillStyle =  "#dc2626";
-            ctx.fillText("Scan to verify membership", centerX, textY + 185);
-            
-            canvas.toBlob(blob => resolve(blob));
-        });
+            ctx.drawImage(qrCanvas, qrX, elementY - qrSize/2, qrSize, qrSize);
+        }
+        
+        // Draw text (name, reg, validity)
+        ctx.textAlign = "center";
+        ctx.font = "bold 26px 'Segoe UI', sans-serif";
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText(member.name, centerX, textBaseY);
+        
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#1e3a5f";
+        ctx.fillText(`ID: ${member.reg}`, centerX, textBaseY + 38);
+        
+        ctx.font = "15px sans-serif";
+        ctx.fillStyle = member.validityText.includes("Expired") ? "#dc2626" : "#16a34a";
+        ctx.fillText(member.validityText, centerX, textBaseY + 70);
+        
+        ctx.font = "11px sans-serif";
+        ctx.fillStyle = "#64748b";
+        ctx.fillText("Scan to verify membership", centerX, textBaseY + 110);
+        
+        return new Promise(resolve => canvas.toBlob(resolve));
     }
 
-    // ===== SHOW ID CARD =====
-    async function showIDCard(member, isExpired) {
-        if (isExpired) { alert("⚠️ Membership expired. ID card cannot be generated."); return; }
-
-        document.getElementById("debugMsg").innerHTML = `⏳ Generating card for ${member.name}...`;
-
-        const verifyLink = `https://mentorrsc.github.io/website/qrscan.html?id=${encodeURIComponent(member.reg)}`;
-        const qrCanvas = await generateQRCanvas(verifyLink, 280);
-        const cardBlob = await buildIDCardBlob(member.name, member.reg, member.validityText, qrCanvas, member.photo);
-
-        activeCardBlob = cardBlob;
-        const previewUrl = URL.createObjectURL(cardBlob);
-        document.getElementById("cardPreviewImage").src = previewUrl;
-        document.getElementById("qrPopup").style.display = "flex";
-        document.getElementById("debugMsg").innerHTML = `🎫 Card generated for ${member.name}`;
-    }
-
-    function downloadCard() {
-        if (activeCardBlob) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(activeCardBlob);
-            link.download = `id_innovationhub.png`;
-            link.click();
-            URL.revokeObjectURL(link.href);
+    async function refreshCardPreview() {
+        if (!currentMemberData || !currentQrCanvas) return;
+        document.getElementById("debugMsg").innerHTML = `🎨 Rendering card (Without Photo Mode: ${withoutPhotoMode})`;
+        const blob = await buildCard(currentMemberData, currentQrCanvas, withoutPhotoMode);
+        activeCardBlob = blob;
+        const url = URL.createObjectURL(blob);
+        document.getElementById("cardPreviewImage").src = url;
+        if(window._currentPreviewUrl) URL.revokeObjectURL(window._currentPreviewUrl);
+        window._currentPreviewUrl = url;
+        
+        // Update button text and style based on mode
+        const toggleBtn = document.getElementById("withoutPhotoToggleBtn");
+        if (withoutPhotoMode) {
+            toggleBtn.innerHTML = '<i class="fas fa-user"></i> With Photo (Side Layout)';
+            toggleBtn.classList.add("active");
+        } else {
+            toggleBtn.innerHTML = '<i class="fas fa-user-slash"></i> Without Photo (QR Centered)';
+            toggleBtn.classList.remove("active");
         }
     }
 
-    window.closePopup = () => {
-        document.getElementById("qrPopup").style.display = "none";
-        if (activeCardBlob) URL.revokeObjectURL(activeCardBlob);
-        activeCardBlob = null;
-    };
+    async function showIDCard(member, isExpired) {
+        if (isExpired) { alert("⚠️ Membership expired. ID card cannot be generated."); return; }
+        document.getElementById("debugMsg").innerHTML = `⏳ Generating QR for ${member.name}...`;
+        const verifyLink = `https://mentorrsc.github.io/website/qrscan.html?id=${encodeURIComponent(member.reg)}`;
+        const qrCanvas = await generateQRCanvas(verifyLink, 280);
+        if (!qrCanvas) { alert("QR generation error"); return; }
+        currentQrCanvas = qrCanvas;
+        currentMemberData = { name: member.name, reg: member.reg, validityText: member.validityText, photo: member.photo };
+        
+        // Reset to normal mode (with photo) when opening a new card
+        withoutPhotoMode = false;
+        await refreshCardPreview();
+        document.getElementById("qrPopup").style.display = "flex";
+    }
 
+    function downloadCard() { 
+        if (activeCardBlob) { 
+            const link = document.createElement('a'); 
+            link.href = URL.createObjectURL(activeCardBlob); 
+            link.download = `id_${currentMemberData?.reg || 'card'}.png`; 
+            link.click(); 
+            URL.revokeObjectURL(link.href);
+        } 
+    }
+    
+    window.closePopup = () => { 
+        document.getElementById("qrPopup").style.display = "none"; 
+        if (window._currentPreviewUrl) URL.revokeObjectURL(window._currentPreviewUrl); 
+        activeCardBlob = null; 
+    };
+    
     window.showIDCardGlobal = (memberObj, expiredFlag) => showIDCard(memberObj, expiredFlag);
 
-    // ===== LOAD DATA =====
+    // Single toggle function: switches between normal mode and "without photo + QR centered"
+    async function toggleWithoutPhotoMode() {
+        withoutPhotoMode = !withoutPhotoMode;
+        await refreshCardPreview();
+    }
+
     async function loadData() {
         try {
             const resp = await fetch(SHEET_URL);
@@ -817,7 +843,6 @@
             const json = JSON.parse(jsonStr);
             const rows = json.table.rows;
             let membersRaw = [];
-
             for (let i = 0; i < rows.length; i++) {
                 const r = rows[i];
                 if (!r?.c) continue;
@@ -827,30 +852,18 @@
                 const photo = r.c[9]?.v || "";
                 if (name && name !== "Name" && name.trim() !== "") {
                     const status = getValidityStatus(validityRaw);
-                    membersRaw.push({
-                        name: name.toString().trim(),
-                        reg: reg.toString().trim(),
-                        photo: photo,
-                        validityText: status.text,
-                        statusClass: status.class,
-                        status: status.status
-                    });
+                    membersRaw.push({ name: name.toString().trim(), reg: reg.toString().trim(), photo: photo, validityText: status.text, statusClass: status.class, status: status.status });
                 }
             }
-
-            membersRaw.sort((a, b) => a.name.localeCompare(b.name));
-            masterMembers = membersRaw.map((m, idx) => ({ ...m, sl: idx + 1 }));
-
-            const activeCount = masterMembers.filter(m => m.status === "active").length;
-            const expiringCount = masterMembers.filter(m => m.status === "expiring").length;
+            membersRaw.sort((a,b) => a.name.localeCompare(b.name));
+            masterMembers = membersRaw.map((m, idx) => ({ ...m, sl: idx+1 }));
             document.getElementById("totalMembers").innerText = masterMembers.length;
-            document.getElementById("activeMembers").innerText = activeCount;
-            document.getElementById("expiringSoon").innerText = expiringCount;
-
+            document.getElementById("activeMembers").innerText = masterMembers.filter(m => m.status === "active").length;
+            document.getElementById("expiringSoon").innerText = masterMembers.filter(m => m.status === "expiring").length;
             renderMembers();
             document.getElementById("debugMsg").innerHTML = `✅ ${masterMembers.length} members loaded`;
-        } catch (e) {
-            document.getElementById("membersList").innerHTML = `<div class="no-results">⚠️ Failed to load data</div>`;
+        } catch(e) { 
+            document.getElementById("membersList").innerHTML = `<div class="no-results">⚠️ Failed to load data</div>`; 
             document.getElementById("debugMsg").innerHTML = `❌ Error: ${e.message}`;
         }
     }
@@ -858,80 +871,30 @@
     function renderMembers() {
         let filtered = [...masterMembers];
         if (currentFilter !== "all") filtered = filtered.filter(m => m.status === currentFilter);
-        if (currentSearch.trim()) {
-            const s = currentSearch.toLowerCase();
-            filtered = filtered.filter(m => m.name.toLowerCase().includes(s) || m.reg.toLowerCase().includes(s));
-        }
-
+        if (currentSearch.trim()) { const s = currentSearch.toLowerCase(); filtered = filtered.filter(m => m.name.toLowerCase().includes(s) || m.reg.toLowerCase().includes(s)); }
         document.getElementById("searchStats").innerHTML = `${filtered.length} of ${masterMembers.length}`;
         const container = document.getElementById("membersList");
-
-        if (filtered.length === 0) {
-            container.innerHTML = `<div class="no-results"><i class="fas fa-user-slash"></i> No members match</div>`;
-            return;
-        }
-
+        if (filtered.length === 0) { container.innerHTML = `<div class="no-results"><i class="fas fa-user-slash"></i> No members match</div>`; return; }
         container.innerHTML = filtered.map((m, idx) => {
             const expiredFlag = m.status === "expired";
             const memberData = { name: m.name, reg: m.reg, validityText: m.validityText, status: m.status, photo: m.photo };
             const safeMember = JSON.stringify(memberData).replace(/"/g, '&quot;');
-            return `
-                <div class="member-row">
-                    <span style="color:#5f6c80;">${idx + 1}</span>
-                    <span class="member-name">${escapeHtml(m.name)}</span>
-                    <span class="member-reg">${escapeHtml(m.reg)}</span>
-                    <span class="${m.statusClass}">${escapeHtml(m.validityText)}</span>
-                    <span>
-                        <button class="id-btn" ${expiredFlag ? 'disabled' : ''} onclick="showIDCardGlobal(${safeMember}, ${expiredFlag})">
-                            <i class="fas fa-id-card"></i> Get ID
-                        </button>
-                    </span>
-                </div>
-            `;
+            return `<div class="member-row"><span style="color:#5f6c80;">${idx+1}</span><span class="member-name">${escapeHtml(m.name)}</span><span class="member-reg">${escapeHtml(m.reg)}</span><span class="${m.statusClass}">${escapeHtml(m.validityText)}</span><span><button class="id-btn" ${expiredFlag ? 'disabled' : ''} onclick="showIDCardGlobal(${safeMember}, ${expiredFlag})"><i class="fas fa-id-card"></i> Get ID</button></span></div>`;
         }).join('');
     }
 
-    // ===== EVENT LISTENERS =====
-    document.getElementById("searchInput").addEventListener("input", (e) => {
-        currentSearch = e.target.value;
-        document.getElementById("clearSearchBtn").style.display = currentSearch ? "block" : "none";
-        if (currentSearch.trim()) {
-            currentFilter = "all";
-            document.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
-            document.querySelector('[data-filter="all"]').classList.add("active");
-        }
-        renderMembers();
-    });
-
-    document.getElementById("clearSearchBtn").addEventListener("click", () => {
-        document.getElementById("searchInput").value = "";
-        currentSearch = "";
-        document.getElementById("clearSearchBtn").style.display = "none";
-        renderMembers();
-    });
-
-    document.querySelectorAll(".filter-chip").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentFilter = btn.dataset.filter;
-            renderMembers();
-        });
-    });
-
+    // Event Listeners
+    document.getElementById("searchInput").addEventListener("input", (e) => { currentSearch = e.target.value; document.getElementById("clearSearchBtn").style.display = currentSearch ? "block" : "none"; if(currentSearch.trim()){ currentFilter="all"; document.querySelectorAll(".filter-chip").forEach(b=>b.classList.remove("active")); document.querySelector('[data-filter="all"]').classList.add("active"); } renderMembers(); });
+    document.getElementById("clearSearchBtn").addEventListener("click", () => { document.getElementById("searchInput").value = ""; currentSearch = ""; document.getElementById("clearSearchBtn").style.display = "none"; renderMembers(); });
+    document.querySelectorAll(".filter-chip").forEach(btn => { btn.addEventListener("click", () => { document.querySelectorAll(".filter-chip").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); currentFilter = btn.dataset.filter; renderMembers(); }); });
     document.getElementById("downloadCardBtn")?.addEventListener("click", downloadCard);
-
-    document.getElementById("mobileMenuBtn")?.addEventListener("click", () => {
-        document.getElementById("navMenu").querySelector("ul")?.classList.toggle("show");
-    });
-
-    document.getElementById("debugToggle")?.addEventListener("click", () => {
-        const panel = document.getElementById("debugPanel");
-        panel.style.display = panel.style.display === "none" ? "block" : "none";
-    });
-
+    document.getElementById("mobileMenuBtn")?.addEventListener("click", () => document.getElementById("navMenu").querySelector("ul")?.classList.toggle("show"));
+    document.getElementById("debugToggle")?.addEventListener("click", () => { const panel = document.getElementById("debugPanel"); panel.style.display = panel.style.display === "none" ? "block" : "none"; });
     document.getElementById("debugPanel").style.display = "none";
-
+    
+    // Single toggle button event
+    document.getElementById("withoutPhotoToggleBtn").addEventListener("click", toggleWithoutPhotoMode);
+    
     loadData();
 </script>
 </body>
