@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WebGPU Whisper Live Transcription</title>
+
+<style>
+body{
+background:#0f172a;
+color:white;
+font-family:Arial;
+text-align:center;
+padding-top:60px;
+}
+
+button{
+padding:14px 40px;
+font-size:18px;
+border:none;
+border-radius:10px;
+background:#22c55e;
+color:white;
+cursor:pointer;
+}
+
+#wave{
+width:420px;
+height:100px;
+margin:40px auto;
+display:flex;
+align-items:flex-end;
+gap:3px;
+}
+
+.bar{
+width:5px;
+background:#06b6d4;
+height:5px;
+border-radius:3px;
+transition:height .05s;
+}
+
+#text{
+margin-top:20px;
+max-width:600px;
+margin-left:auto;
+margin-right:auto;
+font-size:18px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Whisper WebGPU Live Transcription</h2>
+
+<button id="toggle">Start 🎙</button>
+
+<div id="wave"></div>
+
+<div id="text">Waiting for speech...</div>
+
+<script type="module">
+
+import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2";
+
+let transcriber;
+let recording=false;
+let audioContext;
+let analyser;
+let dataArray;
+let mic;
+
+const barsContainer=document.getElementById("wave");
+
+for(let i=0;i<60;i++){
+let bar=document.createElement("div");
+bar.className="bar";
+barsContainer.appendChild(bar);
+}
+
+const bars=document.querySelectorAll(".bar");
+
+async function loadModel(){
+
+document.getElementById("text").innerText="Loading Whisper model...";
+
+transcriber = await pipeline(
+"automatic-speech-recognition",
+"Xenova/whisper-tiny",
+{ device: "webgpu" }
+);
+
+document.getElementById("text").innerText="Model loaded.";
+
+}
+
+await loadModel();
+
+async function startMic(){
+
+const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+
+audioContext=new AudioContext();
+
+mic=audioContext.createMediaStreamSource(stream);
+
+analyser=audioContext.createAnalyser();
+
+analyser.fftSize=256;
+
+mic.connect(analyser);
+
+dataArray=new Uint8Array(analyser.frequencyBinCount);
+
+visualize();
+
+}
+
+function visualize(){
+
+requestAnimationFrame(visualize);
+
+analyser.getByteFrequencyData(dataArray);
+
+for(let i=0;i<bars.length;i++){
+
+let value=dataArray[i] || 0;
+
+bars[i].style.height=(value/2)+"px";
+
+}
+
+}
+
+async function liveTranscribe(){
+
+if(!recording) return;
+
+const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+
+const mediaRecorder=new MediaRecorder(stream);
+
+let chunks=[];
+
+mediaRecorder.ondataavailable=e=>{
+chunks.push(e.data);
+};
+
+mediaRecorder.onstop=async()=>{
+
+const blob=new Blob(chunks,{type:"audio/webm"});
+
+const result=await transcriber(blob);
+
+document.getElementById("text").innerText=result.text;
+
+};
+
+mediaRecorder.start();
+
+setTimeout(()=>{
+mediaRecorder.stop();
+},2000);
+
+setTimeout(liveTranscribe,2500);
+
+}
+
+document.getElementById("toggle").onclick=async()=>{
+
+if(!recording){
+
+await startMic();
+
+recording=true;
+
+document.getElementById("toggle").innerText="Stop";
+
+liveTranscribe();
+
+}else{
+
+recording=false;
+
+audioContext.close();
+
+document.getElementById("toggle").innerText="Start 🎙";
+
+}
+
+};
+
+</script>
+
+</body>
+</html>
