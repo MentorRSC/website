@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Silent Blue Waves + Offline Keyword Detection</title>
+
+<!-- TensorFlow.js + Speech Commands (offline after load) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#ffffff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:1rem}
+.wave-container{background:#fff;max-width:1100px;width:100%;border-radius:2rem;padding:1.5rem;box-shadow:0 20px 35px rgba(0,0,0,0.05)}
+.title{text-align:center;margin-bottom:1rem}
+.title h1{font-size:2rem;background:linear-gradient(135deg,#0a4b8a,#1e88e5);-webkit-background-clip:text;color:transparent}
+
+.permission-panel{text-align:center;padding:1.5rem;background:#f9fafc;border-radius:1.5rem;margin-bottom:1rem}
+.perm-btn{padding:0.8rem 2rem;border:none;border-radius:3rem;background:#1a73e8;color:#fff;font-weight:600;cursor:pointer}
+.status{margin-top:10px;font-size:0.9rem;color:#2c7da0}
+
+canvas{width:100%;height:auto;background:#fff;border-radius:1rem}
+
+.corner-buttons{position:relative;margin-top:1rem;height:50px}
+.btn{position:absolute;bottom:0;padding:0.6rem 1.4rem;border-radius:30px;border:none;cursor:pointer;font-weight:600}
+.stop{left:0;background:#ffe0db}
+.mute{right:0;background:#eef3fe}
+
+/* popup */
+.popup{
+ position:fixed;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ background:#ffffff;
+ border-radius:16px;
+ padding:20px 30px;
+ box-shadow:0 10px 30px rgba(0,0,0,0.1);
+ z-index:1000;
+ text-align:center;
+}
+.popup button{
+ margin-top:10px;
+ padding:6px 14px;
+ border:none;
+ border-radius:20px;
+ background:#1a73e8;
+ color:#fff;
+ cursor:pointer;
+}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+<div class="wave-container">
+
+<div class="title">
+<h1>Audio Bar + AI Detection</h1>
+</div>
+
+<div id="permissionZone" class="permission-panel">
+<p>Start microphone + AI detection</p>
+<button class="perm-btn" onclick="startAll()">Start</button>
+<div class="status" id="status">Idle</div>
+</div>
+
+<div id="visualizerArea" style="display:none">
+<canvas id="canvas" width="1000" height="250"></canvas>
+
+<div class="corner-buttons">
+<button class="btn stop" onclick="stopAll()">STOP</button>
+<button class="btn mute" onclick="toggleMute()">MUTE</button>
+</div>
+</div>
+
+</div>
+
+<!-- popup -->
+<div id="popup" class="popup hidden">
+<div id="popupText">Detected</div>
+<button onclick="closePopup()">Close</button>
+</div>
+
+<script>
+let audioContext, analyser, dataArray, source, stream;
+let animationId;
+let isMuted=false;
+let recognizer;
+
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+
+function draw(){
+ if(!animationId) return;
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ if(!analyser || isMuted){
+   idle();
+   animationId=requestAnimationFrame(draw);
+   return;
+ }
+
+ analyser.getByteFrequencyData(dataArray);
+
+ let barWidth=canvas.width/dataArray.length;
+ for(let i=0;i<dataArray.length;i++){
+   let h=dataArray[i]/255*canvas.height;
+   ctx.fillStyle='#2d86e0';
+   ctx.fillRect(i*barWidth,canvas.height-h,barWidth-2,h);
+ }
+
+ animationId=requestAnimationFrame(draw);
+}
+
+function idle(){
+ let t=Date.now()*0.005;
+ for(let i=0;i<60;i++){
+   let h=10+Math.sin(t+i*0.2)*5;
+   ctx.fillStyle='#c2dcff';
+   ctx.fillRect(i*15,canvas.height-h,10,h);
+ }
+}
+
+async function startAudio(){
+ stream=await navigator.mediaDevices.getUserMedia({audio:true});
+ audioContext=new AudioContext();
+ analyser=audioContext.createAnalyser();
+ analyser.fftSize=256;
+ dataArray=new Uint8Array(analyser.frequencyBinCount);
+ source=audioContext.createMediaStreamSource(stream);
+ source.connect(analyser);
+ animationId=requestAnimationFrame(draw);
+}
+
+function stopAudio(){
+ if(animationId) cancelAnimationFrame(animationId);
+ if(stream) stream.getTracks().forEach(t=>t.stop());
+ if(audioContext) audioContext.close();
+ analyser=null;
+}
+
+function toggleMute(){
+ isMuted=!isMuted;
+}
+
+/* Tensor keyword detection */
+async function startAI(){
+ recognizer=speechCommands.create('BROWSER_FFT');
+ await recognizer.ensureModelLoaded();
+
+ recognizer.listen(result=>{
+   const scores=result.scores;
+   const labels=recognizer.wordLabels();
+
+   const maxIndex=scores.indexOf(Math.max(...scores));
+   const word=labels[maxIndex];
+
+   if(scores[maxIndex]>0.75){
+     checkWakeWords(word);
+   }
+ });
+}
+
+/* custom detection logic */
+function checkWakeWords(word){
+ const triggers=['hey','hello','lyra','lira','liara','lyyra'];
+
+ if(triggers.includes(word)){
+   showPopup(word);
+ }
+}
+
+function showPopup(word){
+ const popup=document.getElementById('popup');
+ document.getElementById('popupText').innerText='Detected: '+word;
+ popup.classList.remove('hidden');
+}
+
+function closePopup(){
+ document.getElementById('popup').classList.add('hidden');
+}
+
+async function startAll(){
+ document.getElementById('permissionZone').style.display='none';
+ document.getElementById('visualizerArea').style.display='block';
+ document.getElementById('status').innerText='Running offline AI + mic';
+
+ await startAudio();
+ await startAI();
+}
+
+function stopAll(){
+ stopAudio();
+ if(recognizer) recognizer.stopListening();
+ document.getElementById('visualizerArea').style.display='none';
+ document.getElementById('permissionZone').style.display='block';
+}
+</script>
+
+</body>
+</html>
