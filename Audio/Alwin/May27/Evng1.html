@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Whisper Browser STT</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+padding-top:80px;
+}
+
+button{
+font-size:20px;
+padding:15px 40px;
+border-radius:12px;
+border:none;
+background:#06b6d4;
+color:white;
+cursor:pointer;
+}
+
+#loading{
+font-size:18px;
+}
+
+#text{
+margin-top:30px;
+font-size:18px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Whisper Voice Transcriber</h1>
+
+<div id="loading">
+Downloading model...
+<br><br>
+<progress id="progress" value="0" max="100"></progress>
+</div>
+
+<button id="toggle" style="display:none;">Start 🎙</button>
+
+<div id="text"></div>
+
+<script>
+
+let recording=false;
+let mediaRecorder;
+let chunks=[];
+
+async function downloadModel(){
+
+const url="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin";
+
+const response=await fetch(url);
+
+const reader=response.body.getReader();
+
+const contentLength=+response.headers.get('Content-Length');
+
+let receivedLength=0;
+let chunks=[];
+
+while(true){
+
+const {done,value}=await reader.read();
+
+if(done) break;
+
+chunks.push(value);
+
+receivedLength+=value.length;
+
+document.getElementById("progress").value=
+(receivedLength/contentLength)*100;
+
+}
+
+document.getElementById("loading").style.display="none";
+document.getElementById("toggle").style.display="inline";
+
+}
+
+downloadModel();
+
+
+document.getElementById("toggle").onclick=async()=>{
+
+if(!recording){
+
+const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+
+mediaRecorder=new MediaRecorder(stream);
+
+mediaRecorder.start();
+
+chunks=[];
+
+mediaRecorder.ondataavailable=e=>{
+chunks.push(e.data);
+}
+
+mediaRecorder.onstop=e=>{
+
+const blob=new Blob(chunks);
+
+document.getElementById("text").innerText=
+"Audio recorded (send to whisper WASM here)";
+
+}
+
+recording=true;
+
+document.getElementById("toggle").innerText="Stop";
+
+}else{
+
+mediaRecorder.stop();
+
+recording=false;
+
+document.getElementById("toggle").innerText="Start 🎙";
+
+}
+
+};
+
+</script>
+
+</body>
+  </html>
