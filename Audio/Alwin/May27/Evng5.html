@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Whisper Transcription</title>
+
+<style>
+body {
+    background: #0f172a;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+button {
+    padding: 15px 40px;
+    font-size: 18px;
+    border: none;
+    border-radius: 50px;
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #16a34a;
+    transform: scale(1.05);
+}
+
+button.stop {
+    background: #ef4444;
+}
+
+button.stop:hover {
+    background: #dc2626;
+}
+
+#bars {
+    width: 100%;
+    max-width: 600px;
+    height: 120px;
+    margin: 40px auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    justify-content: center;
+}
+
+.bar {
+    width: 8px;
+    background: linear-gradient(to top, #06b6d4, #3b82f6);
+    height: 5px;
+    border-radius: 4px;
+    transition: height 0.05s ease;
+}
+
+#text {
+    margin-top: 30px;
+    font-size: 18px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    line-height: 1.6;
+    min-height: 100px;
+    text-align: left;
+}
+
+.status {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error {
+    color: #ef4444;
+    background: rgba(239,68,68,0.1);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.info {
+    color: #22c55e;
+    font-size: 14px;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+    <h2>🎤 Live Voice Transcription</h2>
+    <p>Powered by Whisper AI - Real-time speech recognition</p>
+    
+    <button id="toggle">Start Recording 🎙</button>
+    
+    <div id="bars"></div>
+    
+    <div id="text">
+        <span style="color: #94a3b8;">💡 Click "Start Recording" and begin speaking...</span>
+    </div>
+    
+    <div class="status" id="status">Ready</div>
+    <div class="info" id="info"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/whisper-web@1.0.0/dist/whisper-web.min.js"></script>
+<script>
+
+let audioContext;
+let analyser;
+let dataArray;
+let mic;
+let mediaStream;
+let recording = false;
+let whisper;
+let isModelLoaded = false;
+let mediaRecorder;
+let audioChunks = [];
+
+const barsContainer = document.getElementById("bars");
+
+// Create visualizer bars
+for(let i = 0; i < 60; i++){
+    let bar = document.createElement("div");
+    bar.className = "bar";
+    barsContainer.appendChild(bar);
+}
+
+const bars = document.querySelectorAll(".bar");
+const toggleBtn = document.getElementById("toggle");
+const textDiv = document.getElementById("text");
+const statusDiv = document.getElementById("status");
+const infoDiv = document.getElementById("info");
+
+// Initialize Whisper model
+async function initWhisper() {
+    try {
+        statusDiv.innerHTML = '<span class="loading"></span> Loading Whisper model...';
+        
+        // Initialize Whisper with tiny model for faster performance
+        whisper = new Whisper({
+            model: 'tiny', // Options: tiny, base, small, medium
+            language: 'en', // English
+            useWasm: true,
+            quantized: true // Use quantized model for smaller size
+        });
+        
+        await whisper.load();
+        isModelLoaded = true;
+        statusDiv.innerHTML = '✅ Whisper model loaded! Ready to transcribe.';
+        infoDiv.innerHTML = '🎙️ Model: Tiny (fast & efficient) | Language: English';
+        
+        setTimeout(() => {
+            if(statusDiv.innerHTML.includes('✅')) {
+                statusDiv.innerHTML = 'Ready to record';
+            }
+        }, 3000);
+        
+    } catch(error) {
+        console.error('Failed to load Whisper:', error);
+        statusDiv.innerHTML = '❌ Failed to load Whisper model. Please refresh and try again.';
+        infoDiv.innerHTML = 'Error: ' + error.message;
+        toggleBtn.disabled = true;
+    }
+}
+
+// Start microphone and visualization
+async function startMic() {
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        });
+        
+        audioContext = new AudioContext();
+        mic = audioContext.createMediaStreamSource(mediaStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        
+        mic.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        
+        // Start visualization
+        visualize();
+        
+        // Setup media recorder for audio chunks
+        setupMediaRecorder(mediaStream);
+        
+        return true;
+    } catch(error) {
+        console.error('Microphone error:', error);
+        statusDiv.innerHTML = '❌ Cannot access microphone. Please check permissions.';
+        return false;
+    }
+}
+
+function setupMediaRecorder(stream) {
+    // Use appropriate audio format
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm') 
+        ? 'audio/webm' 
+        : 'audio/mp4';
+    
+    mediaRecorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        audioBitsPerSecond: 128000
+    });
+    
+    mediaRecorder.ondataavailable = async (event) => {
+        if (event.data.size > 0 && recording) {
+            audioChunks.push(event.data);
+            
+            // Process every 3 seconds of audio
+            if (audioChunks.length >= 3) { // Adjust based on chunk timing
+                await processAudioChunk();
+            }
+        }
+    };
+    
+    // Collect data every 1 second
+    mediaRecorder.start(1000);
+}
+
+async function processAudioChunk() {
+    if (!recording || !isModelLoaded || audioChunks.length === 0) return;
+    
+    try {
+        // Combine audio chunks
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        
+        // Convert to required format for Whisper
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioData = await decodeAudioData(arrayBuffer);
+        
+        if (audioData) {
+            // Transcribe with Whisper
+            statusDiv.innerHTML = '🎙️ Transcribing...';
+            
+            const result = await whisper.transcribe(audioData, {
+                language: 'en',
+                task: 'transcribe',
+                temperature: 0.2
+            });
+            
+            if (result && result.text && result.text.trim()) {
+                updateTranscription(result.text);
+            }
+            
+            // Clear processed chunks, keep last chunk for continuity
+            audioChunks = audioChunks.slice(-1);
+            statusDiv.innerHTML = '🎤 Listening...';
+        }
+        
+    } catch(error) {
+        console.error('Transcription error:', error);
+        statusDiv.innerHTML = '⚠️ Transcription error, continuing...';
+    }
+}
+
+function decodeAudioData(arrayBuffer) {
+    return new Promise((resolve) => {
+        audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
+            // Convert to mono and resample to 16kHz for Whisper
+            const monoData = convertToMono(audioBuffer);
+            const resampled = resampleAudio(monoData, audioBuffer.sampleRate, 16000);
+            resolve(resampled);
+        }, (error) => {
+            console.error('Audio decode error:', error);
+            resolve(null);
+        });
+    });
+}
+
+function convertToMono(audioBuffer) {
+    if (audioBuffer.numberOfChannels === 1) {
+        return audioBuffer.getChannelData(0);
+    }
+    
+    // Mix down to mono
+    const length = audioBuffer.length;
+    const result = new Float32Array(length);
+    
+    for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+        const channelData = audioBuffer.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+            result[i] += channelData[i] / audioBuffer.numberOfChannels;
+        }
+    }
+    
+    return result;
+}
+
+function resampleAudio(audioData, fromRate, toRate) {
+    if (fromRate === toRate) return audioData;
+    
+    const ratio = fromRate / toRate;
+    const newLength = Math.round(audioData.length / ratio);
+    const result = new Float32Array(newLength);
+    
+    for (let i = 0; i < newLength; i++) {
+        const originalIndex = i * ratio;
+        const index1 = Math.floor(originalIndex);
+        const index2 = Math.min(index1 + 1, audioData.length - 1);
+        const fraction = originalIndex - index1;
+        
+        result[i] = audioData[index1] * (1 - fraction) + audioData[index2] * fraction;
+    }
+    
+    return result;
+}
+
+let transcriptionHistory = [];
+
+function updateTranscription(newText) {
+    transcriptionHistory.push(newText);
+    
+    // Keep only last 10 transcriptions
+    if (transcriptionHistory.length > 10) {
+        transcriptionHistory.shift();
+    }
+    
+    // Display all transcriptions
+    let displayText = '';
+    for (let i = transcriptionHistory.length - 1; i >= 0; i--) {
+        displayText += transcriptionHistory[i] + ' ';
+    }
+    
+    textDiv.innerHTML = displayText.trim() || 'Waiting for speech...';
+    
+    // Auto-scroll to bottom
+    textDiv.scrollTop = textDiv.scrollHeight;
+}
+
+function visualize() {
+    if (!recording) return;
+    
+    requestAnimationFrame(visualize);
+    
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        
+        for(let i = 0; i < bars.length; i++) {
+            let value = dataArray[i] || 0;
+            let height = Math.min(value * 1.5, 100);
+            bars[i].style.height = height + "px";
+        }
+    }
+}
+
+async function startRecording() {
+    const micStarted = await startMic();
+    
+    if (micStarted) {
+        recording = true;
+        toggleBtn.innerText = "Stop Recording ⏹️";
+        toggleBtn.classList.add('stop');
+        textDiv.innerHTML = '<span style="color: #22c55e;">🎙️ Listening... Speak now</span>';
+        statusDiv.innerHTML = '🎤 Recording and transcribing...';
+        
+        // Start audio context
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+        }
+    }
+}
+
+function stopRecording() {
+    recording = false;
+    toggleBtn.innerText = "Start Recording 🎙";
+    toggleBtn.classList.remove('stop');
+    statusDiv.innerHTML = '⏸️ Stopped';
+    
+    // Clean up
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+    
+    if (audioContext) {
+        audioContext.close();
+    }
+    
+    if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+    }
+    
+    audioChunks = [];
+    
+    // Reset bars
+    for(let i = 0; i < bars.length; i++) {
+        bars[i].style.height = "5px";
+    }
+}
+
+toggleBtn.onclick = async () => {
+    if (!recording) {
+        if (!isModelLoaded) {
+            statusDiv.innerHTML = '⚠️ Loading Whisper model, please wait...';
+            return;
+        }
+        await startRecording();
+    } else {
+        stopRecording();
+    }
+};
+
+// Initialize on page load
+async function init() {
+    await initWhisper();
+    
+    // Check microphone permission
+    try {
+        const hasPermission = await navigator.mediaDevices.getUserMedia({ audio: true });
+        hasPermission.getTracks().forEach(track => track.stop());
+        infoDiv.innerHTML += '<br>✅ Microphone access granted';
+    } catch(e) {
+        infoDiv.innerHTML += '<br>⚠️ Microphone permission needed for transcription';
+    }
+}
+
+// Start initialization
+init();
+
+// Handle page visibility
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && recording) {
+        // Optionally pause recording when tab is hidden
+        console.log('Tab hidden, continuing recording');
+    }
+});
+
+// Error handling for audio context
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+    if (event.reason.name === 'NotAllowedError') {
+        statusDiv.innerHTML = '❌ Microphone access denied. Please allow microphone access.';
+    }
+});
+
+</script>
+</body>
+</html>
