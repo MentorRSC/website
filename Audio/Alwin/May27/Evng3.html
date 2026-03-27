@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Live Whisper Transcription</title>
+
+<style>
+
+body{
+background:#0f172a;
+color:white;
+font-family:Arial;
+text-align:center;
+padding-top:60px;
+}
+
+button{
+padding:15px 40px;
+font-size:18px;
+border:none;
+border-radius:10px;
+background:#22c55e;
+color:white;
+cursor:pointer;
+}
+
+#bars{
+width:400px;
+height:100px;
+margin:40px auto;
+display:flex;
+align-items:flex-end;
+gap:4px;
+}
+
+.bar{
+width:6px;
+background:#06b6d4;
+height:5px;
+border-radius:4px;
+transition:height 0.05s;
+}
+
+#text{
+margin-top:20px;
+font-size:18px;
+max-width:600px;
+margin-left:auto;
+margin-right:auto;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Live Voice Transcription</h2>
+
+<button id="toggle">Start 🎙</button>
+
+<div id="bars"></div>
+
+<div id="text">Waiting for speech...</div>
+
+<script>
+
+let audioContext;
+let analyser;
+let dataArray;
+let mic;
+let recording=false;
+
+const barsContainer=document.getElementById("bars");
+
+for(let i=0;i<50;i++){
+let bar=document.createElement("div");
+bar.className="bar";
+barsContainer.appendChild(bar);
+}
+
+const bars=document.querySelectorAll(".bar");
+
+async function startMic(){
+
+const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+
+audioContext=new AudioContext();
+
+mic=audioContext.createMediaStreamSource(stream);
+
+analyser=audioContext.createAnalyser();
+analyser.fftSize=256;
+
+mic.connect(analyser);
+
+dataArray=new Uint8Array(analyser.frequencyBinCount);
+
+visualize();
+
+}
+
+function visualize(){
+
+requestAnimationFrame(visualize);
+
+analyser.getByteFrequencyData(dataArray);
+
+for(let i=0;i<bars.length;i++){
+
+let value=dataArray[i];
+let height=value/2;
+
+bars[i].style.height=height+"px";
+
+}
+
+}
+
+document.getElementById("toggle").onclick=async()=>{
+
+if(!recording){
+
+await startMic();
+
+document.getElementById("toggle").innerText="Stop";
+
+recording=true;
+
+liveTranscribe();
+
+}else{
+
+audioContext.close();
+
+document.getElementById("toggle").innerText="Start 🎙";
+
+recording=false;
+
+}
+
+};
+
+function liveTranscribe(){
+
+if(!recording) return;
+
+/* HERE you send audio chunks to whisper WASM */
+
+document.getElementById("text").innerText=
+"Listening... (Whisper transcription appears here)";
+
+setTimeout(liveTranscribe,2000);
+
+}
+
+</script>
+
+</body>
+</html>
