@@ -1,1 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Visualizer + Wake Word</title>
 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+
+    canvas {
+      border: 1px solid #444;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* 🔥 Popup Modal */
+    #popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #popupContent {
+      background: #222;
+      padding: 30px;
+      border-radius: 10px;
+      font-size: 20px;
+      box-shadow: 0 0 20px #00ffcc;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🎤 Audio Visualizer + Wake Word</h2>
+
+<button id="startBtn">Start Listening</button>
+<button id="muteBtn">Mute / Stop</button>
+
+<canvas id="canvas" width="800" height="200"></canvas>
+
+<!-- Popup -->
+<div id="popup">
+  <div id="popupContent">
+    🎉 Wake word detected: <b>Hey Lyra</b>
+    <br><br>
+    <button onclick="hidePopup()">Close</button>
+  </div>
+</div>
+
+<script type="module">
+import { PorcupineWorker } from "@picovoice/porcupine-web";
+import { WebVoiceProcessor } from "@picovoice/web-voice-processor";
+
+let audioContext;
+let analyser;
+let microphone;
+let dataArray;
+let animationId;
+let mediaStream;
+let isRunning = false;
+
+let porcupine = null;
+
+// Canvas
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// 🔥 Popup controls
+function showPopup() {
+  document.getElementById("popup").style.display = "flex";
+}
+
+window.hidePopup = function () {
+  document.getElementById("popup").style.display = "none";
+};
+
+// 🎯 Wake word callback
+function keywordDetectionCallback(detection) {
+  console.log("Wake word detected:", detection.label);
+  showPopup();
+}
+
+async function startAudio() {
+  if (isRunning) return;
+
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  microphone = audioContext.createMediaStreamSource(mediaStream);
+  analyser = audioContext.createAnalyser();
+
+  analyser.fftSize = 2048;
+  const bufferLength = analyser.frequencyBinCount;
+  dataArray = new Uint8Array(bufferLength);
+
+  microphone.connect(analyser);
+
+  // 🔥 INIT PORCUPINE
+  porcupine = await PorcupineWorker.create(
+    "lfd0C+KPnrhOtZWXOj39sBSTwMHVn+wutSPMd6vMbDsrYQ6PCzUZ0g==", // 🔴 replace
+    [{ publicPath: "https://mentorrsc.github.io/website/hey-lyra_en_wasm_v4_0_0.ppn", label: "Hey Lyra" }],
+    keywordDetectionCallback,
+    { publicPath: "/" }
+  );
+
+  await WebVoiceProcessor.subscribe(porcupine);
+
+  isRunning = true;
+
+  draw();
+  streamBinary();
+}
+
+function draw() {
+  animationId = requestAnimationFrame(draw);
+
+  analyser.getByteTimeDomainData(dataArray);
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#00ffcc";
+
+  ctx.beginPath();
+
+  const sliceWidth = canvas.width / dataArray.length;
+  let x = 0;
+
+  for (let i = 0; i < dataArray.length; i++) {
+    const v = dataArray[i] / 128.0;
+    const y = (v * canvas.height) / 2;
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+
+    x += sliceWidth;
+  }
+
+  ctx.lineTo(canvas.width, canvas.height / 2);
+  ctx.stroke();
+}
+
+// Simulated streaming
+function streamBinary() {
+  if (!isRunning) return;
+
+  analyser.getByteTimeDomainData(dataArray);
+
+  const chunk = new Uint8Array(dataArray);
+  console.log("Streaming chunk size:", chunk.length);
+
+  setTimeout(streamBinary, 100);
+}
+
+// 🔴 Stop everything cleanly
+async function stopAudio() {
+  if (!isRunning) return;
+
+  cancelAnimationFrame(animationId);
+
+  mediaStream.getTracks().forEach(track => track.stop());
+  audioContext.close();
+
+  if (porcupine) {
+    await WebVoiceProcessor.unsubscribe(porcupine);
+    porcupine.release();
+    porcupine.terminate();
+    porcupine = null;
+  }
+
+  isRunning = false;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  console.log("Stopped.");
+}
+
+document.getElementById("startBtn").onclick = startAudio;
+document.getElementById("muteBtn").onclick = stopAudio;
+
+</script>
+
+</body>
+</html>
