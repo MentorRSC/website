@@ -1,1 +1,535 @@
-nano lyra_wake_word.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Lyra Wake Word Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0b0f14 0%, #1a1f2c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(16, 24, 32, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 200, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #00ffc8;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
+        }
+
+        .status-card {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status {
+            font-size: 1.2em;
+            color: #00ffc8;
+            margin-bottom: 15px;
+            word-break: break-word;
+        }
+
+        .status-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .wave-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #00ffc8 0%, #00b894 100%);
+            color: #0b0f14;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 200, 0.3);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-danger {
+            background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+            color: white;
+        }
+
+        .info {
+            color: #888;
+            font-size: 0.85em;
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detection-count {
+            color: #00ffc8;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .listening {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 200, 0.95);
+            color: #0b0f14;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+            box-shadow: 0 4px 15px rgba(0, 255, 200, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .error {
+            color: #ff4757;
+            font-size: 0.9em;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 71, 87, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 LYRA Wake Word Detector</h1>
+        
+        <div class="status-card">
+            <div class="status-icon" id="statusIcon">🎤</div>
+            <div class="status" id="statusText">Initializing...</div>
+            <div class="detection-count" id="detectionCount">Detections: 0</div>
+        </div>
+
+        <div class="wave-container">
+            <canvas id="waveCanvas"></canvas>
+        </div>
+
+        <button class="button" id="startBtn" onclick="startListening()">🎙️ Start Listening</button>
+        <button class="button button-danger" id="stopBtn" onclick="stopListening()" disabled>⏹️ Stop Listening</button>
+        
+        <div class="info">
+            <div>Wake Word: <strong style="color:#00ffc8">"Hey Lyra"</strong></div>
+            <div id="audioInfo">🎧 Ready to listen</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@picovoice/porcupine-web@4.0.0/dist/porcupine_web.js"></script>
+    
+    <script>
+        // Configuration
+        const ACCESS_KEY = "lfd0C+KPnrhOtZWXOj39sBSTwMHVn+wutSPMd6vMbDsrYQ6PCzUZ0g==";
+        const KEYWORD_FILE = "hey-lyra_en_wasm_v4_0_0.ppn";
+        
+        // Global variables
+        let porcupine = null;
+        let audioContext = null;
+        let mediaStream = null;
+        let sourceNode = null;
+        let scriptNode = null;
+        let isListening = false;
+        let detectionCount = 0;
+        let lastDetectionTime = 0;
+        let animationFrameId = null;
+        
+        // DOM elements
+        const statusText = document.getElementById('statusText');
+        const statusIcon = document.getElementById('statusIcon');
+        const detectionCountEl = document.getElementById('detectionCount');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const waveCanvas = document.getElementById('waveCanvas');
+        const audioInfo = document.getElementById('audioInfo');
+        
+        // Waveform visualization
+        let canvasCtx = waveCanvas.getContext('2d');
+        let waveformData = new Array(100).fill(0);
+        
+        // Set canvas size
+        function resizeCanvas() {
+            const container = waveCanvas.parentElement;
+            waveCanvas.width = container.clientWidth;
+            waveCanvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Draw waveform
+        function drawWaveform() {
+            if (!canvasCtx) return;
+            
+            canvasCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+            canvasCtx.beginPath();
+            canvasCtx.strokeStyle = '#00ffc8';
+            canvasCtx.lineWidth = 2;
+            
+            const step = waveCanvas.width / waveformData.length;
+            const centerY = waveCanvas.height / 2;
+            
+            for (let i = 0; i < waveformData.length; i++) {
+                const x = i * step;
+                const height = waveformData[i] * waveCanvas.height;
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(x, centerY);
+                canvasCtx.lineTo(x, centerY - height);
+                canvasCtx.stroke();
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(x, centerY);
+                canvasCtx.lineTo(x, centerY + height);
+                canvasCtx.stroke();
+            }
+            
+            animationFrameId = requestAnimationFrame(drawWaveform);
+        }
+        
+        // Update waveform with audio data
+        function updateWaveform(audioData) {
+            // Calculate volume level
+            let sum = 0;
+            for (let i = 0; i < audioData.length; i++) {
+                sum += Math.abs(audioData[i]);
+            }
+            const level = Math.min(0.8, sum / audioData.length * 2);
+            
+            waveformData.push(level);
+            waveformData.shift();
+        }
+        
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // Wake word detected
+        function onWakeWordDetected() {
+            const now = Date.now();
+            if (now - lastDetectionTime > 5000) { // Prevent spam (5 second cooldown)
+                lastDetectionTime = now;
+                detectionCount++;
+                detectionCountEl.textContent = `Detections: ${detectionCount}`;
+                
+                // Visual feedback
+                statusIcon.style.transform = 'scale(1.2)';
+                statusText.textContent = '🔔 WAKE WORD DETECTED! 🔔';
+                statusText.style.color = '#ff4757';
+                
+                // Show popup
+                alert('🎯 Wake Word Detected! "Hey Lyra" was heard!');
+                showToast('🎯 "Hey Lyra" detected!');
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    if (isListening) {
+                        statusIcon.style.transform = 'scale(1)';
+                        statusText.textContent = '🎧 Listening for "Hey Lyra"...';
+                        statusText.style.color = '#00ffc8';
+                    }
+                }, 2000);
+            }
+        }
+        
+        // Audio processing callback
+        function audioProcess(event) {
+            if (!porcupine || !isListening) return;
+            
+            const inputData = event.inputBuffer.getChannelData(0);
+            updateWaveform(inputData);
+            
+            // Convert Float32Array to Int16Array for Porcupine
+            const pcm = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+                pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(inputData[i] * 32767)));
+            }
+            
+            try {
+                const keywordIndex = porcupine.process(pcm);
+                if (keywordIndex !== -1) {
+                    onWakeWordDetected();
+                }
+            } catch (error) {
+                console.error('Porcupine process error:', error);
+            }
+        }
+        
+        // Initialize Porcupine
+        async function initPorcupine() {
+            try {
+                statusText.textContent = 'Loading wake word model...';
+                
+                // Fetch the .ppn file
+                const response = await fetch(KEYWORD_FILE);
+                if (!response.ok) {
+                    throw new Error(`Failed to load keyword file: ${KEYWORD_FILE}`);
+                }
+                const keywordData = await response.arrayBuffer();
+                
+                // Create Porcupine instance
+                porcupine = await PorcupineWeb.create(
+                    ACCESS_KEY,
+                    [{ publicPath: KEYWORD_FILE, customData: new Uint8Array(keywordData) }],
+                    { base64: false }
+                );
+                
+                statusText.textContent = '✅ Wake word loaded. Ready!';
+                console.log('Porcupine initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Porcupine initialization error:', error);
+                statusText.textContent = '❌ Failed to load wake word';
+                statusIcon.textContent = '⚠️';
+                audioInfo.innerHTML = `<span style="color:#ff4757">Error: ${error.message}</span>`;
+                return false;
+            }
+        }
+        
+        // Start audio stream
+        async function startAudioStream() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    } 
+                });
+                
+                mediaStream = stream;
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                sourceNode = audioContext.createMediaStreamSource(stream);
+                
+                // Create script processor for audio data
+                const bufferSize = 2048;
+                scriptNode = audioContext.createScriptProcessor(bufferSize, 1, 1);
+                
+                scriptNode.onaudioprocess = audioProcess;
+                
+                sourceNode.connect(scriptNode);
+                scriptNode.connect(audioContext.destination);
+                
+                await audioContext.resume();
+                
+                audioInfo.innerHTML = '🎧 Microphone active - Listening for "Hey Lyra"';
+                return true;
+            } catch (error) {
+                console.error('Microphone error:', error);
+                audioInfo.innerHTML = `<span style="color:#ff4757">❌ Microphone error: ${error.message}</span>`;
+                statusText.textContent = '❌ Microphone access denied';
+                statusIcon.textContent = '🔇';
+                return false;
+            }
+        }
+        
+        // Stop audio stream
+        function stopAudioStream() {
+            if (scriptNode) {
+                scriptNode.disconnect();
+                scriptNode = null;
+            }
+            if (sourceNode) {
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            audioInfo.innerHTML = '🎧 Microphone stopped';
+        }
+        
+        // Start listening
+        async function startListening() {
+            if (isListening) return;
+            
+            startBtn.disabled = true;
+            statusText.textContent = '🎤 Requesting microphone access...';
+            
+            // Initialize Porcupine if not already
+            if (!porcupine) {
+                const success = await initPorcupine();
+                if (!success) {
+                    startBtn.disabled = false;
+                    return;
+                }
+            }
+            
+            // Start audio stream
+            const streamStarted = await startAudioStream();
+            if (!streamStarted) {
+                startBtn.disabled = false;
+                return;
+            }
+            
+            isListening = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            statusText.textContent = '🎧 Listening for "Hey Lyra"...';
+            statusIcon.textContent = '🎤';
+            statusIcon.classList.add('listening');
+            
+            // Start waveform animation
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            drawWaveform();
+        }
+        
+        // Stop listening
+        function stopListening() {
+            if (!isListening) return;
+            
+            isListening = false;
+            stopAudioStream();
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusText.textContent = '⏸️ Stopped';
+            statusIcon.textContent = '⏸️';
+            statusIcon.classList.remove('listening');
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // Clear canvas
+            if (canvasCtx) {
+                canvasCtx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+            }
+            
+            audioInfo.innerHTML = '🎧 Ready - Click "Start Listening" to begin';
+        }
+        
+        // Check browser compatibility
+        function checkBrowserSupport() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusText.textContent = '❌ Browser does not support microphone access';
+                statusIcon.textContent = '⚠️';
+                startBtn.disabled = true;
+                audioInfo.innerHTML = '<span style="color:#ff4757">Your browser does not support Web Audio API</span>';
+                return false;
+            }
+            
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                statusText.textContent = '❌ Browser does not support Web Audio API';
+                statusIcon.textContent = '⚠️';
+                startBtn.disabled = true;
+                audioInfo.innerHTML = '<span style="color:#ff4757">Your browser does not support Web Audio API</span>';
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            if (!checkBrowserSupport()) return;
+            
+            statusText.textContent = 'Click "Start Listening" to begin';
+            statusIcon.textContent = '🎤';
+            
+            // Pre-load Porcupine
+            await initPorcupine();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (isListening) {
+                stopListening();
+            }
+            if (porcupine) {
+                porcupine.release();
+            }
+        });
+    </script>
+</body>
+</html>
