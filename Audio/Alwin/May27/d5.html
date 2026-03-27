@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Web Transcriber Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #load {
+            background: #007bff;
+            color: white;
+        }
+        
+        #start {
+            background: #28a745;
+            color: white;
+        }
+        
+        #stop {
+            background: #dc3545;
+            color: white;
+        }
+        
+        #clear {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .status-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        #transcription {
+            min-height: 200px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        #transcription:empty::before {
+            content: "Transcription will appear here...";
+            color: #999;
+            font-style: italic;
+        }
+        
+        .progress {
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Whisper Web Transcriber Demo</h1>
+        
+        <div class="model-selection" style="text-align: center; margin: 20px 0;">
+            <label for="model-select" style="font-weight: bold;">Select Model:</label>
+            <select id="model-select" style="padding: 8px 16px; font-size: 16px; border-radius: 6px; border: 1px solid #ddd; margin: 0 10px;">
+                <option value="tiny.en">Tiny English (75 MB) - Fastest</option>
+                <option value="tiny-en-q5_1">Tiny English Q5_1 (31 MB) - Smallest</option>
+                <option value="base.en">Base English (142 MB) - Better accuracy</option>
+                <option value="base-en-q5_1" selected>Base English Q5_1 (57 MB) - Best balance</option>
+            </select>
+        </div>
+        
+        <div class="controls">
+            <button id="load">Load Model</button>
+            <button id="start" disabled>Start Recording</button>
+            <button id="stop" disabled>Stop Recording</button>
+            <button id="clear">Clear Text</button>
+        </div>
+        
+        <div class="status-box">
+            <strong>Status:</strong> <span id="status">Ready</span>
+        </div>
+        
+        <div class="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div style="text-align: center; margin-top: 5px;">
+                <span id="progress-text">0%</span>
+            </div>
+        </div>
+        
+        <h3>Transcription:</h3>
+        <div id="transcription"></div>
+    </div>
+    
+    <script>
+        // COI Service Worker (inlined)
+        if (typeof window === 'undefined') {
+            self.addEventListener("install", () => self.skipWaiting());
+            self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
+
+            self.addEventListener("message", e => {
+                if (e.data && e.data.type === "deregister") {
+                    self.registration
+                        .unregister()
+                        .then(() => {
+                            return self.clients.matchAll();
+                        })
+                        .then(clients => {
+                            clients.forEach(client => {
+                                client.navigate(client.url);
+                            });
+                        });
+                }
+            });
+
+            self.addEventListener("fetch", function(e) {
+                if (e.request.cache === "only-if-cached" && e.request.mode !== "same-origin") {
+                    return;
+                }
+
+                e.respondWith(
+                    fetch(e.request)
+                        .then(res => {
+                            if (res.status === 0) {
+                                return res;
+                            }
+
+                            const newHeaders = new Headers(res.headers);
+                            newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
+                            newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+
+                            return new Response(res.body, {
+                                status: res.status,
+                                statusText: res.statusText,
+                                headers: newHeaders
+                            });
+                        })
+                        .catch(e => console.error(e))
+                );
+            });
+        } else {
+            (() => {
+                const reloadedBySelf = window.sessionStorage.getItem("coiReloadedBySelf");
+                window.sessionStorage.removeItem("coiReloadedBySelf");
+                const coiIsolated = window.crossOriginIsolated;
+
+                if (!reloadedBySelf && !coiIsolated) {
+                    window.sessionStorage.setItem("coiReloadedBySelf", "true");
+                    window.location.reload();
+                }
+
+                // Register service worker from blob URL to avoid external file
+                const coiScript = document.currentScript.textContent;
+                const blob = new Blob([coiScript], { type: 'application/javascript' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(blobUrl).then(
+                    registration => {
+                        if (registration.active && !navigator.serviceWorker.controller) {
+                            window.location.reload();
+                        }
+                    },
+                    err => {
+                        console.error("COI service worker registration failed:", err);
+                    }
+                );
+            })();
+        }
+    </script>
+    
+    <script type="module">
+        // WhisperTranscriber class
+        class WhisperTranscriber {
+            constructor(config = {}) {
+                this.instance = null;
+                this.mediaRecorder = null;
+                this.audioContext = null;
+                this.isRecording = false;
+                this.audio = null;
+                this.audio0 = null;
+                this.Module = null;
+                this.modelLoaded = false;
+                this.initPromise = null;
+                this.config = {
+                    modelUrl: config.modelUrl || WhisperTranscriber.MODEL_URLS[config.modelSize || 'base-en-q5_1'],
+                    modelSize: config.modelSize || 'base-en-q5_1',
+                    sampleRate: config.sampleRate || 16000,
+                    audioIntervalMs: config.audioIntervalMs || 5000,
+                    onTranscription: config.onTranscription || (() => { }),
+                    onProgress: config.onProgress || (() => { }),
+                    onStatus: config.onStatus || (() => { }),
+                    debug: config.debug || false,
+                };
+            }
+            
+            log(message) {
+                if (this.config.debug) {
+                    console.log('[WhisperTranscriber]', message);
+                }
+            }
+            
+            getScriptBasePath() {
+                if (window.location.hostname === 'localhost' && window.location.pathname.includes('/demo/')) {
+                    return '../dist/';
+                }
+                return 'https://unpkg.com/whisper-web-transcriber/dist/';
+            }
+            
+            async loadWasmModule() {
+                const script = document.createElement('script');
+                script.src = this.getScriptBasePath() + 'libstream.js';
+                return new Promise((resolve, reject) => {
+                    script.onload = () => {
+                        const checkModule = setInterval(() => {
+                            if (typeof window.Module !== 'undefined') {
+                                clearInterval(checkModule);
+                                this.Module = window.Module;
+                                this.log('WASM module loaded');
+                                resolve();
+                            }
+                        }, 100);
+                        setTimeout(() => {
+                            clearInterval(checkModule);
+                            reject(new Error('Timeout loading WASM module'));
+                        }, 10000);
+                    };
+                    script.onerror = () => reject(new Error('Failed to load WASM module'));
+                    document.head.appendChild(script);
+                });
+            }
+            
+            async loadHelpers() {
+                const script = document.createElement('script');
+                script.src = this.getScriptBasePath() + 'helpers.js';
+                return new Promise((resolve, reject) => {
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error('Failed to load helpers'));
+                    document.head.appendChild(script);
+                });
+            }
+            
+            async initialize() {
+                if (this.initPromise) {
+                    return this.initPromise;
+                }
+                this.initPromise = (async () => {
+                    try {
+                        window.dbVersion = 1;
+                        window.dbName = 'whisper.transcriber.models';
+                        await this.loadHelpers();
+                        this.log('Helpers loaded');
+                        await this.loadWasmModule();
+                        this.log('WASM module initialized');
+                        this.config.onStatus('Ready to load model');
+                    }
+                    catch (error) {
+                        this.log('Failed to initialize: ' + error);
+                        throw error;
+                    }
+                })();
+                return this.initPromise;
+            }
+            
+            async loadModel() {
+                if (this.modelLoaded) {
+                    this.log('Model already loaded');
+                    return;
+                }
+                await this.initialize();
+                return new Promise((resolve, reject) => {
+                    const url = this.config.modelUrl;
+                    const size_mb = WhisperTranscriber.MODEL_SIZES[this.config.modelSize];
+                    this.config.onStatus('Loading model...');
+                    const storeFS = (fname, buf) => {
+                        try {
+                            this.Module.FS_unlink(fname);
+                        }
+                        catch (e) {}
+                        this.Module.FS_createDataFile("/", fname, buf, true, true);
+                        this.log(`Model stored: ${fname}, size: ${buf.length}`);
+                        this.modelLoaded = true;
+                        this.config.onStatus('Model loaded successfully');
+                        resolve();
+                    };
+                    const cbProgress = (progress) => {
+                        this.config.onProgress(Math.round(progress * 100));
+                    };
+                    const cbCancel = () => {
+                        this.config.onStatus('Model loading cancelled');
+                        reject(new Error('Model loading cancelled'));
+                    };
+                    const cbPrint = (msg) => {
+                        this.log(msg);
+                    };
+                    window.loadRemote(url, 'whisper.bin', size_mb, cbProgress, storeFS, cbCancel, cbPrint);
+                });
+            }
+            
+            async startRecording() {
+                if (!this.modelLoaded) {
+                    throw new Error('Model not loaded. Call loadModel() first.');
+                }
+                if (this.isRecording) {
+                    this.log('Already recording');
+                    return;
+                }
+                
+                if (!this.instance) {
+                    this.instance = this.Module.init('whisper.bin');
+                    if (!this.instance) {
+                        throw new Error('Failed to initialize Whisper');
+                    }
+                    this.log('Whisper instance initialized');
+                }
+                
+                this.audioContext = new AudioContext({
+                    sampleRate: this.config.sampleRate,
+                    channelCount: 1,
+                    echoCancellation: false,
+                    autoGainControl: true,
+                    noiseSuppression: true,
+                });
+                
+                this.Module.set_status("");
+                this.isRecording = true;
+                this.config.onStatus('Recording...');
+                
+                const chunks = [];
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.mediaRecorder.ondataavailable = (e) => {
+                        chunks.push(e.data);
+                        const blob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const buf = new Uint8Array(event.target.result);
+                            if (!this.audioContext) return;
+                            this.audioContext.decodeAudioData(buf.buffer, (audioBuffer) => {
+                                const offlineContext = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
+                                const source = offlineContext.createBufferSource();
+                                source.buffer = audioBuffer;
+                                source.connect(offlineContext.destination);
+                                source.start(0);
+                                offlineContext.startRendering().then((renderedBuffer) => {
+                                    this.audio = renderedBuffer.getChannelData(0);
+                                    const audioAll = new Float32Array(this.audio0 == null ? this.audio.length : this.audio0.length + this.audio.length);
+                                    if (this.audio0 != null) {
+                                        audioAll.set(this.audio0, 0);
+                                    }
+                                    audioAll.set(this.audio, this.audio0 == null ? 0 : this.audio0.length);
+                                    if (this.instance) {
+                                        this.Module.set_audio(this.instance, audioAll);
+                                    }
+                                });
+                            });
+                        };
+                        reader.readAsArrayBuffer(blob);
+                    };
+                    
+                    this.mediaRecorder.onstop = () => {
+                        if (this.isRecording) {
+                            setTimeout(() => this.startRecording(), 0);
+                        }
+                    };
+                    
+                    this.mediaRecorder.start(this.config.audioIntervalMs);
+                    this.startTranscriptionPolling();
+                }
+                catch (error) {
+                    this.isRecording = false;
+                    this.config.onStatus('Error: ' + error.message);
+                    throw error;
+                }
+            }
+            
+            startTranscriptionPolling() {
+                const interval = setInterval(() => {
+                    if (!this.isRecording) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    const transcribed = this.Module.get_transcribed();
+                    if (transcribed != null && transcribed.length > 1) {
+                        this.config.onTranscription(transcribed);
+                    }
+                }, 100);
+            }
+            
+            stopRecording() {
+                if (!this.isRecording) {
+                    this.log('Not recording');
+                    return;
+                }
+                this.Module.set_status("paused");
+                this.isRecording = false;
+                this.audio0 = null;
+                this.audio = null;
+                if (this.mediaRecorder) {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder = null;
+                }
+                if (this.audioContext) {
+                    this.audioContext.close();
+                    this.audioContext = null;
+                }
+                this.config.onStatus('Stopped');
+            }
+            
+            destroy() {
+                this.stopRecording();
+                this.instance = null;
+                this.Module = null;
+                this.modelLoaded = false;
+            }
+        }
+        
+        WhisperTranscriber.MODEL_URLS = {
+            'tiny.en': 'https://whisper.ggerganov.com/ggml-model-whisper-tiny.en.bin',
+            'base.en': 'https://whisper.ggerganov.com/ggml-model-whisper-base.en.bin',
+            'tiny-en-q5_1': 'https://whisper.ggerganov.com/ggml-model-whisper-tiny.en-q5_1.bin',
+            'base-en-q5_1': 'https://whisper.ggerganov.com/ggml-model-whisper-base.en-q5_1.bin',
+        };
+        
+        WhisperTranscriber.MODEL_SIZES = {
+            'tiny.en': 75,
+            'base.en': 142,
+            'tiny-en-q5_1': 31,
+            'base-en-q5_1': 57,
+        };
+        
+        // Application code
+        let transcriber = null;
+        
+        function createTranscriber(modelSize) {
+            if (transcriber) {
+                transcriber.destroy();
+            }
+            
+            transcriber = new WhisperTranscriber({
+                modelSize: modelSize,
+                onTranscription: (text) => {
+                    const transcriptionEl = document.getElementById('transcription');
+                    transcriptionEl.textContent += text + ' ';
+                    transcriptionEl.scrollTop = transcriptionEl.scrollHeight;
+                },
+                onProgress: (progress) => {
+                    document.getElementById('progress-fill').style.width = progress + '%';
+                    document.getElementById('progress-text').textContent = progress + '%';
+                },
+                onStatus: (status) => {
+                    document.getElementById('status').textContent = status;
+                },
+                debug: true
+            });
+            
+            return transcriber;
+        }
+        
+        document.getElementById('load').onclick = async () => {
+            try {
+                document.getElementById('load').disabled = true;
+                
+                const modelSelect = document.getElementById('model-select');
+                const selectedModel = modelSelect.value;
+                
+                createTranscriber(selectedModel);
+                
+                document.getElementById('progress-fill').style.width = '0%';
+                document.getElementById('progress-text').textContent = '0%';
+                
+                await transcriber.loadModel();
+                document.getElementById('start').disabled = false;
+                document.getElementById('load').textContent = 'Model Loaded';
+                modelSelect.disabled = true;
+            } catch (error) {
+                console.error('Error loading model:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('load').disabled = false;
+            }
+        };
+        
+        document.getElementById('start').onclick = async () => {
+            try {
+                await transcriber.startRecording();
+                document.getElementById('start').disabled = true;
+                document.getElementById('stop').disabled = false;
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('start').disabled = false;
+            }
+        };
+        
+        document.getElementById('stop').onclick = () => {
+            transcriber.stopRecording();
+            document.getElementById('start').disabled = false;
+            document.getElementById('stop').disabled = true;
+        };
+        
+        document.getElementById('clear').onclick = () => {
+            document.getElementById('transcription').textContent = '';
+        };
+        
+        document.getElementById('model-select').onchange = () => {
+            const loadBtn = document.getElementById('load');
+            if (loadBtn.textContent === 'Model Loaded') {
+                loadBtn.textContent = 'Load Model';
+                loadBtn.disabled = false;
+                document.getElementById('start').disabled = true;
+                
+                if (transcriber && transcriber.isRecording) {
+                    transcriber.stopRecording();
+                    document.getElementById('start').disabled = true;
+                    document.getElementById('stop').disabled = true;
+                }
+            }
+        };
+    </script>
+</body>
+</html>
