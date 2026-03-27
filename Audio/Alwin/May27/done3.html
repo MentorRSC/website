@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Silent Blue Waves | Audio Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'BlinkMacSystemFont', 'Roboto', sans-serif;
+            padding: 1.5rem;
+        }
+
+        /* main container - elevated glassmorphic white theme */
+        .wave-container {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(0px);
+            width: 100%;
+            max-width: 1300px;
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.02);
+            padding: 2rem 1.8rem 2rem 1.8rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* header area */
+        .title-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title-section h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #136b9c, #1e6ab3, #3a8cd9);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        .title-section .sub {
+            color: #5c6f87;
+            margin-top: 0.5rem;
+            font-weight: 450;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* permission panel */
+        .permission-panel {
+            background: #fefefe;
+            border-radius: 2rem;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border: 1px solid #eef2f9;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            margin-bottom: 0.5rem;
+            transition: all 0.25s;
+        }
+
+        .permission-panel p {
+            color: #1f2d3d;
+            font-weight: 500;
+            margin-bottom: 1.4rem;
+            font-size: 1.1rem;
+        }
+
+        .perm-btn {
+            background: #1e6bc7;
+            border: none;
+            padding: 0.9rem 2.4rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 3rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(30, 107, 199, 0.25);
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            font-family: inherit;
+        }
+
+        .perm-btn:hover {
+            background: #0f5bb0;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(30, 107, 199, 0.3);
+        }
+
+        .perm-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* status message */
+        .status-msg {
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 0.6rem;
+            color: #2c7da0;
+            font-weight: 500;
+            background: #eef7ff;
+            display: inline-block;
+            width: auto;
+            padding: 0.4rem 1.2rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+        }
+
+        .status-area {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        /* canvas wrapper */
+        .canvas-wrapper {
+            background: #ffffff;
+            border-radius: 1.8rem;
+            padding: 0.3rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03), inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #ffffff;
+            border-radius: 1.4rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s;
+        }
+
+        /* TWO BUTTONS at bottom corners */
+        .corner-buttons {
+            position: relative;
+            margin-top: 1.8rem;
+            height: 64px;
+        }
+
+        .btn-corner {
+            position: absolute;
+            bottom: 0;
+            background: #f7faff;
+            border: 1px solid #e4ecf7;
+            padding: 0.75rem 1.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .btn-corner:active {
+            transform: scale(0.96);
+        }
+
+        .btn-stop {
+            left: 0;
+            background: #fff5f2;
+            border-color: #ffe0d6;
+            color: #c7451f;
+        }
+
+        .btn-stop:hover {
+            background: #ffeae2;
+            border-color: #ffcbbc;
+            color: #b33a18;
+            box-shadow: 0 4px 10px rgba(199, 69, 31, 0.1);
+        }
+
+        .btn-mute {
+            right: 0;
+            background: #f0f5fe;
+            border-color: #e0ecfe;
+            color: #1f6392;
+        }
+
+        .btn-mute:hover {
+            background: #e4edfd;
+            border-color: #cbddf9;
+        }
+
+        .btn-mute.muted-active {
+            background: #ffebe6;
+            border-color: #fccbbb;
+            color: #bc4a2c;
+            box-shadow: 0 2px 8px rgba(188, 74, 44, 0.1);
+        }
+
+        /* info note */
+        .info-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 1.8rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid #ecf3fa;
+            letter-spacing: 0.3px;
+        }
+
+        /* micro-interactions */
+        @keyframes gentlePulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* responsive */
+        @media (max-width: 640px) {
+            .wave-container {
+                padding: 1.2rem;
+            }
+            .btn-corner {
+                padding: 0.5rem 1.2rem;
+                font-size: 0.8rem;
+            }
+            .title-section h1 {
+                font-size: 1.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wave-container">
+    <div class="title-section">
+        <h1>
+            🌊 Silent Blue Bars
+        </h1>
+        <div class="sub">pure frequency vision · zero audio playback</div>
+    </div>
+
+    <!-- permission request panel (initial visible) -->
+    <div id="permissionZone" class="permission-panel">
+        <p>🎙️ Grant microphone access to see dynamic blue waves</p>
+        <button id="requestPermBtn" class="perm-btn">✨ Allow Mic & Visualize</button>
+        <div class="status-area">
+            <div id="permStatusMsg" class="status-msg">⚡ ready — click to start silent visualizer</div>
+        </div>
+    </div>
+
+    <!-- main visualizer area (hidden until permission granted) -->
+    <div id="visualizerArea" style="display: none;">
+        <div class="canvas-wrapper">
+            <canvas id="audioCanvas" width="1100" height="280" style="width:100%; height:auto; max-width:1100px; aspect-ratio:1100/280"></canvas>
+        </div>
+        
+        <!-- Two corner buttons: STOP (left) and MUTE (right) -->
+        <div class="corner-buttons">
+            <button id="stopBtn" class="btn-corner btn-stop">⏹️ STOP</button>
+            <button id="muteBtn" class="btn-corner btn-mute">🔇 MUTE</button>
+        </div>
+        
+        <div class="info-note">
+            💙 Real-time frequency bars | Mic input visualized — audio never reaches speakers
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM elements
+        const permissionZone = document.getElementById('permissionZone');
+        const visualizerArea = document.getElementById('visualizerArea');
+        const requestBtn = document.getElementById('requestPermBtn');
+        const permStatusMsg = document.getElementById('permStatusMsg');
+        const stopBtn = document.getElementById('stopBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const canvas = document.getElementById('audioCanvas');
+        
+        // Audio context & nodes - NO DESTINATION CONNECTION = COMPLETE SILENCE
+        let audioContext = null;
+        let mediaStream = null;
+        let sourceNode = null;
+        let analyserNode = null;
+        let animationFrameId = null;
+        let isStreamActive = false;
+        let isVisualMuted = false;      // visual freeze/mute flag (bars become idle)
+        
+        // Canvas drawing context
+        let canvasCtx = canvas.getContext('2d');
+        let canvasWidth = canvas.width;
+        let canvasHeight = canvas.height;
+        
+        const FFT_SIZE = 256;
+        let dataArray = null;
+        
+        // rounded rect helper (cross-browser)
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x+r, y);
+                this.lineTo(x+w-r, y);
+                this.quadraticCurveTo(x+w, y, x+w, y+r);
+                this.lineTo(x+w, y+h-r);
+                this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                this.lineTo(x+r, y+h);
+                this.quadraticCurveTo(x, y+h, x, y+h-r);
+                this.lineTo(x, y+r);
+                this.quadraticCurveTo(x, y, x+r, y);
+                return this;
+            };
+        }
+        
+        function initCanvasDimensions() {
+            canvas.width = 1100;
+            canvas.height = 280;
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            canvasCtx = canvas.getContext('2d');
+        }
+        initCanvasDimensions();
+        
+        // draw dynamic frequency bars (alive & responsive)
+        function drawActiveFrequencyBars() {
+            if (!analyserNode || !dataArray) {
+                drawGentleIdleBars();
+                return;
+            }
+            
+            analyserNode.getByteFrequencyData(dataArray);
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            canvasCtx.fillStyle = '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            const barCount = Math.min(84, analyserNode.frequencyBinCount);
+            const step = Math.max(1, Math.floor(analyserNode.frequencyBinCount / barCount));
+            const barWidth = (canvasWidth / barCount) * 0.82;
+            const spacing = (canvasWidth / barCount) * 0.18;
+            let x = 0;
+            
+            for (let i = 0; i < barCount; i++) {
+                let sum = 0;
+                let samples = 0;
+                for (let j = 0; j < step; j++) {
+                    const idx = i * step + j;
+                    if (idx < analyserNode.frequencyBinCount) {
+                        sum += dataArray[idx];
+                        samples++;
+                    }
+                }
+                let avg = samples ? sum / samples : 0;
+                const percent = Math.min(1, avg / 255);
+                // dynamic height with smooth floor
+                const barHeight = Math.max(6, percent * (canvasHeight - 44));
+                // vibrant blue gradient
+                const gradient = canvasCtx.createLinearGradient(x, canvasHeight - barHeight - 4, x, canvasHeight - 8);
+                gradient.addColorStop(0, '#1976d2');
+                gradient.addColorStop(0.6, '#42a5f5');
+                gradient.addColorStop(1, '#7bb3e0');
+                canvasCtx.fillStyle = gradient;
+                const yPosition = canvasHeight - barHeight - 8;
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(x + 1, yPosition, barWidth - 2, barHeight, 7);
+                canvasCtx.fill();
+                x += barWidth + spacing;
+            }
+        }
+        
+        // calm idle waves (visualization when no mic data, or when visual mute is on)
+        function drawGentleIdleBars() {
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            canvasCtx.fillStyle = '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            const barCount = 70;
+            const barWidth = (canvasWidth / barCount) * 0.7;
+            const spacing = (canvasWidth / barCount) * 0.3;
+            let x = 0;
+            const timestamp = Date.now() * 0.0045;
+            
+            for (let i = 0; i < barCount; i++) {
+                // organic sine wave for idle motion
+                let idleHeight = 9 + Math.sin(timestamp + i * 0.22) * 6 + Math.cos(i * 0.19) * 3.5;
+                idleHeight = Math.min(34, Math.max(6, idleHeight));
+                canvasCtx.fillStyle = '#cde4ff';
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(x + 1, canvasHeight - idleHeight - 8, barWidth - 2, idleHeight, 6);
+                canvasCtx.fill();
+                x += barWidth + spacing;
+            }
+        }
+        
+        // Main render loop: decides between live bars, idle bars based on stream + mute state
+        function renderVisuals() {
+            if (!animationFrameId) return;
+            
+            // conditions: stream inactive OR visual muted -> show idle gentle pattern
+            if (!isStreamActive || !analyserNode || isVisualMuted) {
+                drawGentleIdleBars();
+            } else {
+                // stream active, not muted -> draw live frequency data
+                if (dataArray) {
+                    drawActiveFrequencyBars();
+                } else {
+                    drawGentleIdleBars();
+                }
+            }
+            animationFrameId = requestAnimationFrame(renderVisuals);
+        }
+        
+        // COMPLETE SILENT AUDIO ENGINE: only connect source -> analyser, NEVER to destination.
+        async function initSilentVisualizer(stream) {
+            // clean up previous resources if any
+            if (audioContext && audioContext.state !== 'closed') {
+                await closeAudioResources(false);
+            }
+            
+            mediaStream = stream;
+            // Ensure all audio tracks are enabled (for input, but no output)
+            const audioTracks = stream.getAudioTracks();
+            if (audioTracks.length) {
+                audioTracks[0].enabled = true;
+            }
+            
+            // Create AudioContext but DO NOT connect to speakers
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = FFT_SIZE;
+            analyserNode.smoothingTimeConstant = 0.68;  // smooth but responsive
+            const bufferLength = analyserNode.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            sourceNode = audioContext.createMediaStreamSource(mediaStream);
+            
+            // CRITICAL: Connect source -> analyser only. No connection to destination.
+            // This guarantees ZERO audible output while maintaining full visual reactivity.
+            sourceNode.connect(analyserNode);
+            
+            // Start audio context (processing but silent)
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            
+            isStreamActive = true;
+            isVisualMuted = false;     // visual reactive by default
+            updateMuteButtonUI();
+        }
+        
+        // Full stop: release all resources, switch to permission panel
+        async function stopAndClearAll() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            await closeAudioResources(true);
+            
+            isStreamActive = false;
+            isVisualMuted = false;
+            
+            // reset UI visibility
+            visualizerArea.style.display = 'none';
+            permissionZone.style.display = 'block';
+            permStatusMsg.innerText = '⏹️ Visualizer stopped. Click to restart with microphone.';
+            permStatusMsg.style.background = '#eff3f8';
+            permStatusMsg.style.color = '#2c6280';
+            
+            // draw idle pattern in background canvas (clean state)
+            drawGentleIdleBars();
+        }
+        
+        // Helper to close and release all audio objects
+        async function closeAudioResources(stopTracks = true) {
+            if (sourceNode) {
+                try { sourceNode.disconnect(); } catch(e) {}
+                sourceNode = null;
+            }
+            if (analyserNode) {
+                try { analyserNode.disconnect(); } catch(e) {}
+                analyserNode = null;
+            }
+            if (audioContext) {
+                try { await audioContext.close(); } catch(e) {}
+                audioContext = null;
+            }
+            if (mediaStream && stopTracks) {
+                mediaStream.getTracks().forEach(track => {
+                    if (track.readyState === 'live') track.stop();
+                });
+                mediaStream = null;
+            }
+            dataArray = null;
+        }
+        
+        // toggle visual mute: bars freeze / show idle pattern, but microphone continues (silently)
+        function toggleVisualMuteMode() {
+            if (!isStreamActive) {
+                // if no active stream, show brief tip
+                if (permissionZone.style.display !== 'none') {
+                    const originalMsg = permStatusMsg.innerText;
+                    permStatusMsg.innerText = '🎤 Start microphone first to use MUTE feature';
+                    permStatusMsg.style.background = '#ffefe5';
+                    setTimeout(() => {
+                        if (permissionZone.style.display !== 'none' && permStatusMsg.innerText.includes('Start microphone')) {
+                            permStatusMsg.innerText = originalMsg;
+                            permStatusMsg.style.background = '#eef7ff';
+                        }
+                    }, 1800);
+                }
+                return;
+            }
+            
+            isVisualMuted = !isVisualMuted;
+            updateMuteButtonUI();
+            
+            // quick transient feedback
+            showFloatingMessage(isVisualMuted ? '🔇 Visual frozen (mic silent)' : '🎵 Visual active — waves moving');
+        }
+        
+        function updateMuteButtonUI() {
+            if (isVisualMuted) {
+                muteBtn.innerHTML = '🔴 MUTED';
+                muteBtn.classList.add('muted-active');
+            } else {
+                muteBtn.innerHTML = '🔇 MUTE';
+                muteBtn.classList.remove('muted-active');
+            }
+        }
+        
+        function showFloatingMessage(text) {
+            const toast = document.createElement('div');
+            toast.textContent = text;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '90px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = '#ffffffdd';
+            toast.style.backdropFilter = 'blur(12px)';
+            toast.style.color = '#1e5f87';
+            toast.style.padding = '8px 20px';
+            toast.style.borderRadius = '60px';
+            toast.style.fontSize = '0.85rem';
+            toast.style.fontWeight = '500';
+            toast.style.zIndex = '2000';
+            toast.style.border = '1px solid #cde0f0';
+            toast.style.boxShadow = '0 4px 14px rgba(0,0,0,0.05)';
+            toast.style.fontFamily = 'inherit';
+            toast.style.pointerEvents = 'none';
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                if (toast && toast.remove) toast.remove();
+            }, 1400);
+        }
+        
+        // Request microphone and bootstrap silent visualizer
+        async function requestMicAndStart() {
+            permStatusMsg.innerText = '🎤 Requesting mic access ...';
+            permStatusMsg.style.background = '#eef3fe';
+            permStatusMsg.style.color = '#1f6392';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                await initSilentVisualizer(stream);
+                
+                // switch UI
+                permissionZone.style.display = 'none';
+                visualizerArea.style.display = 'block';
+                permStatusMsg.innerText = '✅ Listening — blue bars react to your voice (no sound output)';
+                permStatusMsg.style.background = '#e3f3ec';
+                permStatusMsg.style.color = '#1c6e46';
+                
+                // start rendering loop if not active
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                animationFrameId = requestAnimationFrame(renderVisuals);
+                
+                // reset visual mute state
+                isVisualMuted = false;
+                updateMuteButtonUI();
+                
+            } catch (err) {
+                console.error('Mic error:', err);
+                let errorMsg = '❌ Microphone error: ';
+                if (err.name === 'NotAllowedError') errorMsg += 'Permission denied. Please allow microphone.';
+                else if (err.name === 'NotFoundError') errorMsg += 'No microphone found.';
+                else errorMsg += 'Could not access audio input.';
+                permStatusMsg.innerText = errorMsg;
+                permStatusMsg.style.background = '#ffe8e5';
+                permStatusMsg.style.color = '#bc5440';
+                throw err;
+            }
+        }
+        
+        // Event bindings
+        requestBtn.addEventListener('click', () => {
+            requestMicAndStart().catch(() => {});
+        });
+        
+        stopBtn.addEventListener('click', async () => {
+            await stopAndClearAll();
+            isVisualMuted = false;
+            updateMuteButtonUI();
+            // ensure drawing continues with idle pattern after stop
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(renderVisuals);
+        });
+        
+        muteBtn.addEventListener('click', toggleVisualMuteMode);
+        
+        // Ensure canvas looks clean on initial load
+        function initialIdleDraw() {
+            if (canvasCtx) {
+                drawGentleIdleBars();
+            }
+        }
+        initialIdleDraw();
+        
+        // resize observer to keep canvas crisp but we rely on fixed logical dimensions, however if needed re-render
+        window.addEventListener('resize', () => {
+            if (visualizerArea.style.display === 'block' && canvasCtx) {
+                if (!isStreamActive || isVisualMuted) {
+                    drawGentleIdleBars();
+                } else if (isStreamActive && analyserNode && !isVisualMuted) {
+                    drawActiveFrequencyBars();
+                }
+            }
+        });
+        
+        // resume audio context if suspended (silently) while stream active
+        setInterval(() => {
+            if (isStreamActive && audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().catch(e => {});
+            }
+        }, 1200);
+        
+        // final fallback: ensure drawing loop always runs
+        if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(renderVisuals);
+        }
+    })();
+</script>
+</body>
+</html>
