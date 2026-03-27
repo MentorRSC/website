@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Visualizer</title>
+
+<style>
+* {margin:0;padding:0;box-sizing:border-box;}
+
+body {
+    background:#ffffff;
+    font-family:sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    transition:0.3s;
+}
+
+/* DARK MODE */
+body.dark {
+    background:#0f172a;
+    color:#e2e8f0;
+}
+
+.container {
+    width:90%;
+    max-width:900px;
+    text-align:center;
+}
+
+canvas {
+    width:100%;
+    height:200px;
+    border-radius:12px;
+}
+
+/* FLOAT BUTTONS */
+.floating-btn {
+    position:fixed;
+    bottom:20px;
+    padding:14px 18px;
+    border:none;
+    border-radius:50px;
+    font-size:16px;
+    cursor:pointer;
+    z-index:999;
+}
+
+#muteBtn {
+    left:20px;
+    background:#334155;
+    color:white;
+}
+
+#stopBtn {
+    right:20px;
+    background:#ef4444;
+    color:white;
+}
+
+#themeToggle {
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#111827;
+    color:white;
+    padding:10px 14px;
+    border:none;
+    border-radius:30px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<button id="themeToggle">🌙</button>
+
+<div class="container">
+    <h2>🎤 Live Audio Wave</h2>
+    <canvas id="canvas"></canvas>
+</div>
+
+<button id="muteBtn">🔊</button>
+<button id="stopBtn">⏹️</button>
+
+<script>
+let audioCtx, analyser, source, dataArray;
+let isMuted = false;
+let stream;
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+async function start() {
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx = new AudioContext();
+    analyser = audioCtx.createAnalyser();
+    source = audioCtx.createMediaStreamSource(stream);
+
+    analyser.fftSize = 256;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    source.connect(analyser);
+    draw();
+}
+
+function draw() {
+    requestAnimationFrame(draw);
+
+    analyser.getByteFrequencyData(dataArray);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    let barWidth = canvas.width / dataArray.length;
+
+    for(let i=0;i<dataArray.length;i++){
+        let barHeight = dataArray[i];
+        ctx.fillStyle = "blue";
+        ctx.fillRect(i*barWidth, canvas.height-barHeight, barWidth-2, barHeight);
+    }
+}
+
+function stop() {
+    if(stream){
+        stream.getTracks().forEach(t=>t.stop());
+    }
+}
+
+function toggleMute(){
+    isMuted = !isMuted;
+    document.getElementById("muteBtn").innerText = isMuted ? "🔇" : "🔊";
+}
+
+/* BUTTONS */
+document.getElementById("muteBtn").onclick = toggleMute;
+document.getElementById("stopBtn").onclick = stop;
+
+/* THEME */
+let dark=false;
+document.getElementById("themeToggle").onclick = ()=>{
+    dark=!dark;
+    document.body.classList.toggle("dark");
+    themeToggle.innerText = dark ? "☀️" : "🌙";
+};
+
+/* AUTO START */
+start();
+</script>
+
+</body>
+</html>
