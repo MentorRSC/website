@@ -1,0 +1,149 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Wake Word UI</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #111;
+      color: #fff;
+    }
+
+    #micButton {
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    #audioBarContainer {
+      width: 300px;
+      height: 20px;
+      background: #333;
+      margin: 30px auto;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #audioBar {
+      height: 100%;
+      width: 0%;
+      background: limegreen;
+      transition: width 0.1s;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Wake Word Detection UI</h1>
+
+<button id="micButton">Start Listening</button>
+
+<div id="audioBarContainer">
+  <div id="audioBar"></div>
+</div>
+
+<div id="status">Idle</div>
+
+<!-- Porcupine SDK -->
+<script src="https://unpkg.com/@picovoice/porcupine-web"></script>
+
+<script>
+const ACCESS_KEY = "lfd0C+KPnrhOtZWXOj39sBSTwMHVn+wutSPMd6vMbDsrYQ6PCzUZ0g==";
+const KEYWORD_PATH = "hey-lyra.ppn"; // your .ppn file
+
+let porcupine = null;
+let audioContext;
+let analyser;
+let micStream;
+
+const audioBar = document.getElementById("audioBar");
+const statusText = document.getElementById("status");
+
+document.getElementById("micButton").onclick = async () => {
+  try {
+    statusText.innerText = "Requesting mic permission...";
+    
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    statusText.innerText = "Mic connected";
+
+    // Setup audio context
+    audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(micStream);
+
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+
+    source.connect(analyser);
+
+    visualizeAudio();
+
+    // Initialize Porcupine
+    porcupine = await PorcupineWeb.PorcupineWorker.create(
+      ACCESS_KEY,
+      [{ publicPath: KEYWORD_PATH, label: "wake-word" }],
+      detectionCallback
+    );
+
+    // Start processing audio
+    const reader = micStream.getTracks()[0];
+    processAudioStream(source);
+
+    statusText.innerText = "Listening for wake word...";
+  } catch (err) {
+    console.error(err);
+    statusText.innerText = "Mic permission denied!";
+  }
+};
+
+// Audio visualization
+function visualizeAudio() {
+  const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+  function draw() {
+    analyser.getByteFrequencyData(dataArray);
+
+    let sum = dataArray.reduce((a, b) => a + b, 0);
+    let avg = sum / dataArray.length;
+
+    let percent = Math.min(100, avg * 1.5);
+    audioBar.style.width = percent + "%";
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+}
+
+// Process audio for Porcupine
+async function processAudioStream(source) {
+  const processor = audioContext.createScriptProcessor(512, 1, 1);
+
+  source.connect(processor);
+  processor.connect(audioContext.destination);
+
+  processor.onaudioprocess = (event) => {
+    const input = event.inputBuffer.getChannelData(0);
+    porcupine.process(input);
+  };
+}
+
+// Wake word detected
+function detectionCallback(keyword) {
+  console.log("Wake word detected:", keyword);
+  statusText.innerText = "🔥 Wake word detected!";
+}
+</script>
+
+</body>
+</html>
