@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lyra Wake Word</title>
+</head>
+<body style="background:#0b0f14;color:#00ffc8;font-family:sans-serif;text-align:center;padding-top:50px;">
+
+<h2>Lyra Wake Word Listener</h2>
+<button onclick="start()">Start Listening</button>
+<p id="status">Idle</p>
+
+<script type="module">
+import { PorcupineWorker } from "https://cdn.jsdelivr.net/npm/@picovoice/porcupine-web-en-worker";
+
+let porcupine = null;
+
+async function start() {
+  document.getElementById("status").innerText = "Requesting mic...";
+
+  try {
+    const accessKey = "lfd0C+KPnrhOtZWXOj39sBSTwMHVn+wutSPMd6vMbDsrYQ6PCzUZ0g==";
+
+    porcupine = await PorcupineWorker.create(
+      accessKey,
+      [{
+        publicPath: "hey-lyra_en_wasm_v4_0_0.ppn",
+        label: "lyra"
+      }],
+      (keyword) => {
+        alert("Wake word detected: " + keyword);
+      }
+    );
+
+    document.getElementById("status").innerText = "Listening...";
+
+    await porcupine.start();
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").innerText = "Error: " + err;
+  }
+}
+</script>
+
+</body>
+</html>
