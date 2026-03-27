@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Azure Flow | Audio Wave Stream Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* smooth UI, no accidental text selection */
+        }
+
+        body {
+            background: #ffffff; /* pure white theme */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'BlinkMacSystemFont', 'Roboto', sans-serif;
+            padding: 1.5rem;
+        }
+
+        /* main glassmorphic / clean card with subtle shadow */
+        .wave-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 1300px;
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.02);
+            padding: 2rem 1.8rem 2rem 1.8rem;
+            transition: all 0.2s ease;
+        }
+
+        /* header area */
+        .title-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title-section h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            background: linear-gradient(135deg, #0a4b8a, #1e88e5);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        .title-section .sub {
+            color: #5a6874;
+            margin-top: 0.5rem;
+            font-weight: 450;
+            font-size: 0.95rem;
+        }
+
+        /* permission panel (initial overlay style) */
+        .permission-panel {
+            background: #f9fafc;
+            border-radius: 1.8rem;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border: 1px solid #eef2f6;
+            margin-bottom: 1.8rem;
+            transition: all 0.2s;
+        }
+
+        .permission-panel p {
+            color: #1e2a36;
+            font-weight: 500;
+            margin-bottom: 1.4rem;
+            font-size: 1.1rem;
+        }
+
+        .perm-btn {
+            background: #1a73e8;
+            border: none;
+            padding: 0.85rem 2.2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 3rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(26, 115, 232, 0.25);
+            transition: transform 0.15s, background 0.2s;
+            font-family: inherit;
+        }
+
+        .perm-btn:hover {
+            background: #0f5bb5;
+            transform: scale(0.98);
+        }
+
+        /* status message */
+        .status-msg {
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 0.8rem;
+            color: #2c7da0;
+            font-weight: 500;
+            background: #eef7ff;
+            display: inline-block;
+            width: auto;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+        }
+
+        .status-area {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        /* canvas wrapper — wave canvas */
+        .canvas-wrapper {
+            background: #ffffff;
+            border-radius: 1.6rem;
+            padding: 0.2rem;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.02), inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #ffffff;
+            border-radius: 1.2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        /* controls row — stylish minimal */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-btn {
+            background: #f3f6fc;
+            border: 1px solid #e2e9f2;
+            padding: 0.65rem 1.8rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 3rem;
+            color: #1f6392;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            backdrop-filter: blur(2px);
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.96);
+        }
+
+        .ctrl-btn.primary {
+            background: #1e88e5;
+            border-color: #1e88e5;
+            color: white;
+            box-shadow: 0 2px 6px rgba(30, 136, 229, 0.2);
+        }
+
+        .ctrl-btn.primary:hover {
+            background: #0f6bbd;
+        }
+
+        .ctrl-btn:hover:not(.primary) {
+            background: #e9f0fa;
+            border-color: #cbddee;
+        }
+
+        /* footer note */
+        .info-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8f9eac;
+            margin-top: 1.6rem;
+            border-top: 1px solid #edf2f7;
+            padding-top: 1.2rem;
+        }
+
+        /* responsive */
+        @media (max-width: 640px) {
+            .wave-container {
+                padding: 1.2rem;
+            }
+            .ctrl-btn {
+                padding: 0.5rem 1.2rem;
+            }
+            .title-section h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* blue bars animation hint */
+        .badge-wave {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wave-container">
+    <div class="title-section">
+        <h1>
+            🌊 Azure Spectrum
+            <span class="badge-wave">🎧</span>
+        </h1>
+        <div class="sub">Live audio streaming visualizer · blue frequency bars</div>
+    </div>
+
+    <!-- permission request panel (initial visible) -->
+    <div id="permissionZone" class="permission-panel">
+        <p>🎤 Enable microphone to see the blue wave magic</p>
+        <button id="requestPermBtn" class="perm-btn">✨ Request Permission & Start Stream</button>
+        <div class="status-area" style="margin-top: 1rem;">
+            <div id="permStatusMsg" class="status-msg">⚡ waiting for interaction</div>
+        </div>
+    </div>
+
+    <!-- main visualizer area (hidden until permission granted) -->
+    <div id="visualizerArea" style="display: none;">
+        <div class="canvas-wrapper">
+            <canvas id="audioCanvas" width="1100" height="280" style="width:100%; height:auto; max-width:1100px; aspect-ratio:1100/280"></canvas>
+        </div>
+        <div class="controls">
+            <button id="muteToggleBtn" class="ctrl-btn">🔊 Mute monitoring</button>
+            <button id="resumeBtn" class="ctrl-btn">▶ Resume / restart stream</button>
+            <button id="stopStreamBtn" class="ctrl-btn primary">⏹️ Stop & release mic</button>
+        </div>
+        <div class="info-note">
+            💙 Blue reactive bars | real-time FFT audio spectrum | full white canvas aesthetic
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM elements
+        const permissionZone = document.getElementById('permissionZone');
+        const visualizerArea = document.getElementById('visualizerArea');
+        const requestBtn = document.getElementById('requestPermBtn');
+        const permStatusMsg = document.getElementById('permStatusMsg');
+        const muteToggleBtn = document.getElementById('muteToggleBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const stopStreamBtn = document.getElementById('stopStreamBtn');
+        const canvas = document.getElementById('audioCanvas');
+        
+        // Audio context & nodes
+        let audioContext = null;
+        let mediaStream = null;
+        let sourceNode = null;
+        let analyserNode = null;
+        let animationFrameId = null;
+        let isStreamActive = false;
+        let isMuted = false;       // for output mute (speaker)
+        let gainNode = null;       // for toggling monitor output
+        
+        // Canvas dimensions & drawing
+        let canvasCtx = canvas.getContext('2d');
+        let canvasWidth = canvas.width;
+        let canvasHeight = canvas.height;
+        
+        // FFT size: nice resolution for bars (smooth but performant)
+        const FFT_SIZE = 256;      // gives 128 frequency bins, we'll use ~60-80 bars for visual
+        let dataArray = null;
+        
+        // Resize observer to maintain canvas crispness (CSS may scale but we keep actual resolution)
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const computedStyle = getComputedStyle(canvas);
+            // keep logical resolution high (1100x280 originally)
+            // but if container width is smaller, we keep same buffer to avoid distortion
+            // we'll just ensure the canvas drawing buffer matches the CSS rendered size?
+            // Actually better to keep canvas.width/height fixed for consistent bar count, but we can adjust bar width dynamically later.
+            // For perfect clarity we redraw each frame using original dimensions, but bars look sharp anyway.
+            // we only adjust if window resize changes canvas display? but canvas.width never changes.
+            // Re-set canvas dimensions if needed? we keep as defined (1100x280)
+            // However on retina / high DPI we keep sharp.
+            if (canvas.width !== canvasWidth) {
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+            }
+        }
+        
+        // initialize canvas on load
+        function initCanvasSize() {
+            canvas.width = 1100;
+            canvas.height = 280;
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            canvasCtx = canvas.getContext('2d');
+        }
+        initCanvasSize();
+        window.addEventListener('resize', () => {
+            // we don't change logical buffer, just ensure drawing context is fine
+            if (canvasCtx) {
+                // re-assign after potential style changes no need
+            }
+        });
+        
+        // --- Drawing routine: beautiful blue bars (gradient / solid bars) ---
+        function drawWaveform() {
+            if (!animationFrameId) return;
+            if (!analyserNode || !isStreamActive) {
+                // draw silent / idle wave but still blank or gentle line? 
+                drawIdleBars();
+                animationFrameId = requestAnimationFrame(drawWaveform);
+                return;
+            }
+            
+            // get frequency data (Uint8Array)
+            if (!dataArray) {
+                dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+            }
+            analyserNode.getByteFrequencyData(dataArray);
+            
+            // clear canvas with pure white background
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            canvasCtx.fillStyle = '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            const barCount = Math.min(80, analyserNode.frequencyBinCount); // use up to 80 bars for crisp visual
+            const step = Math.floor(analyserNode.frequencyBinCount / barCount);
+            const barWidth = (canvasWidth / barCount) * 0.85;
+            const spacing = (canvasWidth / barCount) * 0.15;
+            let x = 0;
+            
+            // Loop for each bar
+            for (let i = 0; i < barCount; i++) {
+                // average or pick max in the frequency region
+                let sum = 0;
+                for (let j = 0; j < step; j++) {
+                    const idx = i * step + j;
+                    if (idx < analyserNode.frequencyBinCount) {
+                        sum += dataArray[idx];
+                    }
+                }
+                let avg = sum / step;
+                // Normalize (0-255) -> bar height (max up to canvasHeight - 20)
+                const percent = avg / 255;
+                // exponential feel for lively low-end visibility
+                const barHeight = Math.max(4, percent * (canvasHeight - 40));
+                // Blue bars: deep ocean blue to electric cyan
+                const gradient = canvasCtx.createLinearGradient(x, canvasHeight - barHeight, x, canvasHeight);
+                gradient.addColorStop(0, '#0a6bc2');    // rich medium blue
+                gradient.addColorStop(0.7, '#3b9eff');  // vibrant cerulean
+                gradient.addColorStop(1, '#7bb3ff');    // soft blue
+                canvasCtx.fillStyle = gradient;
+                const yPosition = canvasHeight - barHeight - 6;
+                const radius = 6;
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(x, yPosition, barWidth - 2, barHeight, radius);
+                canvasCtx.fill();
+                // subtle highlight reflection
+                canvasCtx.shadowBlur = 0;
+                x += barWidth + spacing;
+            }
+            
+            // optional: add micro glint overlay
+            canvasCtx.shadowBlur = 0;
+            animationFrameId = requestAnimationFrame(drawWaveform);
+        }
+        
+        // Helper for rounded rect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x+r, y);
+                this.lineTo(x+w-r, y);
+                this.quadraticCurveTo(x+w, y, x+w, y+r);
+                this.lineTo(x+w, y+h-r);
+                this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                this.lineTo(x+r, y+h);
+                this.quadraticCurveTo(x, y+h, x, y+h-r);
+                this.lineTo(x, y+r);
+                this.quadraticCurveTo(x, y, x+r, y);
+                return this;
+            };
+        }
+        
+        // Idle gentle "ambient" bars (light blue ghost bars) when no audio
+        function drawIdleBars() {
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            canvasCtx.fillStyle = '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            const barCount = 56;
+            const barWidth = (canvasWidth / barCount) * 0.7;
+            const spacing = (canvasWidth / barCount) * 0.3;
+            let x = 0;
+            for (let i = 0; i < barCount; i++) {
+                // random gentle static or sine pattern
+                let idleHeight = 6 + Math.sin(Date.now() * 0.004 + i) * 3 + Math.cos(i * 0.3) * 2;
+                idleHeight = Math.min(28, Math.max(4, idleHeight));
+                canvasCtx.fillStyle = '#cfe4ff';
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(x, canvasHeight - idleHeight - 6, barWidth - 2, idleHeight, 4);
+                canvasCtx.fill();
+                x += barWidth + spacing;
+            }
+        }
+        
+        // clean up audio resources fully
+        async function stopAndReleaseMicrophone() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (sourceNode) {
+                try {
+                    sourceNode.disconnect();
+                } catch(e) {}
+                sourceNode = null;
+            }
+            if (analyserNode) {
+                try {
+                    analyserNode.disconnect();
+                } catch(e) {}
+                analyserNode = null;
+            }
+            if (gainNode) {
+                try {
+                    gainNode.disconnect();
+                } catch(e) {}
+                gainNode = null;
+            }
+            if (audioContext) {
+                await audioContext.close().catch(e=>console.warn);
+                audioContext = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => {
+                    if (track.readyState === 'live') track.stop();
+                });
+                mediaStream = null;
+            }
+            isStreamActive = false;
+            isMuted = false;
+            // update UI mute text if needed
+            if (muteToggleBtn) muteToggleBtn.innerText = '🔊 Mute monitoring';
+            // show permission zone again, hide visualizer
+            visualizerArea.style.display = 'none';
+            permissionZone.style.display = 'block';
+            permStatusMsg.innerText = '🎙️ Microphone released. Click to restart.';
+            permStatusMsg.style.background = '#fff0e0';
+        }
+        
+        // core function to initialize audio context, analyser, source from mic stream
+        async function initAudioFromStream(stream) {
+            // close any previous
+            if (audioContext && audioContext.state !== 'closed') {
+                await stopAndReleaseMicrophone();
+            }
+            mediaStream = stream;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = FFT_SIZE;
+            analyserNode.smoothingTimeConstant = 0.65;  // smoother bars
+            const bufferLength = analyserNode.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = isMuted ? 0 : 1;  // if muted set 0 else 1
+            
+            sourceNode = audioContext.createMediaStreamSource(mediaStream);
+            // Connect: source -> analyser (for visual) AND source -> gain -> destination (for monitoring)
+            sourceNode.connect(analyserNode);
+            sourceNode.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // start audio context
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            isStreamActive = true;
+            
+            // start drawing if not already
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(drawWaveform);
+        }
+        
+        // Request microphone permissions and start streaming
+        async function requestMicAndStart() {
+            // Reset any previous errors
+            permStatusMsg.innerText = '🎤 Requesting microphone access...';
+            permStatusMsg.style.background = '#eef3fc';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                // success
+                await initAudioFromStream(stream);
+                // switch UI: hide permission panel, show visualizer
+                permissionZone.style.display = 'none';
+                visualizerArea.style.display = 'block';
+                permStatusMsg.innerText = '✅ Stream active — blue waves dancing!';
+                // adjust mute button text if needed
+                if (isMuted) muteToggleBtn.innerText = '🔇 Unmute monitoring';
+                else muteToggleBtn.innerText = '🔊 Mute monitoring';
+            } catch (err) {
+                console.error('Mic permission error', err);
+                let errorMsg = '❌ Could not access microphone. ';
+                if (err.name === 'NotAllowedError') errorMsg += 'Permission denied. Allow microphone and refresh.';
+                else if (err.name === 'NotFoundError') errorMsg += 'No microphone found.';
+                else errorMsg += 'Please check your audio device.';
+                permStatusMsg.innerText = errorMsg;
+                permStatusMsg.style.background = '#ffe6e5';
+                permStatusMsg.style.color = '#b13e3e';
+                throw err;
+            }
+        }
+        
+        // Mute/unmute speaker output (self-monitoring)
+        function toggleMuteMonitoring() {
+            if (!isStreamActive || !gainNode || !audioContext) {
+                // if stream not active, show message briefly but ignore
+                if (permStatusMsg && permissionZone.style.display === 'block') {
+                    permStatusMsg.innerText = '⚠️ Start stream first to use mute.';
+                    setTimeout(() => {
+                        if (permStatusMsg.innerText.includes('Start stream')) permStatusMsg.innerText = '🎤 Enable microphone to see the blue wave magic';
+                    }, 1500);
+                }
+                return;
+            }
+            isMuted = !isMuted;
+            gainNode.gain.value = isMuted ? 0 : 1;
+            if (isMuted) {
+                muteToggleBtn.innerText = '🔇 Unmute monitoring';
+                muteToggleBtn.classList.add('primary');
+            } else {
+                muteToggleBtn.innerText = '🔊 Mute monitoring';
+                muteToggleBtn.classList.remove('primary');
+            }
+        }
+        
+        // Resume / restart: if context suspended or want to re-init after stop? 
+        // Actually "Resume / restart stream" -> if stream is stopped (visualizer hidden) we request new permission. 
+        // but also if context suspended we can resume.
+        async function resumeOrRestart() {
+            if (isStreamActive && audioContext && audioContext.state === 'suspended') {
+                await audioContext.resume();
+                if (permStatusMsg && visualizerArea.style.display === 'block') {
+                    const msgDiv = document.createElement('div');
+                    // just show quick status
+                }
+                return;
+            }
+            if (!isStreamActive) {
+                // fully restart from permission panel if visualizer hidden
+                if (permissionZone.style.display !== 'none') {
+                    await requestMicAndStart();
+                } else {
+                    // fallback: force stop and request again
+                    await stopAndReleaseMicrophone();
+                    await requestMicAndStart();
+                }
+            } else if (audioContext && audioContext.state === 'running') {
+                // already running, do nothing
+                if (permStatusMsg && visualizerArea.style.display === 'block') {
+                    // optional flash
+                }
+            }
+        }
+        
+        // event listeners
+        requestBtn.addEventListener('click', async () => {
+            await requestMicAndStart().catch(e => {
+                // error already displayed
+            });
+        });
+        
+        muteToggleBtn.addEventListener('click', toggleMuteMonitoring);
+        
+        resumeBtn.addEventListener('click', async () => {
+            if (!isStreamActive) {
+                await requestMicAndStart();
+            } else if (audioContext && audioContext.state === 'suspended') {
+                await audioContext.resume();
+                if (permStatusMsg && visualizerArea.style.display === 'block') {
+                    permStatusMsg.innerText = '▶️ Stream resumed.';
+                    setTimeout(() => {
+                        if (visualizerArea.style.display === 'block') permStatusMsg.innerText = '✅ Stream active — blue waves dancing!';
+                    }, 1500);
+                }
+            } else if (audioContext && audioContext.state === 'running') {
+                // just re-request if needed or show status
+                if (permStatusMsg && visualizerArea.style.display === 'block') {
+                    permStatusMsg.innerText = '🎶 Already streaming.';
+                    setTimeout(() => {
+                        if (visualizerArea.style.display === 'block') permStatusMsg.innerText = '✅ Stream active — blue waves dancing!';
+                    }, 1000);
+                }
+            }
+        });
+        
+        stopStreamBtn.addEventListener('click', async () => {
+            if (isStreamActive || mediaStream) {
+                await stopAndReleaseMicrophone();
+            } else {
+                // if already inactive, just ensure UI reset
+                if (visualizerArea.style.display !== 'none') visualizerArea.style.display = 'none';
+                if (permissionZone.style.display !== 'block') permissionZone.style.display = 'block';
+                permStatusMsg.innerText = '⏹️ Stream stopped. Click button to restart.';
+                permStatusMsg.style.background = '#f5f5fa';
+            }
+        });
+        
+        // On page load, draw idle bars (graceful placeholder inside visualizer? but visualizer hidden initially)
+        // start a silent idle drawing in background for visualizer when not active, but we call idle draw when no stream
+        // but canvas may be hidden. For seamless transition: pre-fill canvas if visible later.
+        // we also set an interval or start draw loop only when active. But to have idle pattern once visualizer visible?
+        // We'll start a generic animation that checks isStreamActive
+        function globalDrawLoop() {
+            if (!isStreamActive && visualizerArea.style.display === 'block') {
+                drawIdleBars();
+            } else if (isStreamActive && analyserNode) {
+                // already handled by drawWaveform recursion, but ensure no double loop.
+                if (!animationFrameId) {
+                    animationFrameId = requestAnimationFrame(drawWaveform);
+                }
+            } else if (!isStreamActive && visualizerArea.style.display === 'none') {
+                // nothing, but we don't waste cycles.
+            }
+            requestAnimationFrame(globalDrawLoop);
+        }
+        // override: we need to keep only one loop to avoid conflicts. Instead just start drawWaveform only when active.
+        // but for idle we call it only if visualizer visible and no active stream. simpler:
+        // we start an independent visual idle if visualizer visible and not streaming.
+        function idleVisualObserver() {
+            if (visualizerArea.style.display === 'block' && !isStreamActive && !animationFrameId) {
+                // start idle drawing loop for inactive state
+                function idleLoop() {
+                    if (visualizerArea.style.display === 'block' && !isStreamActive) {
+                        drawIdleBars();
+                        requestAnimationFrame(idleLoop);
+                    } else if (isStreamActive) {
+                        return;
+                    } else {
+                        requestAnimationFrame(idleLoop);
+                    }
+                }
+                const idleId = requestAnimationFrame(function frameIdle() {
+                    if (visualizerArea.style.display === 'block' && !isStreamActive) {
+                        drawIdleBars();
+                        requestAnimationFrame(frameIdle);
+                    }
+                });
+                return;
+            }
+        }
+        // Mutation or simple check each second, but fine: we just call drawWaveform when active, and clear idle in stop.
+        // ensure that when stream stops we display idle bars:
+        const origStop = stopAndReleaseMicrophone;
+        window.stopAndReleaseMicrophone = stopAndReleaseMicrophone; // not needed, but we can patch idle on stop.
+        // override function to also draw idle if visualizer visible
+        const superStop = stopAndReleaseMicrophone;
+        window.stopAndReleaseMicrophone = async function() {
+            await superStop();
+            if (visualizerArea.style.display === 'block') {
+                // start idle drawing loop
+                function drawIdleContinously() {
+                    if (!isStreamActive && visualizerArea.style.display === 'block') {
+                        drawIdleBars();
+                        requestAnimationFrame(drawIdleContinously);
+                    }
+                }
+                requestAnimationFrame(drawIdleContinously);
+            }
+        };
+        // but we will attach also on stop button
+        stopStreamBtn.addEventListener('click', async () => {
+            await stopAndReleaseMicrophone();
+            if (visualizerArea.style.display === 'none') {
+                // nothing
+            }
+        });
+        
+        // Initialize idle draw for any case
+        setInterval(() => {
+            if (visualizerArea.style.display === 'block' && !isStreamActive && canvasCtx) {
+                drawIdleBars();
+            }
+        }, 200);
+        
+        // minor style addition: set canvas crisp after each resize
+        window.addEventListener('resize', () => { if(canvasCtx) {} });
+        
+        // prefill the canvas with soft idle bars as a welcome ghost
+        drawIdleBars();
+    })();
+</script>
+</body>
+</html>
