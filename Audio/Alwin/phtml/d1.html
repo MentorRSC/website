@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Porcupine Wake Word · Heartbeat Trigger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* cleaner on touch/RPi */
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 30% 10%, #0a0f1e, #03060c);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'SF Pro Display', 'Inter', system-ui, -apple-system, 'Roboto', monospace;
+            padding: 20px;
+        }
+
+        /* main card – like a sleek dashboard */
+        .heartbeat-container {
+            background: rgba(12, 20, 30, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 4rem;
+            padding: 2rem 2rem 2.5rem;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+            border: 1px solid rgba(90, 150, 220, 0.3);
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 650px;
+            text-align: center;
+        }
+
+        /* title + porcupine vibe */
+        .title {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #E0F2FE, #A5D8FF, #7CB9E8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 5px rgba(0,20,40,0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .title span {
+            font-size: 2rem;
+        }
+
+        .sub {
+            color: #9bb7d4;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 400;
+            margin-bottom: 2rem;
+            border-bottom: 1px dashed #2c4458;
+            display: inline-block;
+            padding-bottom: 6px;
+        }
+
+        /* HEARTBEAT VISUALIZATION */
+        .heart-region {
+            background: #05161f30;
+            border-radius: 3rem;
+            padding: 1.8rem 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid #1e3a4d;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .ecg-canvas-wrapper {
+            background: #010a10;
+            border-radius: 2rem;
+            padding: 10px;
+            box-shadow: 0 0 0 1px #1f5a74;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #00070c;
+            border-radius: 1.5rem;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+
+        /* animated heart icon */
+        .heart-icon {
+            font-size: 4.8rem;
+            margin: 10px 0 5px;
+            transition: transform 0.08s linear;
+            filter: drop-shadow(0 0 6px #ff3b6f);
+            display: inline-block;
+        }
+
+        .beat-animation {
+            animation: iconThump 0.28s cubic-bezier(0.4, 1.6, 0.6, 1);
+        }
+
+        @keyframes iconThump {
+            0% { transform: scale(1); text-shadow: 0 0 0px crimson; }
+            50% { transform: scale(1.32); text-shadow: 0 0 16px #ff3366; }
+            100% { transform: scale(1); }
+        }
+
+        /* status pill */
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 15px;
+            flex-wrap: wrap;
+            background: #07141e70;
+            border-radius: 60px;
+            padding: 12px 20px;
+            margin: 20px 0 15px;
+            backdrop-filter: blur(4px);
+        }
+
+        .trigger-status {
+            background: #1a2e3f;
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .led {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #2c8f5e;
+            box-shadow: 0 0 5px #2effa0;
+            transition: all 0.1s ease;
+        }
+
+        .led.active-led {
+            background-color: #f0b34b;
+            box-shadow: 0 0 12px #ffb347;
+        }
+
+        .led.wake-led {
+            background-color: #ff4d6d;
+            box-shadow: 0 0 16px #ff1e4d;
+            animation: pulseRed 0.6s infinite alternate;
+        }
+
+        @keyframes pulseRed {
+            0% { opacity: 0.6; box-shadow: 0 0 0px #ff3366; }
+            100% { opacity: 1; box-shadow: 0 0 14px #ff5c7e; }
+        }
+
+        .wake-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: linear-gradient(120deg, #FFB347, #FF6A88);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .counter {
+            font-family: 'Fira Mono', monospace;
+            background: #030e16;
+            padding: 6px 14px;
+            border-radius: 32px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #afd0f0;
+        }
+
+        button {
+            background: #162b38;
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #2e6a80;
+        }
+
+        button:active {
+            transform: scale(0.96);
+            background: #0f202b;
+        }
+
+        .footnote {
+            font-size: 0.7rem;
+            color: #50788c;
+            margin-top: 1.4rem;
+            border-top: 1px solid #1d4457;
+            padding-top: 1rem;
+        }
+
+        @media (max-width: 500px) {
+            .heartbeat-container { padding: 1.5rem; }
+            .title { font-size: 1.5rem; }
+            .heart-icon { font-size: 3.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="heartbeat-container">
+    <div class="title">
+        <span>🦔</span> PORCUPINE · WAKE TRIGGER <span>❤️‍🔥</span>
+    </div>
+    <div class="sub">HEAR THE BEAT → WAKE WORD SIMULATOR</div>
+
+    <!-- Heartbeat + Visualizer -->
+    <div class="heart-region">
+        <div class="heart-icon" id="heartIcon">💓</div>
+        <div class="ecg-canvas-wrapper">
+            <canvas id="ecgCanvas" width="600" height="140" style="width:100%; height:auto; max-width:600px; aspect-ratio:600/140"></canvas>
+        </div>
+        <div style="font-size:0.7rem; margin-top: 10px; color:#6b93aa;">⚡ each beat mimics "porcupine" wake pulse ⚡</div>
+    </div>
+
+    <!-- Status & Controls -->
+    <div class="status-panel">
+        <div class="trigger-status">
+            <div class="led" id="statusLed"></div>
+            <span id="statusLabel">🟢 listening for wake</span>
+        </div>
+        <div class="counter">
+            🧠 triggers: <span id="triggerCount">0</span>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 8px;">
+        <button id="simulateWakeBtn">🔊 SIMULATE "PORCUPINE" WAKE</button>
+        <button id="resetBtn">⟳ reset counter</button>
+    </div>
+
+    <div class="footnote">
+        🎤 simulated wake-word engine · heartbeat visual reacts to Porcupine trigger<br>
+        click [SIMULATE] or press <kbd style="background:#1e2f3a; padding:2px 8px; border-radius:20px;">Spacebar</kbd> to emulate hotword detection.
+    </div>
+</div>
+
+<script>
+    (function(){
+        // --- WAKE WORD SIMULATOR (porcupine-like event)
+        let triggerCount = 0;
+        let isCurrentlyTriggered = false;     // for visual flashing state
+        let animationFrameActive = true;
+        
+        // canvas ECG references
+        const canvas = document.getElementById('ecgCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // DOM elements
+        const heartIconEl = document.getElementById('heartIcon');
+        const statusLedEl = document.getElementById('statusLed');
+        const statusLabelSpan = document.getElementById('statusLabel');
+        const triggerCountSpan = document.getElementById('triggerCount');
+        const simulateBtn = document.getElementById('simulateWakeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // ECG drawing parameters (realistic heartbeat baseline)
+        let width = 600;
+        let height = 140;
+        let baselineY = height * 0.65;   //  ~91px
+        let ecgData = [];                 // stores y-values for entire width
+        let lastTimestamp = 0;
+        let beatPhase = 0;                // 0..1 phase of simulated natural beat
+        
+        // manage a "trigger heartbeat" extra effect (force a huge QRS complex)
+        let forcedWakeBeat = false;
+        let forcedBeatRemaining = 0;      // frames remaining for forced spike
+        
+        // set canvas actual resolution
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const displayWidth = canvas.clientWidth;
+            // keep internal resolution 600x140 for crisp lines
+            canvas.width = 600;
+            canvas.height = 140;
+            width = 600;
+            height = 140;
+            baselineY = height * 0.65;
+            initEcgBuffer();
+            drawEcg();
+        }
+        
+        // initialize buffer with flat line (resting rhythm)
+        function initEcgBuffer() {
+            ecgData = [];
+            for(let i = 0; i < width; i++) {
+                ecgData.push(baselineY);
+            }
+        }
+        
+        // add new point and shift buffer (sliding window)
+        function updateEcgBuffer(newY) {
+            ecgData.push(newY);
+            if(ecgData.length > width) ecgData.shift();
+        }
+        
+        // natural heartbeat waveform generator (sinus + sharp QRS)
+        // phase: 0..1, returns y-offset from baseline (delta)
+        function getNaturalBeatDelta(phase, isForced = false) {
+            // phase 0 to 1 represents one full cardiac cycle (approx)
+            let delta = 0;
+            // QRS complex region (~0.2 to 0.35)
+            if(phase < 0.05) {
+                // tiny p-wave subtle
+                delta = Math.sin(phase * Math.PI * 20) * 1.2;
+            }
+            else if(phase >= 0.18 && phase <= 0.38) {
+                // sharp peak (R wave)
+                let t = (phase - 0.18) / 0.2; // 0..1 inside QRS window
+                let spike = Math.sin(t * Math.PI) * (isForced ? 32 : 22);
+                // make super high for wake trigger
+                delta = spike + 4;
+                if(isForced) delta = spike * 1.4;
+            }
+            else if(phase > 0.38 && phase < 0.55) {
+                // S wave downslope
+                let t = (phase - 0.38) / 0.17;
+                delta = -8 * (1 - t) + 2;
+                if(isForced) delta = -12 * (1 - t);
+            }
+            else if(phase > 0.65 && phase < 0.85) {
+                // T wave
+                let t = (phase - 0.65) / 0.2;
+                delta = 5 * Math.sin(t * Math.PI);
+            }
+            else {
+                // slight baseline ripple
+                delta = Math.sin(phase * Math.PI * 2) * 1.2;
+            }
+            // clamp
+            delta = Math.min(Math.max(delta, -12), (isForced ? 42 : 34));
+            return delta;
+        }
+        
+        // compute next Y based on internal beatPhase, also consider forcedWakeBeat flag
+        let lastPhaseStep = 0;
+        function computeNextY() {
+            // increment phase based on natural heart rate (~72bpm -> 0.83 per sec, but with frame delta)
+            // use frame-based smoothing: each frame advances phase by 0.012 ~ 70bpm at 60fps
+            let step = 0.012;
+            // if forced beat remains, we override rhythm: we generate one giant spike on next few frames
+            if(forcedWakeBeat) {
+                // we inject a high amplitude "beat" over about 5 frames to mimic wake detection
+                if(forcedBeatRemaining > 0) {
+                    // during forced effect, we return super elevated wave with dramatic shape
+                    let intensity = forcedBeatRemaining / 5; // 1 .. 0 gradually
+                    let fakeSpike = baselineY - 38 * intensity; // negative spike pre-peak style
+                    let peakVal = baselineY - (52 * intensity);
+                    // make a complex pattern: first frame negative dip, second huge R, etc.
+                    const remainStage = 5 - forcedBeatRemaining;
+                    let customY = baselineY;
+                    if(remainStage === 0) customY = baselineY + 8;
+                    else if(remainStage === 1) customY = baselineY - 28;
+                    else if(remainStage === 2) customY = baselineY - 58;
+                    else if(remainStage === 3) customY = baselineY - 28;
+                    else if(remainStage === 4) customY = baselineY + 6;
+                    else customY = baselineY;
+                    
+                    forcedBeatRemaining--;
+                    if(forcedBeatRemaining === 0) {
+                        forcedWakeBeat = false;
+                    }
+                    // also update heart icon animation
+                    triggerHeartThump();
+                    return Math.min(height - 12, Math.max(12, customY));
+                } else {
+                    forcedWakeBeat = false;
+                }
+            }
+            
+            // normal beat phase progression
+            beatPhase += step;
+            if(beatPhase >= 1.0) beatPhase -= 1.0;
+            
+            let delta = getNaturalBeatDelta(beatPhase, false);
+            let newY = baselineY + delta;
+            // boundaries safety
+            newY = Math.min(height - 8, Math.max(8, newY));
+            return newY;
+        }
+        
+        // Drawing ECG line using stored buffer
+        function drawEcg() {
+            if(!ctx || ecgData.length < 2) return;
+            ctx.clearRect(0, 0, width, height);
+            // background subtle grid
+            ctx.save();
+            ctx.strokeStyle = "#1a4d66";
+            ctx.lineWidth = 0.6;
+            for(let y = 30; y < height; y += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            for(let x = 50; x < width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            
+            // draw ECG signal
+            ctx.beginPath();
+            ctx.lineWidth = 2.2;
+            ctx.strokeStyle = "#ff5e7e";
+            ctx.shadowBlur = 0;
+            let firstX = 0;
+            let firstY = ecgData[0];
+            ctx.moveTo(firstX, firstY);
+            for(let i = 1; i < ecgData.length; i++) {
+                let x = i;
+                let y = ecgData[i];
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            // additional glowing effect on wake trigger (reddish overlay)
+            if(isCurrentlyTriggered) {
+                ctx.beginPath();
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#ff3366aa";
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = "#ff3b6f";
+                for(let i = 1; i < ecgData.length; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i-1, ecgData[i-1]);
+                    ctx.lineTo(i, ecgData[i]);
+                    ctx.stroke();
+                }
+                ctx.shadowBlur = 0;
+            }
+            ctx.restore();
+        }
+        
+        // animation loop: update ecg buffer & redraw
+        let lastFrameTime = 0;
+        function animateECG() {
+            if(!animationFrameActive) return;
+            // generate new point
+            let newY = computeNextY();
+            updateEcgBuffer(newY);
+            drawEcg();
+            requestAnimationFrame(animateECG);
+        }
+        
+        // Heartbeat icon + LED and status update for WAKE EVENT
+        function triggerWakeEvent() {
+            // increment trigger counter
+            triggerCount++;
+            triggerCountSpan.innerText = triggerCount;
+            
+            // activate visual wake state for 700ms
+            if(isCurrentlyTriggered) {
+                // extend flashing
+                clearTimeout(window.wakeTimeout);
+            } else {
+                isCurrentlyTriggered = true;
+                // change LED to wake style (flashing red)
+                statusLedEl.className = "led wake-led";
+                statusLabelSpan.innerHTML = "🔴 WAKE! 'PORCUPINE' DETECTED 🔴";
+                // also modify container border flash
+                const containerDiv = document.querySelector('.heartbeat-container');
+                containerDiv.style.transition = "0.1s";
+                containerDiv.style.boxShadow = "0 0 0 2px #ff4d6d, 0 25px 45px black";
+                setTimeout(() => {
+                    if(containerDiv) containerDiv.style.boxShadow = "0 25px 45px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)";
+                }, 400);
+            }
+            
+            // force a dramatic ECG spike (overriding normal rhythm)
+            forcedWakeBeat = true;
+            forcedBeatRemaining = 8;   // extra spikes over ~8 frames
+            
+            // trigger multiple heart icon thumps
+            triggerHeartThump();
+            // extra thump after short delay
+            setTimeout(() => triggerHeartThump(), 90);
+            setTimeout(() => triggerHeartThump(), 210);
+            
+            // also update normal status auto-reset after 1 second
+            if(window.wakeTimeout) clearTimeout(window.wakeTimeout);
+            window.wakeTimeout = setTimeout(() => {
+                isCurrentlyTriggered = false;
+                statusLedEl.className = "led";
+                statusLabelSpan.innerHTML = "🎧 listening for 'porcupine' wake";
+                // ensure led is green (default)
+                statusLedEl.classList.remove("wake-led");
+                statusLedEl.classList.remove("active-led");
+            }, 950);
+        }
+        
+        // heart icon physical animation
+        let heartThrottle = false;
+        function triggerHeartThump() {
+            if(heartThrottle) return;
+            heartIconEl.classList.add('beat-animation');
+            heartThrottle = true;
+            setTimeout(() => {
+                heartIconEl.classList.remove('beat-animation');
+                heartThrottle = false;
+            }, 280);
+            // also change icon momentarily between hearts
+            heartIconEl.innerText = "❤️‍🔥";
+            setTimeout(() => {
+                if(heartIconEl) heartIconEl.innerText = "💓";
+            }, 240);
+        }
+        
+        // simulate wake event by user (button or space)
+        function onWakeTrigger() {
+            triggerWakeEvent();
+            // add subtle haptic vibe? RPi no vibration but still
+        }
+        
+        // reset counter
+        function resetCounter() {
+            triggerCount = 0;
+            triggerCountSpan.innerText = "0";
+            // optional visual feedback
+            const oldText = statusLabelSpan.innerHTML;
+            statusLabelSpan.innerHTML = "⟳ reset · listening";
+            setTimeout(() => {
+                if(!isCurrentlyTriggered) statusLabelSpan.innerHTML = "🎧 listening for 'porcupine' wake";
+                else statusLabelSpan.innerHTML = oldText;
+            }, 600);
+        }
+        
+        // additional simulated "ambient listening" mode: show that heartbeat shows normal but we are ready.
+        // Add spacebar support (keyboard) - useful for raspberry pi with keyboard / remote
+        function handleKeydown(e) {
+            // spacebar triggers wake simulation
+            if(e.code === 'Space' || e.key === ' ' || e.code === 'KeyP') {
+                e.preventDefault();
+                onWakeTrigger();
+            }
+            // optional 'r' reset
+            if(e.code === 'KeyR' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                resetCounter();
+            }
+        }
+        
+        // set up initial canvas and data
+        function setup() {
+            resizeCanvas();
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+            });
+            // initialize ECG buffer with baseline values
+            for(let i = 0; i < width; i++) {
+                ecgData.push(baselineY);
+            }
+            // start animation
+            animateECG();
+            
+            // set initial status
+            statusLedEl.className = "led";
+            statusLabelSpan.innerHTML = "🎧 listening for 'porcupine' wake";
+            triggerCountSpan.innerText = "0";
+            
+            // event listeners
+            simulateBtn.addEventListener('click', onWakeTrigger);
+            resetBtn.addEventListener('click', resetCounter);
+            window.addEventListener('keydown', handleKeydown);
+            
+            // optional: double-tap/touch on canvas also triggers wake (fun)
+            canvas.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onWakeTrigger();
+            });
+            
+            // small boot message
+            console.log("🦔 Porcupine Wake Heartbeat ready — simulate wake-word with SPACE or button");
+            
+            // extra periodic natural heartbeat look (already animated)
+        }
+        
+        setup();
+    })();
+</script>
+</body>
+</html>
