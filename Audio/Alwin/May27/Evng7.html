@@ -581,5 +581,61 @@
     }
     
     // test popup manually (without wake word)
+        // test popup manually (without wake word)
     function manualPopup() {
+      if (!modalOverlay.classList.contains('active')) {
+        modalTriggerWordSpan.innerText = `"manual test (${rawWakeWordForDisplay})"`;
+        modalOverlay.classList.add('active');
+        appendTranscriptMessage('🔔 Manual popup triggered via button.');
+      } else {
+        appendTranscriptMessage('Popup already open, close it first.');
+      }
+    }
+    
+    // event binding
+    startBtn.addEventListener('click', () => {
+      if (isListening) {
+        appendTranscriptMessage('Already active, stop first if you want to restart.');
+        return;
+      }
+      startListening();
+    });
+    
+    stopBtn.addEventListener('click', () => {
+      stopListening();
+    });
+    
+    testPopupBtn.addEventListener('click', manualPopup);
+    
+    setWakeBtn.addEventListener('click', () => {
+      setWakeWordFromInput();
+      // If currently listening, we keep listening; wake word variable changes on the fly
+      if (isListening) {
+        appendTranscriptMessage(`✨ Wake word updated to "${rawWakeWordForDisplay}" while listening — new trigger active.`);
+      }
+    });
+    
+    closeModalBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+    
+    // initial UI defaults
+    customWakeInput.value = "Hey Assistant";
+    setWakeWordFromInput(); // sets currentWakeWord = "hey assistant"
+    
+    // on page unload, cleanup
+    window.addEventListener('beforeunload', () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+      }
+      if (recognition) recognition.abort();
+    });
+    
+    // Also if user leaves, stop
+    appendTranscriptMessage('✅ Ready. Click "Start Listening" and allow microphone. Say "' + rawWakeWordForDisplay + '" to see popup!');
+  })();
+</script>
+</body>
+</html>
  
