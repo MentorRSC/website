@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lyra Wake Word - Audio Visualizer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050a);
+      color: #eef5ff;
+      text-align: center;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 1000px;
+      width: 90%;
+      background: rgba(10, 20, 30, 0.65);
+      backdrop-filter: blur(4px);
+      border-radius: 2rem;
+      padding: 1.5rem 2rem 2rem;
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(72, 187, 255, 0.2);
+    }
+
+    h2 {
+      margin-top: 0;
+      font-weight: 500;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #c0e0ff, #7aa9ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+
+    .badge {
+      background: #1e2a3a;
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      margin-left: 12px;
+      color: #aad0ff;
+    }
+
+    .controls {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      margin: 20px 0 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #1f2a3e;
+      border: none;
+      color: white;
+      padding: 12px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(100, 180, 250, 0.4);
+    }
+
+    button:hover {
+      background: #2c3f5e;
+      transform: scale(1.02);
+      border-color: #5f9eff;
+    }
+
+    #startBtn {
+      background: #0f4c5c;
+      box-shadow: 0 0 10px rgba(0, 200, 220, 0.3);
+    }
+
+    #muteBtn {
+      background: #3a2c2f;
+    }
+
+    .status-panel {
+      margin: 15px 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #0b1018aa;
+      padding: 10px 20px;
+      border-radius: 60px;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: #00000066;
+      padding: 5px 14px;
+      border-radius: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .led {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: gray;
+      display: inline-block;
+      box-shadow: 0 0 3px currentColor;
+    }
+
+    .led.active {
+      background-color: #2effb0;
+      box-shadow: 0 0 10px #2effb0;
+    }
+
+    .led.wake {
+      background-color: #ffcc44;
+      box-shadow: 0 0 12px #ffaa33;
+    }
+
+    canvas {
+      display: block;
+      margin: 18px auto 10px;
+      border-radius: 24px;
+      background: #03060c;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      width: 100%;
+      height: auto;
+      border: 1px solid #2c5270;
+    }
+
+    .info {
+      font-size: 0.8rem;
+      color: #99bbdd;
+      margin-top: 15px;
+    }
+
+    /* Popup overlay */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0s, opacity 0.25s ease;
+    }
+
+    .popup-card {
+      background: linear-gradient(145deg, #1a2a3a, #0e1722);
+      border-radius: 2rem;
+      max-width: 380px;
+      width: 85%;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border: 1px solid #ffd966;
+      animation: floatPop 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    @keyframes floatPop {
+      0% {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .popup-card h3 {
+      font-size: 2rem;
+      margin: 0 0 0.5rem;
+      color: #ffe0a3;
+    }
+
+    .popup-card p {
+      font-size: 1.1rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .popup-card button {
+      background: #ffb347;
+      color: #1f1a0c;
+      border: none;
+      padding: 10px 24px;
+      font-weight: bold;
+      border-radius: 60px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .popup-card button:hover {
+      background: #ff9f2c;
+      transform: scale(1.02);
+    }
+
+    .wake-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+  <!-- Import Porcupine Web SDK and WebVoiceProcessor -->
+  <script src="https://cdn.jsdelivr.net/npm/@picovoice/porcupine-web@4.0.0/dist/porcupine_web.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@picovoice/web-voice-processor@3.0.0/dist/web_voice_processor.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>🎙️ LYRA WAKE WORD <span class="badge">"Hey Lyra"</span></h2>
+  <div class="controls">
+    <button id="startBtn">🎧 Start Listening</button>
+    <button id="muteBtn">⏹️ Stop / Mute</button>
+  </div>
+
+  <div class="status-panel">
+    <div class="status"><span class="led" id="micLed"></span> Microphone</div>
+    <div class="status"><span class="led" id="wakeLed"></span> Wake Word</div>
+    <div class="status"><span id="statusMsg">⚪ Idle</span></div>
+  </div>
+
+  <canvas id="canvas" width="800" height="200" style="width:100%; height:auto; max-width:800px; aspect-ratio:800/200"></canvas>
+  <div class="info">💡 Say <strong style="color:#ffd966">"Hey Lyra"</strong> → magical popup appears! <br>🔊 Visualizer runs while listening.</div>
+</div>
+
+<!-- Popup overlay (hidden initially) -->
+<div id="wakePopup" class="popup-overlay">
+  <div class="popup-card">
+    <div class="wake-icon">🐉✨</div>
+    <h3>Wake word detected!</h3>
+    <p>You said <strong style="background:#ffd96620; padding:4px 8px; border-radius:20px;">"Hey Lyra"</strong> 🌟<br>Ready to serve.</p>
+    <button id="closePopupBtn">Dismiss</button>
+  </div>
+</div>
+
+<script>
+  // ---------- CONFIGURATION ----------
+  // Your Picovoice Access Key
+  const PICOVOICE_ACCESS_KEY = "lfd0C+KPnrhOtZWXOj39sBSTwMHVn+wutSPMd6vMbDsrYQ6PCzUZ0g==";
+  
+  // Path to the custom wake word file stored on your server
+  const CUSTOM_WAKE_WORD_PATH = "/hey-lyra_en_wasm_v4_0_0.ppn";
+  
+  // ---------- GLOBALS ----------
+  let audioContext = null;
+  let analyser = null;
+  let microphone = null;
+  let mediaStream = null;
+  let animationId = null;
+  let isRunning = false;
+  let porcupineInstance = null;
+  let isWakeWordInitialized = false;
+  
+  // DOM elements
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const startBtn = document.getElementById("startBtn");
+  const muteBtn = document.getElementById("muteBtn");
+  const micLed = document.getElementById("micLed");
+  const wakeLed = document.getElementById("wakeLed");
+  const statusMsgSpan = document.getElementById("statusMsg");
+  const popupOverlay = document.getElementById("wakePopup");
+  const closePopupBtn = document.getElementById("closePopupBtn");
+  
+  // ---------- Helper: show popup when wake word triggered ----------
+  function showWakeWordPopup() {
+    if (wakeLed) {
+      wakeLed.classList.add("wake");
+      setTimeout(() => {
+        wakeLed.classList.remove("wake");
+      }, 800);
+    }
+    if (popupOverlay) {
+      popupOverlay.style.visibility = "visible";
+      popupOverlay.style.opacity = "1";
+    }
+    if (statusMsgSpan) statusMsgSpan.innerHTML = "🔔 WAKE WORD TRIGGERED!";
+    setTimeout(() => {
+      if (statusMsgSpan && isRunning) statusMsgSpan.innerHTML = "🎙️ Listening...";
+    }, 1800);
+  }
+  
+  function hidePopup() {
+    if (popupOverlay) {
+      popupOverlay.style.visibility = "hidden";
+      popupOverlay.style.opacity = "0";
+    }
+  }
+  
+  // Wake word detection callback
+  function keywordDetectionCallback(detection) {
+    console.log(`🔊 Porcupine detected keyword: ${detection.label}`);
+    showWakeWordPopup();
+  }
+  
+  // ---------- Initialize Porcupine with custom wake word ----------
+  async function initPorcupine() {
+    if (porcupineInstance) return porcupineInstance;
+    
+    try {
+      const customKeyword = {
+        publicPath: CUSTOM_WAKE_WORD_PATH,
+        label: "Hey Lyra",
+      };
+      
+      const porcupine = await PorcupineWeb.PorcupineWorker.create(
+        PICOVOICE_ACCESS_KEY,
+        [customKeyword],
+        keywordDetectionCallback
+      );
+      
+      console.log("✅ Porcupine initialized with custom wake word");
+      porcupineInstance = porcupine;
+      isWakeWordInitialized = true;
+      return porcupineInstance;
+    } catch (err) {
+      console.error("❌ Porcupine init failed:", err);
+      statusMsgSpan.innerHTML = "Wake word init error";
+      throw err;
+    }
+  }
+  
+  // ---------- Audio Visualizer ----------
+  function setupAnalyserAndDraw(stream) {
+    if (audioContext && audioContext.state !== 'closed') {
+      audioContext.close().catch(e => console.warn);
+    }
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    microphone = audioContext.createMediaStreamSource(stream);
+    microphone.connect(analyser);
+    
+    function drawVisualizer() {
+      if (!isRunning || !analyser) return;
+      animationId = requestAnimationFrame(drawVisualizer);
+      analyser.getByteTimeDomainData(dataArray);
+      ctx.fillStyle = "#03060c";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "#6bd4ff";
+      ctx.beginPath();
+      const sliceWidth = canvas.width / dataArray.length;
+      let x = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * canvas.height) / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        x += sliceWidth;
+      }
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+    }
+    
+    drawVisualizer();
+    return { analyser, dataArray };
+  }
+  
+  // ---------- Subscribe porcupine to WebVoiceProcessor ----------
+  async function startWakeWordAndMic() {
+    if (!isWakeWordInitialized) {
+      try {
+        await initPorcupine();
+      } catch (e) {
+        statusMsgSpan.innerHTML = "Wake word failed";
+        return false;
+      }
+    }
+    if (!porcupineInstance) return false;
+    
+    try {
+      await WebVoiceProcessor.unsubscribe(porcupineInstance);
+    } catch(e) { /* ignore */ }
+    await WebVoiceProcessor.subscribe(porcupineInstance);
+    console.log("🎤 Porcupine subscribed to WebVoiceProcessor");
+    return true;
+  }
+  
+  async function stopWakeWordAndMic() {
+    if (porcupineInstance && typeof WebVoiceProcessor !== 'undefined') {
+      try {
+        await WebVoiceProcessor.unsubscribe(porcupineInstance);
+        console.log("🔇 Unsubscribed porcupine");
+      } catch (err) {
+        console.warn("Unsubscribe error", err);
+      }
+    }
+  }
+  
+  // ---------- Full Start ----------
+  async function startAudioAndWakeWord() {
+    if (isRunning) return;
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStream = stream;
+      
+      setupAnalyserAndDraw(stream);
+      await initPorcupine();
+      await startWakeWordAndMic();
+      
+      isRunning = true;
+      micLed.classList.add("active");
+      statusMsgSpan.innerHTML = "🎙️ Listening for 'Hey Lyra'...";
+      
+      if (audioContext && audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+    } catch (err) {
+      console.error("Failed to start:", err);
+      statusMsgSpan.innerHTML = "Mic error or permissions";
+      isRunning = false;
+      micLed.classList.remove("active");
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      }
+      throw err;
+    }
+  }
+  
+  // ---------- Stop everything ----------
+  async function stopAll() {
+    if (!isRunning) return;
+    
+    await stopWakeWordAndMic();
+    
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+    
+    if (audioContext) {
+      await audioContext.close();
+      audioContext = null;
+    }
+    
+    analyser = null;
+    microphone = null;
+    isRunning = false;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#03060c";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    micLed.classList.remove("active");
+    wakeLed.classList.remove("wake");
+    statusMsgSpan.innerHTML = "⏹️ Stopped";
+  }
+  
+  async function releasePorcupine() {
+    if (porcupineInstance) {
+      await stopWakeWordAndMic();
+      if (typeof porcupineInstance.release === 'function') {
+        porcupineInstance.release();
+      }
+      if (typeof porcupineInstance.terminate === 'function') {
+        porcupineInstance.terminate();
+      }
+      porcupineInstance = null;
+      isWakeWordInitialized = false;
+    }
+  }
+  
+  // ---------- Event listeners ----------
+  startBtn.onclick = async () => {
+    if (isRunning) return;
+    if (!porcupineInstance) {
+      try {
+        await initPorcupine();
+      } catch(e) {
+        statusMsgSpan.innerHTML = "Init error, check key";
+        return;
+      }
+    }
+    await startAudioAndWakeWord().catch(err => {
+      console.error("Start error", err);
+      statusMsgSpan.innerHTML = "Start failed";
+    });
+  };
+  
+  muteBtn.onclick = async () => {
+    await stopAll();
+    await releasePorcupine();
+    statusMsgSpan.innerHTML = "Stopped & released";
+  };
+  
+  closePopupBtn.onclick = () => {
+    hidePopup();
+  };
+  
+  popupOverlay.addEventListener('click', (e) => {
+    if (e.target === popupOverlay) hidePopup();
+  });
+  
+  micLed.classList.remove("active");
+  statusMsgSpan.innerHTML = "Ready. Click 'Start Listening'";
+  
+  // Verify wake word file exists
+  fetch(CUSTOM_WAKE_WORD_PATH, { method: 'HEAD' }).catch(() => {
+    console.warn(`⚠️ Wake word file not found at ${CUSTOM_WAKE_WORD_PATH}`);
+  });
+</script>
+</body>
+</html>
