@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wake Word Visualizer</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@picovoice/porcupine-web/dist/iife/index.js"></script>
+
+<style>
+body {
+    margin:0;
+    font-family: system-ui;
+    background:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+canvas { width:90%; max-width:800px; }
+button { padding:10px 20px; border-radius:20px; }
+</style>
+</head>
+
+<body>
+
+<div>
+    <button id="startBtn">Start</button>
+    <canvas id="canvas" width="800" height="200"></canvas>
+</div>
+
+<script>
+const ACCESS_KEY = "Ylfd0C+KPnrhOtZWXOj39sBSTwMHVn+wutSPMd6vMbDsrYQ6PCzUZ0g=="; // 🔁 replace
+const KEYWORD_PATH = "https://github.com/MentorRSC/website/hey-lyra_en_wasm.ppn";
+
+let audioContext, analyser, dataArray, source;
+let porcupine = null;
+let animationId;
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// ---------------- VISUALIZER ----------------
+function draw() {
+    analyser.getByteFrequencyData(dataArray);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const barWidth = (canvas.width / dataArray.length) * 2.5;
+    let x = 0;
+
+    for (let i = 0; i < dataArray.length; i++) {
+        const barHeight = dataArray[i];
+        ctx.fillStyle = "#1e88e5";
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+    }
+
+    animationId = requestAnimationFrame(draw);
+}
+
+// ---------------- POPUP ----------------
+function showPopup() {
+    const el = document.createElement("div");
+    el.innerText = "✨ Hey Lyra detected";
+
+    Object.assign(el.style, {
+        position: "fixed",
+        top: "40%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        background: "#1e88e5",
+        color: "#fff",
+        padding: "20px 30px",
+        borderRadius: "20px",
+        zIndex: 9999
+    });
+
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),1500);
+
+    if (navigator.vibrate) navigator.vibrate(100);
+}
+
+// ---------------- PORCUPINE ----------------
+async function initPorcupine(stream) {
+
+    porcupine = await PorcupineWeb.PorcupineWorker.create(
+        ACCESS_KEY,
+        [{
+            custom: {
+                label: "hey-lyra",
+                publicPath: KEYWORD_PATH
+            }
+        }]
+    );
+
+    porcupine.onmessage = (e) => {
+        if (e.data.command === "keyword-detected") {
+            showPopup();
+        }
+    };
+
+    // separate audio context (16kHz)
+    const ctx16 = new AudioContext({ sampleRate: 16000 });
+    const src = ctx16.createMediaStreamSource(stream);
+    const processor = ctx16.createScriptProcessor(512, 1, 1);
+
+    src.connect(processor);
+    processor.connect(ctx16.destination);
+
+    processor.onaudioprocess = (e) => {
+        const input = e.inputBuffer.getChannelData(0);
+
+        const pcm = new Int16Array(input.length);
+        for (let i = 0; i < input.length; i++) {
+            pcm[i] = input[i] * 32767;
+        }
+
+        porcupine.process(pcm);
+    };
+}
+
+// ---------------- START ----------------
+document.getElementById("startBtn").onclick = async () => {
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    // VISUALIZER CONTEXT
+    audioContext = new AudioContext();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+
+    source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    draw();
+
+    // PORCUPINE INIT
+    await initPorcupine(stream);
+};
+</script>
+
+</body>
+</html>
