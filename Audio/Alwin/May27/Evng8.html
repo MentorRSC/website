@@ -618,7 +618,7 @@
       stopWaveVisualizer();
     }
     
-    // start microphone + recognition + wave
+   // start microphone + recognition + wave
     async function startListening() {
       if (isListening) {
         appendTranscriptMessage('⚠️ Already listening, stop first if needed.');
@@ -641,4 +641,147 @@
         
         recognition = new SpeechRecognitionAPI();
         recognition.continuous = true;
-        recognition.interimResults = tru
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+          isListening = true;
+          micLed.className = 'led listening';
+          micStateText.innerText = '🎙️ LISTENING (wake word detection)';
+          appendTranscriptMessage('🎧 Active listening — wave bars dancing with your voice!');
+        };
+        
+        recognition.onerror = (event) => {
+          console.warn('SpeechRecognition error', event.error);
+          let errorMsg = `⚠️ Recognition error: ${event.error}`;
+          if (event.error === 'not-allowed') errorMsg = '🔴 Microphone permission denied. Please allow access.';
+          appendTranscriptMessage(errorMsg);
+          if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+            stopListening();
+          }
+        };
+        
+        recognition.onend = () => {
+          if (mediaStream && isListening === true) {
+            if (recognition) {
+              try {
+                recognition.start();
+              } catch(e) {
+                appendTranscriptMessage('⚠️ Restart failed, stopping mic.');
+                stopListening();
+              }
+            }
+          } else {
+            if (!mediaStream) {
+              micLed.className = 'led';
+              micStateText.innerText = '🎤 Microphone inactive';
+              isListening = false;
+              stopWaveVisualizer();
+            }
+          }
+        };
+        
+        recognition.onresult = (event) => {
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            const transcriptChunk = result[0].transcript.trim().toLowerCase();
+            const isFinal = result.isFinal;
+            
+            if (isFinal) {
+              appendTranscriptMessage(`🗣️ "${transcriptChunk}"`);
+            } else {
+              const interimText = `💬 (interim) ${transcriptChunk}`;
+              if (transcriptArea.innerHTML.includes('(interim)')) {
+                let lines = transcriptArea.innerHTML.split('<br>');
+                if (lines.length > 0 && lines[lines.length-1].includes('(interim)')) {
+                  lines[lines.length-1] = `[${new Date().toLocaleTimeString()}] ${interimText}`;
+                  transcriptArea.innerHTML = lines.join('<br>');
+                } else {
+                  appendTranscriptMessage(interimText, true);
+                }
+              } else {
+                appendTranscriptMessage(interimText, true);
+              }
+            }
+            
+            if (transcriptChunk.includes(currentWakeWord)) {
+              if (!modalOverlay.classList.contains('active')) {
+                let matchedPhrase = rawWakeWordForDisplay;
+                const originalText = result[0].transcript.trim();
+                const indexMatch = originalText.toLowerCase().indexOf(currentWakeWord);
+                if (indexMatch !== -1) {
+                  matchedPhrase = originalText.substr(indexMatch, currentWakeWord.length);
+                }
+                showWakePopup(matchedPhrase);
+              }
+            }
+          }
+        };
+        
+        recognition.start();
+        
+      } catch (err) {
+        console.error('getUserMedia error', err);
+        let errorMessage = '❌ Could not access microphone. Please check permissions.';
+        if (err.name === 'NotAllowedError') errorMessage = '🚫 Microphone permission denied. Allow and retry.';
+        appendTranscriptMessage(errorMessage);
+        micStateText.innerText = '🎤 Microphone error';
+        micLed.className = 'led';
+        isListening = false;
+        stopWaveVisualizer();
+      }
+    }
+    
+    function manualPopup() {
+      if (!modalOverlay.classList.contains('active')) {
+        modalTriggerWordSpan.innerText = `"manual test (${rawWakeWordForDisplay})"`;
+        modalOverlay.classList.add('active');
+        appendTranscriptMessage('🔔 Manual popup triggered via button.');
+      } else {
+        appendTranscriptMessage('Popup already open, close it first.');
+      }
+    }
+    
+    // event binding
+    startBtn.addEventListener('click', () => {
+      if (isListening) {
+        appendTranscriptMessage('Already active, stop first if you want to restart.');
+        return;
+      }
+      startListening();
+    });
+    
+    stopBtn.addEventListener('click', () => {
+      stopListening();
+    });
+    
+    testPopupBtn.addEventListener('click', manualPopup);
+    
+    setWakeBtn.addEventListener('click', () => {
+      setWakeWordFromInput();
+      if (isListening) {
+        appendTranscriptMessage(`✨ Wake word updated to "${rawWakeWordForDisplay}" while listening — new trigger active.`);
+      }
+    });
+    
+    closeModalBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+    
+    customWakeInput.value = "Hey Assistant";
+    setWakeWordFromInput();
+    
+    window.addEventListener('beforeunload', () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+      }
+      if (recognition) recognition.abort();
+      if (audioContext) audioContext.close();
+    });
+    
+    appendTranscriptMessage('✅ Ready. Click "Start Listening" and allow microphone. Wave bars appear! Say "' + rawWakeWordForDisplay + '" to see popup.');
+  })();
+</script>
+</body>
+</html>
