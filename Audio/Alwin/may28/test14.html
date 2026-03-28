@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>Custom Wake Word Trainer | Offline</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.4/dist/speech-commands.min.js"></script>
+
+<style>
+/* Your existing CSS styles - keeping the same UI */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #050a14 0%, #0a0f1a 100%);
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    transition: background 0.3s ease;
+    overflow-x: hidden;
+}
+
+body.light-theme {
+    background: linear-gradient(135deg, #e8ecf3 0%, #f0f4fa 100%);
+}
+
+.wave-container {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: clamp(3px, 1.5vw, 10px);
+    padding: 0 15px;
+    z-index: 10;
+    pointer-events: none;
+    flex-wrap: wrap;
+}
+
+.wave-bar {
+    width: clamp(3px, 1.8vw, 12px);
+    height: 25px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #3a86ff, #ff66cc);
+    transition: height 0.05s linear;
+    box-shadow: 0 0 10px rgba(58, 134, 255, 0.5);
+    will-change: height;
+}
+
+.wave-bar.idle {
+    animation: gentleWave 0.8s infinite ease-in-out;
+}
+
+@keyframes gentleWave {
+    0%, 100% { height: 20px; opacity: 0.6; transform: scaleY(0.8); }
+    50% { height: 55px; opacity: 1; transform: scaleY(1); }
+}
+
+.wake-indicator {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 50px;
+    padding: 12px 24px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    font-weight: 600;
+    font-size: 14px;
+    color: #3a86ff;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+.wake-indicator.listening {
+    background: rgba(255, 80, 120, 0.25);
+    border-color: #ff5080;
+    color: #ff80a0;
+    animation: pulseGlow 1.5s infinite;
+}
+
+.wake-indicator.active {
+    background: rgba(0, 255, 150, 0.25);
+    border-color: #00ffaa;
+    color: #00ffaa;
+    animation: none;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 80, 120, 0.3); }
+    50% { box-shadow: 0 0 0 15px rgba(255, 80, 120, 0); }
+}
+
+.popup-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: linear-gradient(135deg, rgba(58, 134, 255, 0.95), rgba(255, 102, 204, 0.95));
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 25px 35px;
+    text-align: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 85%;
+}
+
+.popup-notification.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.popup-icon { font-size: 48px; margin-bottom: 15px; }
+.popup-title { font-size: 24px; font-weight: 700; color: white; margin-bottom: 8px; }
+.popup-message { font-size: 16px; color: rgba(255, 255, 255, 0.9); }
+.popup-word { font-size: 20px; font-weight: 800; color: #ffea80; margin-top: 8px; }
+
+.system-clock {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    padding: 8px 18px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+.clock-time { font-size: 16px; font-weight: 600; color: #3a86ff; }
+.clock-ampm { font-size: 11px; font-weight: 500; color: #88aaff; }
+
+.mute-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    color: #c0e4ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mute-overlay.muted {
+    background: linear-gradient(135deg, #ff3366, #ff80b0);
+    border-color: #ff80b0;
+    color: white;
+}
+
+.settings-corner {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    padding: 8px 18px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    cursor: pointer;
+    color: #3a86ff;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.settings-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: rgba(12, 22, 40, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(58, 134, 255, 0.3);
+    z-index: 310;
+    min-width: 300px;
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-panel.show { display: flex; }
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    color: #eef3ff;
+    flex-wrap: wrap;
+}
+
+.setting-btn, select, .custom-input {
+    background: rgba(58, 134, 255, 0.2);
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    padding: 8px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.custom-input {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+}
+
+.record-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #3a86ff, #ff66cc);
+    border: none;
+    padding: 10px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: white;
+}
+
+.record-btn.recording {
+    background: linear-gradient(135deg, #ff3366, #ff80b0);
+    animation: pulseRed 1s infinite;
+}
+
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
+}
+
+.status-text {
+    font-size: 11px;
+    background: rgba(58, 134, 255, 0.15);
+    padding: 8px 12px;
+    border-radius: 20px;
+    text-align: center;
+    color: #88ddff;
+}
+
+.training-section {
+    border-top: 1px solid rgba(58, 134, 255, 0.3);
+    padding-top: 12px;
+    margin-top: 4px;
+}
+
+.train-word {
+    background: rgba(255, 80, 120, 0.2);
+    border-radius: 20px;
+    padding: 8px;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(58, 134, 255, 0.2);
+    margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+    .wake-indicator { top: 60px; font-size: 11px; padding: 8px 16px; white-space: normal; max-width: 90%; }
+    .settings-panel { top: auto; bottom: 80px; right: 12px; left: 12px; min-width: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="system-clock">
+    <span class="clock-time" id="clockTime">--:--:--</span>
+    <span class="clock-ampm" id="clockAmPm">--</span>
+</div>
+
+<div id="wakeIndicator" class="wake-indicator">📥 Loading offline model...</div>
+
+<div id="settingsBtn" class="settings-corner">⚙️</div>
+
+<div id="settingsPanel" class="settings-panel">
+    <div class="setting-item">
+        <label>🌗 Theme</label>
+        <button id="themeBtn" class="setting-btn">Toggle</button>
+    </div>
+    <div class="divider"></div>
+    
+    <!-- Custom Wake Word Training Section -->
+    <div class="training-section">
+        <div class="setting-item">
+            <label>🎯 Custom Word</label>
+            <input type="text" id="customWordInput" class="custom-input" placeholder="e.g., jarvis" maxlength="20">
+        </div>
+        <div class="setting-item">
+            <label>🎤 Map to:</label>
+            <select id="mapToSelect">
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="up">Up</option>
+                <option value="down">Down</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="go">Go</option>
+                <option value="stop">Stop</option>
+                <option value="computer">Computer</option>
+                <option value="robot">Robot</option>
+            </select>
+        </div>
+        <button id="addCustomWordBtn" class="setting-btn" style="width:100%; margin-top:8px;">➕ Add Custom Word</button>
+        <div id="customWordsList" class="train-word" style="max-height: 150px; overflow-y: auto;"></div>
+    </div>
+    
+    <div class="divider"></div>
+    <button id="recordBtn" class="record-btn">⏺ START RECORDING</button>
+    <div id="statusMsg" class="status-text">⚪ Ready</div>
+</div>
+
+<div id="waveContainer" class="wave-container"></div>
+<button id="muteBtn" class="mute-overlay">🔇 MUTE</button>
+
+<script>
+(async function() {
+    // DOM Elements
+    const waveContainer = document.getElementById('waveContainer');
+    const muteBtn = document.getElementById('muteBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const themeBtn = document.getElementById('themeBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const wakeIndicator = document.getElementById('wakeIndicator');
+    const customWordInput = document.getElementById('customWordInput');
+    const mapToSelect = document.getElementById('mapToSelect');
+    const addCustomWordBtn = document.getElementById('addCustomWordBtn');
+    const customWordsList = document.getElementById('customWordsList');
+    const clockTimeSpan = document.getElementById('clockTime');
+    const clockAmPmSpan = document.getElementById('clockAmPm');
+
+    // State
+    let audioContext = null;
+    let mediaStream = null;
+    let analyser = null;
+    let animationId = null;
+    let isActive = false;
+    let isMuted = false;
+    let recognizer = null;
+    let isListening = false;
+    
+    // Custom words mapping
+    let customWords = [];
+    
+    // Load saved custom words
+    function loadCustomWords() {
+        const saved = localStorage.getItem('customWakeWords');
+        if (saved) {
+            customWords = JSON.parse(saved);
+        } else {
+            customWords = [
+                { word: "jarvis", mapTo: "yes" },
+                { word: "computer", mapTo: "computer" },
+                { word: "alexa", mapTo: "yes" }
+            ];
+        }
+        updateCustomWordsList();
+    }
+    
+    // Save custom words
+    function saveCustomWords() {
+        localStorage.setItem('customWakeWords', JSON.stringify(customWords));
+        updateCustomWordsList();
+        
+        // Restart listening with new words
+        if (recognizer && isListening) {
+            recognizer.stopListening();
+            startListening();
+        }
+    }
+    
+    // Update UI with custom words
+    function updateCustomWordsList() {
+        if (customWords.length === 0) {
+            customWordsList.innerHTML = '<div style="color:#888; padding:8px;">No custom words added</div>';
+            return;
+        }
+        
+        customWordsList.innerHTML = customWords.map((cw, idx) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px; border-bottom:1px solid rgba(58,134,255,0.2);">
+                <span><strong>${cw.word}</strong> → ${cw.mapTo}</span>
+                <button class="remove-word" data-idx="${idx}" style="background:#ff3366; border:none; border-radius:20px; padding:2px 12px; cursor:pointer; color:white;">✖</button>
+            </div>
+        `).join('');
+        
+        // Add remove event listeners
+        document.querySelectorAll('.remove-word').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                customWords.splice(idx, 1);
+                saveCustomWords();
+            });
+        });
+    }
+    
+    // Add custom word
+    function addCustomWord() {
+        let newWord = customWordInput.value.trim().toLowerCase();
+        if (!newWord) {
+            showPopupMessage('Please enter a word', 'warning');
+            return;
+        }
+        
+        const mapTo = mapToSelect.value;
+        
+        // Check if word already exists
+        if (customWords.some(cw => cw.word === newWord)) {
+            showPopupMessage(`"${newWord}" already exists!`, 'warning');
+            return;
+        }
+        
+        customWords.push({ word: newWord, mapTo: mapTo });
+        saveCustomWords();
+        customWordInput.value = '';
+        showPopupMessage(`Added "${newWord}" → "${mapTo}"`, 'success');
+    }
+    
+    // Show popup message
+    function showPopupMessage(msg, type = 'info') {
+        const popup = document.createElement('div');
+        popup.className = 'popup-notification';
+        popup.innerHTML = `
+            <div class="popup-icon">${type === 'success' ? '✅' : '⚠️'}</div>
+            <div class="popup-title">${type === 'success' ? 'Added!' : 'Notice'}</div>
+            <div class="popup-message">${msg}</div>
+        `;
+        document.body.appendChild(popup);
+        setTimeout(() => popup.classList.add('show'), 10);
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }, 2000);
+    }
+    
+    // Show wake word popup
+    function showWakePopup(word) {
+        const popup = document.createElement('div');
+        popup.className = 'popup-notification';
+        popup.innerHTML = `
+            <div class="popup-icon">🎤✨</div>
+            <div class="popup-title">Wake Word Detected!</div>
+            <div class="popup-message">You said:</div>
+            <div class="popup-word">"${word}"</div>
+        `;
+        document.body.appendChild(popup);
+        setTimeout(() => popup.classList.add('show'), 10);
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }, 2000);
+        
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(200);
+        }
+    }
+    
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        clockTimeSpan.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
+        clockAmPmSpan.textContent = ampm;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // Bars
+    let bars = [];
+    let barCount = 24;
+    let freqData = null;
+    
+    function createBars() {
+        const containerWidth = window.innerWidth - 40;
+        const barWidth = Math.max(4, Math.min(12, Math.floor(containerWidth / 28)));
+        barCount = Math.floor(containerWidth / (barWidth + 6));
+        barCount = Math.min(32, Math.max(16, barCount));
+        
+        waveContainer.innerHTML = '';
+        bars = [];
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar idle';
+            waveContainer.appendChild(bar);
+            bars.push(bar);
+        }
+    }
+    
+    function updateBars() {
+        if (!isActive || isMuted || !analyser || !freqData) return;
+        
+        analyser.getByteFrequencyData(freqData);
+        const binsPerBar = Math.floor(freqData.length / barCount);
+        
+        for (let i = 0; i < barCount; i++) {
+            let sum = 0;
+            const start = i * binsPerBar;
+            const end = Math.min(start + binsPerBar, freqData.length);
+            for (let j = start; j < end; j++) sum += freqData[j];
+            
+            let intensity = sum / (end - start) / 180;
+            intensity = Math.min(1, Math.pow(intensity, 1.3) * 1.2);
+            const height = 15 + (intensity * 110);
+            const hue = 200 + intensity * 40;
+            
+            bars[i].style.height = `${height}px`;
+            bars[i].style.background = `linear-gradient(180deg, hsl(${hue}, 85%, 55%), hsl(${hue + 20}, 80%, 60%))`;
+            bars[i].style.boxShadow = `0 0 ${8 + intensity * 12}px rgba(58, 134, 255, ${0.3 + intensity * 0.5})`;
+            bars[i].classList.remove('idle');
+        }
+    }
+    
+    function idleAnimation() {
+        if (!isActive && bars.length) {
+            bars.forEach(bar => bar.classList.add('idle'));
+            requestAnimationFrame(idleAnimation);
+        }
+    }
+    
+    function animate() {
+        if (!animationId) return;
+        updateBars();
+        animationId = requestAnimationFrame(animate);
+    }
+    
+    // Start visualizer
+    async function startVisualizer() {
+        if (isActive) return;
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStream = stream;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.7;
+            freqData = new Uint8Array(analyser.frequencyBinCount);
+            
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            
+            if (audioContext.state === 'suspended') await audioContext.resume();
+            
+            isActive = true;
+            isMuted = false;
+            muteBtn.classList.remove('muted');
+            muteBtn.innerHTML = '🔇 MUTE';
+            bars.forEach(bar => bar.classList.remove('idle'));
+            
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(animate);
+            
+            statusMsg.innerText = '🎤 Active';
+            wakeIndicator.textContent = '✅ Visualizer Active';
+            wakeIndicator.classList.add('active');
+            
+            setTimeout(() => {
+                if (isActive) {
+                    wakeIndicator.textContent = `🎧 Listening for ${customWords.map(w => w.word).join(", ")}`;
+                    wakeIndicator.classList.add('listening');
+                    wakeIndicator.classList.remove('active');
+                }
+            }, 2000);
+            
+        } catch (err) {
+            statusMsg.innerText = '❌ Mic access denied';
+        }
+    }
+    
+    function stopVisualizer() {
+        if (animationId) cancelAnimationFrame(animationId);
+        if (audioContext) audioContext.close();
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        
+        isActive = false;
+        bars.forEach(bar => bar.classList.add('idle'));
+        statusMsg.innerText = '⚪ Waiting for wake word';
+        wakeIndicator.textContent = `🎤 Say: ${customWords.map(w => w.word).join(", ")}`;
+        wakeIndicator.classList.remove('active', 'listening');
+        
+        if (recognizer && !isListening) startListening();
+    }
+    
+    // Start listening with custom word mapping
+    function startListening() {
+        if (!recognizer || isListening) return;
+        
+        isListening = true;
+        recognizer.listen(result => {
+            if (!isActive) {
+                const scores = result.scores;
+                const words = recognizer.wordLabels();
+                
+                // Check custom words mapping
+                for (let custom of customWords) {
+                    const targetWord = custom.mapTo;
+                    const index = words.findIndex(w => w === targetWord);
+                    if (index !== -1 && scores[index] > 0.75) {
+                        triggerWakeWord(custom.word);
+                        return;
+                    }
+                }
+                
+                // Also check default words
+                const defaultWords = ["computer", "robot", "yes", "go", "up"];
+                for (let dw of defaultWords) {
+                    const idx = words.findIndex(w => w === dw);
+                    if (idx !== -1 && scores[idx] > 0.75) {
+                        triggerWakeWord(dw);
+                        return;
+                    }
+                }
+            }
+        }, {
+            probabilityThreshold: 0.75,
+            invokeCallbackOnNoiseAndUnknown: true,
+            overlapFactor: 0.5
+        });
+        
+        wakeIndicator.classList.add('listening');
+    }
+    
+    function triggerWakeWord(word) {
+        showWakePopup(word);
+        wakeIndicator.classList.add('active');
+        wakeIndicator.textContent = `✨ "${word}" detected!`;
+        setTimeout(() => startVisualizer(), 100);
+    }
+    
+    function toggleMute() {
+        if (!isActive) return;
+        isMuted = !isMuted;
+        muteBtn.classList.toggle('muted', isMuted);
+        muteBtn.innerHTML = isMuted ? '🔊 UNMUTE' : '🔇 MUTE';
+        statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
+        if (isMuted) bars.forEach(bar => bar.classList.add('idle'));
+        else bars.forEach(bar => bar.classList.remove('idle'));
+    }
+    
+    // Recording
+    let mediaRecorder = null;
+    let chunks = [];
+    let isRecording = false;
+    let recordTimeout = null;
+    let counterInterval = null;
+    let recordDuration = 10;
+    
+    function updateRecordUI() {
+        if (isRecording) {
+            recordBtn.innerHTML = '⏹️ STOP RECORDING';
+            recordBtn.classList.add('recording');
+        } else {
+            recordBtn.innerHTML = '⏺ START RECORDING';
+            recordBtn.classList.remove('recording');
+        }
+    }
+    
+    function handleRecording() {
+        if (!isActive || !mediaStream) {
+            statusMsg.innerText = '❌ Activate wake word first';
+            return;
+        }
+        
+        if (isRecording) {
+            if (counterInterval) clearInterval(counterInterval);
+            if (recordTimeout) clearTimeout(recordTimeout);
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            isRecording = false;
+            updateRecordUI();
+            statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
+            return;
+        }
+        
+        chunks = [];
+        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: mime });
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            if (chunks.length) {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `wave_recording_${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                statusMsg.innerText = '💾 Saved!';
+                setTimeout(() => {
+                    if (!isRecording && isActive) statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
+                }, 1500);
+            }
+            chunks = [];
+            isRecording = false;
+            updateRecordUI();
+            if (counterInterval) clearInterval(counterInterval);
+        };
+        
+        mediaRecorder.start(200);
+        isRecording = true;
+        updateRecordUI();
+        
+        let remaining = recordDuration;
+        counterInterval = setInterval(() => {
+            if (remaining >= 0) {
+                statusMsg.innerText = `🔴 Recording: ${remaining}s`;
+                remaining--;
+            }
+            if (remaining < 0 && counterInterval) clearInterval(counterInterval);
+        }, 1000);
+        
+        recordTimeout = setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+        }, recordDuration * 1000);
+    }
+    
+    // Theme
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+    }
+    function applyTheme() {
+        if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
+    }
+    
+    // Initialize offline model
+    async function initModel() {
+        try {
+            wakeIndicator.textContent = '📥 Loading offline model...';
+            recognizer = await speechCommands.create('BROWSER_FFT');
+            await recognizer.ensureModelLoaded();
+            wakeIndicator.textContent = `🎤 Ready! Say: ${customWords.map(w => w.word).join(", ")}`;
+            statusMsg.innerText = '✅ Model ready';
+            startListening();
+        } catch (error) {
+            console.error('Model error:', error);
+            wakeIndicator.textContent = '⚠️ Model failed - using fallback';
+        }
+    }
+    
+    // Event listeners
+    muteBtn.addEventListener('click', toggleMute);
+    recordBtn.addEventListener('click', handleRecording);
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsPanel.classList.toggle('show');
+    });
+    document.addEventListener('click', (e) => {
+        if (!settingsBtn.contains(e.target) && !settingsPanel.contains(e.target)) {
+            settingsPanel.classList.remove('show');
+        }
+    });
+    themeBtn.addEventListener('click', toggleTheme);
+    addCustomWordBtn.addEventListener('click', addCustomWord);
+    document.getElementById('durationSelect')?.addEventListener('change', (e) => {
+        recordDuration = parseInt(e.target.value);
+    });
+    
+    window.addEventListener('resize', () => setTimeout(createBars, 100));
+    
+    // Initialize
+    createBars();
+    idleAnimation();
+    applyTheme();
+    loadCustomWords();
+    initModel();
+    
+    window.addEventListener('beforeunload', () => {
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        if (audioContext) audioContext.close();
+        if (animationId) cancelAnimationFrame(animationId);
+        if (recognizer) recognizer.stopListening();
+    });
+})();
+</script>
+</body>
+</html>
