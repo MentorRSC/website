@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Command Recognizer - TF.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; text-align: center; }
+        button { padding: 12px 24px; font-size: 1rem; margin: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #4CAF50; color: white; transition: 0.2s; }
+        button:hover { background-color: #45a049; transform: scale(1.02); }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; transform: none; }
+        #status { margin: 20px 0; padding: 10px; border-radius: 8px; background: #f0f0f0; font-weight: bold; }
+        .word-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+        .word-card { background: #e7e7e7; padding: 8px 16px; border-radius: 20px; font-weight: bold; transition: 0.1s linear; }
+        .word-card.active { background: #4CAF50; color: white; transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        #confidence { margin-top: 20px; font-size: 0.9rem; color: #555; }
+        hr { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎤 Offline Voice Command Recognition</h1>
+    <p>Pre-trained on 20 words (numbers, directions, yes/no, etc.)</p>
+    <button id="toggleMic">🎙️ Enable Microphone & Start</button>
+    <div id="status">⚪ Model loading... Please wait.</div>
+    <div id="confidence"></div>
+    <div id="wordContainer" class="word-grid"></div>
+
+    <hr>
+    <div style="font-size: 0.8rem; color: gray;">Model runs 100% in your browser. No data sent to any server.</div>
+
+    <script>
+        let recognizer;
+        let isListening = false;
+
+        const toggleButton = document.getElementById('toggleMic');
+        const statusDiv = document.getElementById('status');
+        const wordContainer = document.getElementById('wordContainer');
+        const confidenceDiv = document.getElementById('confidence');
+
+        async function initModel() {
+            statusDiv.innerHTML = '⏳ Loading Speech Command Model (first time may take a few seconds)...';
+            // Create recognizer using browser's native FFT for performance
+            recognizer = speechCommands.create('BROWSER_FFT');
+            await recognizer.ensureModelLoaded();
+            const words = recognizer.wordLabels();
+            
+            // Build UI dynamically with all the words the model can recognize
+            wordContainer.innerHTML = '';
+            words.forEach(word => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                card.id = `word-${word}`;
+                card.innerText = word;
+                wordContainer.appendChild(card);
+            });
+            statusDiv.innerHTML = '✅ Model ready! Click "Enable Microphone" and speak.';
+            toggleButton.disabled = false;
+        }
+
+        function startListening() {
+            if (!recognizer) return;
+            if (isListening) return;
+
+            // listen() returns a promise, we handle errors
+            recognizer.listen(({ scores }) => {
+                // Get the list of all possible words
+                const words = recognizer.wordLabels();
+                // Convert scores to a list of {score, word} and find the highest
+                const results = Array.from(scores).map((score, i) => ({ score, word: words[i] }));
+                results.sort((a, b) => b.score - a.score);
+                const topResult = results[0];
+                const confidence = (topResult.score * 100).toFixed(1);
+
+                // Highlight the detected word in the UI
+                document.querySelectorAll('.word-card').forEach(card => card.classList.remove('active'));
+                const activeCard = document.getElementById(`word-${topResult.word}`);
+                if (activeCard) activeCard.classList.add('active');
+                
+                confidenceDiv.innerHTML = `🎯 Detected: <strong>${topResult.word}</strong> (${confidence}% confidence)`;
+                
+                // Optional: log to console for debugging
+                // console.log(`Detected: ${topResult.word} (${confidence}%)`);
+            }, {
+                probabilityThreshold: 0.70,   // Only fire when at least 70% confident
+                overlapFactor: 0.50,          // How often to process audio frames
+                includeSpectrogram: false,     // We only need scores for basic demo
+                invokeCallbackOnNoiseAndUnknown: true // Shows when unknown or silence is detected
+            });
+            isListening = true;
+            toggleButton.innerText = '🔴 Stop Listening';
+            statusDiv.innerHTML = '🎧 Listening... speak one of the displayed words.';
+        }
+
+        function stopListening() {
+            if (recognizer && isListening) {
+                recognizer.stopListening();
+                isListening = false;
+                toggleButton.innerText = '🎙️ Enable Microphone & Start';
+                statusDiv.innerHTML = '🛑 Stopped. Click to start again.';
+                confidenceDiv.innerHTML = '';
+                document.querySelectorAll('.word-card').forEach(card => card.classList.remove('active'));
+            }
+        }
+
+        async function onToggleMic() {
+            if (isListening) {
+                stopListening();
+            } else {
+                // If model not yet loaded, we must load it first (though button is disabled until loaded)
+                if (!recognizer) {
+                    await initModel();
+                }
+                startListening();
+            }
+        }
+
+        toggleButton.addEventListener('click', onToggleMic);
+        toggleButton.disabled = true; // disabled until model loaded
+
+        // Start loading the model as soon as the page loads
+        initModel().catch(err => {
+            console.error(err);
+            statusDiv.innerHTML = '❌ Failed to load model. Check your internet connection and reload.';
+            toggleButton.disabled = true;
+        });
+    </script>
+</body>
+</html>
