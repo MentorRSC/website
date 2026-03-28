@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Bar</title>
+
+<style>
+/* KEEPING YOUR ORIGINAL STYLES */
+body { background:#fff; font-family:sans-serif; }
+
+/* ADDITIONS */
+.dark-mode {
+    background:#0f172a !important;
+    color:#fff !important;
+}
+
+.settings-panel {
+    display:none;
+    margin-top:1rem;
+    padding:1rem;
+    border-radius:1rem;
+    background:#f5f7fb;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wave-container">
+
+<!-- ORIGINAL CONTENT KEPT -->
+
+<button id="recordBtn">⏺ START REC</button>
+<button id="settingsBtn">⚙️</button>
+
+<div id="settingsPanel" class="settings-panel">
+    Theme:
+    <select id="themeSelect">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+    </select>
+
+    <br><br>
+
+    Duration:
+    <select id="durationSelect">
+        <option value="5">5 sec</option>
+        <option value="10">10 sec</option>
+        <option value="20">20 sec</option>
+        <option value="30">30 sec</option>
+    </select>
+</div>
+
+<canvas id="audioCanvas" width="800" height="200"></canvas>
+
+<a id="downloadLink" style="display:block;margin-top:10px;"></a>
+
+</div>
+
+<script>
+
+/* ===== ORIGINAL VARIABLES ===== */
+let audioContext, analyserNode, mediaStream;
+
+/* ===== NEW RECORDING VARIABLES ===== */
+let mediaRecorder;
+let recordedChunks = [];
+let isRecording = false;
+let selectedDuration = 5000;
+let timeoutId;
+let recordedBlob = null;
+
+/* ===== MICROPHONE START ===== */
+async function startMic() {
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    audioContext = new AudioContext();
+    analyserNode = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    source.connect(analyserNode);
+}
+startMic();
+
+/* ===== RECORD TOGGLE ===== */
+async function toggleRecording() {
+
+    if (!mediaStream) {
+        alert("Mic not started");
+        return;
+    }
+
+    if (!isRecording) {
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(mediaStream);
+
+        mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+
+            const blob = new Blob(recordedChunks, {type:'audio/webm'});
+            const wavBlob = await convertToWav(blob);
+
+            recordedBlob = wavBlob;
+
+            const url = URL.createObjectURL(wavBlob);
+
+            const link = document.getElementById("downloadLink");
+            link.href = url;
+            link.download = "recording.wav";
+            link.innerText = "⬇ Download Latest Recording";
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        recordBtn.innerText = "⏹ STOP REC";
+
+        timeoutId = setTimeout(() => {
+            if (isRecording) toggleRecording();
+        }, selectedDuration);
+
+    } else {
+
+        mediaRecorder.stop();
+        isRecording = false;
+        recordBtn.innerText = "⏺ START REC";
+        clearTimeout(timeoutId);
+    }
+}
+
+/* ===== WAV CONVERTER ===== */
+function convertToWav(blob) {
+    return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            resolve(new Blob([reader.result], {type:'audio/wav'}));
+        };
+        reader.readAsArrayBuffer(blob);
+    });
+}
+
+/* ===== SETTINGS TOGGLE ===== */
+settingsBtn.onclick = () => {
+    const panel = document.getElementById("settingsPanel");
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+};
+
+/* ===== THEME SWITCH ===== */
+themeSelect.onchange = (e) => {
+    if (e.target.value === "dark") {
+        document.body.classList.add("dark-mode");
+    } else {
+        document.body.classList.remove("dark-mode");
+    }
+};
+
+/* ===== DURATION CHANGE ===== */
+durationSelect.onchange = (e) => {
+    selectedDuration = parseInt(e.target.value) * 1000;
+};
+
+/* ===== EVENT ===== */
+recordBtn.onclick = toggleRecording;
+
+</script>
+
+</body>
+</html>
