@@ -1,3 +1,5 @@
+Here is the modified HTML code that hides the mute button like the settings button, with auto-hide functionality.
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,7 +114,7 @@
             color: #0077aa;
         }
 
-        /* Mute button */
+        /* Mute button - now with auto-hide behavior like settings */
         .mute-overlay {
             position: fixed;
             bottom: 20px;
@@ -146,6 +148,19 @@
             border-color: #ff80b0;
             color: white;
             animation: softPulse 1s infinite;
+        }
+        
+        /* Auto-hide classes for mute button */
+        .mute-overlay.auto-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+        }
+        
+        .mute-overlay.force-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
         }
 
         @keyframes softPulse {
@@ -379,7 +394,7 @@
         <canvas id="waveCanvas" width="1200" height="200"></canvas>
     </div>
 
-    <button id="muteOverlayBtn" class="mute-overlay">🔇 </button>
+    <button id="muteOverlayBtn" class="mute-overlay">🔇 Mute</button>
     <div class="live-status">🎵 Live Audio Visualizer</div>
 
     <script>
@@ -426,7 +441,13 @@
             let hideTimer = null;
             let isDropdownOpen = false;
             
-            function resetHideTimer() {
+            // Mute button auto-hide - separate timer for mute
+            let muteHideTimer = null;
+            let isMuteHoverLock = false;
+            
+            // Function to reset hide timer for both buttons
+            function resetHideTimers() {
+                // Reset settings button timer
                 if (hideTimer) clearTimeout(hideTimer);
                 settingsBtn.classList.remove('auto-hidden');
                 settingsBtn.classList.add('force-visible');
@@ -436,41 +457,124 @@
                         settingsBtn.classList.remove('force-visible');
                     }
                 }, 3500);
+                
+                // Reset mute button timer
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+                muteHideTimer = setTimeout(() => {
+                    // Don't auto-hide if the mute button is being hovered or if recording is active?
+                    if (!isMuteHoverLock && !isRecording) {
+                        muteOverlayBtn.classList.add('auto-hidden');
+                        muteOverlayBtn.classList.remove('force-visible');
+                    } else if (isRecording) {
+                        // Keep visible during recording
+                        muteOverlayBtn.classList.remove('auto-hidden');
+                        muteOverlayBtn.classList.add('force-visible');
+                        // Set another timer to re-evaluate after recording
+                        setTimeout(() => {
+                            if (!isMuteHoverLock && !isRecording) {
+                                muteOverlayBtn.classList.add('auto-hidden');
+                                muteOverlayBtn.classList.remove('force-visible');
+                            }
+                        }, 3500);
+                    }
+                }, 3500);
             }
             
-            function showSettingsButton() {
+            // Show both buttons on any movement
+            function showAllButtons() {
+                // Show settings button
                 settingsBtn.classList.remove('auto-hidden');
                 settingsBtn.classList.add('force-visible');
-                resetHideTimer();
+                // Show mute button
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+                resetHideTimers();
             }
             
-            document.addEventListener('mousemove', showSettingsButton);
-            document.addEventListener('touchstart', showSettingsButton);
+            // Show mute button specifically (for hover state)
+            function showMuteButton() {
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+            }
             
+            // Hide mute button after delay (if not hovered and not recording)
+            function scheduleMuteHide() {
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteHideTimer = setTimeout(() => {
+                    if (!isMuteHoverLock && !isRecording) {
+                        muteOverlayBtn.classList.add('auto-hidden');
+                        muteOverlayBtn.classList.remove('force-visible');
+                    } else if (isRecording) {
+                        // If recording, keep visible and check again later
+                        muteOverlayBtn.classList.remove('auto-hidden');
+                        muteOverlayBtn.classList.add('force-visible');
+                        muteHideTimer = setTimeout(() => {
+                            if (!isMuteHoverLock && !isRecording) {
+                                muteOverlayBtn.classList.add('auto-hidden');
+                                muteOverlayBtn.classList.remove('force-visible');
+                            }
+                        }, 3000);
+                    }
+                }, 3500);
+            }
+            
+            // Global activity detection
+            document.addEventListener('mousemove', showAllButtons);
+            document.addEventListener('touchstart', showAllButtons);
+            document.addEventListener('scroll', showAllButtons);
+            
+            // Settings button specific hover & click handling
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 settingsDropdown.classList.toggle('hidden');
                 isDropdownOpen = !settingsDropdown.classList.contains('hidden');
-                showSettingsButton();
+                showAllButtons();
             });
             
-            settingsBtn.addEventListener('mouseenter', showSettingsButton);
+            settingsBtn.addEventListener('mouseenter', showAllButtons);
+            
             settingsDropdown.addEventListener('mouseenter', () => {
                 if (hideTimer) clearTimeout(hideTimer);
                 settingsBtn.classList.remove('auto-hidden');
                 settingsBtn.classList.add('force-visible');
             });
-            settingsDropdown.addEventListener('mouseleave', resetHideTimer);
+            settingsDropdown.addEventListener('mouseleave', () => {
+                resetHideTimers();
+            });
             
             document.addEventListener('click', (e) => {
                 if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
                     settingsDropdown.classList.add('hidden');
                     isDropdownOpen = false;
-                    resetHideTimer();
+                    resetHideTimers();
                 }
             });
             
-            resetHideTimer();
+            // Mute button hover handling for auto-hide
+            muteOverlayBtn.addEventListener('mouseenter', () => {
+                isMuteHoverLock = true;
+                showMuteButton();
+            });
+            
+            muteOverlayBtn.addEventListener('mouseleave', () => {
+                isMuteHoverLock = false;
+                scheduleMuteHide();
+            });
+            
+            // Mute button click - prevent hiding during interaction
+            muteOverlayBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showMuteButton();
+                toggleMute();
+                // Reset hide timer after interaction
+                scheduleMuteHide();
+            });
+            
+            // Initial timers
+            resetHideTimers();
             
             // Clock
             function updateClock() {
@@ -752,15 +856,15 @@
                 if (!isMicActive) return;
                 isMuted = !isMuted;
                 updateMuteUI();
-                settingsStatusMsg.innerText = isMuted ? "🔇 " : "🎤 ";
+                settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Active";
             }
             
             function updateMuteUI() {
                 if (isMuted) {
-                    muteOverlayBtn.innerHTML = "🔊 ";
+                    muteOverlayBtn.innerHTML = "🔊 Unmute";
                     muteOverlayBtn.classList.add('muted-active');
                 } else {
-                    muteOverlayBtn.innerHTML = "🔇 ";
+                    muteOverlayBtn.innerHTML = "🔇 Mute";
                     muteOverlayBtn.classList.remove('muted-active');
                 }
             }
@@ -778,6 +882,8 @@
                     recordToggleBtn.classList.remove('recording-active');
                     recordToggleBtn.innerHTML = "⏺ START RECORDING";
                     settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Active";
+                    // Re-schedule mute hide after recording stops
+                    scheduleMuteHide();
                     return;
                 }
                 startRecording();
@@ -803,11 +909,18 @@
                     recordToggleBtn.classList.remove('recording-active');
                     recordToggleBtn.innerHTML = "⏺ START RECORDING";
                     if (counterInterval) clearInterval(counterInterval);
+                    // Show mute button and schedule hide after recording
+                    showMuteButton();
+                    scheduleMuteHide();
                 };
                 mediaRecorder.start();
                 isRecording = true;
                 recordToggleBtn.classList.add('recording-active');
                 recordToggleBtn.innerHTML = "⏹️ STOP RECORDING";
+                
+                // Keep mute button visible during recording
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
                 
                 let remaining = selectedDuration;
                 settingsStatusMsg.innerText = `🔴 Recording: ${remaining}s`;
@@ -834,7 +947,6 @@
             applyTheme();
             
             requestMicBtn.addEventListener('click', initMicrophone);
-            muteOverlayBtn.addEventListener('click', toggleMute);
             recordToggleBtn.addEventListener('click', handleRecordToggle);
             durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value); });
             themeSwitch.addEventListener('click', toggleTheme);
@@ -845,3 +957,4 @@
     </script>
 </body>
 </html>
+```
