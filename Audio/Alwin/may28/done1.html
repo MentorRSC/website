@@ -46,6 +46,56 @@
             pointer-events: none;
         }
 
+        /* System Clock - top left corner */
+        .system-clock {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.5);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: 'Inter', 'Segoe UI', 'Courier New', monospace;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+
+        .clock-time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00c8ff;
+            font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-ampm {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #88aaff;
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+        }
+
+        body.light-theme .system-clock {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(0, 160, 210, 0.6);
+        }
+
+        body.light-theme .clock-time {
+            color: #0077aa;
+        }
+
+        body.light-theme .clock-ampm {
+            color: #005f7a;
+        }
+
         /* Mute button overlay on wave - bottom right corner */
         .mute-overlay {
             position: fixed;
@@ -89,7 +139,7 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
         }
 
-        /* Settings button - top right corner */
+        /* Settings button - top right corner with auto-hide behavior */
         .settings-corner {
             position: fixed;
             top: 18px;
@@ -104,11 +154,27 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: opacity 0.3s ease, transform 0.2s, background 0.2s;
             color: #00c8ff;
             font-weight: 600;
             font-size: 0.9rem;
             pointer-events: auto;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Auto-hide state */
+        .settings-corner.auto-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+
+        /* Visible on hover or when dropdown is open */
+        .settings-corner.force-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
         }
 
         .settings-corner:hover {
@@ -139,6 +205,7 @@
             gap: 1rem;
             min-width: 240px;
             pointer-events: auto;
+            transition: opacity 0.2s;
         }
 
         body.light-theme .settings-dropdown {
@@ -310,6 +377,9 @@
         }
 
         @media (max-width: 640px) {
+            .system-clock { top: 12px; left: 12px; padding: 0.45rem 1rem; }
+            .clock-time { font-size: 0.9rem; }
+            .clock-ampm { font-size: 0.6rem; }
             .settings-corner { top: 12px; right: 12px; padding: 0.45rem 1rem; font-size: 0.8rem; }
             .mute-overlay { bottom: 12px; right: 12px; padding: 0.5rem 1.1rem; font-size: 0.75rem; }
             .settings-dropdown { min-width: 200px; right: 12px; top: 65px; padding: 1rem; }
@@ -320,7 +390,13 @@
 </head>
 <body>
 
-<!-- Settings Button (top right corner) -->
+<!-- System Clock - Top Left -->
+<div class="system-clock">
+    <span class="clock-time" id="clockTime">--:--:--</span>
+    <span class="clock-ampm" id="clockAmPm">--</span>
+</div>
+
+<!-- Settings Button (top right corner) with auto-hide capability -->
 <div id="settingsBtn" class="settings-corner">
     ⚙️ 
 </div>
@@ -364,8 +440,6 @@
 <!-- Mute Button Overlay (bottom right) -->
 <button id="muteOverlayBtn" class="mute-overlay">🔇 MUTE</button>
 
-
-
 <script>
     (function(){
         // DOM Elements
@@ -380,6 +454,8 @@
         const durationSelect = document.getElementById('durationSelect');
         const recordToggleBtn = document.getElementById('recordToggleBtn');
         const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+        const clockTimeSpan = document.getElementById('clockTime');
+        const clockAmPmSpan = document.getElementById('clockAmPm');
     
         // Audio Globals
         let audioCtx = null;
@@ -402,6 +478,126 @@
         let rawLevel = 0;
         let smoothLevel = 0;
         let particles = [];
+        
+        // ========== SETTINGS BUTTON AUTO-HIDE LOGIC ==========
+        // Auto-hide timer: hide button after 3.5 seconds of inactivity
+        let hideTimer = null;
+        let isDropdownOpen = false;
+        
+        // Function to reset the auto-hide timer
+        function resetHideTimer() {
+            if (hideTimer) clearTimeout(hideTimer);
+            
+            // Remove hidden class and add force-visible to ensure button appears
+            settingsBtn.classList.remove('auto-hidden');
+            settingsBtn.classList.add('force-visible');
+            
+            // Set new timer to hide after 3.5 seconds
+            hideTimer = setTimeout(() => {
+                // Only hide if dropdown is NOT open
+                if (!isDropdownOpen) {
+                    settingsBtn.classList.add('auto-hidden');
+                    settingsBtn.classList.remove('force-visible');
+                } else {
+                    // If dropdown is open, wait another second and check again
+                    resetHideTimer();
+                }
+            }, 3500);
+        }
+        
+        // Show button temporarily (on mouse movement or click)
+        function showSettingsButtonTemporarily() {
+            settingsBtn.classList.remove('auto-hidden');
+            settingsBtn.classList.add('force-visible');
+            resetHideTimer(); // restart timer
+        }
+        
+        // Track mouse movement anywhere on the document to reveal button
+        document.addEventListener('mousemove', () => {
+            showSettingsButtonTemporarily();
+        });
+        
+        // Also track touch events for mobile
+        document.addEventListener('touchstart', () => {
+            showSettingsButtonTemporarily();
+        });
+        
+        // Handle settings button click: toggle dropdown, manage visibility
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Toggle dropdown
+            settingsDropdown.classList.toggle('hidden');
+            isDropdownOpen = !settingsDropdown.classList.contains('hidden');
+            
+            // Always show button when interacting
+            settingsBtn.classList.remove('auto-hidden');
+            settingsBtn.classList.add('force-visible');
+            
+            // Reset timer when dropdown opens/closes
+            resetHideTimer();
+            
+            // If dropdown is open, prevent auto-hide while interacting
+            if (isDropdownOpen) {
+                if (hideTimer) clearTimeout(hideTimer);
+            } else {
+                // If closed, start timer again
+                resetHideTimer();
+            }
+        });
+        
+        // When hovering over settings button, ensure it's visible and reset timer
+        settingsBtn.addEventListener('mouseenter', () => {
+            showSettingsButtonTemporarily();
+        });
+        
+        // When hovering over dropdown, keep button visible and prevent hiding
+        settingsDropdown.addEventListener('mouseenter', () => {
+            if (hideTimer) clearTimeout(hideTimer);
+            settingsBtn.classList.remove('auto-hidden');
+            settingsBtn.classList.add('force-visible');
+        });
+        
+        settingsDropdown.addEventListener('mouseleave', () => {
+            // If dropdown is still open but mouse leaves, restart timer
+            if (!settingsDropdown.classList.contains('hidden')) {
+                resetHideTimer();
+            } else {
+                resetHideTimer();
+            }
+        });
+        
+        // Click outside to close dropdown
+        document.addEventListener('click', (e) => {
+            if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+                settingsDropdown.classList.add('hidden');
+                isDropdownOpen = false;
+                // After closing, restart timer
+                resetHideTimer();
+            }
+        });
+        
+        // Initial call: show button, then hide after 3.5 seconds
+        resetHideTimer();
+        
+        // Clock update function
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert 0 to 12
+            
+            const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            clockTimeSpan.textContent = formattedTime;
+            clockAmPmSpan.textContent = ampm;
+        }
+        
+        // Update clock immediately and set interval
+        updateClock();
+        setInterval(updateClock, 1000);
         
         // Canvas Setup
         let ctx = canvas.getContext('2d');
@@ -566,7 +762,6 @@
         }
         
         async function fullStopAndRelease(resetToPermission=true) {
-            // Stop counter interval
             if(counterInterval) { clearInterval(counterInterval); counterInterval = null; }
             if(recordingTimeout) { clearTimeout(recordingTimeout); recordingTimeout=null; }
             if(isRecording && mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
@@ -584,7 +779,6 @@
                 permStatusSpan.innerText = "🎤 Microphone released";
                 settingsStatusMsg.innerText = "⚪ Inactive";
                 settingsStatusMsg.classList.remove('counting');
-
             }
         }
         
@@ -623,10 +817,8 @@
             isMuted = !isMuted;
             updateMuteButtonUI();
             if(isMuted) {
-             
                 settingsStatusMsg.innerText = "🔇 Muted";
             } else {
-            
                 settingsStatusMsg.innerText = "🎤 Active";
             }
         }
@@ -636,7 +828,7 @@
                 muteOverlayBtn.innerHTML = "🔊";
                 muteOverlayBtn.classList.add('muted-active');
             } else {
-                muteOverlayBtn.innerHTML = "🔇";
+                muteOverlayBtn.innerHTML = "🔇 ";
                 muteOverlayBtn.classList.remove('muted-active');
             }
         }
@@ -655,7 +847,6 @@
             }
         }
         
-        // Update counter in settings status bar
         function startCounter(initialSeconds) {
             if(counterInterval) clearInterval(counterInterval);
             let remaining = initialSeconds;
@@ -664,12 +855,9 @@
                 if(remaining >= 0) {
                     settingsStatusMsg.innerText = `🔴 Recording: ${remaining}s`;
                     settingsStatusMsg.classList.add('counting');
-                    
-                    // Add pulse animation on each tick
                     settingsStatusMsg.style.animation = 'none';
                     settingsStatusMsg.offsetHeight;
                     settingsStatusMsg.style.animation = 'counterPulse 0.3s ease';
-                    
                     if(remaining === 0) {
                         if(counterInterval) clearInterval(counterInterval);
                         counterInterval = null;
@@ -681,31 +869,27 @@
                 }
             };
             
-            updateCounter(); // Immediate first update
+            updateCounter();
             counterInterval = setInterval(updateCounter, 1000);
         }
         
-        // SINGLE BUTTON HANDLER: starts recording immediately (NO COUNTDOWN) or stops
         function handleRecordToggle() {
             if(!isMicActive || !mediaStream) {
                 settingsStatusMsg.innerText = "❌ No mic active";
                 return;
             }
             
-            // If currently recording -> STOP recording immediately
             if(isRecording) {
                 if(counterInterval) { clearInterval(counterInterval); counterInterval = null; }
                 if(recordingTimeout) clearTimeout(recordingTimeout);
                 if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
                 isRecording = false;
                 updateRecordUI();
-               
                 settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Active";
                 settingsStatusMsg.classList.remove('counting');
                 return;
             }
             
-            // Not recording: START RECORDING IMMEDIATELY - NO COUNTDOWN
             startMediaRecording();
         }
         
@@ -719,7 +903,6 @@
                 recordedChunks = [];
                 isRecording = false;
                 updateRecordUI();
-               
                 if(isMicActive && !isMuted) settingsStatusMsg.innerText = "🎤 Active";
                 else if(isMicActive && isMuted) settingsStatusMsg.innerText = "🔇 Muted";
                 settingsStatusMsg.classList.remove('counting');
@@ -728,8 +911,6 @@
             mediaRecorder.start(200);
             isRecording = true;
             updateRecordUI();
-           
-            // Start the counter in settings status bar
             startCounter(selectedDuration);
             
             if(recordingTimeout) clearTimeout(recordingTimeout);
@@ -808,7 +989,6 @@
             return buffer;
         }
         
-        // Theme
         function applyTheme() {
             if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
             else document.body.classList.remove('light-theme');
@@ -819,13 +999,10 @@
         }
         applyTheme();
         
-        // Event listeners
         requestMicBtn.addEventListener('click', initMicrophone);
         muteOverlayBtn.addEventListener('click', toggleMute);
         recordToggleBtn.addEventListener('click', handleRecordToggle);
         durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value,10); });
-        settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsDropdown.classList.toggle('hidden'); });
-        document.addEventListener('click', (e) => { if(!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) settingsDropdown.classList.add('hidden'); });
         themeSwitch.addEventListener('click', toggleThemeGlobal);
         
         resizeCanvasToWindow();
