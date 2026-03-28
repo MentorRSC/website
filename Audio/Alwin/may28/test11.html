@@ -1,768 +1,1044 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Silent Flow | Ambient Wave Visualizer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>Silent Flow | Custom Wake Word Visualizer</title>
 
-        body {
-            background: #050a14;
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Roboto', sans-serif;
-            transition: background 0.3s ease;
-            padding: 0;
-            overflow-x: hidden;
-        }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body.light-theme {
-            background: #e8ecf3;
-        }
+body {
+    background: linear-gradient(135deg, #050a14 0%, #0a0f1a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    transition: background 0.3s ease;
+    overflow-x: hidden;
+    position: relative;
+}
 
-        /* Wave canvas - merged into background */
-        .wave-canvas-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10;
-            pointer-events: none;
-        }
+body.light-theme {
+    background: linear-gradient(135deg, #e8ecf3 0%, #f0f4fa 100%);
+}
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            background: transparent;
-            pointer-events: none;
-        }
+/* Wave Container */
+.wave-container {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: clamp(3px, 1.5vw, 10px);
+    padding: 0 15px;
+    z-index: 10;
+    pointer-events: none;
+    flex-wrap: wrap;
+}
 
-        /* Mute button overlay on wave - bottom right corner */
-        .mute-overlay {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 200;
-            background: rgba(10, 20, 35, 0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 3rem;
-            border: 1px solid rgba(0, 200, 255, 0.5);
-            padding: 0.7rem 1.4rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-            color: #c0e4ff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            pointer-events: auto;
-        }
+.wave-bar {
+    width: clamp(3px, 1.8vw, 12px);
+    height: 25px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #3a86ff, #ff66cc);
+    transition: height 0.05s linear;
+    box-shadow: 0 0 10px rgba(58, 134, 255, 0.5);
+    will-change: height;
+}
 
-        body.light-theme .mute-overlay {
-            background: rgba(245, 250, 255, 0.9);
-            color: #0a2a3a;
-            border-color: rgba(0, 160, 210, 0.6);
-        }
+.wave-bar.idle {
+    animation: gentleWave 0.8s infinite ease-in-out;
+}
 
-        .mute-overlay.muted-active {
-            background: linear-gradient(135deg, #ff3366, #ff80b0);
-            border-color: #ff80b0;
-            color: white;
-            animation: softPulse 1s infinite;
-        }
+@keyframes gentleWave {
+    0%, 100% { height: 20px; opacity: 0.6; transform: scaleY(0.8); }
+    50% { height: 55px; opacity: 1; transform: scaleY(1); }
+}
 
-        @keyframes softPulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
-        }
+/* Wake Word Indicator */
+.wake-indicator {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 50px;
+    padding: 12px 24px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    font-weight: 600;
+    font-size: 14px;
+    color: #3a86ff;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    text-align: center;
+    font-family: monospace;
+}
 
-        /* Settings button - top right corner */
-        .settings-corner {
-            position: fixed;
-            top: 18px;
-            right: 18px;
-            z-index: 300;
-            background: rgba(10, 20, 35, 0.85);
-            backdrop-filter: blur(12px);
-            border-radius: 3rem;
-            padding: 0.6rem 1.3rem;
-            border: 1px solid rgba(0, 200, 255, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            color: #00c8ff;
-            font-weight: 600;
-            font-size: 0.9rem;
-            pointer-events: auto;
-        }
+.wake-indicator.listening {
+    background: rgba(255, 80, 120, 0.25);
+    border-color: #ff5080;
+    color: #ff80a0;
+    animation: pulseGlow 1.5s infinite;
+}
 
-        .settings-corner:hover {
-            background: rgba(0, 200, 255, 0.2);
-            transform: scale(0.98);
-        }
+.wake-indicator.active {
+    background: rgba(0, 255, 150, 0.25);
+    border-color: #00ffaa;
+    color: #00ffaa;
+    animation: none;
+}
 
-        body.light-theme .settings-corner {
-            background: rgba(255, 255, 255, 0.9);
-            color: #0077aa;
-            border-color: #00a8d0;
-        }
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 80, 120, 0.3); }
+    50% { box-shadow: 0 0 0 15px rgba(255, 80, 120, 0); }
+}
 
-        /* Settings dropdown */
-        .settings-dropdown {
-            position: fixed;
-            top: 75px;
-            right: 20px;
-            background: rgba(12, 22, 40, 0.98);
-            backdrop-filter: blur(20px);
-            border-radius: 1.6rem;
-            padding: 1.2rem 1.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(0, 200, 255, 0.4);
-            z-index: 310;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            min-width: 240px;
-            pointer-events: auto;
-        }
+/* Popup Notification */
+.popup-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: linear-gradient(135deg, rgba(58, 134, 255, 0.95), rgba(255, 102, 204, 0.95));
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 25px 35px;
+    text-align: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 85%;
+}
 
-        body.light-theme .settings-dropdown {
-            background: rgba(250, 252, 255, 0.98);
-            border-color: rgba(0, 160, 200, 0.6);
-        }
+.popup-notification.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
 
-        .dropdown-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #eef3ff;
-        }
+.popup-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
 
-        body.light-theme .dropdown-item {
-            color: #102a38;
-        }
+.popup-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+}
 
-        .theme-toggle-btn, .duration-select {
-            background: rgba(0, 200, 255, 0.2);
-            border: 1px solid rgba(0, 200, 255, 0.6);
-            padding: 0.4rem 1rem;
-            border-radius: 2rem;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 500;
-            color: inherit;
-        }
+.popup-message {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 5px;
+}
 
-        .duration-select {
-            background: rgba(0, 0, 0, 0.4);
-        }
+.popup-word {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffea80;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
 
-        /* SINGLE combined button for start/stop recording */
-        .single-record-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #00c8ff, #ff50c8);
-            border: none;
-            padding: 0.75rem 1rem;
-            border-radius: 2rem;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            font-family: inherit;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s;
-            margin-top: 0.2rem;
-        }
+/* System Clock */
+.system-clock {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    padding: 8px 18px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-weight: 500;
+    pointer-events: none;
+}
 
-        .single-record-btn.recording-active {
-            background: linear-gradient(135deg, #ff3366, #ff80b0);
-            animation: pulseRed 1.2s infinite;
-        }
+.clock-time {
+    font-size: 16px;
+    font-weight: 600;
+    color: #3a86ff;
+    font-variant-numeric: tabular-nums;
+}
 
-        @keyframes pulseRed {
-            0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.5); }
-            70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
-        }
+.clock-ampm {
+    font-size: 11px;
+    font-weight: 500;
+    color: #88aaff;
+}
 
-        .status-badge-mini {
-            font-size: 0.7rem;
-            background: rgba(0, 200, 255, 0.15);
-            padding: 0.25rem 0.7rem;
-            border-radius: 2rem;
-            text-align: center;
-            margin-top: 0.3rem;
-            color: #88ddff;
-        }
+/* Mute Button */
+.mute-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    color: #c0e4ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
 
-        body.light-theme .status-badge-mini {
-            color: #007799;
-        }
+.mute-overlay.muted {
+    background: linear-gradient(135deg, #ff3366, #ff80b0);
+    border-color: #ff80b0;
+    color: white;
+}
 
-        .divider {
-            height: 1px;
-            background: rgba(0, 200, 255, 0.2);
-            margin: 0.2rem 0;
-        }
+.mute-overlay:active {
+    transform: scale(0.95);
+}
 
-        /* Permission overlay */
-        .permission-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(3, 8, 20, 0.94);
-            backdrop-filter: blur(20px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 400;
-            flex-direction: column;
-        }
+/* Settings Button */
+.settings-corner {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    padding: 8px 18px;
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    cursor: pointer;
+    color: #3a86ff;
+    font-weight: 600;
+    font-size: 18px;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
 
-        .perm-card {
-            background: rgba(10, 20, 40, 0.9);
-            border-radius: 2.5rem;
-            padding: 2rem 1.8rem;
-            text-align: center;
-            border: 1px solid rgba(0, 200, 255, 0.5);
-            max-width: 320px;
-            width: 85%;
-        }
+.settings-corner:active {
+    transform: scale(0.95);
+}
 
-        .perm-card p {
-            color: #bdd4ff;
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
+/* Settings Panel */
+.settings-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: rgba(12, 22, 40, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(58, 134, 255, 0.3);
+    z-index: 310;
+    min-width: 280px;
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+}
 
-        .perm-btn {
-            background: linear-gradient(135deg, #00c8ff, #ff50c8);
-            border: none;
-            padding: 0.8rem 1.8rem;
-            font-weight: 700;
-            border-radius: 3rem;
-            color: white;
-            font-size: 1rem;
-            cursor: pointer;
-        }
+.settings-panel.show {
+    display: flex;
+}
 
-        /* Live status indicator */
-        .live-status {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            font-size: 0.7rem;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            padding: 0.3rem 1rem;
-            border-radius: 2rem;
-            color: #88aaff;
-            pointer-events: none;
-            z-index: 140;
-            font-weight: 500;
-        }
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    color: #eef3ff;
+    flex-wrap: wrap;
+}
 
-        body.light-theme .live-status {
-            background: rgba(200, 220, 240, 0.7);
-            color: #005f7a;
-        }
+.setting-item label {
+    font-size: 13px;
+    opacity: 0.9;
+}
 
-        .hidden {
-            display: none !important;
-        }
+.setting-btn, select, .custom-wake-input {
+    background: rgba(58, 134, 255, 0.2);
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    padding: 8px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s;
+}
 
-        @media (max-width: 640px) {
-            .settings-corner { top: 12px; right: 12px; padding: 0.45rem 1rem; font-size: 0.8rem; }
-            .mute-overlay { bottom: 12px; right: 12px; padding: 0.5rem 1.1rem; font-size: 0.75rem; }
-            .settings-dropdown { min-width: 200px; right: 12px; top: 65px; padding: 1rem; }
-            .single-record-btn { font-size: 0.85rem; padding: 0.6rem; }
-            .live-status { left: 12px; bottom: 12px; font-size: 0.65rem; }
-        }
-    </style>
+.custom-wake-input {
+    flex: 1;
+    min-width: 120px;
+    cursor: text;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.custom-wake-input:focus {
+    outline: none;
+    border-color: #00ffaa;
+    background: rgba(0, 255, 170, 0.2);
+}
+
+.record-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #3a86ff, #ff66cc);
+    border: none;
+    padding: 10px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.record-btn:active {
+    transform: scale(0.98);
+}
+
+.record-btn.recording {
+    background: linear-gradient(135deg, #ff3366, #ff80b0);
+    animation: pulseRed 1s infinite;
+}
+
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
+}
+
+.status-text {
+    font-size: 11px;
+    background: rgba(58, 134, 255, 0.15);
+    padding: 8px 12px;
+    border-radius: 20px;
+    text-align: center;
+    color: #88ddff;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(58, 134, 255, 0.2);
+    margin: 4px 0;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .wake-indicator { 
+        top: 60px; 
+        font-size: 11px; 
+        padding: 8px 16px; 
+        white-space: normal;
+        max-width: 90%;
+        line-height: 1.3;
+    }
+    .system-clock { top: 12px; left: 12px; padding: 6px 14px; }
+    .clock-time { font-size: 13px; }
+    .settings-corner { top: 12px; right: 12px; padding: 6px 14px; font-size: 16px; }
+    .mute-overlay { bottom: 12px; right: 12px; padding: 8px 16px; font-size: 12px; }
+    .settings-panel { 
+        position: fixed;
+        top: auto;
+        bottom: 80px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+        min-width: auto;
+    }
+    .popup-notification {
+        padding: 20px 25px;
+        width: 85%;
+    }
+    .popup-title { font-size: 20px; }
+    .popup-message { font-size: 14px; }
+}
+
+/* iOS specific */
+@supports (-webkit-touch-callout: none) {
+    .wake-indicator {
+        top: 80px;
+    }
+}
+</style>
 </head>
 <body>
 
-<!-- Settings Button (top right corner) -->
-<div id="settingsBtn" class="settings-corner">
-    ⚙️ 
+<div class="system-clock">
+    <span class="clock-time" id="clockTime">--:--:--</span>
+    <span class="clock-ampm" id="clockAmPm">--</span>
 </div>
 
-<!-- Settings Dropdown: contains SINGLE record/stop button + Theme + Duration -->
-<div id="settingsDropdown" class="settings-dropdown hidden">
-    <div class="dropdown-item">
-        <span>🌗 Theme</span>
-        <button id="themeSwitchBtn" class="theme-toggle-btn">Toggle</button>
+<div id="wakeIndicator" class="wake-indicator">🎤 Say "Hey, Hello, Hi, Lyra, Robot, Computer, Teacher, Start"</div>
+
+<div id="settingsBtn" class="settings-corner">⚙️</div>
+
+<div id="settingsPanel" class="settings-panel">
+    <div class="setting-item">
+        <label>🌗 Theme</label>
+        <button id="themeBtn" class="setting-btn">Toggle</button>
     </div>
-    <div class="dropdown-item">
-        <span>⏱️ Rec Duration</span>
-        <select id="durationSelect" class="duration-select">
+    <div class="setting-item">
+        <label>🎙️ Wake Word</label>
+        <input type="text" id="customWakeWord" class="custom-wake-input" maxlength="20" placeholder="Enter wake word">
+    </div>
+    <div class="setting-item">
+        <label>⏱️ Duration</label>
+        <select id="durationSelect">
             <option value="5">5 sec</option>
             <option value="10" selected>10 sec</option>
             <option value="15">15 sec</option>
             <option value="30">30 sec</option>
-            <option value="60">60 sec</option>
         </select>
     </div>
     <div class="divider"></div>
-    <!-- SINGLE BUTTON: Start / Stop Recording (no countdown) -->
-    <button id="recordToggleBtn" class="single-record-btn">⏺ START RECORDING</button>
-    <div id="settingsStatusMsg" class="status-badge-mini">⚪ Ready</div>
+    <button id="recordBtn" class="record-btn">⏺ START RECORDING</button>
+    <div id="statusMsg" class="status-text">⚪ Waiting for wake word</div>
 </div>
 
-<!-- Permission Overlay -->
-<div id="permissionOverlay" class="permission-overlay">
-    <div class="perm-card">
-        <p>🎙️ Allow microphone to visualize live waves</p>
-        <button id="requestMicBtn" class="perm-btn">✨ Enable Visualizer</button>
-        <div id="permStatusText" style="margin-top: 1rem; font-size: 0.75rem; color:#00c8ff;">Click to start</div>
-    </div>
-</div>
-
-<!-- Wave Canvas - merged into background -->
-<div class="wave-canvas-container">
-    <canvas id="waveCanvas" width="1200" height="180" style="width:100%; height:auto; display: block;"></canvas>
-</div>
-
-<!-- Mute Button Overlay (bottom right) -->
-<button id="muteOverlayBtn" class="mute-overlay">🔇 MUTE</button>
-
-<!-- Live status indicator (bottom left) -->
-
+<div id="waveContainer" class="wave-container"></div>
+<button id="muteBtn" class="mute-overlay">🔇 MUTE</button>
 
 <script>
-    (function(){
-        // DOM Elements
-        const permissionOverlay = document.getElementById('permissionOverlay');
-        const requestMicBtn = document.getElementById('requestMicBtn');
-        const permStatusSpan = document.getElementById('permStatusText');
-        const canvas = document.getElementById('waveCanvas');
-        const muteOverlayBtn = document.getElementById('muteOverlayBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsDropdown = document.getElementById('settingsDropdown');
-        const themeSwitch = document.getElementById('themeSwitchBtn');
-        const durationSelect = document.getElementById('durationSelect');
-        const recordToggleBtn = document.getElementById('recordToggleBtn');
-        const settingsStatusMsg = document.getElementById('settingsStatusMsg');
-     
-        // Audio Globals
-        let audioCtx = null;
-        let mediaStream = null;
-        let sourceNode = null;
-        let analyserNode = null;
-        let animationId = null;
-        let isMicActive = false;
-        let isMuted = false;
+(function() {
+    // DOM Elements
+    const waveContainer = document.getElementById('waveContainer');
+    const muteBtn = document.getElementById('muteBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const themeBtn = document.getElementById('themeBtn');
+    const customWakeInput = document.getElementById('customWakeWord');
+    const durationSelect = document.getElementById('durationSelect');
+    const recordBtn = document.getElementById('recordBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const wakeIndicator = document.getElementById('wakeIndicator');
+    const clockTimeSpan = document.getElementById('clockTime');
+    const clockAmPmSpan = document.getElementById('clockAmPm');
+
+    // State
+    let audioContext = null;
+    let mediaStream = null;
+    let analyser = null;
+    let animationId = null;
+    let isActive = false;
+    let isMuted = false;
+    let wakeEnabled = true;
+    let recognition = null;
+    let customWakeWord = "hey wave";
+    
+    // MULTI-WAKE-WORD LIST
+    const defaultWakeWords = ["hey", "hello", "hi", "lyra", "robot", "computer", "teacher", "start"];
+    let activeWakeWords = [...defaultWakeWords];
+    
+    // Recording
+    let mediaRecorder = null;
+    let chunks = [];
+    let isRecording = false;
+    let recordTimeout = null;
+    let counterInterval = null;
+    let recordDuration = 10;
+    
+    // Bars
+    let bars = [];
+    let barCount = 24;
+    let freqData = null;
+    
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        clockTimeSpan.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
+        clockAmPmSpan.textContent = ampm;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // Check if spoken text contains any wake word
+    function containsWakeWord(text) {
+        const lowerText = text.toLowerCase().trim();
         
-        // Recording Globals
-        let mediaRecorder = null;
-        let recordedChunks = [];
-        let isRecording = false;
-        let recordingTimeout = null;
-        let selectedDuration = 10;
-        
-        // Visual smoothing
-        let rawLevel = 0;
-        let smoothLevel = 0;
-        let particles = [];
-        
-        // Canvas Setup
-        let ctx = canvas.getContext('2d');
-        let canvasWidth = 1200;
-        let canvasHeight = 180;
-        
-        function resizeCanvasToWindow() {
-            let targetHeight = Math.max(80, Math.min(200, Math.floor(window.innerHeight / 7.5)));
-            canvasHeight = targetHeight;
-            canvas.width = window.innerWidth;
-            canvasWidth = canvas.width;
-            canvas.height = canvasHeight;
-            canvas.style.width = `${canvasWidth}px`;
-            canvas.style.height = `${canvasHeight}px`;
-            ctx = canvas.getContext('2d');
-            drawWaveform(0);
+        // Check against custom wake word first
+        const customLower = customWakeWord.toLowerCase().trim();
+        if (customLower && lowerText.includes(customLower)) {
+            return { detected: true, word: customLower };
         }
         
-        window.addEventListener('resize', () => {
-            resizeCanvasToWindow();
-            if(!isMicActive) drawWaveform(0);
+        // Check against default wake words
+        for (let word of activeWakeWords) {
+            if (lowerText.includes(word.toLowerCase())) {
+                return { detected: true, word: word };
+            }
+        }
+        
+        return { detected: false, word: null };
+    }
+    
+    // Show Popup Notification
+    function showPopup(wakeWord) {
+        // Remove existing popup
+        const oldPopup = document.querySelector('.popup-notification');
+        if (oldPopup) oldPopup.remove();
+        
+        // Create popup
+        const popup = document.createElement('div');
+        popup.className = 'popup-notification';
+        popup.innerHTML = `
+            <div class="popup-icon">🎤✨</div>
+            <div class="popup-title">Wake Word Detected!</div>
+            <div class="popup-message">You said:</div>
+            <div class="popup-word">"${wakeWord}"</div>
+        `;
+        document.body.appendChild(popup);
+        
+        // Animate in
+        setTimeout(() => popup.classList.add('show'), 10);
+        
+        // Auto hide after 2 seconds
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }, 2000);
+        
+        // Vibrate on mobile if supported
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(200);
+        }
+    }
+    
+    // Create bars
+    function createBars() {
+        const containerWidth = window.innerWidth - 40;
+        const barWidth = Math.max(4, Math.min(12, Math.floor(containerWidth / 28)));
+        barCount = Math.floor(containerWidth / (barWidth + 6));
+        barCount = Math.min(32, Math.max(16, barCount));
+        
+        waveContainer.innerHTML = '';
+        bars = [];
+        
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar idle';
+            waveContainer.appendChild(bar);
+            bars.push(bar);
+        }
+    }
+    
+    // Update bars with audio
+    function updateBars() {
+        if (!isActive || isMuted || !analyser || !freqData) {
+            return;
+        }
+        
+        analyser.getByteFrequencyData(freqData);
+        const binsPerBar = Math.floor(freqData.length / barCount);
+        
+        for (let i = 0; i < barCount; i++) {
+            let sum = 0;
+            const start = i * binsPerBar;
+            const end = Math.min(start + binsPerBar, freqData.length);
+            for (let j = start; j < end; j++) sum += freqData[j];
+            
+            let intensity = sum / (end - start) / 180;
+            intensity = Math.min(1, Math.pow(intensity, 1.3) * 1.2);
+            
+            const height = 15 + (intensity * 110);
+            const hue = 200 + intensity * 40;
+            
+            bars[i].style.height = `${height}px`;
+            bars[i].style.background = `linear-gradient(180deg, hsl(${hue}, 85%, 55%), hsl(${hue + 20}, 80%, 60%))`;
+            bars[i].style.boxShadow = `0 0 ${8 + intensity * 12}px rgba(58, 134, 255, ${0.3 + intensity * 0.5})`;
+            bars[i].classList.remove('idle');
+        }
+    }
+    
+    // Idle animation
+    function idleAnimation() {
+        if (!isActive && bars.length) {
+            bars.forEach(bar => {
+                bar.classList.add('idle');
+            });
+            requestAnimationFrame(idleAnimation);
+        }
+    }
+    
+    // Animation loop
+    function animate() {
+        if (!animationId) return;
+        updateBars();
+        animationId = requestAnimationFrame(animate);
+    }
+    
+    // Start audio visualization
+    async function startVisualizer() {
+        if (isActive) return;
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { echoCancellation: true, noiseSuppression: true }
+            });
+            mediaStream = stream;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.7;
+            freqData = new Uint8Array(analyser.frequencyBinCount);
+            
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            
+            isActive = true;
+            isMuted = false;
+            
+            muteBtn.classList.remove('muted');
+            muteBtn.innerHTML = '🔇 MUTE';
+            
+            bars.forEach(bar => bar.classList.remove('idle'));
+            
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(animate);
+            
+            statusMsg.innerText = '🎤 Active';
+            wakeIndicator.textContent = '✅ Visualizer Active • Listening for wake words';
+            wakeIndicator.classList.remove('listening');
+            wakeIndicator.classList.add('active');
+            
+            setTimeout(() => {
+                if (isActive) {
+                    wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
+                    wakeIndicator.classList.add('listening');
+                    wakeIndicator.classList.remove('active');
+                }
+            }, 2000);
+            
+        } catch (err) {
+            console.error('Mic error:', err);
+            statusMsg.innerText = '❌ Mic access denied';
+            wakeIndicator.textContent = '❌ Microphone access required';
+            
+            // Show error popup
+            const errorPopup = document.createElement('div');
+            errorPopup.className = 'popup-notification';
+            errorPopup.innerHTML = `
+                <div class="popup-icon">⚠️</div>
+                <div class="popup-title">Microphone Required</div>
+                <div class="popup-message">Please allow microphone access to use wake word</div>
+            `;
+            document.body.appendChild(errorPopup);
+            setTimeout(() => errorPopup.classList.add('show'), 10);
+            setTimeout(() => {
+                errorPopup.classList.remove('show');
+                setTimeout(() => errorPopup.remove(), 300);
+            }, 2500);
+        }
+    }
+    
+    // Stop visualizer
+    function stopVisualizer() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        
+        if (audioContext) {
+            audioContext.close().catch(() => {});
+            audioContext = null;
+        }
+        
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(t => t.stop());
+            mediaStream = null;
+        }
+        
+        analyser = null;
+        isActive = false;
+        isMuted = false;
+        
+        bars.forEach(bar => {
+            bar.classList.add('idle');
+            bar.style.height = '';
+            bar.style.background = '';
         });
         
-        // Particle class
-        class Particle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 5;
-                this.vy = (Math.random() - 0.5) * 4 - 0.5;
-                this.life = 55 + Math.random() * 85;
-            }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.life -= 2;
-            }
+        statusMsg.innerText = '⚪ Waiting for wake word';
+        wakeIndicator.textContent = `🎤 Say: ${activeWakeWords.join(", ")}`;
+        wakeIndicator.classList.remove('active', 'listening');
+        
+        if (wakeEnabled && recognition) {
+            setTimeout(() => {
+                try { recognition.start(); } catch(e) { console.log('Restart error:', e); }
+            }, 500);
+        }
+    }
+    
+    // Wake word detection with multiple wake words
+    function initWakeWord() {
+        if (!wakeEnabled) return;
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            wakeIndicator.textContent = '⚠️ Speech recognition not supported on this device';
+            statusMsg.innerText = '⚠️ Browser doesn\'t support wake word';
+            return;
         }
         
-        function drawWaveform(level) {
-            if(!ctx) return;
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-            const centerY = canvasHeight / 2;
-            const maxAmp = canvasHeight * 0.48;
-            let amp = (isMuted || !isMicActive) ? 0 : Math.min(maxAmp, level * maxAmp * 1.5);
+        if (recognition) {
+            try { recognition.stop(); } catch(e) {}
+        }
+        
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+            if (!isActive && wakeEnabled) {
+                wakeIndicator.classList.add('listening');
+                wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
+            }
+        };
+        
+        recognition.onend = () => {
+            if (wakeEnabled && !isActive) {
+                setTimeout(() => {
+                    try { recognition.start(); } catch(e) { console.log('Restart error:', e); }
+                }, 1000);
+            }
+        };
+        
+        recognition.onresult = (event) => {
+            const last = event.results.length - 1;
+            const text = event.results[last][0].transcript.toLowerCase().trim();
             
-            if(!isMuted && isMicActive && level > 0.04) {
-                let spawnCount = Math.min(6, Math.floor(level * 14));
-                for(let i=0;i<spawnCount;i++) {
-                    particles.push(new Particle(
-                        canvasWidth/2 + (Math.random()-0.5)*canvasWidth*0.7,
-                        centerY + (Math.random()-0.5)*canvasHeight*0.5
-                    ));
-                }
-            }
-            for(let p of particles) p.update();
-            particles = particles.filter(p => p.life > 0);
+            // Check for any wake word
+            const wakeCheck = containsWakeWord(text);
             
-            if(isMuted || !isMicActive || level < 0.008) {
-                ctx.beginPath();
-                ctx.moveTo(0, centerY);
-                ctx.lineTo(canvasWidth, centerY);
-                ctx.strokeStyle = `rgba(100, 180, 255, 0.4)`;
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-                drawParticles();
-                return;
-            }
-            
-            const gradient = ctx.createLinearGradient(0,0,canvasWidth,0);
-            gradient.addColorStop(0, '#3a86ff');
-            gradient.addColorStop(0.5, '#ff66cc');
-            gradient.addColorStop(1, '#3a86ff');
-            const time = Date.now() * 0.007;
-            const steps = Math.max(80, Math.floor(canvasWidth / 3));
-            const stepX = canvasWidth / steps;
-            
-            ctx.beginPath();
-            for(let i=0; i<=steps; i++) {
-                const x = i * stepX;
-                const envelope = Math.sin((x / canvasWidth) * Math.PI * 2) * 0.6 + 0.5;
-                const waveMix = Math.sin(x * 0.018 + time) * 0.7 + Math.sin(x * 0.045 - time*1.2) * 0.5 + Math.sin(x * 0.009 + time*0.6) * 0.3;
-                const dynamicAmp = amp * (0.5 + envelope * 0.85) * (0.75 + Math.sin(time)*0.2);
-                const offset = waveMix * dynamicAmp;
-                const yTop = centerY - offset;
-                if(i===0) ctx.moveTo(x, yTop);
-                else ctx.lineTo(x, yTop);
-            }
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 4;
-            ctx.stroke();
-            
-            ctx.beginPath();
-            for(let i=0; i<=steps; i++) {
-                const x = i * stepX;
-                const envelope = Math.sin((x / canvasWidth) * Math.PI * 2) * 0.6 + 0.5;
-                const waveMix = Math.sin(x * 0.018 + time) * 0.7 + Math.sin(x * 0.045 - time) * 0.5;
-                const dynamicAmp = amp * (0.5 + envelope * 0.85);
-                const offset = waveMix * dynamicAmp;
-                const yBottom = centerY + offset;
-                if(i===0) ctx.moveTo(x, yBottom);
-                else ctx.lineTo(x, yBottom);
-            }
-            ctx.stroke();
-            
-            const barStep = Math.max(5, Math.floor(steps / 55));
-            for(let i=0; i<=steps; i+=barStep) {
-                const x = i * stepX;
-                const envelope = Math.sin((x / canvasWidth) * Math.PI * 2) * 0.6 + 0.5;
-                const waveMix = Math.sin(x * 0.018 + time) * 0.7 + Math.sin(x * 0.045 - time) * 0.5;
-                const dynamicAmp = amp * (0.5 + envelope * 0.85);
-                const offset = waveMix * dynamicAmp;
-                const yTop = centerY - offset;
-                const yBottom = centerY + offset;
-                const barH = Math.abs(yBottom - yTop);
-                if(barH > 4) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, yTop);
-                    ctx.lineTo(x, yBottom);
-                    ctx.strokeStyle = `rgba(255, 100, 200, 0.7)`;
-                    ctx.lineWidth = Math.min(4, 1.8 + barH/16);
-                    ctx.stroke();
-                }
-            }
-            drawParticles();
-        }
-        
-        function drawParticles() {
-            for(let p of particles) {
-                const alpha = Math.min(180, p.life/70 * 200);
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 2.8, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(80, 200, 255, ${alpha/255})`;
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255, 100, 200, ${alpha/255})`;
-                ctx.fill();
-            }
-        }
-        
-        function updateAudioLevel() {
-            if(!isMicActive || !analyserNode || isMuted) {
-                rawLevel = 0;
-                return;
-            }
-            const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
-            analyserNode.getByteFrequencyData(dataArray);
-            let sum=0;
-            for(let i=0;i<dataArray.length;i++) sum+=dataArray[i];
-            let avg = sum/dataArray.length;
-            rawLevel = Math.min(1.0, avg / 200);
-        }
-        
-        let smoothAudio = 0;
-        function animationLoop() {
-            if(!animationId) return;
-            updateAudioLevel();
-            smoothAudio = smoothAudio * 0.8 + rawLevel * 0.2;
-            drawWaveform(smoothAudio);
-            animationId = requestAnimationFrame(animationLoop);
-        }
-        
-        async function fullStopAndRelease(resetToPermission=true) {
-            if(recordingTimeout) { clearTimeout(recordingTimeout); recordingTimeout=null; }
-            if(isRecording && mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-            isRecording = false; updateRecordUI();
-            if(animationId) { cancelAnimationFrame(animationId); animationId=null; }
-            if(sourceNode) { try{ sourceNode.disconnect(); }catch(e){} sourceNode=null; }
-            if(analyserNode) { try{ analyserNode.disconnect(); }catch(e){} analyserNode=null; }
-            if(audioCtx) { await audioCtx.close().catch(e=>{}); audioCtx=null; }
-            if(mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
-            isMicActive = false;
-            isMuted = false;
-            updateMuteButtonUI();
-            if(resetToPermission){
-                permissionOverlay.classList.remove('hidden');
-                permStatusSpan.innerText = "🎤 Microphone released";
-                settingsStatusMsg.innerText = "⚪ Inactive";
-               
-            }
-        }
-        
-        async function initMicrophone() {
-            permStatusSpan.innerText = "Requesting mic...";
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaStream = stream;
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                analyserNode = audioCtx.createAnalyser();
-                analyserNode.fftSize = 512;
-                analyserNode.smoothingTimeConstant = 0.7;
-                sourceNode = audioCtx.createMediaStreamSource(mediaStream);
-                sourceNode.connect(analyserNode);
-                if(audioCtx.state === 'suspended') await audioCtx.resume();
-                isMicActive = true;
-                isMuted = false;
-                updateMuteButtonUI();
-                if(animationId) cancelAnimationFrame(animationId);
-                animationId = requestAnimationFrame(animationLoop);
-
-                settingsStatusMsg.innerText = "🎤 Active";
-                permStatusSpan.innerText = "✅ Ready";
-                permissionOverlay.classList.add('hidden');
-                resizeCanvasToWindow();
-                drawWaveform(0);
-            } catch(err) {
-                permStatusSpan.innerText = "❌ Microphone denied";
-                settingsStatusMsg.innerText = "❌ No access";
-            }
-        }
-        
-        function toggleMute() {
-            if(!isMicActive) return;
-            isMuted = !isMuted;
-            updateMuteButtonUI();
-            if(isMuted) {
-               
-                settingsStatusMsg.innerText = "🔇 ";
-            } else {
+            if (wakeCheck.detected && !isActive) {
+                // Show popup notification
+                showPopup(wakeCheck.word);
                 
-                settingsStatusMsg.innerText = "🎤";
-            }
-        }
-        
-        function updateMuteButtonUI() {
-            if(isMuted) {
-                muteOverlayBtn.innerHTML = "🔊";
-                muteOverlayBtn.classList.add('muted-active');
-            } else {
-                muteOverlayBtn.innerHTML = "🔇 ";
-                muteOverlayBtn.classList.remove('muted-active');
-            }
-        }
-        
-        function updateRecordUI() {
-            if(isRecording) {
-                recordToggleBtn.innerHTML = "⏹️ STOP RECORDING";
-                recordToggleBtn.classList.add('recording-active');
-                settingsStatusMsg.innerText = `🔴 Recording ${selectedDuration}s`;
-            } else {
-                recordToggleBtn.innerHTML = "⏺ START RECORDING";
-                recordToggleBtn.classList.remove('recording-active');
-                if(isMicActive && !isMuted) settingsStatusMsg.innerText = "🎤 Active";
-                else if(isMicActive && isMuted) settingsStatusMsg.innerText = "🔇 Muted";
-                else settingsStatusMsg.innerText = "⚪ Idle";
-            }
-        }
-        
-        // SINGLE BUTTON HANDLER: starts recording immediately (NO COUNTDOWN) or stops
-        function handleRecordToggle() {
-            if(!isMicActive || !mediaStream) {
-                settingsStatusMsg.innerText = "❌ No mic active";
-                return;
+                // Visual feedback on indicator
+                wakeIndicator.classList.add('active');
+                wakeIndicator.textContent = `✨ Wake word detected! "${wakeCheck.word}" from: "${text.substring(0, 40)}"`;
+                
+                // Start visualizer after a brief moment
+                setTimeout(() => {
+                    startVisualizer();
+                }, 100);
             }
             
-            // If currently recording -> STOP recording immediately
-            if(isRecording) {
-                if(recordingTimeout) clearTimeout(recordingTimeout);
-                if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-                isRecording = false;
-                updateRecordUI();
-               
-                return;
+            // Show what's being heard (for debugging)
+            if (!isActive && text.length > 0) {
+                wakeIndicator.textContent = `🎤 "${text.substring(0, 40)}"`;
+                setTimeout(() => {
+                    if (!isActive && wakeEnabled) {
+                        wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
+                    }
+                }, 1500);
             }
-            
-            // Not recording: START RECORDING IMMEDIATELY - NO COUNTDOWN
-            startMediaRecording();
+        };
+        
+        recognition.onerror = (e) => {
+            console.log('Recognition error:', e.error);
+            if (e.error === 'not-allowed') {
+                wakeIndicator.textContent = '🎤 Microphone permission needed for wake word';
+            } else if (e.error === 'network') {
+                wakeIndicator.textContent = '🌐 Internet connection required for wake word';
+            }
+        };
+        
+        try {
+            recognition.start();
+        } catch(e) {
+            console.log('Start error:', e);
+        }
+    }
+    
+    // Update wake word from input
+    function updateWakeWord() {
+        let newWord = customWakeInput.value.trim();
+        if (newWord === "") {
+            newWord = "hey wave";
+            customWakeInput.value = "hey wave";
+        }
+        customWakeWord = newWord.toLowerCase();
+        
+        // Update UI
+        if (!isActive) {
+            wakeIndicator.textContent = `🎤 Say: ${activeWakeWords.join(", ")} (or "${customWakeWord}")`;
+        } else {
+            wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
         }
         
-        function startMediaRecording() {
-            recordedChunks = [];
-            const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-            mediaRecorder = new MediaRecorder(mediaStream, { mimeType: mime });
-            mediaRecorder.ondataavailable = (e) => { if(e.data.size>0) recordedChunks.push(e.data); };
-            mediaRecorder.onstop = async () => {
-                if(recordedChunks.length) await saveWavFile();
-                recordedChunks = [];
-                isRecording = false;
-                updateRecordUI();
-              
-                if(isMicActive && !isMuted) settingsStatusMsg.innerText = "🎤 Active";
-                else if(isMicActive && isMuted) settingsStatusMsg.innerText = "🔇 Muted";
-            };
-            mediaRecorder.start(200);
-            isRecording = true;
-            updateRecordUI();
-            
-            if(recordingTimeout) clearTimeout(recordingTimeout);
-            recordingTimeout = setTimeout(() => {
-                if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-                recordingTimeout = null;
-            }, selectedDuration * 1000);
-        }
-        
-        async function saveWavFile() {
-            if(!recordedChunks.length) return;
-            const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-            const arrayBuf = await blob.arrayBuffer();
+        // Restart recognition with new wake word
+        if (wakeEnabled && recognition && !isActive) {
             try {
-                const offline = new OfflineAudioContext({ numberOfChannels: 1, length: 1, sampleRate: 44100 });
-                const audioBuf = await offline.decodeAudioData(arrayBuf);
-                const channel = audioBuf.getChannelData(0);
-                const wavBuf = float32ToWav(channel, audioBuf.sampleRate);
-                const wavBlob = new Blob([wavBuf], { type: 'audio/wav' });
-                const url = URL.createObjectURL(wavBlob);
+                recognition.stop();
+                setTimeout(() => {
+                    recognition.start();
+                }, 100);
+            } catch(e) {}
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('customWakeWord', customWakeWord);
+    }
+    
+    // Load saved wake word
+    function loadSavedWakeWord() {
+        const saved = localStorage.getItem('customWakeWord');
+        if (saved) {
+            customWakeWord = saved;
+            customWakeInput.value = saved;
+        } else {
+            customWakeInput.value = "hey wave";
+        }
+        if (!isActive) {
+            wakeIndicator.textContent = `🎤 Say: ${activeWakeWords.join(", ")} (or "${customWakeWord}")`;
+        }
+    }
+    
+    // Toggle mute
+    function toggleMute() {
+        if (!isActive) return;
+        isMuted = !isMuted;
+        
+        if (isMuted) {
+            muteBtn.classList.add('muted');
+            muteBtn.innerHTML = '🔊 UNMUTE';
+            statusMsg.innerText = '🔇 Muted';
+            bars.forEach(bar => bar.classList.add('idle'));
+        } else {
+            muteBtn.classList.remove('muted');
+            muteBtn.innerHTML = '🔇 MUTE';
+            statusMsg.innerText = '🎤 Active';
+            bars.forEach(bar => bar.classList.remove('idle'));
+        }
+    }
+    
+    // Recording
+    function updateRecordUI() {
+        if (isRecording) {
+            recordBtn.innerHTML = '⏹️ STOP RECORDING';
+            recordBtn.classList.add('recording');
+        } else {
+            recordBtn.innerHTML = '⏺ START RECORDING';
+            recordBtn.classList.remove('recording');
+        }
+    }
+    
+    function startCounter(seconds) {
+        if (counterInterval) clearInterval(counterInterval);
+        let remaining = seconds;
+        const update = () => {
+            if (remaining >= 0) {
+                statusMsg.innerText = `🔴 Recording: ${remaining}s`;
+                remaining--;
+            }
+            if (remaining < 0 && counterInterval) {
+                clearInterval(counterInterval);
+                counterInterval = null;
+            }
+        };
+        update();
+        counterInterval = setInterval(update, 1000);
+    }
+    
+    function handleRecording() {
+        if (!isActive || !mediaStream) {
+            statusMsg.innerText = '❌ Activate wake word first';
+            showPopupMessage('Activate wake word first', 'info');
+            return;
+        }
+        
+        if (isRecording) {
+            if (counterInterval) clearInterval(counterInterval);
+            if (recordTimeout) clearTimeout(recordTimeout);
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+            updateRecordUI();
+            statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
+            return;
+        }
+        
+        chunks = [];
+        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: mime });
+        
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size) chunks.push(e.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+            if (chunks.length) {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `wave_recording.wav`;
+                a.download = `wave_recording_${Date.now()}.webm`;
                 a.click();
                 URL.revokeObjectURL(url);
-                settingsStatusMsg.innerText = "💾 Saved!";
-                setTimeout(()=>{
-                    if(!isRecording && isMicActive && !isMuted) settingsStatusMsg.innerText = "🎤 Active";
-                    else if(!isRecording && isMicActive && isMuted) settingsStatusMsg.innerText = "🔇 Muted";
+                statusMsg.innerText = '💾 Saved!';
+                setTimeout(() => {
+                    if (!isRecording && isActive) {
+                        statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
+                    }
                 }, 1500);
-            } catch(e) {
-                const fallback = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = fallback;
-                a.download = 'recording.webm';
-                a.click();
-                URL.revokeObjectURL(fallback);
+            }
+            chunks = [];
+            isRecording = false;
+            updateRecordUI();
+            if (counterInterval) clearInterval(counterInterval);
+        };
+        
+        mediaRecorder.start(200);
+        isRecording = true;
+        updateRecordUI();
+        startCounter(recordDuration);
+        
+        recordTimeout = setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+        }, recordDuration * 1000);
+    }
+    
+    function showPopupMessage(msg, type = 'info') {
+        const popup = document.createElement('div');
+        popup.className = 'popup-notification';
+        popup.innerHTML = `
+            <div class="popup-icon">${type === 'info' ? 'ℹ️' : '⚠️'}</div>
+            <div class="popup-title">${type === 'info' ? 'Info' : 'Notice'}</div>
+            <div class="popup-message">${msg}</div>
+        `;
+        document.body.appendChild(popup);
+        setTimeout(() => popup.classList.add('show'), 10);
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }, 2000);
+    }
+    
+    // Theme
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+    }
+    
+    function applyTheme() {
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-theme');
+        }
+    }
+    
+    // Toggle wake word
+    function toggleWakeWord() {
+        wakeEnabled = !wakeEnabled;
+        if (wakeEnabled && !isActive) {
+            initWakeWord();
+        } else if (!wakeEnabled && recognition) {
+            try { recognition.stop(); } catch(e) {}
+            recognition = null;
+            if (!isActive) {
+                wakeIndicator.textContent = '⏸️ Wake word disabled';
+                wakeIndicator.classList.remove('listening', 'active');
             }
         }
-        
-        function float32ToWav(samples, sampleRate) {
-            const buffer = new ArrayBuffer(44 + samples.length * 2);
-            const view = new DataView(buffer);
-            const writeStr = (off, str) => { for(let i=0;i<str.length;i++) view.setUint8(off+i, str.charCodeAt(i)); };
-            writeStr(0, 'RIFF');
-            view.setUint32(4, 36 + samples.length*2, true);
-            writeStr(8, 'WAVE');
-            writeStr(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
-            writeStr(36, 'data');
-            view.setUint32(40, samples.length*2, true);
-            let offset=44;
-            for(let i=0;i<samples.length;i++) {
-                let s = Math.max(-1, Math.min(1, samples[i]));
-                s = s<0 ? s*0x8000 : s*0x7FFF;
-                view.setInt16(offset, s, true);
-                offset+=2;
-            }
-            return buffer;
+    }
+    
+    // Event listeners
+    muteBtn.addEventListener('click', toggleMute);
+    recordBtn.addEventListener('click', handleRecording);
+    durationSelect.addEventListener('change', (e) => {
+        recordDuration = parseInt(e.target.value);
+    });
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsPanel.classList.toggle('show');
+    });
+    document.addEventListener('click', (e) => {
+        if (!settingsBtn.contains(e.target) && !settingsPanel.contains(e.target)) {
+            settingsPanel.classList.remove('show');
         }
-        
-        // Theme
-        function applyTheme() {
-            if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
-            else document.body.classList.remove('light-theme');
+    });
+    themeBtn.addEventListener('click', toggleTheme);
+    customWakeInput.addEventListener('change', updateWakeWord);
+    customWakeInput.addEventListener('blur', updateWakeWord);
+    
+    window.addEventListener('resize', () => setTimeout(createBars, 100));
+    
+    // Initialize
+    createBars();
+    idleAnimation();
+    applyTheme();
+    loadSavedWakeWord();
+    initWakeWord();
+    
+    // Check if mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+        console.log('Mobile device detected - wake word should work on iOS 14+ and Android');
+        // iOS requires user interaction to start speech recognition
+        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            wakeIndicator.textContent = `🎤 Tap anywhere to enable wake words on iOS`;
+            document.body.addEventListener('touchstart', function enableIOS() {
+                if (recognition) {
+                    try {
+                        recognition.start();
+                        wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
+                        wakeIndicator.classList.add('listening');
+                    } catch(e) {}
+                }
+                document.body.removeEventListener('touchstart', enableIOS);
+            }, { once: true });
         }
-        function toggleThemeGlobal() {
-            document.body.classList.toggle('light-theme');
-            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
-        }
-        applyTheme();
-        
-        // Event listeners
-        requestMicBtn.addEventListener('click', initMicrophone);
-        muteOverlayBtn.addEventListener('click', toggleMute);
-        recordToggleBtn.addEventListener('click', handleRecordToggle);
-        durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value,10); });
-        settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsDropdown.classList.toggle('hidden'); });
-        document.addEventListener('click', (e) => { if(!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) settingsDropdown.classList.add('hidden'); });
-        themeSwitch.addEventListener('click', toggleThemeGlobal);
-        
-        resizeCanvasToWindow();
-        drawWaveform(0);
-    })();
+    }
+    
+    // Cleanup
+    window.addEventListener('beforeunload', () => {
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        if (audioContext) audioContext.close();
+        if (animationId) cancelAnimationFrame(animationId);
+        if (recognition) recognition.stop();
+    });
+})();
 </script>
 </body>
 </html>
