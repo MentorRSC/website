@@ -319,15 +319,10 @@
         </div>
     </div>
 
-    <!-- Load TensorFlow.js from multiple CDNs for redundancy -->
+    <!-- Load TensorFlow.js and Speech Commands -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
-    <script>
-        // Fallback if primary CDN fails
-        if (typeof tf === 'undefined') {
-            document.write('<script src="https://unpkg.com/@tensorflow/tfjs@4.15.0/dist/tf.min.js"><\/script>');
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.4/dist/speech-commands.min.js"></script>
+    
     <script>
         // Global variables
         let recognizer = null;
@@ -335,18 +330,6 @@
         let mediaStream = null;
         let modelLoaded = false;
         let detectionCount = 0;
-        let currentConfidence = 0;
-        
-        // Check if TensorFlow is loaded
-        function checkTensorFlow() {
-            if (typeof tf === 'undefined') {
-                console.error('TensorFlow.js not loaded');
-                updateStatus('❌ TensorFlow.js failed to load. Please check your internet connection.', 'error');
-                return false;
-            }
-            console.log('TensorFlow.js version:', tf.version?.tfjs);
-            return true;
-        }
         
         // Update status display
         function updateStatus(message, type) {
@@ -361,7 +344,6 @@
             const percent = Math.round(confidence * 100);
             fill.style.width = `${percent}%`;
             fill.textContent = `${percent}%`;
-            currentConfidence = confidence;
             
             if (word) {
                 const wordDisplay = document.getElementById('wordDisplay');
@@ -369,7 +351,7 @@
             }
         }
         
-        // Load the model with retry logic
+        // Load the model correctly
         async function loadModel(retryCount = 0) {
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
@@ -378,17 +360,17 @@
             progressBar.classList.remove('hidden');
             updateStatus('📦 Loading speech recognition model...', 'loading');
             
-            // Simulate progress
+            // Simulate progress animation
             let progress = 0;
             const progressInterval = setInterval(() => {
-                progress = Math.min(progress + 10, 90);
+                progress = Math.min(progress + 5, 90);
                 progressFill.style.width = `${progress}%`;
-            }, 500);
+            }, 200);
             
             try {
                 // Check if TensorFlow is loaded
-                if (!checkTensorFlow()) {
-                    throw new Error('TensorFlow.js not loaded');
+                if (typeof tf === 'undefined') {
+                    throw new Error('TensorFlow.js library not loaded');
                 }
                 
                 // Check if speechCommands is available
@@ -396,15 +378,16 @@
                     throw new Error('Speech commands library not loaded');
                 }
                 
-                // Try to create and load the model
+                // Create recognizer - using the correct method without specifying URL
+                // The library will automatically load from the correct CDN
                 console.log('Creating speech recognizer...');
-                recognizer = speechCommands.create('BROWSER_FFT', null, 
-                    'https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v0.4/browser_fft/');
+                recognizer = speechCommands.create('BROWSER_FFT');
                 
-                // Add timeout for model loading
+                // Load the model with timeout
+                console.log('Loading model (this may take a few moments)...');
                 const loadPromise = recognizer.ensureModelLoaded();
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Model loading timeout')), 30000)
+                    setTimeout(() => reject(new Error('Model loading timeout after 30 seconds')), 30000)
                 );
                 
                 await Promise.race([loadPromise, timeoutPromise]);
@@ -414,11 +397,17 @@
                 
                 // Get available words
                 const words = recognizer.wordLabels();
-                console.log('Model loaded! Available words:', words);
+                console.log('Model loaded successfully!');
+                console.log('Available words for detection:', words);
                 
                 // Show available words in info text
                 const infoText = document.getElementById('infoText');
-                infoText.textContent = `Available words: ${words.slice(0, 10).join(', ')}...`;
+                const helloIndex = words.findIndex(w => w.toLowerCase().includes('hello'));
+                if (helloIndex !== -1) {
+                    infoText.textContent = `✅ Model ready! "${words[helloIndex]}" word is available for detection`;
+                } else {
+                    infoText.textContent = `✅ Model ready! Available: ${words.slice(0, 8).join(', ')}... Try saying "hello"`;
+                }
                 
                 modelLoaded = true;
                 updateStatus('✅ Model ready! Click Start to begin detection', 'waiting');
@@ -440,12 +429,12 @@
                 updateStatus(`❌ Failed to load model: ${error.message}`, 'error');
                 progressBar.classList.add('hidden');
                 
-                // Show retry button if not too many retries
+                // Show retry button
                 if (retryCount < 3) {
                     retryBtn.style.display = 'inline-block';
-                    document.getElementById('infoText').textContent = 'Click "Retry" to try loading the model again';
+                    document.getElementById('infoText').textContent = 'Click "Retry" to try loading the model again. Check your internet connection.';
                 } else {
-                    document.getElementById('infoText').textContent = 'Please check your internet connection and reload the page';
+                    document.getElementById('infoText').textContent = 'Multiple failures. Please check your internet connection and refresh the page.';
                 }
                 
                 modelLoaded = false;
@@ -515,15 +504,16 @@
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = false;
                 
-                // Start listening
+                // Start listening with the recognizer
                 recognizer.listen((scores) => {
                     if (!isListening) return;
                     
                     const labels = recognizer.wordLabels();
+                    
+                    // Find the word with highest confidence
                     let maxScore = -Infinity;
                     let maxIndex = -1;
                     
-                    // Find the word with highest confidence
                     for (let i = 0; i < scores.length; i++) {
                         if (scores[i] > maxScore) {
                             maxScore = scores[i];
@@ -531,17 +521,23 @@
                         }
                     }
                     
-                    if (maxIndex !== -1 && maxScore > 0.5) {
+                    if (maxIndex !== -1 && maxScore > 0.6) {
                         const detectedWord = labels[maxIndex];
                         const confidence = maxScore;
                         
                         updateConfidence(confidence, detectedWord);
                         
-                        // Check for "hello" (or variations like "hello" in different contexts)
-                        const isHello = detectedWord.toLowerCase().includes('hello') || 
-                                      (detectedWord.toLowerCase() === 'hello');
+                        // Check for "hello" or similar words
+                        const isHello = detectedWord.toLowerCase() === 'hello' || 
+                                      detectedWord.toLowerCase().includes('hello');
                         
-                        if (isHello && confidence > 0.75) {
+                        // Also check for common variations
+                        const helloVariations = ['hello', 'halo', 'helo'];
+                        const isHelloVariation = helloVariations.some(v => 
+                            detectedWord.toLowerCase().includes(v)
+                        );
+                        
+                        if ((isHello || isHelloVariation) && confidence > 0.7) {
                             // Increment detection count
                             detectionCount++;
                             document.getElementById('detectionCount').textContent = `Detections: ${detectionCount}`;
@@ -551,6 +547,7 @@
                             
                             // Visual feedback
                             const wordDisplay = document.getElementById('wordDisplay');
+                            const originalBg = wordDisplay.style.backgroundColor;
                             wordDisplay.style.backgroundColor = '#4caf50';
                             wordDisplay.style.color = 'white';
                             setTimeout(() => {
@@ -558,13 +555,12 @@
                                 wordDisplay.style.color = '#333';
                             }, 500);
                             
-                            // Optional: Add beep sound (if needed)
-                            // playBeep();
+                            console.log(`✅ "Hello" detected! Confidence: ${(confidence * 100).toFixed(1)}%`);
                         }
                     }
                 }, {
                     includeSpectrogram: false,
-                    probabilityThreshold: 0.5,
+                    probabilityThreshold: 0.6,
                     invokeCallbackOnNoiseAndUnknown: true,
                     overlapFactor: 0.5
                 });
@@ -596,7 +592,7 @@
             const modal = document.getElementById('popupModal');
             modal.style.display = 'block';
             
-            // Optional: Auto-hide after 3 seconds
+            // Auto-hide after 3 seconds
             setTimeout(() => {
                 if (modal.style.display === 'block') {
                     closePopup();
@@ -620,21 +616,11 @@
         
         // Initialize everything
         async function initialize() {
-            // Check if required libraries are loaded
-            const tfLoaded = checkTensorFlow();
-            
-            if (!tfLoaded) {
-                updateStatus('❌ Failed to load TensorFlow.js. Please check your internet connection.', 'error');
-                document.getElementById('retryBtn').style.display = 'inline-block';
-                document.getElementById('retryBtn').onclick = () => window.location.reload();
-                return;
-            }
-            
-            // Load the model
+            console.log('Initializing wake word detector...');
             await loadModel();
         }
         
-        // Add keyboard shortcut
+        // Add keyboard shortcut for popup
         document.addEventListener('keydown', function(event) {
             if (event.code === 'Space' && document.getElementById('popupModal').style.display === 'block') {
                 event.preventDefault();
