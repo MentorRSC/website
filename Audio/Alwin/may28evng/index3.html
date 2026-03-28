@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Jarvis Wake Word</title>
+
+<style>
+body{
+background:#0b0f19;
+color:#00f7ff;
+font-family:Arial;
+text-align:center;
+padding-top:80px;
+}
+
+button{
+padding:15px 30px;
+font-size:18px;
+background:#00f7ff;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+#status{
+margin-top:30px;
+font-size:22px;
+}
+
+canvas{
+margin-top:40px;
+background:#111;
+border-radius:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Jarvis Assistant</h1>
+
+<button id="startBtn">Start System</button>
+
+<div id="status">System idle</div>
+
+<canvas id="wave" width="600" height="120"></canvas>
+
+<script src="edge-impulse-standalone.js"></script>
+
+<script>
+
+let runner;
+let analyser;
+let audioContext;
+
+const status = document.getElementById("status");
+const canvas = document.getElementById("wave");
+const ctx = canvas.getContext("2d");
+
+document.getElementById("startBtn").onclick = startSystem;
+
+async function startSystem(){
+
+status.innerText="Requesting microphone...";
+
+const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+
+audioContext = new AudioContext();
+
+const source = audioContext.createMediaStreamSource(stream);
+
+analyser = audioContext.createAnalyser();
+
+source.connect(analyser);
+
+drawWave();
+
+status.innerText="Loading wake model...";
+
+runner = new EdgeImpulseRunner();
+
+await runner.init("model.eim");
+
+status.innerText="Listening for wake word...";
+
+detectWakeWord();
+
+}
+
+async function detectWakeWord(){
+
+while(true){
+
+const res = await runner.classify();
+
+console.log(res);
+
+const score = res.result.classification.wakeword;
+
+if(score > 0.85){
+
+status.innerText="Wake word detected";
+
+startSpeechRecognition();
+
+}
+
+}
+
+}
+
+function startSpeechRecognition(){
+
+const SpeechRecognition =
+window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+
+recognition.lang="en-US";
+
+recognition.start();
+
+status.innerText="Listening command...";
+
+recognition.onresult = function(event){
+
+const text = event.results[0][0].transcript;
+
+status.innerText="Command: "+text;
+
+jarvisResponse(text);
+
+}
+
+}
+
+function jarvisResponse(text){
+
+text=text.toLowerCase();
+
+if(text.includes("hello")) speak("Hello. How can I help you");
+
+else if(text.includes("time")){
+
+const t=new Date().toLocaleTimeString();
+
+speak("The time is "+t);
+
+}
+
+else speak("Command received");
+
+}
+
+function speak(msg){
+
+const speech = new SpeechSynthesisUtterance(msg);
+
+speech.rate=1;
+
+speech.pitch=1;
+
+speech.volume=1;
+
+speechSynthesis.speak(speech);
+
+}
+
+function drawWave(){
+
+const bufferLength = analyser.frequencyBinCount;
+
+const dataArray = new Uint8Array(bufferLength);
+
+function draw(){
+
+requestAnimationFrame(draw);
+
+analyser.getByteTimeDomainData(dataArray);
+
+ctx.fillStyle="#111";
+
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.lineWidth=2;
+
+ctx.strokeStyle="#00f7ff";
+
+ctx.beginPath();
+
+let sliceWidth = canvas.width/bufferLength;
+
+let x=0;
+
+for(let i=0;i<bufferLength;i++){
+
+let v=dataArray[i]/128.0;
+
+let y=v*canvas.height/2;
+
+if(i===0) ctx.moveTo(x,y);
+
+else ctx.lineTo(x,y);
+
+x+=sliceWidth;
+
+}
+
+ctx.lineTo(canvas.width,canvas.height/2);
+
+ctx.stroke();
+
+}
+
+draw();
+
+}
+
+</script>
+
+</body>
+</html>
