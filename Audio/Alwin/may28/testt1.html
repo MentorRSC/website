@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Silent Flow | Wake Word Activated Wave Visualizer</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    background: #050a14;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Roboto', sans-serif;
+    transition: background 0.3s ease;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+body.light-theme {
+    background: #e8ecf3;
+}
+
+/* Wave container */
+.wave-container {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: clamp(4px, 2vw, 12px);
+    padding: 0 20px;
+    z-index: 10;
+    pointer-events: none;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.wave-bar {
+    width: clamp(4px, 2vw, 14px);
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #0a6bc2, #6eaeff, #3a86ff);
+    transition: height 0.08s ease-out;
+    box-shadow: 0 0 6px rgba(0, 160, 255, 0.5);
+    will-change: height;
+}
+
+.wave-bar.animated-wave {
+    animation: barWave 1s infinite ease-in-out;
+}
+
+@keyframes barWave {
+    0%, 100% { height: 20px; opacity: 0.6; }
+    50% { height: 85px; opacity: 1; }
+}
+
+.wave-bar.animated-wave:nth-child(1) { animation-delay: 0s; }
+.wave-bar.animated-wave:nth-child(2) { animation-delay: 0.08s; }
+.wave-bar.animated-wave:nth-child(3) { animation-delay: 0.16s; }
+.wave-bar.animated-wave:nth-child(4) { animation-delay: 0.24s; }
+.wave-bar.animated-wave:nth-child(5) { animation-delay: 0.32s; }
+.wave-bar.animated-wave:nth-child(6) { animation-delay: 0.4s; }
+.wave-bar.animated-wave:nth-child(7) { animation-delay: 0.48s; }
+.wave-bar.animated-wave:nth-child(8) { animation-delay: 0.56s; }
+.wave-bar.animated-wave:nth-child(9) { animation-delay: 0.64s; }
+.wave-bar.animated-wave:nth-child(10) { animation-delay: 0.72s; }
+
+/* Wake Word Indicator */
+.wake-indicator {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    background: rgba(0, 200, 255, 0.2);
+    backdrop-filter: blur(12px);
+    border-radius: 3rem;
+    padding: 0.5rem 1.5rem;
+    border: 1px solid rgba(0, 200, 255, 0.6);
+    font-family: monospace;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #00c8ff;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.wake-indicator.listening {
+    background: rgba(255, 80, 120, 0.3);
+    border-color: #ff5080;
+    color: #ff80a0;
+    animation: listeningPulse 1.2s infinite;
+    box-shadow: 0 0 20px rgba(255, 80, 120, 0.4);
+}
+
+.wake-indicator.activated {
+    background: rgba(0, 255, 150, 0.3);
+    border-color: #00ffaa;
+    color: #00ffaa;
+    animation: activatedGlow 0.5s ease;
+}
+
+@keyframes listeningPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 80, 120, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(255, 80, 120, 0); }
+}
+
+@keyframes activatedGlow {
+    0% { box-shadow: 0 0 0 0 rgba(0, 255, 150, 0.8); background: rgba(0, 255, 150, 0.5); }
+    100% { box-shadow: 0 0 30px 15px rgba(0, 255, 150, 0); background: rgba(0, 200, 255, 0.2); }
+}
+
+/* System Clock */
+.system-clock {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 3rem;
+    padding: 0.6rem 1.3rem;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: 'Inter', 'Segoe UI', 'Courier New', monospace;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+.clock-time {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #00c8ff;
+    font-feature-settings: 'tnum';
+}
+
+.clock-ampm {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #88aaff;
+}
+
+body.light-theme .system-clock {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 160, 210, 0.6);
+}
+
+body.light-theme .clock-time { color: #0077aa; }
+body.light-theme .clock-ampm { color: #005f7a; }
+
+/* Mute button */
+.mute-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    background: rgba(10, 20, 35, 0.75);
+    backdrop-filter: blur(12px);
+    border-radius: 3rem;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    padding: 0.7rem 1.4rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    color: #c0e4ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+.mute-overlay.muted-active {
+    background: linear-gradient(135deg, #ff3366, #ff80b0);
+    border-color: #ff80b0;
+    color: white;
+    animation: softPulse 1s infinite;
+}
+
+@keyframes softPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+}
+
+/* Settings button */
+.settings-corner {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 300;
+    background: rgba(10, 20, 35, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 3rem;
+    padding: 0.6rem 1.3rem;
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #00c8ff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    pointer-events: auto;
+}
+
+.settings-corner:hover {
+    background: rgba(0, 200, 255, 0.2);
+    transform: scale(0.98);
+}
+
+/* Settings dropdown */
+.settings-dropdown {
+    position: fixed;
+    top: 75px;
+    right: 20px;
+    background: rgba(12, 22, 40, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 1.6rem;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 200, 255, 0.4);
+    z-index: 310;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 260px;
+    pointer-events: auto;
+}
+
+.dropdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #eef3ff;
+}
+
+.theme-toggle-btn, .duration-select, .wake-toggle-btn {
+    background: rgba(0, 200, 255, 0.2);
+    border: 1px solid rgba(0, 200, 255, 0.6);
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    color: inherit;
+}
+
+.single-record-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #00c8ff, #ff50c8);
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 2rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s;
+}
+
+.single-record-btn.recording-active {
+    background: linear-gradient(135deg, #ff3366, #ff80b0);
+    animation: pulseRed 1.2s infinite;
+}
+
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+}
+
+.status-badge-mini {
+    font-size: 0.7rem;
+    background: rgba(0, 200, 255, 0.15);
+    padding: 0.35rem 0.7rem;
+    border-radius: 2rem;
+    text-align: center;
+    color: #88ddff;
+    font-weight: 500;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(0, 200, 255, 0.2);
+    margin: 0.2rem 0;
+}
+
+.hidden { display: none !important; }
+
+@media (max-width: 640px) {
+    .system-clock { top: 12px; left: 12px; padding: 0.45rem 1rem; }
+    .clock-time { font-size: 0.9rem; }
+    .settings-corner { top: 12px; right: 12px; padding: 0.45rem 1rem; }
+    .mute-overlay { bottom: 12px; right: 12px; padding: 0.5rem 1.1rem; }
+    .wake-indicator { top: 65px; font-size: 0.7rem; padding: 0.4rem 1rem; white-space: nowrap; }
+    .settings-dropdown { min-width: 220px; right: 12px; top: 65px; }
+}
+</style>
+</head>
+<body>
+
+<div class="system-clock">
+    <span class="clock-time" id="clockTime">--:--:--</span>
+    <span class="clock-ampm" id="clockAmPm">--</span>
+</div>
+
+<div id="wakeIndicator" class="wake-indicator">🎤 Say "Hey Wave" to activate</div>
+
+<div id="settingsBtn" class="settings-corner">⚙️</div>
+
+<div id="settingsDropdown" class="settings-dropdown hidden">
+    <div class="dropdown-item">
+        <span>🌗 Theme</span>
+        <button id="themeSwitchBtn" class="theme-toggle-btn">Toggle</button>
+    </div>
+    <div class="dropdown-item">
+        <span>🎙️ Wake Word</span>
+        <button id="wakeToggleBtn" class="wake-toggle-btn">Disable</button>
+    </div>
+    <div class="dropdown-item">
+        <span>⏱️ Rec Duration</span>
+        <select id="durationSelect" class="duration-select">
+            <option value="5">5 sec</option>
+            <option value="10" selected>10 sec</option>
+            <option value="15">15 sec</option>
+            <option value="30">30 sec</option>
+            <option value="60">60 sec</option>
+        </select>
+    </div>
+    <div class="divider"></div>
+    <button id="recordToggleBtn" class="single-record-btn">⏺ START RECORDING</button>
+    <div id="settingsStatusMsg" class="status-badge-mini">⚪ Ready</div>
+</div>
+
+<div id="waveContainer" class="wave-container"></div>
+<button id="muteOverlayBtn" class="mute-overlay">🔇 MUTE</button>
+
+<script>
+(function(){
+    // DOM Elements
+    const waveContainer = document.getElementById('waveContainer');
+    const muteOverlayBtn = document.getElementById('muteOverlayBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsDropdown = document.getElementById('settingsDropdown');
+    const themeSwitch = document.getElementById('themeSwitchBtn');
+    const wakeToggleBtn = document.getElementById('wakeToggleBtn');
+    const durationSelect = document.getElementById('durationSelect');
+    const recordToggleBtn = document.getElementById('recordToggleBtn');
+    const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+    const wakeIndicator = document.getElementById('wakeIndicator');
+    const clockTimeSpan = document.getElementById('clockTime');
+    const clockAmPmSpan = document.getElementById('clockAmPm');
+
+    // Audio Globals
+    let audioCtx = null;
+    let mediaStream = null;
+    let sourceNode = null;
+    let analyserNode = null;
+    let animationId = null;
+    let isMicActive = false;
+    let isMuted = false;
+    
+    // Wake Word Variables
+    let wakeWordEnabled = true;
+    let isWakeListening = false;
+    let wakeRecognition = null;
+    const WAKE_WORD = "hey wave";
+    
+    // Recording Globals
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let recordingTimeout = null;
+    let selectedDuration = 10;
+    let counterInterval = null;
+    
+    // Bar Wave Elements
+    let barElements = [];
+    let barCount = 24;
+    let frequencyData = new Uint8Array(0);
+    
+    // Clock update
+    function updateClock() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        clockTimeSpan.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        clockAmPmSpan.textContent = ampm;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // Create animated bars
+    function createBars() {
+        const containerWidth = window.innerWidth - 40;
+        const minBarWidth = 6;
+        const maxBars = Math.min(32, Math.floor(containerWidth / (minBarWidth + 6)));
+        barCount = Math.max(16, maxBars);
+        
+        waveContainer.innerHTML = '';
+        barElements = [];
+        
+        for (let i = 0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar animated-wave';
+            waveContainer.appendChild(bar);
+            barElements.push(bar);
+        }
+    }
+    
+    // Update bars with audio data
+    function updateBarsWithAudio() {
+        if (!isMicActive || isMuted || !analyserNode || frequencyData.length === 0) {
+            return;
+        }
+        
+        analyserNode.getByteFrequencyData(frequencyData);
+        const binsPerBar = Math.floor(frequencyData.length / barCount);
+        
+        for (let i = 0; i < barCount; i++) {
+            let sum = 0;
+            let startBin = i * binsPerBar;
+            let endBin = Math.min(startBin + binsPerBar, frequencyData.length);
+            
+            for (let j = startBin; j < endBin; j++) {
+                sum += frequencyData[j];
+            }
+            let avg = sum / (endBin - startBin);
+            let intensity = Math.min(1.0, avg / 180);
+            intensity = Math.pow(intensity, 1.2) * 1.1;
+            intensity = Math.min(1.0, intensity);
+            
+            let barHeight = 15 + (intensity * 145);
+            barHeight = Math.max(12, Math.min(170, barHeight));
+            
+            const hue = 200 + intensity * 40;
+            barElements[i].style.height = `${barHeight}px`;
+            barElements[i].style.background = `linear-gradient(180deg, hsl(${hue}, 85%, 55%), hsl(${hue + 20}, 80%, 65%))`;
+            barElements[i].style.opacity = `${0.7 + intensity * 0.4}`;
+            barElements[i].style.boxShadow = `0 0 ${8 + intensity * 12}px rgba(0, 160, 255, ${0.4 + intensity * 0.5})`;
+            barElements[i].classList.remove('animated-wave');
+        }
+    }
+    
+    // Idle animation for bars
+    function idleBarAnimation() {
+        if (!isMicActive && barElements.length) {
+            barElements.forEach((bar, idx) => {
+                const waveHeight = 20 + Math.sin(Date.now() * 0.006 + idx * 0.3) * 35;
+                bar.style.height = `${waveHeight}px`;
+                bar.classList.add('animated-wave');
+            });
+            requestAnimationFrame(idleBarAnimation);
+        }
+    }
+    
+    function animateBars() {
+        if (!animationId) return;
+        updateBarsWithAudio();
+        animationId = requestAnimationFrame(animateBars);
+    }
+    
+    // Initialize Wake Word Detection
+    function initWakeWordDetection() {
+        if (!wakeWordEnabled) return;
+        
+        // Check if browser supports speech recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            wakeIndicator.textContent = "⚠️ Speech recognition not supported";
+            return;
+        }
+        
+        wakeRecognition = new SpeechRecognition();
+        wakeRecognition.continuous = true;
+        wakeRecognition.interimResults = true;
+        wakeRecognition.lang = 'en-US';
+        
+        wakeRecognition.onstart = () => {
+            isWakeListening = true;
+            wakeIndicator.classList.add('listening');
+            wakeIndicator.textContent = "🎧 Listening for 'Hey Wave'...";
+        };
+        
+        wakeRecognition.onend = () => {
+            isWakeListening = false;
+            wakeIndicator.classList.remove('listening');
+            if (wakeWordEnabled && !isMicActive) {
+                wakeIndicator.textContent = "🎤 Say 'Hey Wave' to activate";
+                // Restart recognition after a delay
+                setTimeout(() => {
+                    if (wakeWordEnabled && !isMicActive) {
+                        try {
+                            wakeRecognition.start();
+                        } catch(e) {}
+                    }
+                }, 1000);
+            }
+        };
+        
+        wakeRecognition.onresult = (event) => {
+            const last = event.results.length - 1;
+            const transcript = event.results[last][0].transcript.toLowerCase().trim();
+            
+            // Check if wake word is spoken
+            if (transcript.includes(WAKE_WORD)) {
+                triggerWakeWord();
+            }
+        };
+        
+        wakeRecognition.onerror = (event) => {
+            console.log('Speech recognition error:', event.error);
+            if (event.error === 'not-allowed') {
+                wakeIndicator.textContent = "🎤 Microphone permission needed";
+            }
+        };
+        
+        try {
+            wakeRecognition.start();
+        } catch(e) {
+            console.log('Could not start wake word detection:', e);
+        }
+    }
+    
+    // Trigger wake word activation
+    async function triggerWakeWord() {
+        if (isMicActive) return;
+        
+        // Visual feedback
+        wakeIndicator.classList.add('activated');
+        wakeIndicator.textContent = "✨ Wake word detected! Activating...";
+        
+        setTimeout(() => {
+            wakeIndicator.classList.remove('activated');
+        }, 500);
+        
+        // Stop wake word listening temporarily
+        if (wakeRecognition) {
+            try {
+                wakeRecognition.stop();
+            } catch(e) {}
+        }
+        
+        // Activate microphone and visualizer
+        await initMicrophone();
+        
+        // Restart wake word listening after activation
+        setTimeout(() => {
+            if (wakeWordEnabled && wakeRecognition) {
+                try {
+                    wakeRecognition.start();
+                } catch(e) {}
+            }
+        }, 2000);
+    }
+    
+    // Initialize microphone (called by wake word or manual)
+    async function initMicrophone() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            mediaStream = stream;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyserNode = audioCtx.createAnalyser();
+            analyserNode.fftSize = 512;
+            analyserNode.smoothingTimeConstant = 0.65;
+            frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
+            sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+            sourceNode.connect(analyserNode);
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            
+            isMicActive = true;
+            isMuted = false;
+            updateMuteUI();
+            
+            // Remove animated class from bars
+            barElements.forEach(bar => {
+                bar.classList.remove('animated-wave');
+            });
+            
+            // Start animation loop
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(animateBars);
+            
+            settingsStatusMsg.innerText = "🎤 Active";
+            wakeIndicator.textContent = "✅ Wave active! Visualizing audio...";
+            wakeIndicator.style.background = "rgba(0, 255, 150, 0.3)";
+            wakeIndicator.style.borderColor = "#00ffaa";
+            wakeIndicator.style.color = "#00ffaa";
+            
+            setTimeout(() => {
+                if (isMicActive && wakeWordEnabled) {
+                    wakeIndicator.textContent = "🎧 Listening for 'Hey Wave' (mic active)";
+                    wakeIndicator.style.background = "";
+                    wakeIndicator.style.borderColor = "";
+                    wakeIndicator.style.color = "";
+                    wakeIndicator.classList.add('listening');
+                }
+            }, 2000);
+            
+        } catch (err) {
+            console.error("Mic error:", err);
+            settingsStatusMsg.innerText = "❌ No mic access";
+            wakeIndicator.textContent = "❌ Microphone access denied";
+        }
+    }
+    
+    // Stop microphone and return to wake listening
+    async function stopMicrophone() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        
+        if (sourceNode) {
+            try { sourceNode.disconnect(); } catch(e) {}
+            sourceNode = null;
+        }
+        if (analyserNode) {
+            try { analyserNode.disconnect(); } catch(e) {}
+            analyserNode = null;
+        }
+        if (audioCtx) {
+            await audioCtx.close().catch(e => {});
+            audioCtx = null;
+        }
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(t => t.stop());
+            mediaStream = null;
+        }
+        
+        isMicActive = false;
+        isMuted = false;
+        
+        // Restore animated bars
+        barElements.forEach(bar => {
+            bar.classList.add('animated-wave');
+            bar.style.height = '';
+            bar.style.background = '';
+        });
+        
+        settingsStatusMsg.innerText = "⚪ Waiting for wake word";
+        wakeIndicator.textContent = "🎤 Say 'Hey Wave' to activate";
+        wakeIndicator.classList.remove('listening');
+        wakeIndicator.style.background = "";
+        wakeIndicator.style.borderColor = "";
+        
+        // Restart wake word detection if enabled
+        if (wakeWordEnabled && wakeRecognition) {
+            setTimeout(() => {
+                try {
+                    wakeRecognition.start();
+                } catch(e) {}
+            }, 500);
+        }
+    }
+    
+    function toggleMute() {
+        if (!isMicActive) return;
+        isMuted = !isMuted;
+        updateMuteUI();
+        settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Active";
+    }
+    
+    function updateMuteUI() {
+        if (isMuted) {
+            muteOverlayBtn.innerHTML = "🔊 UNMUTE";
+            muteOverlayBtn.classList.add('muted-active');
+        } else {
+            muteOverlayBtn.innerHTML = "🔇 MUTE";
+            muteOverlayBtn.classList.remove('muted-active');
+        }
+    }
+    
+    // Toggle wake word on/off
+    function toggleWakeWord() {
+        wakeWordEnabled = !wakeWordEnabled;
+        wakeToggleBtn.textContent = wakeWordEnabled ? "Disable" : "Enable";
+        
+        if (!wakeWordEnabled) {
+            // Disable wake word
+            if (wakeRecognition) {
+                try {
+                    wakeRecognition.stop();
+                } catch(e) {}
+                wakeRecognition = null;
+            }
+            wakeIndicator.textContent = "⏸️ Wake word disabled";
+            wakeIndicator.classList.remove('listening');
+        } else {
+            // Enable wake word
+            wakeIndicator.textContent = "🎤 Say 'Hey Wave' to activate";
+            initWakeWordDetection();
+        }
+    }
+    
+    // Recording functions
+    function updateRecordUI() {
+        if (isRecording) {
+            recordToggleBtn.innerHTML = "⏹️ STOP RECORDING";
+            recordToggleBtn.classList.add('recording-active');
+        } else {
+            recordToggleBtn.innerHTML = "⏺ START RECORDING";
+            recordToggleBtn.classList.remove('recording-active');
+        }
+    }
+    
+    function startCounter(seconds) {
+        if (counterInterval) clearInterval(counterInterval);
+        let remaining = seconds;
+        const update = () => {
+            if (remaining >= 0) {
+                settingsStatusMsg.innerText = `🔴 Recording: ${remaining}s`;
+                if (remaining === 0 && counterInterval) clearInterval(counterInterval);
+                remaining--;
+            } else if (counterInterval) clearInterval(counterInterval);
+        };
+        update();
+        counterInterval = setInterval(update, 1000);
+    }
+    
+    function handleRecordToggle() {
+        if (!isMicActive || !mediaStream) { 
+            settingsStatusMsg.innerText = "❌ Activate mic first"; 
+            return; 
+        }
+        
+        if (isRecording) {
+            if (counterInterval) clearInterval(counterInterval);
+            if (recordingTimeout) clearTimeout(recordingTimeout);
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            isRecording = false;
+            updateRecordUI();
+            settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Active";
+            return;
+        }
+        
+        recordedChunks = [];
+        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: mime });
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => { saveRecording(); };
+        mediaRecorder.start(200);
+        isRecording = true;
+        updateRecordUI();
+        startCounter(selectedDuration);
+        if (recordingTimeout) clearTimeout(recordingTimeout);
+        recordingTimeout = setTimeout(() => { 
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); 
+        }, selectedDuration * 1000);
+    }
+    
+    async function saveRecording() {
+        if (!recordedChunks.length) return;
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wave_recording_${Date.now()}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        settingsStatusMsg.innerText = "💾 Saved!";
+        setTimeout(() => { 
+            if (!isRecording && isMicActive) 
+                settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Active"; 
+        }, 1800);
+        recordedChunks = [];
+        isRecording = false;
+        updateRecordUI();
+        if (counterInterval) clearInterval(counterInterval);
+    }
+    
+    // Theme
+    function applyTheme() {
+        if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
+        else document.body.classList.remove('light-theme');
+    }
+    function toggleTheme() { 
+        document.body.classList.toggle('light-theme'); 
+        localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark'); 
+    }
+    applyTheme();
+    
+    // Event Listeners
+    muteOverlayBtn.addEventListener('click', toggleMute);
+    recordToggleBtn.addEventListener('click', handleRecordToggle);
+    durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value, 10); });
+    settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsDropdown.classList.toggle('hidden'); });
+    document.addEventListener('click', (e) => { 
+        if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) 
+            settingsDropdown.classList.add('hidden'); 
+    });
+    themeSwitch.addEventListener('click', toggleTheme);
+    wakeToggleBtn.addEventListener('click', toggleWakeWord);
+    
+    // Initialize
+    createBars();
+    idleBarAnimation();
+    initWakeWordDetection();
+    
+    // Cleanup
+    window.addEventListener('beforeunload', () => {
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        if (audioCtx) audioCtx.close();
+        if (animationId) cancelAnimationFrame(animationId);
+        if (wakeRecognition) wakeRecognition.stop();
+    });
+})();
+</script>
+</body>
+</html>
