@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Silent Blue Waves | Audio Visualizer + Recorder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'BlinkMacSystemFont', 'Roboto', sans-serif;
+            padding: 1.5rem;
+            transition: background 0.25s ease, color 0.2s ease;
+        }
+
+        /* Dark theme variables */
+        body.dark-theme {
+            background: #0f172a;
+        }
+        body.dark-theme .wave-container {
+            background: #1e293b;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+        }
+        body.dark-theme .title-section h1 {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+        }
+        body.dark-theme .sub {
+            color: #94a3b8;
+        }
+        body.dark-theme .permission-panel {
+            background: #0f172a;
+            border-color: #334155;
+        }
+        body.dark-theme .permission-panel p {
+            color: #e2e8f0;
+        }
+        body.dark-theme .status-msg {
+            background: #1e293b;
+            color: #7aa9c4;
+        }
+        body.dark-theme .canvas-wrapper {
+            background: #0f172a;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+        }
+        body.dark-theme canvas {
+            background: #0f172a;
+        }
+        body.dark-theme .btn-corner {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        body.dark-theme .btn-stop {
+            background: #451e1a;
+            border-color: #7f2e24;
+            color: #fda4af;
+        }
+        body.dark-theme .btn-stop:hover {
+            background: #63241e;
+        }
+        body.dark-theme .btn-mute {
+            background: #1e2a44;
+            border-color: #2d3a5e;
+            color: #93c5fd;
+        }
+        body.dark-theme .info-note {
+            color: #64748b;
+            border-top-color: #334155;
+        }
+        body.dark-theme .recording-panel {
+            background: #0f172a;
+            border-color: #334155;
+        }
+        body.dark-theme .rec-btn {
+            background: #2d3a5e;
+            color: #e2e8f0;
+        }
+        body.dark-theme .rec-btn.recording-active {
+            background: #b91c1c;
+            color: white;
+        }
+        body.dark-theme .setting-dropdown {
+            background: #1e293b;
+            border-color: #475569;
+            color: #f1f5f9;
+        }
+        body.dark-theme .duration-select {
+            background: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        .wave-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 1300px;
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+            padding: 2rem 1.8rem 2rem 1.8rem;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .title-section h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            background: linear-gradient(135deg, #0a4b8a, #1e88e5);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        .title-section .sub {
+            color: #5a6874;
+            margin-top: 0.5rem;
+            font-weight: 450;
+            font-size: 0.9rem;
+        }
+
+        /* settings button (top right) */
+        .settings-icon {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 3rem;
+            padding: 0.5rem 1rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .settings-icon:hover {
+            background: #e6edf4;
+            transform: scale(0.97);
+        }
+        body.dark-theme .settings-icon {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+
+        /* dropdown menu for settings */
+        .settings-dropdown {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1rem 1.3rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+            border: 1px solid #eef2f6;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            min-width: 180px;
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.96);
+        }
+        body.dark-theme .settings-dropdown {
+            background: #1e293be6;
+            border-color: #475569;
+            color: #f1f5f9;
+        }
+        .dropdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .theme-toggle-btn {
+            background: #eef2ff;
+            border: none;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+        }
+        .duration-select {
+            padding: 0.3rem 0.6rem;
+            border-radius: 2rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-family: inherit;
+            font-weight: 500;
+        }
+        .recording-panel {
+            background: #f9fafc;
+            border-radius: 1.8rem;
+            padding: 0.8rem 1.2rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            border: 1px solid #eef2f6;
+        }
+        .rec-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .rec-btn {
+            background: #eef3fc;
+            border: 1px solid #d4e2fc;
+            padding: 0.6rem 1.4rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .rec-btn.recording-active {
+            background: #dc2626;
+            color: white;
+            border-color: #b91c1c;
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+            100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+        }
+        .rec-status {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #2c7da0;
+        }
+        .permission-panel, .visualizer-area {
+            transition: display 0.1s;
+        }
+        .btn-corner {
+            position: absolute;
+            bottom: 0;
+            background: #f3f6fc;
+            border: 1px solid #e2e9f2;
+            padding: 0.7rem 1.6rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        .corner-buttons {
+            position: relative;
+            margin-top: 1.8rem;
+            height: 60px;
+        }
+        .btn-stop { left: 0; background: #fee9e6; border-color: #ffcdc5; color: #d43f1f; }
+        .btn-mute { right: 0; background: #eef3fe; border-color: #d4e2fc; color: #1e6f9f; }
+        .info-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8f9eac;
+            margin-top: 1.8rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid #edf2f7;
+        }
+        @media (max-width: 640px) {
+            .wave-container { padding: 1.2rem; }
+            .recording-panel { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+<div class="wave-container">
+    <div class="title-section">
+        <h1>Audio Bar</h1>
+        <div class="sub">Live audio waves · recorder · silent visual</div>
+        <div id="settingsButton" class="settings-icon">⚙️ Settings</div>
+        <div id="settingsDropdown" class="settings-dropdown" style="display: none;">
+            <div class="dropdown-item">
+                <span>🌓 Dark/Light</span>
+                <button id="themeToggleBtn" class="theme-toggle-btn">Toggle Theme</button>
+            </div>
+            <div class="dropdown-item">
+                <span>⏱️ Duration (sec)</span>
+                <select id="durationSelect" class="duration-select">
+                    <option value="5">5 sec</option>
+                    <option value="10" selected>10 sec</option>
+                    <option value="15">15 sec</option>
+                    <option value="30">30 sec</option>
+                    <option value="60">60 sec</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- permission panel -->
+    <div id="permissionZone" class="permission-panel">
+        <p>Grant microphone access to see the blue bars dance & record</p>
+        <button id="requestPermBtn" class="perm-btn">✨ Request Permission & Start</button>
+        <div class="status-area" style="margin-top: 1rem;">
+            <div id="permStatusMsg" class="status-msg">⚡ Click to allow microphone</div>
+        </div>
+    </div>
+
+    <!-- visualizer area (hidden until permission) -->
+    <div id="visualizerArea" style="display: none;">
+        <div class="canvas-wrapper">
+            <canvas id="audioCanvas" width="1100" height="280" style="width:100%; height:auto; max-width:1100px; aspect-ratio:1100/280"></canvas>
+        </div>
+
+        <!-- recording control panel -->
+        <div id="recordingPanel" class="recording-panel">
+            <div class="rec-controls">
+                <button id="startRecordBtn" class="rec-btn">⏺ Start Recording</button>
+                <button id="stopRecordBtn" class="rec-btn" disabled>⏹️ Stop & Save</button>
+            </div>
+            <div id="recStatusMsg" class="rec-status">⚪ Ready to record</div>
+        </div>
+
+        <div class="corner-buttons">
+            <button id="stopBtn" class="btn-corner btn-stop">STOP</button>
+            <button id="muteBtn" class="btn-corner btn-mute">🔇 MUTE</button>
+        </div>
+        <div class="info-note">Blue bars react to mic | Record WAV (overwrites previous) | Silent output</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM elements
+        const permissionZone = document.getElementById('permissionZone');
+        const visualizerArea = document.getElementById('visualizerArea');
+        const requestBtn = document.getElementById('requestPermBtn');
+        const permStatusMsg = document.getElementById('permStatusMsg');
+        const stopBtn = document.getElementById('stopBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const canvas = document.getElementById('audioCanvas');
+        const startRecordBtn = document.getElementById('startRecordBtn');
+        const stopRecordBtn = document.getElementById('stopRecordBtn');
+        const recStatusSpan = document.getElementById('recStatusMsg');
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        const themeToggle = document.getElementById('themeToggleBtn');
+        const durationSelect = document.getElementById('durationSelect');
+
+        // Audio context & nodes - SILENT (no destination)
+        let audioContext = null;
+        let mediaStream = null;
+        let sourceNode = null;
+        let analyserNode = null;
+        let animationFrameId = null;
+        let isStreamActive = false;
+        let isMicrophoneMuted = false;
+        
+        // Recording variables
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordingTimer = null;
+        let selectedDuration = 10;  // seconds default
+        
+        // Canvas & drawing
+        let canvasCtx = canvas.getContext('2d');
+        let canvasWidth = canvas.width, canvasHeight = canvas.height;
+        const FFT_SIZE = 256;
+        let dataArray = null;
+        
+        // Helper rounded rect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x+r, y);
+                this.lineTo(x+w-r, y);
+                this.quadraticCurveTo(x+w, y, x+w, y+r);
+                this.lineTo(x+w, y+h-r);
+                this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                this.lineTo(x+r, y+h);
+                this.quadraticCurveTo(x, y+h, x, y+h-r);
+                this.lineTo(x, y+r);
+                this.quadraticCurveTo(x, y, x+r, y);
+                return this;
+            };
+        }
+        
+        function initCanvasSize() { canvas.width = 1100; canvas.height = 280; canvasWidth = canvas.width; canvasHeight = canvas.height; canvasCtx = canvas.getContext('2d'); }
+        initCanvasSize();
+        
+        // drawing functions (identical to original style + silent logic)
+        function drawBlueBars() {
+            if (!animationFrameId) return;
+            if (!isStreamActive || !analyserNode || isMicrophoneMuted) {
+                drawGentleIdleBars();
+                animationFrameId = requestAnimationFrame(drawBlueBars);
+                return;
+            }
+            if (!dataArray) dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+            analyserNode.getByteFrequencyData(dataArray);
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            canvasCtx.fillStyle = getComputedStyle(document.body).backgroundColor === 'rgb(15, 23, 42)' ? '#0f172a' : '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            const barCount = Math.min(80, analyserNode.frequencyBinCount);
+            const step = Math.floor(analyserNode.frequencyBinCount / barCount);
+            const barWidth = (canvasWidth / barCount) * 0.85;
+            const spacing = (canvasWidth / barCount) * 0.15;
+            let x = 0;
+            for (let i = 0; i < barCount; i++) {
+                let sum = 0;
+                for (let j = 0; j < step; j++) { const idx = i * step + j; if (idx < analyserNode.frequencyBinCount) sum += dataArray[idx]; }
+                let avg = sum / step;
+                const percent = avg / 255;
+                const barHeight = Math.max(5, percent * (canvasHeight - 40));
+                const gradient = canvasCtx.createLinearGradient(x, canvasHeight - barHeight, x, canvasHeight);
+                gradient.addColorStop(0, '#0a6bc2'); gradient.addColorStop(0.5, '#2d86e0'); gradient.addColorStop(1, '#6eaeff');
+                canvasCtx.fillStyle = gradient;
+                const yPosition = canvasHeight - barHeight - 6;
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(x, yPosition, barWidth - 2, barHeight, 6);
+                canvasCtx.fill();
+                x += barWidth + spacing;
+            }
+            animationFrameId = requestAnimationFrame(drawBlueBars);
+        }
+        
+        function drawGentleIdleBars() {
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            const bgColor = document.body.classList.contains('dark-theme') ? '#0f172a' : '#ffffff';
+            canvasCtx.fillStyle = bgColor;
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            const barCount = 64;
+            const barWidth = (canvasWidth / barCount) * 0.7;
+            const spacing = (canvasWidth / barCount) * 0.3;
+            let x = 0;
+            const time = Date.now() * 0.005;
+            for (let i = 0; i < barCount; i++) {
+                let idleHeight = 8 + Math.sin(time + i * 0.2) * 5 + Math.cos(i * 0.15) * 3;
+                idleHeight = Math.min(32, Math.max(5, idleHeight));
+                canvasCtx.fillStyle = '#c2dcff';
+                canvasCtx.beginPath();
+                canvasCtx.roundRect(x, canvasHeight - idleHeight - 6, barWidth - 2, idleHeight, 5);
+                canvasCtx.fill();
+                x += barWidth + spacing;
+            }
+        }
+        
+        // silent visualizer init
+        async function initSilentVisualizerFromStream(stream) {
+            if (audioContext && audioContext.state !== 'closed') await stopAndReleaseResources(false);
+            mediaStream = stream;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = FFT_SIZE;
+            analyserNode.smoothingTimeConstant = 0.7;
+            dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+            sourceNode = audioContext.createMediaStreamSource(mediaStream);
+            sourceNode.connect(analyserNode);
+            // NO connection to destination -> SILENT
+            if (audioContext.state === 'suspended') await audioContext.resume();
+            isStreamActive = true;
+            isMicrophoneMuted = false;
+            updateMuteButtonUI();
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(drawBlueBars);
+        }
+        
+        async function stopAndReleaseResources(keepUI = false) {
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+            if (sourceNode) { try { sourceNode.disconnect(); } catch(e) {} sourceNode = null; }
+            if (analyserNode) { try { analyserNode.disconnect(); } catch(e) {} analyserNode = null; }
+            if (audioContext) { await audioContext.close().catch(e=>{}); audioContext = null; }
+            if (mediaStream) { mediaStream.getTracks().forEach(track => { if(track.readyState === 'live') track.stop(); }); mediaStream = null; }
+            isStreamActive = false;
+            isMicrophoneMuted = false;
+            if (!keepUI) {
+                visualizerArea.style.display = 'none';
+                permissionZone.style.display = 'block';
+                permStatusMsg.innerText = '⏹️ Stream stopped. Click to restart.';
+            }
+            // reset recording UI if needed
+            if (isRecording) stopRecordingAndSave();
+        }
+        
+        function updateMuteButtonUI() {
+            if (isMicrophoneMuted) { muteBtn.innerHTML = '🔴 MUTED'; muteBtn.classList.add('muted-active'); }
+            else { muteBtn.innerHTML = '🔇 MUTE'; muteBtn.classList.remove('muted-active'); }
+        }
+        function toggleVisualMute() { if(!isStreamActive) return; isMicrophoneMuted = !isMicrophoneMuted; updateMuteButtonUI(); showTempMsg(isMicrophoneMuted ? '🔇 Visual muted' : '🎵 Visual active'); }
+        
+        function showTempMsg(msg) {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.style.position = 'fixed'; div.style.bottom = '80px'; div.style.left = '50%'; div.style.transform = 'translateX(-50%)';
+            div.style.backgroundColor = '#eef3fc'; div.style.padding = '6px 18px'; div.style.borderRadius = '40px';
+            div.style.fontSize = '0.8rem'; div.style.fontWeight = '500'; div.style.zIndex = '1000'; div.style.pointerEvents = 'none';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 1200);
+        }
+        
+        // ---------- RECORDING (WAV, single file, overwrite) ----------
+        function getWavBlob(chunks, mimeType = 'audio/webm') {
+            // We'll convert to WAV using AudioContext if needed but simplest: recorder with type 'audio/wav' if supported
+            // Many browsers support audio/wav in MediaRecorder? Not always. We'll encode using offline context? For robust wav, we use a simple PCM converter.
+            // Better approach: Use MediaRecorder with 'audio/webm' then convert? But requirement: save as .wav.
+            // Implement custom PCM WAV from raw audio? Let's do: capture audio from stream via ScriptProcessor? complex. Instead use MediaRecorder with audio/wav if possible, else convert webm to wav via simple library? but I'll use a robust method: Record as PCM via AudioWorklet? not needed.
+            // Since requirement is strict: save as wav. I'll implement a WAV writer using AudioContext to decode webm? Overkill.
+            // Simpler: Record raw PCM using createScriptProcessor? but deprecated. We'll use MediaRecorder with 'audio/webm' and then convert to WAV using offline context.
+            // Provide clean solution: Record via MediaRecorder(stream, {mimeType: 'audio/webm'}) then convert to wav with a helper. Implement wav encoder from Float32Array.
+            return new Promise(async (resolve) => {
+                // Decode webm to wav using offline context
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const arrayBuffer = await blob.arrayBuffer();
+                const audioCtxOff = new OfflineAudioContext({ numberOfChannels: 1, length: 1, sampleRate: 48000 });
+                try {
+                    const audioBuffer = await audioCtxOff.decodeAudioData(arrayBuffer);
+                    const numberOfChannels = audioBuffer.numberOfChannels;
+                    const sampleRate = audioBuffer.sampleRate;
+                    const length = audioBuffer.length;
+                    const pcmData = [];
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        pcmData.push(audioBuffer.getChannelData(channel));
+                    }
+                    // interleave
+                    const interleaved = new Float32Array(length * numberOfChannels);
+                    for (let i = 0; i < length; i++) {
+                        for (let ch = 0; ch < numberOfChannels; ch++) {
+                            interleaved[i * numberOfChannels + ch] = pcmData[ch][i];
+                        }
+                    }
+                    const wavBuffer = float32ToWav(interleaved, sampleRate, numberOfChannels);
+                    resolve(new Blob([wavBuffer], { type: 'audio/wav' }));
+                } catch(e) {
+                    console.warn("fallback wav");
+                    resolve(new Blob(chunks, { type: 'audio/wav' }));
+                }
+            });
+        }
+        
+        function float32ToWav(samples, sampleRate, numChannels) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+            const writeString = (offset, str) => { for (let i=0; i<str.length; i++) view.setUint8(offset+i, str.charCodeAt(i)); };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * 2, true);
+            view.setUint16(32, numChannels * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+            let offset = 44;
+            for (let i=0; i<samples.length; i++) {
+                let s = Math.max(-1, Math.min(1, samples[i]));
+                s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                view.setInt16(offset, s, true);
+                offset += 2;
+            }
+            return buffer;
+        }
+        
+        async function startRecording() {
+            if (!isStreamActive || !mediaStream) { recStatusSpan.innerText = '❌ No active mic. Start visualizer first.'; return; }
+            if (isRecording) return;
+            recordedChunks = [];
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+            mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+            mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = async () => {
+                if(recordedChunks.length === 0) return;
+                const wavBlob = await getWavBlob(recordedChunks);
+                // Save as "recording.wav" always overwriting previous (single file)
+                const url = URL.createObjectURL(wavBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'recording.wav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                recStatusSpan.innerText = '✅ Saved as recording.wav (overwritten)';
+                setTimeout(() => { if(!isRecording) recStatusSpan.innerText = '⚪ Ready to record'; }, 2000);
+                recordedChunks = [];
+            };
+            mediaRecorder.start(1000);
+            isRecording = true;
+            startRecordBtn.disabled = true;
+            stopRecordBtn.disabled = false;
+            startRecordBtn.classList.add('recording-active');
+            startRecordBtn.textContent = '🔴 RECORDING...';
+            recStatusSpan.innerText = `⏺ Recording for ${selectedDuration} sec...`;
+            recordingTimer = setTimeout(() => { if(isRecording) stopRecordingAndSave(); }, selectedDuration * 1000);
+        }
+        
+        function stopRecordingAndSave() {
+            if (recordingTimer) { clearTimeout(recordingTimer); recordingTimer = null; }
+            if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+            startRecordBtn.disabled = false;
+            stopRecordBtn.disabled = true;
+            startRecordBtn.classList.remove('recording-active');
+            startRecordBtn.textContent = '⏺ Start Recording';
+            if (!recordingTimer) recStatusSpan.innerText = '⏹️ Stopped, saving...';
+        }
+        
+        // request microphone & start visualizer
+        async function requestMicAndStartVisualizer() {
+            permStatusMsg.innerText = '🎤 Requesting microphone...';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                await initSilentVisualizerFromStream(stream);
+                permissionZone.style.display = 'none';
+                visualizerArea.style.display = 'block';
+                permStatusMsg.innerText = '✅ Visualizer active — silent recording ready';
+                isMicrophoneMuted = false;
+                updateMuteButtonUI();
+            } catch(err) {
+                permStatusMsg.innerText = '❌ Microphone error: ' + (err.name === 'NotAllowedError' ? 'Permission denied' : 'No mic');
+            }
+        }
+        
+        // Theme toggle & dropdown
+        function initTheme() { if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-theme'); }
+        function toggleTheme() { document.body.classList.toggle('dark-theme'); localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light'); drawGentleIdleBars(); }
+        initTheme();
+        
+        // Events
+        requestBtn.addEventListener('click', requestMicAndStartVisualizer);
+        stopBtn.addEventListener('click', async () => { if(isRecording) stopRecordingAndSave(); await stopAndReleaseResources(true); permissionZone.style.display = 'block'; visualizerArea.style.display = 'none'; permStatusMsg.innerText = '⏹️ Stopped. Click to restart.'; });
+        muteBtn.addEventListener('click', toggleVisualMute);
+        startRecordBtn.addEventListener('click', () => { selectedDuration = parseInt(durationSelect.value, 10); startRecording(); });
+        stopRecordBtn.addEventListener('click', stopRecordingAndSave);
+        settingsButton.addEventListener('click', (e) => { e.stopPropagation(); settingsDropdown.style.display = settingsDropdown.style.display === 'none' ? 'flex' : 'none'; });
+        document.addEventListener('click', (e) => { if(!settingsButton.contains(e.target) && !settingsDropdown.contains(e.target)) settingsDropdown.style.display = 'none'; });
+        themeToggle.addEventListener('click', () => { toggleTheme(); drawGentleIdleBars(); });
+        durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value,10); });
+        window.addEventListener('resize', () => { if(visualizerArea.style.display === 'block') drawGentleIdleBars(); });
+        drawGentleIdleBars();
+    })();
+</script>
+</body>
+</html>
