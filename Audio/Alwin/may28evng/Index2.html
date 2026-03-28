@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Wake Word Detector</title>
+</head>
+
+<body>
+
+<button id="startBtn">Start Listening</button>
+<p id="status">Click start</p>
+
+<script src="edge-impulse-standalone.js"></script>
+
+<script>
+
+let runner;
+
+document.getElementById("startBtn").onclick = async function () {
+
+  const status = document.getElementById("status");
+
+  try {
+
+    // Ask microphone permission
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    status.innerText = "Microphone access granted";
+
+    // Initialize Edge Impulse runner
+    runner = new EdgeImpulseRunner();
+    await runner.init("model.eim");
+
+    status.innerText = "Model loaded. Listening...";
+
+    listenLoop();
+
+  } catch (err) {
+
+    status.innerText = "Microphone permission denied";
+    console.error(err);
+
+  }
+
+};
+
+async function listenLoop() {
+
+  while (true) {
+
+    const result = await runner.classify();
+
+    console.log(result);
+
+    if (result.result.classification.wakeword > 0.8) {
+
+      document.getElementById("status").innerText = "Wake word detected!";
+
+    }
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>
