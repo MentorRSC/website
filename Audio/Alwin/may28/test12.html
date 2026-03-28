@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>Silent Flow | Custom Wake Word Visualizer</title>
+<title>Offline Wake Word Visualizer</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.4/dist/speech-commands.min.js"></script>
 
 <style>
+/* Your existing CSS here - same as before */
 * {
     margin: 0;
     padding: 0;
@@ -397,7 +400,7 @@ body.light-theme {
     <span class="clock-ampm" id="clockAmPm">--</span>
 </div>
 
-<div id="wakeIndicator" class="wake-indicator">🎤 Say "Hey Wave" to start</div>
+<div id="wakeIndicator" class="wake-indicator">📥 Loading offline wake word model...</div>
 
 <div id="settingsBtn" class="settings-corner">⚙️</div>
 
@@ -407,8 +410,8 @@ body.light-theme {
         <button id="themeBtn" class="setting-btn">Toggle</button>
     </div>
     <div class="setting-item">
-        <label>🎙️ Wake Word</label>
-        <input type="text" id="customWakeWord" class="custom-wake-input" maxlength="20" placeholder="Enter wake word">
+        <label>🎙️ Offline Mode</label>
+        <button id="offlineModeBtn" class="setting-btn">✅ Enabled</button>
     </div>
     <div class="setting-item">
         <label>⏱️ Duration</label>
@@ -421,21 +424,21 @@ body.light-theme {
     </div>
     <div class="divider"></div>
     <button id="recordBtn" class="record-btn">⏺ START RECORDING</button>
-    <div id="statusMsg" class="status-text">⚪ Waiting for wake word</div>
+    <div id="statusMsg" class="status-text">⚪ Loading model...</div>
 </div>
 
 <div id="waveContainer" class="wave-container"></div>
 <button id="muteBtn" class="mute-overlay">🔇 MUTE</button>
 
 <script>
-(function() {
+(async function() {
     // DOM Elements
     const waveContainer = document.getElementById('waveContainer');
     const muteBtn = document.getElementById('muteBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsPanel = document.getElementById('settingsPanel');
     const themeBtn = document.getElementById('themeBtn');
-    const customWakeInput = document.getElementById('customWakeWord');
+    const offlineModeBtn = document.getElementById('offlineModeBtn');
     const durationSelect = document.getElementById('durationSelect');
     const recordBtn = document.getElementById('recordBtn');
     const statusMsg = document.getElementById('statusMsg');
@@ -450,9 +453,16 @@ body.light-theme {
     let animationId = null;
     let isActive = false;
     let isMuted = false;
-    let wakeEnabled = true;
-    let recognition = null;
-    let customWakeWord = "hey wave";
+    
+    // Offline Wake Word Detection
+    let recognizer = null;
+    let wakeWordModel = null;
+    let isListening = false;
+    let offlineEnabled = true;
+    
+    // Custom wake words mapping to model labels
+    const wakeWordsList = ["hey", "hello", "hi", "lyra", "robot", "computer", "teacher", "start"];
+    let customWakeWord = "";
     
     // Recording
     let mediaRecorder = null;
@@ -483,11 +493,9 @@ body.light-theme {
     
     // Show Popup Notification
     function showPopup(wakeWord) {
-        // Remove existing popup
         const oldPopup = document.querySelector('.popup-notification');
         if (oldPopup) oldPopup.remove();
         
-        // Create popup
         const popup = document.createElement('div');
         popup.className = 'popup-notification';
         popup.innerHTML = `
@@ -498,16 +506,13 @@ body.light-theme {
         `;
         document.body.appendChild(popup);
         
-        // Animate in
         setTimeout(() => popup.classList.add('show'), 10);
         
-        // Auto hide after 2 seconds
         setTimeout(() => {
             popup.classList.remove('show');
             setTimeout(() => popup.remove(), 300);
         }, 2000);
         
-        // Vibrate on mobile if supported
         if (window.navigator && window.navigator.vibrate) {
             window.navigator.vibrate(200);
         }
@@ -559,7 +564,6 @@ body.light-theme {
         }
     }
     
-    // Idle animation
     function idleAnimation() {
         if (!isActive && bars.length) {
             bars.forEach(bar => {
@@ -569,7 +573,6 @@ body.light-theme {
         }
     }
     
-    // Animation loop
     function animate() {
         if (!animationId) return;
         updateBars();
@@ -610,13 +613,13 @@ body.light-theme {
             animationId = requestAnimationFrame(animate);
             
             statusMsg.innerText = '🎤 Active';
-            wakeIndicator.textContent = '✅ Visualizer Active • Listening for wake word';
+            wakeIndicator.textContent = '✅ Visualizer Active • Offline listening active';
             wakeIndicator.classList.remove('listening');
             wakeIndicator.classList.add('active');
             
             setTimeout(() => {
                 if (isActive) {
-                    wakeIndicator.textContent = `🎧 Listening for "${customWakeWord}"`;
+                    wakeIndicator.textContent = `🎧 Offline - Listening for wake words`;
                     wakeIndicator.classList.add('listening');
                     wakeIndicator.classList.remove('active');
                 }
@@ -626,21 +629,6 @@ body.light-theme {
             console.error('Mic error:', err);
             statusMsg.innerText = '❌ Mic access denied';
             wakeIndicator.textContent = '❌ Microphone access required';
-            
-            // Show error popup
-            const errorPopup = document.createElement('div');
-            errorPopup.className = 'popup-notification';
-            errorPopup.innerHTML = `
-                <div class="popup-icon">⚠️</div>
-                <div class="popup-title">Microphone Required</div>
-                <div class="popup-message">Please allow microphone access to use wake word</div>
-            `;
-            document.body.appendChild(errorPopup);
-            setTimeout(() => errorPopup.classList.add('show'), 10);
-            setTimeout(() => {
-                errorPopup.classList.remove('show');
-                setTimeout(() => errorPopup.remove(), 300);
-            }, 2500);
         }
     }
     
@@ -672,141 +660,148 @@ body.light-theme {
         });
         
         statusMsg.innerText = '⚪ Waiting for wake word';
-        wakeIndicator.textContent = `🎤 Say "${customWakeWord}" to start`;
+        wakeIndicator.textContent = `🎤 Offline - Say: ${wakeWordsList.join(", ")}`;
         wakeIndicator.classList.remove('active', 'listening');
-        
-        if (wakeEnabled && recognition) {
-            setTimeout(() => {
-                try { recognition.start(); } catch(e) { console.log('Restart error:', e); }
-            }, 500);
+    }
+    
+    // Initialize offline wake word model
+    async function initOfflineWakeWord() {
+        try {
+            wakeIndicator.textContent = '📥 Loading offline AI model... (40MB)';
+            statusMsg.innerText = '📥 Loading offline model...';
+            
+            // Load the pre-trained speech commands model
+            recognizer = await speechCommands.create('BROWSER_FFT');
+            await recognizer.ensureModelLoaded();
+            
+            // Get available words from the model
+            const words = recognizer.wordLabels();
+            
+            wakeIndicator.textContent = '🎤 Offline model ready! Say: ' + wakeWordsList.join(", ");
+            statusMsg.innerText = '✅ Offline wake word ready';
+            
+            // Start listening
+            startOfflineListening();
+            
+        } catch (error) {
+            console.error('Failed to load offline model:', error);
+            wakeIndicator.textContent = '⚠️ Offline model failed - using fallback mode';
+            statusMsg.innerText = '⚠️ Using basic audio detection';
+            
+            // Fallback to simple volume detection
+            startFallbackDetection();
         }
     }
     
-    // Wake word detection
-    function initWakeWord() {
-        if (!wakeEnabled) return;
+    // Start offline listening with TensorFlow model
+    function startOfflineListening() {
+        if (!recognizer || isListening) return;
         
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            wakeIndicator.textContent = '⚠️ Speech recognition not supported on this device';
-            statusMsg.innerText = '⚠️ Browser doesn\'t support wake word';
-            return;
-        }
+        isListening = true;
         
-        if (recognition) {
-            try { recognition.stop(); } catch(e) {}
-        }
-        
-        recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        
-        recognition.onstart = () => {
-            if (!isActive && wakeEnabled) {
-                wakeIndicator.classList.add('listening');
-                wakeIndicator.textContent = `🎧 Listening for "${customWakeWord}"...`;
-            }
-        };
-        
-        recognition.onend = () => {
-            if (wakeEnabled && !isActive) {
-                setTimeout(() => {
-                    try { recognition.start(); } catch(e) { console.log('Restart error:', e); }
-                }, 1000);
-            }
-        };
-        
-        recognition.onresult = (event) => {
-            const last = event.results.length - 1;
-            const text = event.results[last][0].transcript.toLowerCase().trim();
-            const wakeWordLower = customWakeWord.toLowerCase().trim();
-            
-            // Check if spoken text contains the custom wake word
-            if (text.includes(wakeWordLower)) {
-                if (!isActive) {
-                    // Show popup notification
-                    showPopup(text);
-                    
-                    // Visual feedback on indicator
-                    wakeIndicator.classList.add('active');
-                    wakeIndicator.textContent = `✨ Wake word detected! "${text.substring(0, 30)}"`;
-                    
-                    // Start visualizer after a brief moment
-                    setTimeout(() => {
-                        startVisualizer();
-                    }, 100);
+        // Listen for speech commands
+        recognizer.listen(result => {
+            if (!isActive) {
+                const scores = result.scores;
+                const words = recognizer.wordLabels();
+                
+                // Check each wake word
+                for (let i = 0; i < wakeWordsList.length; i++) {
+                    const wakeWord = wakeWordsList[i];
+                    // Find closest match in model
+                    for (let j = 0; j < words.length; j++) {
+                        if (words[j].toLowerCase().includes(wakeWord.toLowerCase()) || 
+                            wakeWord.toLowerCase().includes(words[j].toLowerCase())) {
+                            if (scores[j] > 0.7) { // Confidence threshold
+                                triggerWakeWord(wakeWord);
+                                return;
+                            }
+                        }
+                    }
+                }
+                
+                // Also check custom wake word
+                if (customWakeWord && customWakeWord !== "hey wave") {
+                    for (let j = 0; j < words.length; j++) {
+                        if (words[j].toLowerCase().includes(customWakeWord.toLowerCase())) {
+                            if (scores[j] > 0.7) {
+                                triggerWakeWord(customWakeWord);
+                                return;
+                            }
+                        }
+                    }
                 }
             }
-            
-            // Optional: Show what's being heard (for debugging, but can be removed)
-            if (!isActive && text.length > 0) {
-                wakeIndicator.textContent = `🎤 "${text.substring(0, 30)}"`;
-                setTimeout(() => {
-                    if (!isActive && wakeEnabled) {
-                        wakeIndicator.textContent = `🎧 Listening for "${customWakeWord}"...`;
-                    }
-                }, 1500);
-            }
-        };
+        }, {
+            includeSpectrogram: false,
+            probabilityThreshold: 0.75,
+            invokeCallbackOnNoiseAndUnknown: true,
+            overlapFactor: 0.5
+        });
         
-        recognition.onerror = (e) => {
-            console.log('Recognition error:', e.error);
-            if (e.error === 'not-allowed') {
-                wakeIndicator.textContent = '🎤 Microphone permission needed for wake word';
-            } else if (e.error === 'network') {
-                wakeIndicator.textContent = '🌐 Internet connection required for wake word';
-            }
-        };
-        
+        wakeIndicator.classList.add('listening');
+    }
+    
+    // Fallback: Simple volume-based detection (for when model fails)
+    let fallbackStream = null;
+    let fallbackAudioContext = null;
+    let fallbackAnalyser = null;
+    
+    async function startFallbackDetection() {
         try {
-            recognition.start();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            fallbackStream = stream;
+            fallbackAudioContext = new AudioContext();
+            fallbackAnalyser = fallbackAudioContext.createAnalyser();
+            const source = fallbackAudioContext.createMediaStreamSource(stream);
+            source.connect(fallbackAnalyser);
+            
+            const dataArray = new Uint8Array(fallbackAnalyser.frequencyBinCount);
+            let lastTriggerTime = 0;
+            let silenceCount = 0;
+            
+            function detectVolume() {
+                if (!fallbackAnalyser) return;
+                
+                fallbackAnalyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                let avg = sum / dataArray.length;
+                let volume = avg / 255;
+                
+                // Simple voice activity detection
+                if (volume > 0.15 && !isActive && (Date.now() - lastTriggerTime > 3000)) {
+                    silenceCount++;
+                    if (silenceCount > 3) {
+                        triggerWakeWord("voice detected");
+                        lastTriggerTime = Date.now();
+                        silenceCount = 0;
+                    }
+                } else if (volume < 0.05) {
+                    silenceCount = 0;
+                }
+                
+                requestAnimationFrame(detectVolume);
+            }
+            
+            detectVolume();
+            wakeIndicator.textContent = '🎤 Fallback mode - Speak to activate';
+            statusMsg.innerText = '⚡ Fallback detection active';
+            
         } catch(e) {
-            console.log('Start error:', e);
+            console.error('Fallback failed:', e);
         }
     }
     
-    // Update wake word from input
-    function updateWakeWord() {
-        let newWord = customWakeInput.value.trim();
-        if (newWord === "") {
-            newWord = "hey wave";
-            customWakeInput.value = "hey wave";
-        }
-        customWakeWord = newWord.toLowerCase();
-        
-        // Update UI
+    // Trigger wake word
+    function triggerWakeWord(word) {
         if (!isActive) {
-            wakeIndicator.textContent = `🎤 Say "${customWakeWord}" to start`;
-        } else {
-            wakeIndicator.textContent = `🎧 Listening for "${customWakeWord}"`;
-        }
-        
-        // Restart recognition with new wake word
-        if (wakeEnabled && recognition && !isActive) {
-            try {
-                recognition.stop();
-                setTimeout(() => {
-                    recognition.start();
-                }, 100);
-            } catch(e) {}
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('customWakeWord', customWakeWord);
-    }
-    
-    // Load saved wake word
-    function loadSavedWakeWord() {
-        const saved = localStorage.getItem('customWakeWord');
-        if (saved) {
-            customWakeWord = saved;
-            customWakeInput.value = saved;
-        } else {
-            customWakeInput.value = "hey wave";
-        }
-        if (!isActive) {
-            wakeIndicator.textContent = `🎤 Say "${customWakeWord}" to start`;
+            showPopup(word);
+            wakeIndicator.classList.add('active');
+            wakeIndicator.textContent = `✨ Wake word detected! "${word}"`;
+            setTimeout(() => {
+                startVisualizer();
+            }, 100);
         }
     }
     
@@ -828,7 +823,7 @@ body.light-theme {
         }
     }
     
-    // Recording
+    // Recording functions
     function updateRecordUI() {
         if (isRecording) {
             recordBtn.innerHTML = '⏹️ STOP RECORDING';
@@ -859,7 +854,6 @@ body.light-theme {
     function handleRecording() {
         if (!isActive || !mediaStream) {
             statusMsg.innerText = '❌ Activate wake word first';
-            showPopupMessage('Activate wake word first', 'info');
             return;
         }
         
@@ -917,22 +911,6 @@ body.light-theme {
         }, recordDuration * 1000);
     }
     
-    function showPopupMessage(msg, type = 'info') {
-        const popup = document.createElement('div');
-        popup.className = 'popup-notification';
-        popup.innerHTML = `
-            <div class="popup-icon">${type === 'info' ? 'ℹ️' : '⚠️'}</div>
-            <div class="popup-title">${type === 'info' ? 'Info' : 'Notice'}</div>
-            <div class="popup-message">${msg}</div>
-        `;
-        document.body.appendChild(popup);
-        setTimeout(() => popup.classList.add('show'), 10);
-        setTimeout(() => {
-            popup.classList.remove('show');
-            setTimeout(() => popup.remove(), 300);
-        }, 2000);
-    }
-    
     // Theme
     function toggleTheme() {
         document.body.classList.toggle('light-theme');
@@ -942,21 +920,6 @@ body.light-theme {
     function applyTheme() {
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-theme');
-        }
-    }
-    
-    // Toggle wake word
-    function toggleWakeWord() {
-        wakeEnabled = !wakeEnabled;
-        if (wakeEnabled && !isActive) {
-            initWakeWord();
-        } else if (!wakeEnabled && recognition) {
-            try { recognition.stop(); } catch(e) {}
-            recognition = null;
-            if (!isActive) {
-                wakeIndicator.textContent = '⏸️ Wake word disabled';
-                wakeIndicator.classList.remove('listening', 'active');
-            }
         }
     }
     
@@ -976,8 +939,16 @@ body.light-theme {
         }
     });
     themeBtn.addEventListener('click', toggleTheme);
-    customWakeInput.addEventListener('change', updateWakeWord);
-    customWakeInput.addEventListener('blur', updateWakeWord);
+    offlineModeBtn.addEventListener('click', () => {
+        offlineEnabled = !offlineEnabled;
+        offlineModeBtn.textContent = offlineEnabled ? '✅ Enabled' : '❌ Disabled';
+        if (!offlineEnabled && recognizer) {
+            recognizer.stopListening();
+            isListening = false;
+        } else if (offlineEnabled && !recognizer) {
+            initOfflineWakeWord();
+        }
+    });
     
     window.addEventListener('resize', () => setTimeout(createBars, 100));
     
@@ -985,35 +956,15 @@ body.light-theme {
     createBars();
     idleAnimation();
     applyTheme();
-    loadSavedWakeWord();
-    initWakeWord();
-    
-    // Check if mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile) {
-        console.log('Mobile device detected - wake word should work on iOS 14+ and Android');
-        // iOS requires user interaction to start speech recognition
-        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            wakeIndicator.textContent = `🎤 Tap anywhere to enable "${customWakeWord}" on iOS`;
-            document.body.addEventListener('touchstart', function enableIOS() {
-                if (recognition) {
-                    try {
-                        recognition.start();
-                        wakeIndicator.textContent = `🎧 Listening for "${customWakeWord}"...`;
-                        wakeIndicator.classList.add('listening');
-                    } catch(e) {}
-                }
-                document.body.removeEventListener('touchstart', enableIOS);
-            }, { once: true });
-        }
-    }
+    initOfflineWakeWord();
     
     // Cleanup
     window.addEventListener('beforeunload', () => {
         if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
         if (audioContext) audioContext.close();
         if (animationId) cancelAnimationFrame(animationId);
-        if (recognition) recognition.stop();
+        if (recognizer) recognizer.stopListening();
+        if (fallbackStream) fallbackStream.getTracks().forEach(t => t.stop());
     });
 })();
 </script>
