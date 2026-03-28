@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Wake Word Detector</title>
+</head>
+
+<body>
+
+<button onclick="start()">Start Listening</button>
+<p id="result">Waiting...</p>
+
+<script src="edge-impulse-standalone.js"></script>
+
+<script>
+async function start() {
+
+  const runner = new EdgeImpulseRunner();
+
+  await runner.init("model.eim");
+
+  document.getElementById("result").innerText = "Listening...";
+
+  while (true) {
+
+    const result = await runner.classify();
+
+    console.log(result);
+
+    if (result.result.classification.wakeword > 0.8) {
+      document.getElementById("result").innerText = "Wake word detected!";
+    }
+
+  }
+}
+</script>
+
+</body>
+</html>
