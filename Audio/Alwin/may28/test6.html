@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Pure Waves | Neon Waveform Visualizer + Recorder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #050b14;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'BlinkMacSystemFont', sans-serif;
+            transition: background 0.2s ease;
+            overflow-x: hidden;
+        }
+
+        /* Dark theme base (always sleek) */
+        body.dark-theme {
+            background: #03060c;
+        }
+        body.dark-theme .wave-surface {
+            background: #07111f;
+        }
+        body.dark-theme .settings-btn {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border-color: rgba(71, 85, 105, 0.6);
+            color: #e2e8f0;
+        }
+        body.dark-theme .settings-panel {
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+        body.dark-theme .mute-overlay-btn {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border-color: rgba(71, 85, 105, 0.6);
+            color: #94a3f8;
+        }
+        body.dark-theme .perm-card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(16px);
+            border-color: #334155;
+        }
+        body.dark-theme .status-badge {
+            background: #1e293b;
+            color: #90cdf4;
+        }
+
+        /* main container: full immersive wave */
+        .wave-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* canvas takes most of the screen — wave bar dominates */
+        .wave-stage {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 1rem 1rem 1rem;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 82vh;
+            max-height: 82vh;
+            min-height: 320px;
+            background: transparent;
+            border-radius: 2rem;
+            object-fit: cover;
+        }
+        @media (max-width: 768px) {
+            canvas {
+                height: 70vh;
+                min-height: 280px;
+            }
+        }
+        @media (min-width: 1400px) {
+            canvas {
+                height: 78vh;
+            }
+        }
+
+        /* floating top row: settings button + mute button (both overlay) */
+        .top-overlay {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            left: auto;
+            z-index: 50;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        .settings-btn, .mute-overlay-btn {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            border-radius: 3rem;
+            padding: 0.7rem 1.3rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            letter-spacing: -0.2px;
+        }
+        .settings-btn:hover, .mute-overlay-btn:hover {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.96);
+        }
+        body.dark-theme .settings-btn:hover, body.dark-theme .mute-overlay-btn:hover {
+            background: rgba(51, 65, 85, 0.95);
+        }
+        .mute-overlay-btn.muted-active {
+            background: rgba(220, 38, 38, 0.85);
+            border-color: #ef4444;
+            color: white;
+        }
+
+        /* Settings Panel (dropdown) — contains STOP + RECORD buttons inside */
+        .settings-panel {
+            position: absolute;
+            top: 80px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 1.8rem;
+            padding: 1.2rem 1.5rem;
+            width: 260px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.2);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.2s;
+        }
+        .panel-section {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.8rem;
+        }
+        body.dark-theme .panel-section {
+            border-bottom-color: #334155;
+        }
+        .panel-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #5b6e8c;
+            margin-bottom: 0.6rem;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .rec-control-btn, .stop-control-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 0.7rem 1rem;
+            border-radius: 2.5rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        .rec-control-btn.recording-active {
+            background: #dc2626;
+            color: white;
+            animation: softPulse 1.2s infinite;
+        }
+        .stop-control-btn {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #ffc9c9;
+        }
+        .stop-control-btn:hover {
+            background: #fecaca;
+        }
+        @keyframes softPulse {
+            0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
+            70% { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+            100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+        }
+        .duration-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.4rem;
+        }
+        .duration-select {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 2rem;
+            padding: 0.4rem 0.8rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .theme-toggle-small {
+            background: #eef2ff;
+            border: none;
+            border-radius: 2rem;
+            padding: 0.4rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .rec-status-text {
+            font-size: 0.7rem;
+            text-align: center;
+            background: #eef3fc;
+            padding: 0.3rem;
+            border-radius: 2rem;
+            color: #2c7da0;
+        }
+        .counter-badge-panel {
+            font-family: monospace;
+            font-weight: 800;
+            font-size: 0.9rem;
+            background: #1e293b20;
+            padding: 0.2rem 0.5rem;
+            border-radius: 2rem;
+            text-align: center;
+        }
+        body.dark-theme .rec-status-text {
+            background: #1e293b;
+            color: #90cdf4;
+        }
+        /* permission overlay minimal */
+        .perm-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(16px);
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            text-align: center;
+            width: 85%;
+            max-width: 360px;
+            z-index: 100;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.15);
+        }
+        .perm-btn {
+            background: #1e6f9f;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .status-badge {
+            background: #eef3fc;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            margin-top: 1rem;
+        }
+        .save-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.65rem;
+            color: #5b6e8c;
+            background: transparent;
+            pointer-events: none;
+            z-index: 30;
+        }
+        @media (max-width: 550px) {
+            .settings-panel { width: 240px; right: 16px; top: 70px; padding: 1rem; }
+            .top-overlay { top: 16px; right: 16px; gap: 8px; }
+            .settings-btn, .mute-overlay-btn { padding: 0.5rem 1rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="wave-container">
+    <!-- CANVAS: GLOWING WAVEFORM STYLE (inspired by neon wave) -->
+    <div class="wave-stage">
+        <canvas id="audioCanvas" width="1200" height="600" style="width:100%; height:82vh; min-height:300px"></canvas>
+    </div>
+
+    <!-- TOP OVERLAY: only MUTE + SETTINGS button (no stop/record here) -->
+    <div class="top-overlay">
+        <button id="muteOverlayBtn" class="mute-overlay-btn">🔇 MUTE</button>
+        <button id="settingsTopBtn" class="settings-btn">⚙️ Settings</button>
+    </div>
+
+    <!-- SETTINGS PANEL (contains STOP, RECORD, duration, theme) -->
+    <div id="settingsPanel" class="settings-panel" style="display: none;">
+        <div class="panel-section">
+            <div class="panel-title">🎛️ CONTROL CENTER</div>
+            <div class="action-buttons">
+                <button id="recordInsideBtn" class="rec-control-btn">⏺ START RECORD</button>
+                <button id="stopInsideBtn" class="stop-control-btn">⏹️ STOP VISUALIZER</button>
+            </div>
+            <div id="recCounterInside" class="counter-badge-panel" style="margin-top: 8px; display: none;">00:00</div>
+            <div id="recStatusInside" class="rec-status-text" style="margin-top: 6px;">⚪ Ready</div>
+        </div>
+        <div class="panel-section">
+            <div class="panel-title">⏱️ RECORD LIMIT</div>
+            <div class="duration-row">
+                <span>Duration</span>
+                <select id="durationSelect" class="duration-select">
+                    <option value="5">5 sec</option>
+                    <option value="10" selected>10 sec</option>
+                    <option value="15">15 sec</option>
+                    <option value="30">30 sec</option>
+                    <option value="60">60 sec</option>
+                </select>
+            </div>
+        </div>
+        <div class="panel-section">
+            <div class="panel-title">🌓 APPEARANCE</div>
+            <button id="themeInsideBtn" class="theme-toggle-small">Toggle Dark/Light</button>
+        </div>
+        <div class="save-hint" style="position: relative; margin-top: 6px; font-size: 0.65rem;">💾 WAV saves to device</div>
+    </div>
+
+    <!-- PERMISSION OVERLAY (only shown before mic) -->
+    <div id="permissionOverlay" class="perm-card">
+        <p style="font-weight: 500;">🎙️ Let the neon waves move</p>
+        <p style="font-size: 0.8rem; margin-top: 6px;">Grant microphone access to see glowing waveform & record</p>
+        <button id="requestPermBtn" class="perm-btn">✨ Enable Microphone</button>
+        <div id="permMsg" class="status-badge">⚡ Click to allow</div>
+    </div>
+
+    <!-- subtle electron hint -->
+    <div id="electronHint" class="save-hint" style="display: none;">💾 Files auto-save to chosen folder</div>
+</div>
+
+<script>
+    (function() {
+        const isElectron = typeof window !== 'undefined' && window.process && window.process.type === 'renderer';
+        
+        // DOM elements
+        const canvas = document.getElementById('audioCanvas');
+        const permissionOverlay = document.getElementById('permissionOverlay');
+        const requestBtn = document.getElementById('requestPermBtn');
+        const permMsgSpan = document.getElementById('permMsg');
+        const muteOverlayBtn = document.getElementById('muteOverlayBtn');
+        const settingsTopBtn = document.getElementById('settingsTopBtn');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const recordInsideBtn = document.getElementById('recordInsideBtn');
+        const stopInsideBtn = document.getElementById('stopInsideBtn');
+        const recCounterInside = document.getElementById('recCounterInside');
+        const recStatusInside = document.getElementById('recStatusInside');
+        const durationSelect = document.getElementById('durationSelect');
+        const themeInsideBtn = document.getElementById('themeInsideBtn');
+        const electronHint = document.getElementById('electronHint');
+        
+        if (isElectron) electronHint.style.display = 'block';
+        
+        // audio global
+        let audioContext = null;
+        let mediaStream = null;
+        let sourceNode = null;
+        let analyserNode = null;
+        let animationId = null;
+        let isStreamActive = false;
+        let isMicMuted = false;
+        
+        // recording vars
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordingTimer = null;
+        let counterInterval = null;
+        let selectedDuration = 10;
+        let recordingStartTime = 0;
+        
+        // canvas drawing setup
+        let canvasCtx = canvas.getContext('2d');
+        let canvasWidth = canvas.width, canvasHeight = canvas.height;
+        const FFT_SIZE = 512;
+        let dataArray = null;
+        
+        // dynamic phase for neon wave shimmer
+        let wavePhase = 0;
+        
+        // Helper: rounded rect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x+r, y);
+                this.lineTo(x+w-r, y);
+                this.quadraticCurveTo(x+w, y, x+w, y+r);
+                this.lineTo(x+w, y+h-r);
+                this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                this.lineTo(x+r, y+h);
+                this.quadraticCurveTo(x, y+h, x, y+h-r);
+                this.lineTo(x, y+r);
+                this.quadraticCurveTo(x, y, x+r, y);
+                return this;
+            };
+        }
+        
+        function resizeCanvasToDisplay() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            const w = rect.width;
+            const h = Math.min(window.innerHeight * 0.82, window.innerHeight - 100);
+            canvas.style.width = `${w}px`;
+            canvas.style.height = `${h}px`;
+            canvas.width = w * devicePixelRatio;
+            canvas.height = h * devicePixelRatio;
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            canvasCtx = canvas.getContext('2d');
+            if (!isStreamActive) drawGlowIdleWave();
+        }
+        window.addEventListener('resize', () => { resizeCanvasToDisplay(); if (!isStreamActive) drawGlowIdleWave(); else drawNeonWaveformLoop(); });
+        
+        // GLOWING NEON WAVEFORM (inspired by original design: particle-like glow, gradient line, dynamic envelope)
+        function drawNeonWaveformLoop() {
+            if (!animationId) return;
+            if (!isStreamActive || !analyserNode || isMicMuted) {
+                drawGlowIdleWave();
+                animationId = requestAnimationFrame(drawNeonWaveformLoop);
+                return;
+            }
+            if (!dataArray) dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+            analyserNode.getByteFrequencyData(dataArray);
+            
+            // compute average level for overall intensity (0..1)
+            let sum = 0;
+            for (let i = 0; i < analyserNode.frequencyBinCount; i++) sum += dataArray[i];
+            let avgLevel = sum / (analyserNode.frequencyBinCount * 255);
+            avgLevel = Math.min(1.0, avgLevel * 1.2);
+            
+            // dynamic phase for wave motion
+            wavePhase += 0.025;
+            
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            const isDark = document.body.classList.contains('dark-theme');
+            canvasCtx.fillStyle = isDark ? '#03060c' : '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            const centerY = canvasHeight * 0.90
+            const width = canvasWidth;
+            const maxAmp = canvasHeight * 0.42;
+            let baseAmp = avgLevel * maxAmp;
+            if (baseAmp < 4) baseAmp = 4;
+            
+            // Prepare top and bottom wave points using frequency data & sine modulation for organic neon look
+            const pointsTop = [];
+            const pointsBottom = [];
+            // frequency influence: take low-mid freqs for rich movement
+            const freqStep = Math.max(1, Math.floor(analyserNode.frequencyBinCount / width));
+            
+            for (let x = 0; x < width; x++) {
+                const normX = (x / width) * 2 - 1;
+                const envelope = Math.exp(-Math.pow(normX * 1.6, 2));
+                let freqIndex = Math.floor((x / width) * analyserNode.frequencyBinCount);
+                if (freqIndex >= analyserNode.frequencyBinCount) freqIndex = analyserNode.frequencyBinCount - 1;
+                let freqVal = dataArray[freqIndex] / 255;
+                // combine envelope and frequency value for organic wave
+                let ampFactor = (freqVal * 0.7 + avgLevel * 0.3) * envelope;
+                let waveHeight = Math.max(4, ampFactor * maxAmp);
+                // Add sine modulation for fluid movement
+                let modulation = Math.sin(x * 0.025 + wavePhase) * 6;
+                let offset = waveHeight + modulation;
+                offset = Math.min(maxAmp - 4, offset);
+                const topY = centerY - offset;
+                const bottomY = centerY + offset;
+                pointsTop.push({x, y: topY});
+                pointsBottom.push({x, y: bottomY});
+            }
+            
+            // DRAW GLOWING LINES (multiple layers for neon effect)
+            const glowIntensity = Math.min(0.7, avgLevel * 1.2 + 0.3);
+            // outer glow (wide)
+            for (let glow = 12; glow >= 4; glow -= 4) {
+                const alpha = Math.floor(35 * glowIntensity);
+                const gradTop = canvasCtx.createLinearGradient(0, 0, width, 0);
+                gradTop.addColorStop(0, `rgba(0, 180, 255, ${alpha/255})`);
+                gradTop.addColorStop(0.5, `rgba(120, 80, 255, ${alpha/255})`);
+                gradTop.addColorStop(1, `rgba(0, 200, 255, ${alpha/255})`);
+                canvasCtx.beginPath();
+                canvasCtx.lineWidth = glow;
+                canvasCtx.strokeStyle = gradTop;
+                for (let i = 0; i < pointsTop.length - 1; i++) {
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(pointsTop[i].x, pointsTop[i].y);
+                    canvasCtx.lineTo(pointsTop[i+1].x, pointsTop[i+1].y);
+                    canvasCtx.stroke();
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(pointsBottom[i].x, pointsBottom[i].y);
+                    canvasCtx.lineTo(pointsBottom[i+1].x, pointsBottom[i+1].y);
+                    canvasCtx.stroke();
+                }
+            }
+            
+            // core neon lines (bright)
+            const coreGrad = canvasCtx.createLinearGradient(0, 0, width, 0);
+            coreGrad.addColorStop(0, '#00ccff');
+            coreGrad.addColorStop(0.3, '#ff44cc');
+            coreGrad.addColorStop(0.7, '#3a86ff');
+            coreGrad.addColorStop(1, '#00ccff');
+            canvasCtx.lineWidth = 3;
+            canvasCtx.strokeStyle = coreGrad;
+            for (let i = 0; i < pointsTop.length - 1; i++) {
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(pointsTop[i].x, pointsTop[i].y);
+                canvasCtx.lineTo(pointsTop[i+1].x, pointsTop[i+1].y);
+                canvasCtx.stroke();
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(pointsBottom[i].x, pointsBottom[i].y);
+                canvasCtx.lineTo(pointsBottom[i+1].x, pointsBottom[i+1].y);
+                canvasCtx.stroke();
+            }
+            
+            // draw vertical bar glow (similar to original but more refined)
+            if (avgLevel > 0.02) {
+                const barCount = Math.min(70, width / 8);
+                const stepX = width / barCount;
+                for (let i = 0; i < barCount; i++) {
+                    const idx = Math.floor((i / barCount) * analyserNode.frequencyBinCount);
+                    let barVal = (dataArray[idx] || 0) / 255;
+                    let barHeight = Math.max(3, barVal * maxAmp * 0.9);
+                    const xPos = i * stepX;
+                    const barTop = centerY - barHeight/2;
+                    const gradBar = canvasCtx.createLinearGradient(xPos, barTop, xPos, barTop + barHeight);
+                    gradBar.addColorStop(0, '#00aaff');
+                    gradBar.addColorStop(1, '#ff44aa');
+                    canvasCtx.fillStyle = gradBar;
+                    canvasCtx.beginPath();
+                    canvasCtx.roundRect(xPos - 1, barTop, stepX - 2, barHeight, 4);
+                    canvasCtx.fill();
+                }
+            }
+            
+            // draw particle effect (like original UI): dynamic glimmers around wave
+            if (avgLevel > 0.08) {
+                const particleCount = Math.floor(avgLevel * 15) + 3;
+                for (let p = 0; p < particleCount; p++) {
+                    const t = (Date.now() * 0.008 + p) % 1;
+                    const idx = Math.floor(t * pointsTop.length);
+                    if (idx < pointsTop.length - 1) {
+                        const pt = pointsTop[idx];
+                        const randOffsetX = (Math.sin(Date.now() * 0.01 + p) * 6);
+                        const randOffsetY = (Math.cos(Date.now() * 0.013 + p) * 6);
+                        canvasCtx.beginPath();
+                        canvasCtx.fillStyle = `rgba(0, 200, 255, ${0.5 + Math.sin(Date.now() * 0.02 + p) * 0.3})`;
+                        canvasCtx.arc(pt.x + randOffsetX, pt.y + randOffsetY, 2 + Math.random() * 3, 0, Math.PI * 2);
+                        canvasCtx.fill();
+                    }
+                }
+            }
+            
+            animationId = requestAnimationFrame(drawNeonWaveformLoop);
+        }
+        
+        function drawGlowIdleWave() {
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+            const isDark = document.body.classList.contains('dark-theme');
+            canvasCtx.fillStyle = isDark ? '#03060c' : '#ffffff';
+            canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            const width = canvasWidth;
+            const centerY = canvasHeight / 2;
+            const time = Date.now() * 0.003;
+            canvasCtx.beginPath();
+            canvasCtx.lineWidth = 3;
+            const grad = canvasCtx.createLinearGradient(0, 0, width, 0);
+            grad.addColorStop(0, '#66ccff');
+            grad.addColorStop(0.5, '#aa88ff');
+            grad.addColorStop(1, '#66ccff');
+            canvasCtx.strokeStyle = grad;
+            for (let x = 0; x < width; x += 4) {
+                const idleAmp = 8 + Math.sin(x * 0.02 + time) * 5;
+                const y = centerY + Math.sin(x * 0.03 + time) * idleAmp;
+                if (x === 0) canvasCtx.moveTo(x, y);
+                else canvasCtx.lineTo(x, y);
+            }
+            canvasCtx.stroke();
+            canvasCtx.beginPath();
+            for (let x = 0; x < width; x += 4) {
+                const idleAmp = 8 + Math.cos(x * 0.02 + time + Math.PI) * 5;
+                const y = centerY - Math.sin(x * 0.03 + time + 1.2) * idleAmp;
+                if (x === 0) canvasCtx.moveTo(x, y);
+                else canvasCtx.lineTo(x, y);
+            }
+            canvasCtx.stroke();
+            
+            // gentle glow dots
+            for (let i = 0; i < 30; i++) {
+                const fx = (Math.sin(time * 0.7 + i) * 0.5 + 0.5) * width;
+                const fy = centerY + Math.sin(time * 1.2 + i) * 12;
+                canvasCtx.beginPath();
+                canvasCtx.fillStyle = `rgba(100, 180, 255, 0.4)`;
+                canvasCtx.arc(fx, fy, 2, 0, Math.PI * 2);
+                canvasCtx.fill();
+            }
+        }
+        
+        async function initVisualizer(stream) {
+            if (audioContext && audioContext.state !== 'closed') await fullCleanup(false);
+            mediaStream = stream;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = FFT_SIZE;
+            analyserNode.smoothingTimeConstant = 0.65;
+            dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+            sourceNode = audioContext.createMediaStreamSource(mediaStream);
+            sourceNode.connect(analyserNode);
+            if (audioContext.state === 'suspended') await audioContext.resume();
+            isStreamActive = true;
+            isMicMuted = false;
+            updateMuteUI();
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(drawNeonWaveformLoop);
+        }
+        
+        async function fullCleanup(keepPermOverlay = false) {
+            if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+            if (sourceNode) { try { sourceNode.disconnect(); } catch(e) {} sourceNode = null; }
+            if (analyserNode) { try { analyserNode.disconnect(); } catch(e) {} analyserNode = null; }
+            if (audioContext) { await audioContext.close().catch(()=>{}); audioContext = null; }
+            if (mediaStream) { mediaStream.getTracks().forEach(t => { if(t.readyState === 'live') t.stop(); }); mediaStream = null; }
+            isStreamActive = false;
+            isMicMuted = false;
+            if (!keepPermOverlay) {
+                permissionOverlay.style.display = 'flex';
+            }
+            if (isRecording) forceStopRecordingUI();
+            drawGlowIdleWave();
+        }
+        
+        function forceStopRecordingUI() {
+            if (recordingTimer) clearTimeout(recordingTimer);
+            if (counterInterval) clearInterval(counterInterval);
+            if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            isRecording = false;
+            updateRecordUIState(false);
+            recCounterInside.style.display = 'none';
+            recCounterInside.innerText = '00:00';
+            recStatusInside.innerText = '⚪ Ready';
+        }
+        
+        function updateMuteUI() {
+            if (isMicMuted) {
+                muteOverlayBtn.innerHTML = '🔴 MUTED';
+                muteOverlayBtn.classList.add('muted-active');
+            } else {
+                muteOverlayBtn.innerHTML = '🔇 MUTE';
+                muteOverlayBtn.classList.remove('muted-active');
+            }
+        }
+        
+        function toggleMute() {
+            if (!isStreamActive) return;
+            isMicMuted = !isMicMuted;
+            updateMuteUI();
+            showFloatingMsg(isMicMuted ? '🔇 Visual frozen' : '🎵 Visual reactive');
+        }
+        
+        function showFloatingMsg(msg) {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.style.position = 'fixed'; div.style.bottom = '30%'; div.style.left = '50%'; div.style.transform = 'translateX(-50%)';
+            div.style.backgroundColor = '#1f2a44cc'; div.style.backdropFilter = 'blur(12px)'; div.style.color = 'white';
+            div.style.padding = '6px 18px'; div.style.borderRadius = '40px'; div.style.fontSize = '0.8rem'; div.style.zIndex = '999';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 1200);
+        }
+        
+        // RECORDING LOGIC
+        async function startRecordingInside() {
+            if (!isStreamActive || !mediaStream) {
+                recStatusInside.innerText = '❌ No mic active';
+                setTimeout(() => { if(!isRecording) recStatusInside.innerText = '⚪ Ready'; }, 1500);
+                return;
+            }
+            if (isRecording) { stopRecordingInside(); return; }
+            recordedChunks = [];
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+            mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+            mediaRecorder.ondataavailable = (e) => { if(e.data.size>0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = async () => {
+                if (recordedChunks.length > 0) await saveWavFromChunks(recordedChunks);
+                recordedChunks = [];
+                isRecording = false;
+                updateRecordUIState(false);
+                if (recordingTimer) clearTimeout(recordingTimer);
+                if (counterInterval) clearInterval(counterInterval);
+                recCounterInside.style.display = 'none';
+                recStatusInside.innerHTML = '✅ Saved';
+                setTimeout(() => { if(!isRecording) recStatusInside.innerHTML = '⚪ Ready'; }, 2000);
+            };
+            mediaRecorder.start(1000);
+            isRecording = true;
+            recordingStartTime = Date.now();
+            updateRecordUIState(true);
+            recCounterInside.style.display = 'block';
+            recCounterInside.innerText = formatTime(selectedDuration);
+            if (counterInterval) clearInterval(counterInterval);
+            counterInterval = setInterval(() => {
+                if (!isRecording) return;
+                const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                const remaining = Math.max(0, selectedDuration - elapsed);
+                recCounterInside.innerText = formatTime(remaining);
+                if (remaining <= 0) stopRecordingInside();
+            }, 200);
+            recordingTimer = setTimeout(() => { if (isRecording) stopRecordingInside(); }, selectedDuration * 1000);
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+        }
+        
+        function stopRecordingInside() {
+            if (recordingTimer) clearTimeout(recordingTimer);
+            if (counterInterval) clearInterval(counterInterval);
+            if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                recStatusInside.innerText = '💾 Saving...';
+            } else {
+                if (isRecording) { isRecording = false; updateRecordUIState(false); recCounterInside.style.display = 'none'; }
+            }
+        }
+        
+        async function saveWavFromChunks(chunks) {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            const arrayBuffer = await blob.arrayBuffer();
+            try {
+                const offlineCtx = new OfflineAudioContext({ numberOfChannels: 1, length: 1, sampleRate: 44100 });
+                const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
+                let channelData = audioBuffer.getChannelData(0);
+                if (audioBuffer.numberOfChannels > 1) {
+                    const left = audioBuffer.getChannelData(0);
+                    const right = audioBuffer.getChannelData(1);
+                    channelData = new Float32Array(left.length);
+                    for (let i=0; i<left.length; i++) channelData[i] = (left[i]+right[i])/2;
+                }
+                const wavBuffer = float32ToWav(channelData, audioBuffer.sampleRate, 1);
+                const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                const fileName = `wave_rec_${timestamp}.wav`;
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(wavBlob);
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(a.href), 200);
+                recStatusInside.innerHTML = `✅ Saved`;
+            } catch(e) {
+                const fallbackBlob = new Blob(chunks, { type: 'audio/webm' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(fallbackBlob);
+                a.download = `recording_${Date.now()}.webm`;
+                a.click();
+                recStatusInside.innerHTML = `⚠️ Saved as webm`;
+            }
+        }
+        
+        function float32ToWav(samples, sampleRate, numChannels) {
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+            const writeStr = (offset, str) => { for(let i=0;i<str.length;i++) view.setUint8(offset+i, str.charCodeAt(i)); };
+            writeStr(0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * 2, true);
+            view.setUint16(32, numChannels * 2, true);
+            view.setUint16(34, 16, true);
+            writeStr(36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+            let offset = 44;
+            for(let i=0;i<samples.length;i++) {
+                let s = Math.max(-1, Math.min(1, samples[i]));
+                s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                view.setInt16(offset, s, true);
+                offset+=2;
+            }
+            return buffer;
+        }
+        
+        function updateRecordUIState(recording) {
+            if (recording) {
+                recordInsideBtn.innerHTML = '⏹️ STOP RECORD';
+                recordInsideBtn.classList.add('recording-active');
+                recStatusInside.innerHTML = '🔴 Recording...';
+            } else {
+                recordInsideBtn.innerHTML = '⏺ START RECORD';
+                recordInsideBtn.classList.remove('recording-active');
+                recStatusInside.innerHTML = '⚪ Ready';
+            }
+        }
+        
+        async function requestMicAndStart() {
+            permMsgSpan.innerText = '🎤 Requesting...';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                await initVisualizer(stream);
+                permissionOverlay.style.display = 'none';
+                permMsgSpan.innerText = '✅ Active';
+                updateRecordUIState(false);
+                recCounterInside.style.display = 'none';
+            } catch(err) {
+                permMsgSpan.innerText = err.name === 'NotAllowedError' ? '❌ Permission denied' : '❌ No mic found';
+            }
+        }
+        
+        async function stopVisualizer() {
+            if (isRecording) stopRecordingInside();
+            await fullCleanup(true);
+            permissionOverlay.style.display = 'flex';
+            permMsgSpan.innerText = '⏹️ Stopped. Restart to record.';
+        }
+        
+        function initTheme() { if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-theme'); else document.body.classList.remove('dark-theme'); }
+        function toggleTheme() { document.body.classList.toggle('dark-theme'); localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light'); drawGlowIdleWave(); }
+        initTheme();
+        
+        requestBtn.addEventListener('click', requestMicAndStart);
+        muteOverlayBtn.addEventListener('click', toggleMute);
+        settingsTopBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'flex' : 'none'; });
+        recordInsideBtn.addEventListener('click', startRecordingInside);
+        stopInsideBtn.addEventListener('click', stopVisualizer);
+        themeInsideBtn.addEventListener('click', () => { toggleTheme(); drawGlowIdleWave(); });
+        durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value,10); });
+        document.addEventListener('click', (e) => { if(!settingsTopBtn.contains(e.target) && !settingsPanel.contains(e.target)) settingsPanel.style.display = 'none'; });
+        window.addEventListener('resize', () => { resizeCanvasToDisplay(); if(!isStreamActive) drawGlowIdleWave(); });
+        resizeCanvasToDisplay();
+        drawGlowIdleWave();
+    })();
+</script>
+</body>
+</html>
