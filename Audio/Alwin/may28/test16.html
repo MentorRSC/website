@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake Word Detector - "Hello" Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .status-card {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            font-size: 1.2em;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .status.listening {
+            background: #4caf50;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status.waiting {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status.error {
+            background: #f44336;
+            color: white;
+        }
+
+        .status.loading {
+            background: #2196f3;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .word-display {
+            font-size: 1.5em;
+            color: #333;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8eaf6;
+            border-radius: 10px;
+            font-family: monospace;
+            min-height: 80px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            width: 0%;
+            transition: width 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            margin: 10px;
+        }
+
+        .button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: scale(1.05);
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button.danger {
+            background: #f44336;
+        }
+
+        .button.danger:hover:not(:disabled) {
+            background: #da190b;
+        }
+
+        .button.success {
+            background: #4caf50;
+        }
+
+        .button.success:hover:not(:disabled) {
+            background: #45a049;
+        }
+
+        /* Popup Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 15% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            animation: slideIn 0.3s;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        .modal-body {
+            padding: 30px;
+            color: white;
+        }
+
+        .modal-body p {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+
+        .close-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4caf50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .detection-count {
+            font-size: 0.9em;
+            color: #667eea;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Wake Word Detector</h1>
+        <div class="subtitle">Say <strong>"Hello"</strong> to trigger the popup</div>
+        
+        <div class="status-card">
+            <div class="status waiting" id="status">🔴 Ready to start</div>
+            <div class="word-display" id="wordDisplay">Click Start and say "Hello"</div>
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceFill">0%</div>
+            </div>
+            <div class="detection-count" id="detectionCount">Detections: 0</div>
+            <div class="progress-bar hidden" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="info-text" id="infoText"></div>
+        </div>
+
+        <div>
+            <button class="button success" id="startBtn" onclick="startDetection()">🎙️ Start Detection</button>
+            <button class="button danger" id="stopBtn" onclick="stopDetection()" disabled>⏹️ Stop Detection</button>
+            <button class="button" id="retryBtn" onclick="retryLoadModel()" style="display:none;">🔄 Retry Loading Model</button>
+        </div>
+        
+        <div class="subtitle" style="margin-top: 20px;">
+            💡 Model is cached after first download for offline use
+        </div>
+    </div>
+
+    <!-- Popup Modal -->
+    <div id="popupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 Wake Word Detected!</h2>
+            </div>
+            <div class="modal-body">
+                <p>You said: <strong>"Hello"</strong></p>
+                <p style="font-size: 3em;">👋</p>
+                <button class="close-btn" onclick="closePopup()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load TensorFlow.js from multiple CDNs for redundancy -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script>
+        // Fallback if primary CDN fails
+        if (typeof tf === 'undefined') {
+            document.write('<script src="https://unpkg.com/@tensorflow/tfjs@4.15.0/dist/tf.min.js"><\/script>');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.4/dist/speech-commands.min.js"></script>
+    <script>
+        // Global variables
+        let recognizer = null;
+        let isListening = false;
+        let mediaStream = null;
+        let modelLoaded = false;
+        let detectionCount = 0;
+        let currentConfidence = 0;
+        
+        // Check if TensorFlow is loaded
+        function checkTensorFlow() {
+            if (typeof tf === 'undefined') {
+                console.error('TensorFlow.js not loaded');
+                updateStatus('❌ TensorFlow.js failed to load. Please check your internet connection.', 'error');
+                return false;
+            }
+            console.log('TensorFlow.js version:', tf.version?.tfjs);
+            return true;
+        }
+        
+        // Update status display
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Update confidence display
+        function updateConfidence(confidence, word = '') {
+            const fill = document.getElementById('confidenceFill');
+            const percent = Math.round(confidence * 100);
+            fill.style.width = `${percent}%`;
+            fill.textContent = `${percent}%`;
+            currentConfidence = confidence;
+            
+            if (word) {
+                const wordDisplay = document.getElementById('wordDisplay');
+                wordDisplay.textContent = `Detected: "${word}" (${percent}% confidence)`;
+            }
+        }
+        
+        // Load the model with retry logic
+        async function loadModel(retryCount = 0) {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const retryBtn = document.getElementById('retryBtn');
+            
+            progressBar.classList.remove('hidden');
+            updateStatus('📦 Loading speech recognition model...', 'loading');
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + 10, 90);
+                progressFill.style.width = `${progress}%`;
+            }, 500);
+            
+            try {
+                // Check if TensorFlow is loaded
+                if (!checkTensorFlow()) {
+                    throw new Error('TensorFlow.js not loaded');
+                }
+                
+                // Check if speechCommands is available
+                if (typeof speechCommands === 'undefined') {
+                    throw new Error('Speech commands library not loaded');
+                }
+                
+                // Try to create and load the model
+                console.log('Creating speech recognizer...');
+                recognizer = speechCommands.create('BROWSER_FFT', null, 
+                    'https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v0.4/browser_fft/');
+                
+                // Add timeout for model loading
+                const loadPromise = recognizer.ensureModelLoaded();
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Model loading timeout')), 30000)
+                );
+                
+                await Promise.race([loadPromise, timeoutPromise]);
+                
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                
+                // Get available words
+                const words = recognizer.wordLabels();
+                console.log('Model loaded! Available words:', words);
+                
+                // Show available words in info text
+                const infoText = document.getElementById('infoText');
+                infoText.textContent = `Available words: ${words.slice(0, 10).join(', ')}...`;
+                
+                modelLoaded = true;
+                updateStatus('✅ Model ready! Click Start to begin detection', 'waiting');
+                
+                setTimeout(() => {
+                    progressBar.classList.add('hidden');
+                }, 1000);
+                
+                // Enable start button
+                document.getElementById('startBtn').disabled = false;
+                retryBtn.style.display = 'none';
+                
+                return true;
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Model loading error:', error);
+                
+                updateStatus(`❌ Failed to load model: ${error.message}`, 'error');
+                progressBar.classList.add('hidden');
+                
+                // Show retry button if not too many retries
+                if (retryCount < 3) {
+                    retryBtn.style.display = 'inline-block';
+                    document.getElementById('infoText').textContent = 'Click "Retry" to try loading the model again';
+                } else {
+                    document.getElementById('infoText').textContent = 'Please check your internet connection and reload the page';
+                }
+                
+                modelLoaded = false;
+                return false;
+            }
+        }
+        
+        // Retry loading model
+        async function retryLoadModel() {
+            const retryBtn = document.getElementById('retryBtn');
+            retryBtn.style.display = 'none';
+            retryBtn.disabled = true;
+            
+            await loadModel();
+            
+            retryBtn.disabled = false;
+            if (!modelLoaded) {
+                retryBtn.style.display = 'inline-block';
+            }
+        }
+        
+        // Initialize microphone
+        async function initMicrophone() {
+            try {
+                updateStatus('🎤 Requesting microphone access...', 'loading');
+                
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        sampleRate: 16000
+                    } 
+                });
+                
+                updateStatus('✅ Microphone ready!', 'waiting');
+                return true;
+            } catch (error) {
+                console.error('Microphone error:', error);
+                let errorMessage = '❌ Microphone access denied';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = '❌ Please allow microphone access to use this feature';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = '❌ No microphone found on your device';
+                }
+                updateStatus(errorMessage, 'error');
+                return false;
+            }
+        }
+        
+        // Start wake word detection
+        async function startDetection() {
+            if (!modelLoaded) {
+                updateStatus('❌ Model not loaded. Please wait or click Retry', 'error');
+                return;
+            }
+            
+            if (!isListening) {
+                const micReady = await initMicrophone();
+                if (!micReady) return;
+                
+                updateStatus('🎧 Listening for "Hello"...', 'listening');
+                document.getElementById('wordDisplay').textContent = '👂 Listening... Say "Hello"';
+                updateConfidence(0);
+                
+                isListening = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                // Start listening
+                recognizer.listen((scores) => {
+                    if (!isListening) return;
+                    
+                    const labels = recognizer.wordLabels();
+                    let maxScore = -Infinity;
+                    let maxIndex = -1;
+                    
+                    // Find the word with highest confidence
+                    for (let i = 0; i < scores.length; i++) {
+                        if (scores[i] > maxScore) {
+                            maxScore = scores[i];
+                            maxIndex = i;
+                        }
+                    }
+                    
+                    if (maxIndex !== -1 && maxScore > 0.5) {
+                        const detectedWord = labels[maxIndex];
+                        const confidence = maxScore;
+                        
+                        updateConfidence(confidence, detectedWord);
+                        
+                        // Check for "hello" (or variations like "hello" in different contexts)
+                        const isHello = detectedWord.toLowerCase().includes('hello') || 
+                                      (detectedWord.toLowerCase() === 'hello');
+                        
+                        if (isHello && confidence > 0.75) {
+                            // Increment detection count
+                            detectionCount++;
+                            document.getElementById('detectionCount').textContent = `Detections: ${detectionCount}`;
+                            
+                            // Show popup
+                            showPopup();
+                            
+                            // Visual feedback
+                            const wordDisplay = document.getElementById('wordDisplay');
+                            wordDisplay.style.backgroundColor = '#4caf50';
+                            wordDisplay.style.color = 'white';
+                            setTimeout(() => {
+                                wordDisplay.style.backgroundColor = '#e8eaf6';
+                                wordDisplay.style.color = '#333';
+                            }, 500);
+                            
+                            // Optional: Add beep sound (if needed)
+                            // playBeep();
+                        }
+                    }
+                }, {
+                    includeSpectrogram: false,
+                    probabilityThreshold: 0.5,
+                    invokeCallbackOnNoiseAndUnknown: true,
+                    overlapFactor: 0.5
+                });
+            }
+        }
+        
+        // Stop detection
+        function stopDetection() {
+            if (recognizer && isListening) {
+                recognizer.stopListening();
+                isListening = false;
+                
+                updateStatus('⏹️ Detection stopped', 'waiting');
+                document.getElementById('wordDisplay').textContent = 'Click Start to begin';
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                updateConfidence(0);
+                
+                // Close microphone
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+            }
+        }
+        
+        // Show popup modal
+        function showPopup() {
+            const modal = document.getElementById('popupModal');
+            modal.style.display = 'block';
+            
+            // Optional: Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (modal.style.display === 'block') {
+                    closePopup();
+                }
+            }, 3000);
+        }
+        
+        // Close popup modal
+        function closePopup() {
+            const modal = document.getElementById('popupModal');
+            modal.style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('popupModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Initialize everything
+        async function initialize() {
+            // Check if required libraries are loaded
+            const tfLoaded = checkTensorFlow();
+            
+            if (!tfLoaded) {
+                updateStatus('❌ Failed to load TensorFlow.js. Please check your internet connection.', 'error');
+                document.getElementById('retryBtn').style.display = 'inline-block';
+                document.getElementById('retryBtn').onclick = () => window.location.reload();
+                return;
+            }
+            
+            // Load the model
+            await loadModel();
+        }
+        
+        // Add keyboard shortcut
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' && document.getElementById('popupModal').style.display === 'block') {
+                event.preventDefault();
+                closePopup();
+            }
+        });
+        
+        // Start initialization when page loads
+        window.addEventListener('load', initialize);
+        
+        // Export functions to global scope
+        window.startDetection = startDetection;
+        window.stopDetection = stopDetection;
+        window.closePopup = closePopup;
+        window.retryLoadModel = retryLoadModel;
+    </script>
+</body>
+</html>
