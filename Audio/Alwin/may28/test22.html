@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Silent Flow | Keyword AI Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #050a14 0%, #0a1020 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Roboto', sans-serif;
+            transition: background 0.3s ease;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body.light-theme {
+            background: linear-gradient(135deg, #e8ecf3 0%, #d4dce8 100%);
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(circle at 50% 80%, rgba(0, 200, 255, 0.05) 0%, transparent 70%);
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        .wave-canvas-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: transparent;
+            pointer-events: none;
+            filter: drop-shadow(0 0 15px rgba(0, 200, 255, 0.3));
+        }
+
+        .system-clock {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: 'Inter', monospace;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+        }
+
+        .clock-time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00c8ff;
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+        }
+
+        .clock-ampm {
+            font-size: 0.7rem;
+            color: #88aaff;
+        }
+
+        body.light-theme .system-clock {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 160, 210, 0.6);
+        }
+        body.light-theme .clock-time { color: #0077aa; }
+
+        .mute-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            padding: 0.7rem 1.4rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #c0e4ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .mute-overlay.muted-active { background: linear-gradient(135deg, #ff3366, #ff80b0); border-color: #ff80b0; color: white; animation: softPulse 1s infinite; }
+        .mute-overlay.auto-hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
+        .mute-overlay.force-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        @keyframes softPulse { 0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); } }
+
+        .settings-corner {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            cursor: pointer;
+            transition: opacity 0.3s;
+            color: #00c8ff;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .settings-corner.auto-hidden { opacity: 0; pointer-events: none; transform: translateY(-10px); }
+        .settings-corner.force-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+        .settings-dropdown {
+            position: fixed;
+            top: 75px;
+            right: 20px;
+            background: rgba(12, 22, 40, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 1.6rem;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            z-index: 310;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 260px;
+        }
+        body.light-theme .settings-dropdown { background: rgba(250, 252, 255, 0.98); }
+        .dropdown-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: 0.85rem; font-weight: 500; color: #eef3ff; }
+        body.light-theme .dropdown-item { color: #102a38; }
+        .theme-toggle-btn, .duration-select { background: rgba(0, 200, 255, 0.2); border: 1px solid rgba(0, 200, 255, 0.6); padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; font-family: inherit; color: inherit; }
+        .single-record-btn { width: 100%; background: linear-gradient(135deg, #00c8ff, #ff50c8); border: none; padding: 0.75rem; border-radius: 2rem; font-weight: 700; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+        .single-record-btn.recording-active { background: linear-gradient(135deg, #ff3366, #ff80b0); animation: pulseRed 1.2s infinite; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); } }
+        .status-badge-mini { font-size: 0.7rem; background: rgba(0, 200, 255, 0.15); padding: 0.35rem 0.7rem; border-radius: 2rem; text-align: center; color: #88ddff; font-weight: 500; }
+        .keyword-chip { background: rgba(0,200,255,0.25); border-radius: 2rem; padding: 0.2rem 0.6rem; font-size: 0.7rem; display: inline-block; margin: 2px; }
+        .keyword-panel { max-height: 110px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 8, 20, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+        }
+        .perm-card { background: rgba(10, 20, 40, 0.9); border-radius: 2.5rem; padding: 2rem; text-align: center; border: 1px solid rgba(0, 200, 255, 0.5); max-width: 340px; }
+        .perm-btn { background: linear-gradient(135deg, #00c8ff, #ff50c8); border: none; padding: 0.8rem 1.8rem; font-weight: 700; border-radius: 3rem; color: white; cursor: pointer; }
+        .live-status { position: fixed; left: 20px; bottom: 20px; font-size: 0.7rem; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); padding: 0.3rem 1rem; border-radius: 2rem; color: #88aaff; pointer-events: none; z-index: 140; }
+        .hidden { display: none !important; }
+        .keyword-highlight { animation: keywordGlow 0.4s ease-out; }
+        @keyframes keywordGlow { 0% { text-shadow: 0 0 0px cyan; background: rgba(0,255,255,0.3); } 100% { text-shadow: 0 0 8px cyan; background: rgba(0,255,255,0); } }
+    </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="system-clock"><span class="clock-time" id="clockTime">--:--:--</span><span class="clock-ampm" id="clockAmPm">--</span></div>
+<div id="settingsBtn" class="settings-corner">⚙️</div>
+<div id="settingsDropdown" class="settings-dropdown hidden">
+    <div class="dropdown-item"><span>🌗 Theme</span><button id="themeSwitchBtn" class="theme-toggle-btn">Toggle</button></div>
+    <div class="dropdown-item"><span>🎙️ Keyword Model</span><span class="status-badge-mini" id="modelStatus">Micro-Speech (20)</span></div>
+    <div class="dropdown-item"><span>🔊 Detected:</span><span id="lastKeywordSpan" style="font-weight:bold; color:#ffaa66;">—</span></div>
+    <div class="keyword-panel" id="keywordPanel"></div>
+    <div class="divider" style="height:1px; background:rgba(0,200,255,0.2); margin:4px 0;"></div>
+    <button id="recordToggleBtn" class="single-record-btn">⏺ START RECORDING</button>
+    <div id="settingsStatusMsg" class="status-badge-mini">⚪ Ready</div>
+</div>
+<div id="permissionOverlay" class="permission-overlay">
+    <div class="perm-card"><p>🎙️ Enable Mic for 20-Keyword AI & Visualizer</p><button id="requestMicBtn" class="perm-btn">✨ Activate Micro-Speech</button><div id="permStatusText" style="margin-top:1rem; font-size:0.75rem;">Click to load keyword spotting</div></div>
+</div>
+<div class="wave-canvas-container"><canvas id="waveCanvas" width="1200" height="200"></canvas></div>
+<button id="muteOverlayBtn" class="mute-overlay">🔇 Mute</button>
+<div class="live-status">🎤 Keyword AI: 20 words · live</div>
+
+<script>
+    (function(){
+        // DOM
+        const permissionOverlay = document.getElementById('permissionOverlay');
+        const requestMicBtn = document.getElementById('requestMicBtn');
+        const permStatusSpan = document.getElementById('permStatusText');
+        const canvas = document.getElementById('waveCanvas');
+        const muteOverlayBtn = document.getElementById('muteOverlayBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        const themeSwitch = document.getElementById('themeSwitchBtn');
+        const recordToggleBtn = document.getElementById('recordToggleBtn');
+        const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+        const clockTimeSpan = document.getElementById('clockTime');
+        const clockAmPmSpan = document.getElementById('clockAmPm');
+        const lastKeywordSpan = document.getElementById('lastKeywordSpan');
+        const keywordPanelDiv = document.getElementById('keywordPanel');
+        
+        // Audio & TFJS globals
+        let audioCtx = null, mediaStream = null, sourceNode = null, analyserNode = null;
+        let animationId = null, isMicActive = false, isMuted = false;
+        let frequencyData = new Uint8Array(0);
+        let particles = [], timeOffset = 0;
+        let stationaryWaveTime = 0, isWaveFrozen = false;
+        let smoothAmp = 0;
+        
+        // Recording
+        let mediaRecorder = null, recordedChunks = [], isRecording = false, recordingTimeout = null;
+        let selectedDuration = 10, counterInterval = null;
+        
+        // --- KEYWORD SPOTTING (Micro Speech 20 keywords) ---
+        let recognizer = null;          // @tensorflow-models/speech-commands
+        let listening = false;
+        const keywords20 = [
+            "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+            "up", "down", "left", "right", "go", "stop", "yes", "no", "on", "off"
+        ];
+        let lastDetected = "—";
+        
+        async function loadKeywordModel() {
+            try {
+                if (typeof tf === 'undefined') throw new Error("TensorFlow not loaded");
+                const speechCommands = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v0.4/browser_fft/20w_browser_fft/model.json');
+                recognizer = speechCommands;
+                listening = true;
+                permStatusSpan.innerText = "✅ Model ready! Speak any of 20 keywords";
+                settingsStatusMsg.innerText = "🎙️ 20-word AI active";
+                document.getElementById('modelStatus').innerHTML = "🧠 Micro-Speech (20)";
+                renderKeywordChips();
+            } catch(err) {
+                console.warn(err);
+                permStatusSpan.innerText = "⚠️ Using fallback amplitude detection (no keyword AI)";
+                settingsStatusMsg.innerText = "⚠️ Model offline, visualizer only";
+                recognizer = null;
+            }
+        }
+        
+        function renderKeywordChips() {
+            keywordPanelDiv.innerHTML = keywords20.map(kw => `<span class="keyword-chip">${kw}</span>`).join('');
+        }
+        
+        async function startKeywordRecognition(stream) {
+            if (!recognizer) return;
+            try {
+                await recognizer.ensureModelLoaded();
+                const wordLabels = recognizer.wordLabels(); // returns array of 21 including '_background_noise_'
+                const filterLabels = keywords20;
+                recognizer.listen(result => {
+                    if (!isMicActive || isMuted) return;
+                    const scores = result.scores;
+                    let maxIdx = -1, maxScore = -Infinity;
+                    for (let i = 0; i < scores.length; i++) {
+                        if (scores[i] > maxScore && i < wordLabels.length) {
+                            maxScore = scores[i];
+                            maxIdx = i;
+                        }
+                    }
+                    if (maxIdx !== -1 && maxScore > 0.75) { // threshold
+                        const detectedLabel = wordLabels[maxIdx];
+                        if (detectedLabel !== '_background_noise_' && filterLabels.includes(detectedLabel)) {
+                            lastDetected = detectedLabel;
+                            lastKeywordSpan.innerHTML = detectedLabel;
+                            lastKeywordSpan.classList.add('keyword-highlight');
+                            setTimeout(() => lastKeywordSpan.classList.remove('keyword-highlight'), 300);
+                            settingsStatusMsg.innerHTML = `✨ Keyword: ${detectedLabel}`;
+                            setTimeout(() => { if (!isRecording) settingsStatusMsg.innerHTML = isMuted ? "🔇 Muted" : "🎤 20-word AI"; }, 1000);
+                            // trigger burst particles for visual feedback
+                            for(let i=0;i<12;i++) particles.push(new Particle(Math.random()*canvas.width, canvas.height/2, `hsl(${Math.random()*80+200},90%,65%)`));
+                        }
+                    }
+                }, { includeSpectrogram: false, probabilityThreshold: 0.7, overlapFactor: 0.3 });
+                console.log("Keyword recognition listening started");
+            } catch(e) { console.error("Listen error", e); }
+        }
+        
+        // Particle class
+        class Particle {
+            constructor(x,y,color) { this.x=x; this.y=y; this.vx=(Math.random()-0.5)*3; this.vy=(Math.random()-0.5)*2-1; this.life=40+Math.random()*60; this.maxLife=this.life; this.color=color||`hsl(${Math.random()*60+200},80%,65%)`; this.size=2+Math.random()*3; }
+            update() { this.x+=this.vx; this.y+=this.vy; this.life-=2.5; }
+            draw(ctx) { ctx.beginPath(); ctx.arc(this.x,this.y,this.size*(this.life/this.maxLife),0,Math.PI*2); ctx.fillStyle=this.color; ctx.fill(); ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0; }
+        }
+        
+        // Canvas setup
+        let ctx, canvasWidth, canvasHeight = 200;
+        function resizeCanvas() { canvasWidth = window.innerWidth; canvas.height = canvasHeight; canvas.width = canvasWidth; ctx = canvas.getContext('2d'); drawStationaryWave(0.2); }
+        
+        function drawStationaryWave(amplitude) {
+            if(!ctx) return;
+            ctx.clearRect(0,0,canvasWidth,canvasHeight);
+            const centerY = canvasHeight/2;
+            const frozenTime = stationaryWaveTime;
+            const hue1 = 200 + amplitude*60;
+            const steps = Math.max(120, Math.floor(canvasWidth/2.5));
+            const stepX = canvasWidth/steps;
+            const maxOffset = canvasHeight*0.35*0.2;
+            ctx.beginPath();
+            for(let i=0;i<=steps;i++) {
+                const x=i*stepX, progress=x/canvasWidth;
+                const wave1=Math.sin(progress*Math.PI*4)*0.6;
+                const wave2=Math.sin(progress*Math.PI*8)*0.4;
+                const wave3=Math.sin(progress*Math.PI*12)*0.3;
+                let waveValue=(wave1+wave2+wave3)/1.5;
+                const y=centerY - waveValue*maxOffset;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.strokeStyle=`hsl(${hue1},100%,60%)`; ctx.lineWidth=3; ctx.stroke();
+            ctx.beginPath();
+            for(let i=0;i<=steps;i++) {
+                const x=i*stepX, progress=x/canvasWidth;
+                const wave1=Math.sin(progress*Math.PI*4+0.5)*0.6;
+                const wave2=Math.sin(progress*Math.PI*8+0.3)*0.4;
+                let waveValue=(wave1+wave2)/1.3;
+                const y=centerY+waveValue*maxOffset;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            ctx.fillStyle=`hsla(${hue1},80%,55%,0.15)`;
+            ctx.fillRect(0,centerY-5,canvasWidth,10);
+        }
+        
+        function drawAnimatedWave(amplitude) {
+            if(!ctx) return;
+            ctx.clearRect(0,0,canvasWidth,canvasHeight);
+            const centerY = canvasHeight/2;
+            const time = Date.now()*0.008;
+            const hue1 = 200 + amplitude*60;
+            const gradient = ctx.createLinearGradient(0,0,canvasWidth,0);
+            gradient.addColorStop(0,`hsl(${hue1},100%,60%)`);
+            gradient.addColorStop(1,`hsl(${hue1+40},100%,65%)`);
+            const steps = Math.max(120, Math.floor(canvasWidth/2.5));
+            const stepX = canvasWidth/steps;
+            const ampMultiplier = (!isMicActive) ? 0.15 : Math.min(0.85, amplitude*1.8);
+            const maxOffset = canvasHeight*0.4 * ampMultiplier;
+            // top wave
+            ctx.beginPath();
+            for(let i=0;i<=steps;i++) {
+                const x=i*stepX, progress=x/canvasWidth;
+                let wave1=Math.sin(progress*Math.PI*4+time)*0.6;
+                let wave2=Math.sin(progress*Math.PI*8-time*1.3)*0.4;
+                let wave3=Math.sin(progress*Math.PI*12+time*0.7)*0.3;
+                let waveValue=(wave1+wave2+wave3)/1.5;
+                if(frequencyData.length>0 && isMicActive && !isMuted) {
+                    const freqIndex=Math.floor(progress*frequencyData.length);
+                    const freqAmp=frequencyData[freqIndex]/255;
+                    waveValue=waveValue*0.6+freqAmp*0.4;
+                }
+                const y=centerY - waveValue*maxOffset;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.strokeStyle=gradient; ctx.lineWidth=3.5; ctx.shadowBlur=12; ctx.stroke();
+            // bottom wave
+            ctx.beginPath();
+            for(let i=0;i<=steps;i++) {
+                const x=i*stepX, progress=x/canvasWidth;
+                let wave1=Math.sin(progress*Math.PI*4+time+0.5)*0.6;
+                let wave2=Math.sin(progress*Math.PI*8-time*1.3+0.3)*0.4;
+                let waveValue=(wave1+wave2)/1.3;
+                if(frequencyData.length>0 && isMicActive && !isMuted) {
+                    const freqIndex=Math.floor(progress*frequencyData.length);
+                    const freqAmp=frequencyData[freqIndex]/255;
+                    waveValue=waveValue*0.7+freqAmp*0.3;
+                }
+                const y=centerY + waveValue*maxOffset;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            }
+            ctx.stroke();
+            // center glow
+            ctx.beginPath(); ctx.moveTo(0,centerY); ctx.lineTo(canvasWidth,centerY); ctx.strokeStyle=`hsla(${hue1},80%,65%,0.4)`; ctx.lineWidth=1; ctx.stroke();
+            // particles & bars
+            if(isMicActive && amplitude>0.05 && !isMuted) {
+                const barCount=Math.min(40, Math.floor(amplitude*80));
+                for(let i=0;i<barCount;i++) {
+                    const progress=i/barCount;
+                    const x=progress*canvasWidth;
+                    let waveValue=Math.sin(progress*Math.PI*4+time)*0.6;
+                    if(frequencyData.length>0) {
+                        const idx=Math.floor(progress*frequencyData.length);
+                        const freqAmp=frequencyData[idx]/255;
+                        waveValue=waveValue*0.6+freqAmp*0.4;
+                    }
+                    const yTop=centerY - waveValue*maxOffset;
+                    const yBottom=centerY + waveValue*maxOffset*0.8;
+                    ctx.beginPath(); ctx.moveTo(x,yTop); ctx.lineTo(x,yBottom);
+                    ctx.strokeStyle=`hsl(${hue1+amplitude*80},90%,65%)`;
+                    ctx.lineWidth=2+Math.abs(yBottom-yTop)/12;
+                    ctx.stroke();
+                    if(Math.random()<amplitude*0.25) particles.push(new Particle(x,yTop-4,`hsl(${hue1+Math.random()*60},85%,65%)`));
+                }
+            }
+            for(let i=particles.length-1;i>=0;i--) { particles[i].update(); if(particles[i].life<=0) particles.splice(i,1); else particles[i].draw(ctx); }
+            ctx.shadowBlur=0;
+        }
+        
+        function updateAudioLevel() {
+            if(!isMicActive || !analyserNode || isMuted) { frequencyData=new Uint8Array(0); return; }
+            frequencyData=new Uint8Array(analyserNode.frequencyBinCount);
+            analyserNode.getByteFrequencyData(frequencyData);
+        }
+        
+        function animationLoop() {
+            if(!animationId) return;
+            updateAudioLevel();
+            let currentAmp=0;
+            if(frequencyData.length>0 && !isMuted) {
+                let sum=0; for(let i=0;i<frequencyData.length;i++) sum+=frequencyData[i];
+                currentAmp=Math.min(0.9, sum/frequencyData.length/180);
+            }
+            smoothAmp=smoothAmp*0.85+currentAmp*0.15;
+            if(isMuted || !isMicActive) drawStationaryWave(0.2);
+            else drawAnimatedWave(smoothAmp);
+            animationId=requestAnimationFrame(animationLoop);
+        }
+        
+        // MIC setup with keyword spotting
+        async function initMicrophone() {
+            permStatusSpan.innerText = "Requesting mic & loading AI...";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                mediaStream = stream;
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 1024;
+                analyserNode.smoothingTimeConstant = 0.6;
+                sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+                sourceNode.connect(analyserNode);
+                if(audioCtx.state === 'suspended') await audioCtx.resume();
+                isMicActive = true;
+                isMuted = false;
+                stationaryWaveTime = Date.now()*0.008;
+                updateMuteUI();
+                if(animationId) cancelAnimationFrame(animationId);
+                animationId = requestAnimationFrame(animationLoop);
+                permissionOverlay.classList.add('hidden');
+                resizeCanvas();
+                settingsStatusMsg.innerText = "🎤 AI ready · 20 keywords";
+                // Start keyword recognition if model loaded, else load model
+                if(recognizer) {
+                    await startKeywordRecognition(stream);
+                } else {
+                    await loadKeywordModel();
+                    if(recognizer) await startKeywordRecognition(stream);
+                }
+                permStatusSpan.innerText = "✅ Listening for 20 keywords";
+            } catch(err) {
+                permStatusSpan.innerText = "❌ Mic error: use fallback visualizer";
+                settingsStatusMsg.innerText = "⚠️ Visualizer only (no AI)";
+                isMicActive = false;
+            }
+        }
+        
+        function toggleMute() {
+            if(!isMicActive) return;
+            isMuted = !isMuted;
+            if(isMuted) stationaryWaveTime = Date.now()*0.008;
+            updateMuteUI();
+            settingsStatusMsg.innerText = isMuted ? "🔇 Muted - Stationary" : "🎤 Keyword AI active";
+            if(!isMuted && recognizer && mediaStream) startKeywordRecognition(mediaStream);
+        }
+        
+        function updateMuteUI() {
+            if(isMuted) { muteOverlayBtn.innerHTML="🔊 Unmute"; muteOverlayBtn.classList.add('muted-active'); }
+            else { muteOverlayBtn.innerHTML="🔇 Mute"; muteOverlayBtn.classList.remove('muted-active'); }
+        }
+        
+        // Recording
+        function handleRecordToggle() {
+            if(!isMicActive || !mediaStream) { settingsStatusMsg.innerText = "❌ No mic active"; return; }
+            if(isRecording) {
+                if(counterInterval) clearInterval(counterInterval);
+                if(recordingTimeout) clearTimeout(recordingTimeout);
+                if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
+                isRecording=false;
+                recordToggleBtn.classList.remove('recording-active');
+                recordToggleBtn.innerHTML="⏺ START RECORDING";
+                settingsStatusMsg.innerText = isMuted ? "🔇 Muted" : "🎤 Keyword AI";
+                return;
+            }
+            startRecording();
+        }
+        
+        function startRecording() {
+            recordedChunks=[];
+            mediaRecorder = new MediaRecorder(mediaStream);
+            mediaRecorder.ondataavailable = (e) => { if(e.data.size>0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = async () => {
+                if(recordedChunks.length) {
+                    const blob = new Blob(recordedChunks, {type:'audio/webm'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href=url; a.download=`keyword_voice_${Date.now()}.webm`; a.click();
+                    URL.revokeObjectURL(url);
+                    settingsStatusMsg.innerText="💾 Saved!";
+                    setTimeout(()=>{ if(!isRecording) settingsStatusMsg.innerText=isMuted?"🔇 Muted":"🎤 Keyword AI"; },1500);
+                }
+                isRecording=false;
+                recordToggleBtn.classList.remove('recording-active');
+                recordToggleBtn.innerHTML="⏺ START RECORDING";
+                if(counterInterval) clearInterval(counterInterval);
+            };
+            mediaRecorder.start();
+            isRecording=true;
+            recordToggleBtn.classList.add('recording-active');
+            recordToggleBtn.innerHTML="⏹️ STOP RECORDING";
+            let remaining=selectedDuration;
+            settingsStatusMsg.innerText=`🔴 Recording: ${remaining}s`;
+            counterInterval=setInterval(()=>{ remaining--; if(remaining>=0) settingsStatusMsg.innerText=`🔴 Recording: ${remaining}s`; if(remaining<=0) clearInterval(counterInterval); },1000);
+            recordingTimeout=setTimeout(()=>{ if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop(); recordingTimeout=null; }, selectedDuration*1000);
+        }
+        
+        // Clock & Theme
+        function updateClock() { const now=new Date(); let h=now.getHours(); const m=now.getMinutes(); const s=now.getSeconds(); const ap=h>=12?'PM':'AM'; h=h%12||12; clockTimeSpan.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; clockAmPmSpan.textContent=ap; }
+        updateClock(); setInterval(updateClock,1000);
+        function applyTheme() { if(localStorage.getItem('theme')==='light') document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme'); }
+        function toggleTheme() { document.body.classList.toggle('light-theme'); localStorage.setItem('theme', document.body.classList.contains('light-theme')?'light':'dark'); }
+        applyTheme();
+        
+        // UI Auto-hide
+        let hideTimer=null, isDropdownOpen=false, muteHideTimer=null, isMuteHoverLock=false;
+        function resetHideTimers() { if(hideTimer) clearTimeout(hideTimer); settingsBtn.classList.remove('auto-hidden'); settingsBtn.classList.add('force-visible'); hideTimer=setTimeout(()=>{ if(!isDropdownOpen) { settingsBtn.classList.add('auto-hidden'); settingsBtn.classList.remove('force-visible'); } },3500); if(muteHideTimer) clearTimeout(muteHideTimer); muteOverlayBtn.classList.remove('auto-hidden'); muteOverlayBtn.classList.add('force-visible'); muteHideTimer=setTimeout(()=>{ if(!isMuteHoverLock && !isRecording) { muteOverlayBtn.classList.add('auto-hidden'); muteOverlayBtn.classList.remove('force-visible'); } },3500); }
+        document.addEventListener('mousemove', resetHideTimers); document.addEventListener('touchstart', resetHideTimers);
+        settingsBtn.addEventListener('click', (e)=>{ e.stopPropagation(); settingsDropdown.classList.toggle('hidden'); isDropdownOpen=!settingsDropdown.classList.contains('hidden'); resetHideTimers(); });
+        document.addEventListener('click', (e)=>{ if(!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) { settingsDropdown.classList.add('hidden'); isDropdownOpen=false; resetHideTimers(); } });
+        muteOverlayBtn.addEventListener('mouseenter',()=>{ isMuteHoverLock=true; muteOverlayBtn.classList.remove('auto-hidden'); muteOverlayBtn.classList.add('force-visible'); });
+        muteOverlayBtn.addEventListener('mouseleave',()=>{ isMuteHoverLock=false; if(muteHideTimer) clearTimeout(muteHideTimer); muteHideTimer=setTimeout(()=>{ if(!isMuteHoverLock && !isRecording) muteOverlayBtn.classList.add('auto-hidden'); },3000); });
+        muteOverlayBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleMute(); resetHideTimers(); });
+        resetHideTimers();
+        
+        requestMicBtn.addEventListener('click', initMicrophone);
+        recordToggleBtn.addEventListener('click', handleRecordToggle);
+        durationSelect.addEventListener('change', (e)=>{ selectedDuration = parseInt(e.target.value); });
+        themeSwitch.addEventListener('click', toggleTheme);
+        
+        // Preload tfjs
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js";
+        script.onload = () => { loadKeywordModel(); };
+        document.head.appendChild(script);
+        
+        resizeCanvas();
+        drawStationaryWave(0.2);
+        renderKeywordChips();
+    })();
+</script>
+</body>
+</html>
