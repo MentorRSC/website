@@ -1,1044 +1,594 @@
+Here is an HTML document that adds a "wake word" listener to your audio visualizer, responding to phrases like "hey lyra" and showing a modal when detected.
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>Silent Flow | Custom Wake Word Visualizer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Silent Flow | Lyra Wake Word Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        body {
+            background: linear-gradient(135deg, #050a14 0%, #0a1020 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Roboto', sans-serif;
+            transition: background 0.3s ease;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
 
-body {
-    background: linear-gradient(135deg, #050a14 0%, #0a0f1a 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-    transition: background 0.3s ease;
-    overflow-x: hidden;
-    position: relative;
-}
+        body.light-theme {
+            background: linear-gradient(135deg, #e8ecf3 0%, #d4dce8 100%);
+        }
 
-body.light-theme {
-    background: linear-gradient(135deg, #e8ecf3 0%, #f0f4fa 100%);
-}
+        /* Animated background glow */
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(circle at 50% 80%, rgba(0, 200, 255, 0.05) 0%, transparent 70%);
+            animation: breathe 4s ease-in-out infinite;
+        }
 
-/* Wave Container */
-.wave-container {
-    position: fixed;
-    bottom: 30px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: clamp(3px, 1.5vw, 10px);
-    padding: 0 15px;
-    z-index: 10;
-    pointer-events: none;
-    flex-wrap: wrap;
-}
+        @keyframes breathe {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
 
-.wave-bar {
-    width: clamp(3px, 1.8vw, 12px);
-    height: 25px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #3a86ff, #ff66cc);
-    transition: height 0.05s linear;
-    box-shadow: 0 0 10px rgba(58, 134, 255, 0.5);
-    will-change: height;
-}
+        /* Wave canvas */
+        .wave-canvas-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
 
-.wave-bar.idle {
-    animation: gentleWave 0.8s infinite ease-in-out;
-}
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: transparent;
+            pointer-events: none;
+            filter: drop-shadow(0 0 15px rgba(0, 200, 255, 0.3));
+        }
 
-@keyframes gentleWave {
-    0%, 100% { height: 20px; opacity: 0.6; transform: scaleY(0.8); }
-    50% { height: 55px; opacity: 1; transform: scaleY(1); }
-}
+        /* System Clock */
+        .system-clock {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: 'Inter', 'Segoe UI', 'Courier New', monospace;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+        }
 
-/* Wake Word Indicator */
-.wake-indicator {
-    position: fixed;
-    top: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 300;
-    background: rgba(10, 20, 35, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 50px;
-    padding: 12px 24px;
-    border: 1px solid rgba(58, 134, 255, 0.5);
-    font-weight: 600;
-    font-size: 14px;
-    color: #3a86ff;
-    pointer-events: none;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    letter-spacing: 0.5px;
-    text-align: center;
-    font-family: monospace;
-}
+        .clock-time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00c8ff;
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+            font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;
+        }
 
-.wake-indicator.listening {
-    background: rgba(255, 80, 120, 0.25);
-    border-color: #ff5080;
-    color: #ff80a0;
-    animation: pulseGlow 1.5s infinite;
-}
+        .clock-ampm {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #88aaff;
+        }
 
-.wake-indicator.active {
-    background: rgba(0, 255, 150, 0.25);
-    border-color: #00ffaa;
-    color: #00ffaa;
-    animation: none;
-}
+        body.light-theme .system-clock {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 160, 210, 0.6);
+        }
+        body.light-theme .clock-time { color: #0077aa; }
 
-@keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 80, 120, 0.3); }
-    50% { box-shadow: 0 0 0 15px rgba(255, 80, 120, 0); }
-}
+        /* Mute button */
+        .mute-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            padding: 0.7rem 1.4rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            color: #c0e4ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+        }
+        .mute-overlay:hover { transform: scale(1.02); border-color: #ff66cc; }
+        .mute-overlay.muted-active { background: linear-gradient(135deg, #ff3366, #ff80b0); border-color: #ff80b0; color: white; animation: softPulse 1s infinite; }
+        .mute-overlay.auto-hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
+        .mute-overlay.force-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        @keyframes softPulse { 0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); } }
 
-/* Popup Notification */
-.popup-notification {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    background: linear-gradient(135deg, rgba(58, 134, 255, 0.95), rgba(255, 102, 204, 0.95));
-    backdrop-filter: blur(20px);
-    border-radius: 30px;
-    padding: 25px 35px;
-    text-align: center;
-    z-index: 1000;
-    opacity: 0;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    max-width: 85%;
-}
+        /* Settings button */
+        .settings-corner {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.2s;
+            color: #00c8ff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            pointer-events: auto;
+        }
+        .settings-corner.auto-hidden { opacity: 0; pointer-events: none; transform: translateY(-10px); }
+        .settings-corner.force-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .settings-corner:hover { background: rgba(0, 200, 255, 0.2); transform: scale(0.98); }
 
-.popup-notification.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
+        /* Settings dropdown */
+        .settings-dropdown {
+            position: fixed;
+            top: 75px;
+            right: 20px;
+            background: rgba(12, 22, 40, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 1.6rem;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            z-index: 310;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 240px;
+            pointer-events: auto;
+        }
+        body.light-theme .settings-dropdown { background: rgba(250, 252, 255, 0.98); }
+        .dropdown-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: 0.85rem; font-weight: 500; color: #eef3ff; }
+        body.light-theme .dropdown-item { color: #102a38; }
+        .theme-toggle-btn, .duration-select { background: rgba(0, 200, 255, 0.2); border: 1px solid rgba(0, 200, 255, 0.6); padding: 0.4rem 1rem; border-radius: 2rem; cursor: pointer; font-family: inherit; font-weight: 500; color: inherit; }
+        .single-record-btn { width: 100%; background: linear-gradient(135deg, #00c8ff, #ff50c8); border: none; padding: 0.75rem 1rem; border-radius: 2rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; font-family: inherit; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+        .single-record-btn.recording-active { background: linear-gradient(135deg, #ff3366, #ff80b0); animation: pulseRed 1.2s infinite; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); } }
+        .status-badge-mini { font-size: 0.7rem; background: rgba(0, 200, 255, 0.15); padding: 0.35rem 0.7rem; border-radius: 2rem; text-align: center; color: #88ddff; font-weight: 500; }
+        .divider { height: 1px; background: rgba(0, 200, 255, 0.2); margin: 0.2rem 0; }
 
-.popup-icon {
-    font-size: 48px;
-    margin-bottom: 15px;
-}
+        /* Permission overlay */
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 8, 20, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+            flex-direction: column;
+        }
+        .perm-card { background: rgba(10, 20, 40, 0.9); border-radius: 2.5rem; padding: 2rem 1.8rem; text-align: center; border: 1px solid rgba(0, 200, 255, 0.5); max-width: 320px; width: 85%; }
+        .perm-btn { background: linear-gradient(135deg, #00c8ff, #ff50c8); border: none; padding: 0.8rem 1.8rem; font-weight: 700; border-radius: 3rem; color: white; font-size: 1rem; cursor: pointer; }
+        .live-status { position: fixed; left: 20px; bottom: 20px; font-size: 0.7rem; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); padding: 0.3rem 1rem; border-radius: 2rem; color: #88aaff; pointer-events: none; z-index: 140; }
+        .hidden { display: none !important; }
 
-.popup-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 8px;
-}
-
-.popup-message {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 5px;
-}
-
-.popup-word {
-    font-size: 20px;
-    font-weight: 800;
-    color: #ffea80;
-    margin-top: 8px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-/* System Clock */
-.system-clock {
-    position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 300;
-    background: rgba(10, 20, 35, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 40px;
-    padding: 8px 18px;
-    border: 1px solid rgba(58, 134, 255, 0.5);
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-weight: 500;
-    pointer-events: none;
-}
-
-.clock-time {
-    font-size: 16px;
-    font-weight: 600;
-    color: #3a86ff;
-    font-variant-numeric: tabular-nums;
-}
-
-.clock-ampm {
-    font-size: 11px;
-    font-weight: 500;
-    color: #88aaff;
-}
-
-/* Mute Button */
-.mute-overlay {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 200;
-    background: rgba(10, 20, 35, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 40px;
-    border: 1px solid rgba(58, 134, 255, 0.5);
-    padding: 10px 20px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    color: #c0e4ff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-    font-family: inherit;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.mute-overlay.muted {
-    background: linear-gradient(135deg, #ff3366, #ff80b0);
-    border-color: #ff80b0;
-    color: white;
-}
-
-.mute-overlay:active {
-    transform: scale(0.95);
-}
-
-/* Settings Button */
-.settings-corner {
-    position: fixed;
-    top: 18px;
-    right: 18px;
-    z-index: 300;
-    background: rgba(10, 20, 35, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 40px;
-    padding: 8px 18px;
-    border: 1px solid rgba(58, 134, 255, 0.5);
-    cursor: pointer;
-    color: #3a86ff;
-    font-weight: 600;
-    font-size: 18px;
-    transition: all 0.2s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.settings-corner:active {
-    transform: scale(0.95);
-}
-
-/* Settings Panel */
-.settings-panel {
-    position: fixed;
-    top: 70px;
-    right: 20px;
-    background: rgba(12, 22, 40, 0.98);
-    backdrop-filter: blur(20px);
-    border-radius: 24px;
-    padding: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(58, 134, 255, 0.3);
-    z-index: 310;
-    min-width: 280px;
-    display: none;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.settings-panel.show {
-    display: flex;
-}
-
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    font-size: 14px;
-    color: #eef3ff;
-    flex-wrap: wrap;
-}
-
-.setting-item label {
-    font-size: 13px;
-    opacity: 0.9;
-}
-
-.setting-btn, select, .custom-wake-input {
-    background: rgba(58, 134, 255, 0.2);
-    border: 1px solid rgba(58, 134, 255, 0.5);
-    padding: 8px 14px;
-    border-radius: 30px;
-    cursor: pointer;
-    color: inherit;
-    font-family: inherit;
-    font-size: 13px;
-    transition: all 0.2s;
-}
-
-.custom-wake-input {
-    flex: 1;
-    min-width: 120px;
-    cursor: text;
-    text-align: center;
-    font-weight: 600;
-    letter-spacing: 1px;
-}
-
-.custom-wake-input:focus {
-    outline: none;
-    border-color: #00ffaa;
-    background: rgba(0, 255, 170, 0.2);
-}
-
-.record-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #3a86ff, #ff66cc);
-    border: none;
-    padding: 10px;
-    border-radius: 30px;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    color: white;
-    transition: all 0.2s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.record-btn:active {
-    transform: scale(0.98);
-}
-
-.record-btn.recording {
-    background: linear-gradient(135deg, #ff3366, #ff80b0);
-    animation: pulseRed 1s infinite;
-}
-
-@keyframes pulseRed {
-    0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.5); }
-    70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
-}
-
-.status-text {
-    font-size: 11px;
-    background: rgba(58, 134, 255, 0.15);
-    padding: 8px 12px;
-    border-radius: 20px;
-    text-align: center;
-    color: #88ddff;
-}
-
-.divider {
-    height: 1px;
-    background: rgba(58, 134, 255, 0.2);
-    margin: 4px 0;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 768px) {
-    .wake-indicator { 
-        top: 60px; 
-        font-size: 11px; 
-        padding: 8px 16px; 
-        white-space: normal;
-        max-width: 90%;
-        line-height: 1.3;
-    }
-    .system-clock { top: 12px; left: 12px; padding: 6px 14px; }
-    .clock-time { font-size: 13px; }
-    .settings-corner { top: 12px; right: 12px; padding: 6px 14px; font-size: 16px; }
-    .mute-overlay { bottom: 12px; right: 12px; padding: 8px 16px; font-size: 12px; }
-    .settings-panel { 
-        position: fixed;
-        top: auto;
-        bottom: 80px;
-        right: 12px;
-        left: 12px;
-        max-width: none;
-        min-width: auto;
-    }
-    .popup-notification {
-        padding: 20px 25px;
-        width: 85%;
-    }
-    .popup-title { font-size: 20px; }
-    .popup-message { font-size: 14px; }
-}
-
-/* iOS specific */
-@supports (-webkit-touch-callout: none) {
-    .wake-indicator {
-        top: 80px;
-    }
-}
-</style>
+        /* WAKE WORD MODAL */
+        .wake-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(12px);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn 0.2s ease;
+        }
+        .wake-card {
+            background: rgba(20, 30, 55, 0.98);
+            border-radius: 2.5rem;
+            padding: 2rem 2rem;
+            text-align: center;
+            border: 1px solid #ff66cc;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5), 0 0 20px rgba(255, 102, 204, 0.3);
+            max-width: 340px;
+            width: 85%;
+            animation: slideUp 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        body.light-theme .wake-card { background: rgba(245, 248, 255, 0.98); border-color: #ff66aa; }
+        .wake-icon {
+            font-size: 3.5rem;
+            margin-bottom: 0.8rem;
+            filter: drop-shadow(0 0 8px #ff66cc);
+        }
+        .wake-title {
+            font-size: 1.7rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff99cc, #ff66ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.75rem;
+        }
+        .wake-message {
+            color: #cceeff;
+            font-size: 1.1rem;
+            margin-bottom: 1.8rem;
+            font-weight: 500;
+        }
+        body.light-theme .wake-message { color: #1a2a3a; }
+        .close-wake-btn {
+            background: linear-gradient(135deg, #ff66cc, #ff3388);
+            border: none;
+            padding: 0.8rem 2rem;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 3rem;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.15s;
+            font-family: inherit;
+        }
+        .close-wake-btn:hover { transform: scale(1.02); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .wake-badge {
+            position: fixed;
+            bottom: 60px;
+            left: 20px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            font-size: 0.65rem;
+            padding: 0.2rem 0.7rem;
+            border-radius: 2rem;
+            color: #ff99cc;
+            z-index: 140;
+            pointer-events: none;
+        }
+        @media (max-width: 640px) {
+            .system-clock, .settings-corner { top: 12px; padding: 0.45rem 1rem; }
+            .clock-time { font-size: 0.9rem; }
+            .mute-overlay { bottom: 12px; right: 12px; padding: 0.5rem 1.1rem; }
+        }
+    </style>
 </head>
 <body>
+    <div class="bg-glow"></div>
 
-<div class="system-clock">
-    <span class="clock-time" id="clockTime">--:--:--</span>
-    <span class="clock-ampm" id="clockAmPm">--</span>
-</div>
-
-<div id="wakeIndicator" class="wake-indicator">🎤 Say "Hey, Hello, Hi, Lyra, Robot, Computer, Teacher, Start"</div>
-
-<div id="settingsBtn" class="settings-corner">⚙️</div>
-
-<div id="settingsPanel" class="settings-panel">
-    <div class="setting-item">
-        <label>🌗 Theme</label>
-        <button id="themeBtn" class="setting-btn">Toggle</button>
+    <div class="system-clock">
+        <span class="clock-time" id="clockTime">--:--:--</span>
+        <span class="clock-ampm" id="clockAmPm">--</span>
     </div>
-    <div class="setting-item">
-        <label>🎙️ Wake Word</label>
-        <input type="text" id="customWakeWord" class="custom-wake-input" maxlength="20" placeholder="Enter wake word">
+
+    <div id="settingsBtn" class="settings-corner">⚙️</div>
+    <div id="settingsDropdown" class="settings-dropdown hidden">
+        <div class="dropdown-item"><span>🌗 Theme</span><button id="themeSwitchBtn" class="theme-toggle-btn">Toggle</button></div>
+        <div class="dropdown-item"><span>⏱️ Rec Duration</span><select id="durationSelect" class="duration-select"><option value="5">5 sec</option><option value="10" selected>10 sec</option><option value="15">15 sec</option><option value="30">30 sec</option><option value="60">60 sec</option></select></div>
+        <div class="divider"></div>
+        <button id="recordToggleBtn" class="single-record-btn">⏺ START RECORDING</button>
+        <div id="settingsStatusMsg" class="status-badge-mini">⚪ Ready</div>
     </div>
-    <div class="setting-item">
-        <label>⏱️ Duration</label>
-        <select id="durationSelect">
-            <option value="5">5 sec</option>
-            <option value="10" selected>10 sec</option>
-            <option value="15">15 sec</option>
-            <option value="30">30 sec</option>
-        </select>
+
+    <div id="permissionOverlay" class="permission-overlay">
+        <div class="perm-card">
+            <p>🎙️ Allow microphone to visualize live waves & wake word</p>
+            <button id="requestMicBtn" class="perm-btn">✨ Enable Visualizer & Wake</button>
+            <div id="permStatusText" style="margin-top: 1rem; font-size: 0.75rem; color:#00c8ff;">Click to start</div>
+        </div>
     </div>
-    <div class="divider"></div>
-    <button id="recordBtn" class="record-btn">⏺ START RECORDING</button>
-    <div id="statusMsg" class="status-text">⚪ Waiting for wake word</div>
-</div>
 
-<div id="waveContainer" class="wave-container"></div>
-<button id="muteBtn" class="mute-overlay">🔇 MUTE</button>
+    <div class="wave-canvas-container">
+        <canvas id="waveCanvas" width="1200" height="200"></canvas>
+    </div>
 
-<script>
-(function() {
-    // DOM Elements
-    const waveContainer = document.getElementById('waveContainer');
-    const muteBtn = document.getElementById('muteBtn');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsPanel = document.getElementById('settingsPanel');
-    const themeBtn = document.getElementById('themeBtn');
-    const customWakeInput = document.getElementById('customWakeWord');
-    const durationSelect = document.getElementById('durationSelect');
-    const recordBtn = document.getElementById('recordBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    const wakeIndicator = document.getElementById('wakeIndicator');
-    const clockTimeSpan = document.getElementById('clockTime');
-    const clockAmPmSpan = document.getElementById('clockAmPm');
+    <button id="muteOverlayBtn" class="mute-overlay">🔇 Mute</button>
+    <div class="live-status">🎵 Live Audio Visualizer | 🎤 Wake: "Hey Lyra", "Hello" ...</div>
+    <div class="wake-badge">✨ always listening for wake word</div>
 
-    // State
-    let audioContext = null;
-    let mediaStream = null;
-    let analyser = null;
-    let animationId = null;
-    let isActive = false;
-    let isMuted = false;
-    let wakeEnabled = true;
-    let recognition = null;
-    let customWakeWord = "hey wave";
-    
-    // MULTI-WAKE-WORD LIST
-    const defaultWakeWords = ["hey", "hello", "hi", "lyra", "robot", "computer", "teacher", "start"];
-    let activeWakeWords = [...defaultWakeWords];
-    
-    // Recording
-    let mediaRecorder = null;
-    let chunks = [];
-    let isRecording = false;
-    let recordTimeout = null;
-    let counterInterval = null;
-    let recordDuration = 10;
-    
-    // Bars
-    let bars = [];
-    let barCount = 24;
-    let freqData = null;
-    
-    // Clock
-    function updateClock() {
-        const now = new Date();
-        let hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-        clockTimeSpan.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
-        clockAmPmSpan.textContent = ampm;
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-    
-    // Check if spoken text contains any wake word
-    function containsWakeWord(text) {
-        const lowerText = text.toLowerCase().trim();
+    <script>
+        (function(){
+            // DOM Elements
+            const permissionOverlay = document.getElementById('permissionOverlay');
+            const requestMicBtn = document.getElementById('requestMicBtn');
+            const permStatusSpan = document.getElementById('permStatusText');
+            const canvas = document.getElementById('waveCanvas');
+            const muteOverlayBtn = document.getElementById('muteOverlayBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            const themeSwitch = document.getElementById('themeSwitchBtn');
+            const durationSelect = document.getElementById('durationSelect');
+            const recordToggleBtn = document.getElementById('recordToggleBtn');
+            const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+            const clockTimeSpan = document.getElementById('clockTime');
+            const clockAmPmSpan = document.getElementById('clockAmPm');
         
-        // Check against custom wake word first
-        const customLower = customWakeWord.toLowerCase().trim();
-        if (customLower && lowerText.includes(customLower)) {
-            return { detected: true, word: customLower };
-        }
-        
-        // Check against default wake words
-        for (let word of activeWakeWords) {
-            if (lowerText.includes(word.toLowerCase())) {
-                return { detected: true, word: word };
-            }
-        }
-        
-        return { detected: false, word: null };
-    }
-    
-    // Show Popup Notification
-    function showPopup(wakeWord) {
-        // Remove existing popup
-        const oldPopup = document.querySelector('.popup-notification');
-        if (oldPopup) oldPopup.remove();
-        
-        // Create popup
-        const popup = document.createElement('div');
-        popup.className = 'popup-notification';
-        popup.innerHTML = `
-            <div class="popup-icon">🎤✨</div>
-            <div class="popup-title">Wake Word Detected!</div>
-            <div class="popup-message">You said:</div>
-            <div class="popup-word">"${wakeWord}"</div>
-        `;
-        document.body.appendChild(popup);
-        
-        // Animate in
-        setTimeout(() => popup.classList.add('show'), 10);
-        
-        // Auto hide after 2 seconds
-        setTimeout(() => {
-            popup.classList.remove('show');
-            setTimeout(() => popup.remove(), 300);
-        }, 2000);
-        
-        // Vibrate on mobile if supported
-        if (window.navigator && window.navigator.vibrate) {
-            window.navigator.vibrate(200);
-        }
-    }
-    
-    // Create bars
-    function createBars() {
-        const containerWidth = window.innerWidth - 40;
-        const barWidth = Math.max(4, Math.min(12, Math.floor(containerWidth / 28)));
-        barCount = Math.floor(containerWidth / (barWidth + 6));
-        barCount = Math.min(32, Math.max(16, barCount));
-        
-        waveContainer.innerHTML = '';
-        bars = [];
-        
-        for (let i = 0; i < barCount; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'wave-bar idle';
-            waveContainer.appendChild(bar);
-            bars.push(bar);
-        }
-    }
-    
-    // Update bars with audio
-    function updateBars() {
-        if (!isActive || isMuted || !analyser || !freqData) {
-            return;
-        }
-        
-        analyser.getByteFrequencyData(freqData);
-        const binsPerBar = Math.floor(freqData.length / barCount);
-        
-        for (let i = 0; i < barCount; i++) {
-            let sum = 0;
-            const start = i * binsPerBar;
-            const end = Math.min(start + binsPerBar, freqData.length);
-            for (let j = start; j < end; j++) sum += freqData[j];
+            // Audio Globals
+            let audioCtx = null;
+            let mediaStream = null;
+            let sourceNode = null;
+            let analyserNode = null;
+            let animationId = null;
+            let isMicActive = false;
+            let isMuted = false;
             
-            let intensity = sum / (end - start) / 180;
-            intensity = Math.min(1, Math.pow(intensity, 1.3) * 1.2);
+            // Recording
+            let mediaRecorder = null;
+            let recordedChunks = [];
+            let isRecording = false;
+            let recordingTimeout = null;
+            let selectedDuration = 10;
+            let counterInterval = null;
             
-            const height = 15 + (intensity * 110);
-            const hue = 200 + intensity * 40;
+            // Visual data
+            let frequencyData = new Uint8Array(0);
+            let particles = [];
+            let timeOffset = 0;
+            let stationaryWaveTime = 0;
+            let isWaveFrozen = false;
             
-            bars[i].style.height = `${height}px`;
-            bars[i].style.background = `linear-gradient(180deg, hsl(${hue}, 85%, 55%), hsl(${hue + 20}, 80%, 60%))`;
-            bars[i].style.boxShadow = `0 0 ${8 + intensity * 12}px rgba(58, 134, 255, ${0.3 + intensity * 0.5})`;
-            bars[i].classList.remove('idle');
-        }
-    }
-    
-    // Idle animation
-    function idleAnimation() {
-        if (!isActive && bars.length) {
-            bars.forEach(bar => {
-                bar.classList.add('idle');
-            });
-            requestAnimationFrame(idleAnimation);
-        }
-    }
-    
-    // Animation loop
-    function animate() {
-        if (!animationId) return;
-        updateBars();
-        animationId = requestAnimationFrame(animate);
-    }
-    
-    // Start audio visualization
-    async function startVisualizer() {
-        if (isActive) return;
-        
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { echoCancellation: true, noiseSuppression: true }
-            });
-            mediaStream = stream;
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
-            analyser.smoothingTimeConstant = 0.7;
-            freqData = new Uint8Array(analyser.frequencyBinCount);
+            // UI auto-hide
+            let hideTimer = null;
+            let isDropdownOpen = false;
+            let muteHideTimer = null;
+            let isMuteHoverLock = false;
             
-            const source = audioContext.createMediaStreamSource(stream);
-            source.connect(analyser);
+            // ---------- WAKE WORD DETECTION ----------
+            let recognition = null;           // SpeechRecognition instance
+            let isListeningForWake = false;    // flag if wake system active
+            let wakeModalActive = false;       // to prevent multiple modals
+            // List of trigger phrases (case-insensitive, partial match)
+            const wakeTriggers = [
+                "hey lyra", "hey", "hi", "hello", "hi lyra", "hello lyra",
+                "computer", "robot", "assistant", "teacher", "lyra"
+            ];
             
-            if (audioContext.state === 'suspended') {
-                await audioContext.resume();
-            }
-            
-            isActive = true;
-            isMuted = false;
-            
-            muteBtn.classList.remove('muted');
-            muteBtn.innerHTML = '🔇 MUTE';
-            
-            bars.forEach(bar => bar.classList.remove('idle'));
-            
-            if (animationId) cancelAnimationFrame(animationId);
-            animationId = requestAnimationFrame(animate);
-            
-            statusMsg.innerText = '🎤 Active';
-            wakeIndicator.textContent = '✅ Visualizer Active • Listening for wake words';
-            wakeIndicator.classList.remove('listening');
-            wakeIndicator.classList.add('active');
-            
-            setTimeout(() => {
-                if (isActive) {
-                    wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
-                    wakeIndicator.classList.add('listening');
-                    wakeIndicator.classList.remove('active');
-                }
-            }, 2000);
-            
-        } catch (err) {
-            console.error('Mic error:', err);
-            statusMsg.innerText = '❌ Mic access denied';
-            wakeIndicator.textContent = '❌ Microphone access required';
-            
-            // Show error popup
-            const errorPopup = document.createElement('div');
-            errorPopup.className = 'popup-notification';
-            errorPopup.innerHTML = `
-                <div class="popup-icon">⚠️</div>
-                <div class="popup-title">Microphone Required</div>
-                <div class="popup-message">Please allow microphone access to use wake word</div>
-            `;
-            document.body.appendChild(errorPopup);
-            setTimeout(() => errorPopup.classList.add('show'), 10);
-            setTimeout(() => {
-                errorPopup.classList.remove('show');
-                setTimeout(() => errorPopup.remove(), 300);
-            }, 2500);
-        }
-    }
-    
-    // Stop visualizer
-    function stopVisualizer() {
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-        }
-        
-        if (audioContext) {
-            audioContext.close().catch(() => {});
-            audioContext = null;
-        }
-        
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(t => t.stop());
-            mediaStream = null;
-        }
-        
-        analyser = null;
-        isActive = false;
-        isMuted = false;
-        
-        bars.forEach(bar => {
-            bar.classList.add('idle');
-            bar.style.height = '';
-            bar.style.background = '';
-        });
-        
-        statusMsg.innerText = '⚪ Waiting for wake word';
-        wakeIndicator.textContent = `🎤 Say: ${activeWakeWords.join(", ")}`;
-        wakeIndicator.classList.remove('active', 'listening');
-        
-        if (wakeEnabled && recognition) {
-            setTimeout(() => {
-                try { recognition.start(); } catch(e) { console.log('Restart error:', e); }
-            }, 500);
-        }
-    }
-    
-    // Wake word detection with multiple wake words
-    function initWakeWord() {
-        if (!wakeEnabled) return;
-        
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            wakeIndicator.textContent = '⚠️ Speech recognition not supported on this device';
-            statusMsg.innerText = '⚠️ Browser doesn\'t support wake word';
-            return;
-        }
-        
-        if (recognition) {
-            try { recognition.stop(); } catch(e) {}
-        }
-        
-        recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        
-        recognition.onstart = () => {
-            if (!isActive && wakeEnabled) {
-                wakeIndicator.classList.add('listening');
-                wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
-            }
-        };
-        
-        recognition.onend = () => {
-            if (wakeEnabled && !isActive) {
-                setTimeout(() => {
-                    try { recognition.start(); } catch(e) { console.log('Restart error:', e); }
-                }, 1000);
-            }
-        };
-        
-        recognition.onresult = (event) => {
-            const last = event.results.length - 1;
-            const text = event.results[last][0].transcript.toLowerCase().trim();
-            
-            // Check for any wake word
-            const wakeCheck = containsWakeWord(text);
-            
-            if (wakeCheck.detected && !isActive) {
-                // Show popup notification
-                showPopup(wakeCheck.word);
-                
-                // Visual feedback on indicator
-                wakeIndicator.classList.add('active');
-                wakeIndicator.textContent = `✨ Wake word detected! "${wakeCheck.word}" from: "${text.substring(0, 40)}"`;
-                
-                // Start visualizer after a brief moment
-                setTimeout(() => {
-                    startVisualizer();
-                }, 100);
-            }
-            
-            // Show what's being heard (for debugging)
-            if (!isActive && text.length > 0) {
-                wakeIndicator.textContent = `🎤 "${text.substring(0, 40)}"`;
-                setTimeout(() => {
-                    if (!isActive && wakeEnabled) {
-                        wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
+            function showWakeModal(detectedWord = "") {
+                if (wakeModalActive) return;
+                wakeModalActive = true;
+                // Create modal element
+                const modalDiv = document.createElement('div');
+                modalDiv.className = 'wake-modal';
+                modalDiv.id = 'wakeModal';
+                modalDiv.innerHTML = `
+                    <div class="wake-card">
+                        <div class="wake-icon">🎤✨</div>
+                        <div class="wake-title">WAKE WORD DETECTED</div>
+                        <div class="wake-message">"${detectedWord}"<br>I'm listening, how can I help?</div>
+                        <button class="close-wake-btn" id="closeWakeBtn">🔊 CLOSE</button>
+                    </div>
+                `;
+                document.body.appendChild(modalDiv);
+                const closeBtn = document.getElementById('closeWakeBtn');
+                const closeModal = () => {
+                    if (modalDiv && modalDiv.remove) modalDiv.remove();
+                    wakeModalActive = false;
+                    // After modal closes, restart wake word listening if mic is active
+                    if (isMicActive && !isListeningForWake) {
+                        startWakeWordRecognition();
                     }
-                }, 1500);
+                };
+                closeBtn.addEventListener('click', closeModal);
+                // Also clicking outside? only close button to be intentional
             }
-        };
-        
-        recognition.onerror = (e) => {
-            console.log('Recognition error:', e.error);
-            if (e.error === 'not-allowed') {
-                wakeIndicator.textContent = '🎤 Microphone permission needed for wake word';
-            } else if (e.error === 'network') {
-                wakeIndicator.textContent = '🌐 Internet connection required for wake word';
-            }
-        };
-        
-        try {
-            recognition.start();
-        } catch(e) {
-            console.log('Start error:', e);
-        }
-    }
-    
-    // Update wake word from input
-    function updateWakeWord() {
-        let newWord = customWakeInput.value.trim();
-        if (newWord === "") {
-            newWord = "hey wave";
-            customWakeInput.value = "hey wave";
-        }
-        customWakeWord = newWord.toLowerCase();
-        
-        // Update UI
-        if (!isActive) {
-            wakeIndicator.textContent = `🎤 Say: ${activeWakeWords.join(", ")} (or "${customWakeWord}")`;
-        } else {
-            wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
-        }
-        
-        // Restart recognition with new wake word
-        if (wakeEnabled && recognition && !isActive) {
-            try {
-                recognition.stop();
-                setTimeout(() => {
-                    recognition.start();
-                }, 100);
-            } catch(e) {}
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('customWakeWord', customWakeWord);
-    }
-    
-    // Load saved wake word
-    function loadSavedWakeWord() {
-        const saved = localStorage.getItem('customWakeWord');
-        if (saved) {
-            customWakeWord = saved;
-            customWakeInput.value = saved;
-        } else {
-            customWakeInput.value = "hey wave";
-        }
-        if (!isActive) {
-            wakeIndicator.textContent = `🎤 Say: ${activeWakeWords.join(", ")} (or "${customWakeWord}")`;
-        }
-    }
-    
-    // Toggle mute
-    function toggleMute() {
-        if (!isActive) return;
-        isMuted = !isMuted;
-        
-        if (isMuted) {
-            muteBtn.classList.add('muted');
-            muteBtn.innerHTML = '🔊 UNMUTE';
-            statusMsg.innerText = '🔇 Muted';
-            bars.forEach(bar => bar.classList.add('idle'));
-        } else {
-            muteBtn.classList.remove('muted');
-            muteBtn.innerHTML = '🔇 MUTE';
-            statusMsg.innerText = '🎤 Active';
-            bars.forEach(bar => bar.classList.remove('idle'));
-        }
-    }
-    
-    // Recording
-    function updateRecordUI() {
-        if (isRecording) {
-            recordBtn.innerHTML = '⏹️ STOP RECORDING';
-            recordBtn.classList.add('recording');
-        } else {
-            recordBtn.innerHTML = '⏺ START RECORDING';
-            recordBtn.classList.remove('recording');
-        }
-    }
-    
-    function startCounter(seconds) {
-        if (counterInterval) clearInterval(counterInterval);
-        let remaining = seconds;
-        const update = () => {
-            if (remaining >= 0) {
-                statusMsg.innerText = `🔴 Recording: ${remaining}s`;
-                remaining--;
-            }
-            if (remaining < 0 && counterInterval) {
-                clearInterval(counterInterval);
-                counterInterval = null;
-            }
-        };
-        update();
-        counterInterval = setInterval(update, 1000);
-    }
-    
-    function handleRecording() {
-        if (!isActive || !mediaStream) {
-            statusMsg.innerText = '❌ Activate wake word first';
-            showPopupMessage('Activate wake word first', 'info');
-            return;
-        }
-        
-        if (isRecording) {
-            if (counterInterval) clearInterval(counterInterval);
-            if (recordTimeout) clearTimeout(recordTimeout);
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-            isRecording = false;
-            updateRecordUI();
-            statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
-            return;
-        }
-        
-        chunks = [];
-        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: mime });
-        
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size) chunks.push(e.data);
-        };
-        
-        mediaRecorder.onstop = () => {
-            if (chunks.length) {
-                const blob = new Blob(chunks, { type: 'audio/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `wave_recording_${Date.now()}.webm`;
-                a.click();
-                URL.revokeObjectURL(url);
-                statusMsg.innerText = '💾 Saved!';
-                setTimeout(() => {
-                    if (!isRecording && isActive) {
-                        statusMsg.innerText = isMuted ? '🔇 Muted' : '🎤 Active';
-                    }
-                }, 1500);
-            }
-            chunks = [];
-            isRecording = false;
-            updateRecordUI();
-            if (counterInterval) clearInterval(counterInterval);
-        };
-        
-        mediaRecorder.start(200);
-        isRecording = true;
-        updateRecordUI();
-        startCounter(recordDuration);
-        
-        recordTimeout = setTimeout(() => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-        }, recordDuration * 1000);
-    }
-    
-    function showPopupMessage(msg, type = 'info') {
-        const popup = document.createElement('div');
-        popup.className = 'popup-notification';
-        popup.innerHTML = `
-            <div class="popup-icon">${type === 'info' ? 'ℹ️' : '⚠️'}</div>
-            <div class="popup-title">${type === 'info' ? 'Info' : 'Notice'}</div>
-            <div class="popup-message">${msg}</div>
-        `;
-        document.body.appendChild(popup);
-        setTimeout(() => popup.classList.add('show'), 10);
-        setTimeout(() => {
-            popup.classList.remove('show');
-            setTimeout(() => popup.remove(), 300);
-        }, 2000);
-    }
-    
-    // Theme
-    function toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
-    }
-    
-    function applyTheme() {
-        if (localStorage.getItem('theme') === 'light') {
-            document.body.classList.add('light-theme');
-        }
-    }
-    
-    // Toggle wake word
-    function toggleWakeWord() {
-        wakeEnabled = !wakeEnabled;
-        if (wakeEnabled && !isActive) {
-            initWakeWord();
-        } else if (!wakeEnabled && recognition) {
-            try { recognition.stop(); } catch(e) {}
-            recognition = null;
-            if (!isActive) {
-                wakeIndicator.textContent = '⏸️ Wake word disabled';
-                wakeIndicator.classList.remove('listening', 'active');
-            }
-        }
-    }
-    
-    // Event listeners
-    muteBtn.addEventListener('click', toggleMute);
-    recordBtn.addEventListener('click', handleRecording);
-    durationSelect.addEventListener('change', (e) => {
-        recordDuration = parseInt(e.target.value);
-    });
-    settingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        settingsPanel.classList.toggle('show');
-    });
-    document.addEventListener('click', (e) => {
-        if (!settingsBtn.contains(e.target) && !settingsPanel.contains(e.target)) {
-            settingsPanel.classList.remove('show');
-        }
-    });
-    themeBtn.addEventListener('click', toggleTheme);
-    customWakeInput.addEventListener('change', updateWakeWord);
-    customWakeInput.addEventListener('blur', updateWakeWord);
-    
-    window.addEventListener('resize', () => setTimeout(createBars, 100));
-    
-    // Initialize
-    createBars();
-    idleAnimation();
-    applyTheme();
-    loadSavedWakeWord();
-    initWakeWord();
-    
-    // Check if mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile) {
-        console.log('Mobile device detected - wake word should work on iOS 14+ and Android');
-        // iOS requires user interaction to start speech recognition
-        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            wakeIndicator.textContent = `🎤 Tap anywhere to enable wake words on iOS`;
-            document.body.addEventListener('touchstart', function enableIOS() {
+            
+            function startWakeWordRecognition() {
+                if (!isMicActive) return;
                 if (recognition) {
-                    try {
-                        recognition.start();
-                        wakeIndicator.textContent = `🎧 Listening for: ${activeWakeWords.join(", ")}`;
-                        wakeIndicator.classList.add('listening');
-                    } catch(e) {}
+                    try { recognition.stop(); } catch(e) {}
                 }
-                document.body.removeEventListener('touchstart', enableIOS);
-            }, { once: true });
-        }
-    }
-    
-    // Cleanup
-    window.addEventListener('beforeunload', () => {
-        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-        if (audioContext) audioContext.close();
-        if (animationId) cancelAnimationFrame(animationId);
-        if (recognition) recognition.stop();
-    });
-})();
-</script>
+                // Use webkitSpeechRecognition if available
+                const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognitionAPI) {
+                    console.warn("Speech recognition not supported");
+                    permStatusSpan.innerText = "⚠️ Wake word not supported (browser)";
+                    return;
+                }
+                recognition = new SpeechRecognitionAPI();
+                recognition.continuous = true;    // keep listening
+                recognition.interimResults = true; // get partial results for real-time
+                recognition.lang = 'en-US';
+                recognition.maxAlternatives = 1;
+                
+                recognition.onresult = (event) => {
+                    if (wakeModalActive) return; // already showing modal, ignore new triggers
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript.trim().toLowerCase();
+                        // check if any wake trigger appears in transcript
+                        let matched = false;
+                        let matchedWord = "";
+                        for (let trigger of wakeTriggers) {
+                            if (transcript.includes(trigger.toLowerCase())) {
+                                matched = true;
+                                matchedWord = trigger;
+                                break;
+                            }
+                        }
+                        // also check for single words like "lyra", "computer"
+                        if (!matched) {
+                            const words = transcript.split(/\s+/);
+                            for (let w of words) {
+                                if (wakeTriggers.some(tr => tr === w)) {
+                                    matched = true;
+                                    matchedWord = w;
+                                    break;
+                                }
+                            }
+                        }
+                        if (matched) {
+                            // optional: vibrate if supported
+                            if (navigator.vibrate) navigator.vibrate(100);
+                            // Stop recognition temporarily while modal is shown
+                            if (recognition) {
+                                try { recognition.abort(); } catch(e) {}
+                                isListeningForWake = false;
+                            }
+                            showWakeModal(matchedWord);
+                            break; // only one modal at a time
+                        }
+                    }
+                };
+                
+                recognition.onerror = (e) => {
+                    // if error like no-speech, just restart after delay
+                    if (e.error === 'no-speech' || e.error === 'audio-capture') {
+                        // retry
+                    }
+                    if (isMicActive && !wakeModalActive) {
+                        setTimeout(() => {
+                            if (isMicActive && !wakeModalActive && !isListeningForWake) startWakeWordRecognition();
+                        }, 1000);
+                    }
+                };
+                
+                recognition.onend = () => {
+                    if (isMicActive && !wakeModalActive && !isListeningForWake) {
+                        // restart continuous listening
+                        isListeningForWake = false;
+                        startWakeWordRecognition();
+                    } else {
+                        isListeningForWake = false;
+                    }
+                };
+                
+                recognition.start();
+                isListeningForWake = true;
+                permStatusSpan.innerText = "✅ Wake word active";
+            }
+            
+            function stopWakeWordRecognition() {
+                if (recognition) {
+                    try { recognition.stop(); } catch(e) {}
+                    recognition = null;
+                }
+                isListeningForWake = false;
+            }
+            
+            // restart wake when mic becomes active
+            function initWakeWordAfterMic() {
+                if (isMicActive && !wakeModalActive) {
+                    stopWakeWordRecognition();
+                    startWakeWordRecognition();
+                }
+            }
+            
+            // ---------- VISUAL AND AUDIO CORE ----------
+            function resetHideTimers() {
+                if (hideTimer) clearTimeout(hideTimer);
+                settingsBtn.classList.remove('auto-hidden');
+                settingsBtn.classList.add('force-visible');
+                hideTimer = setTimeout(() => {
+                    if (!isDropdownOpen) {
+                        settingsBtn.classList.add('auto-hidden');
+                        settingsBtn.classList.remove('force-visible');
+                    }
+                }, 3500);
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+                muteHideTimer = setTimeout(() => {
+                    if (!isMuteHoverLock && !isRecording) {
+                        muteOverlayBtn.classList.add('auto-hidden');
+                        muteOverlayBtn.classList.remove('force-visible');
+                    }
+                }, 3500);
+            }
+            function showAllButtons() { settingsBtn.classList.remove('auto-hidden'); settingsBtn.classList.add('force-visible'); muteOverlayBtn.classList.remove('auto-hidden'); muteOverlayBtn.classList.add('force-visible'); resetHideTimers(); }
+            function showMuteButton() { if (muteHideTimer) clearTimeout(muteHideTimer); muteOverlayBtn.classList.remove('auto-hidden'); muteOverlayBtn.classList.add('force-visible'); }
+            function scheduleMuteHide() { if (muteHideTimer) clearTimeout(muteHideTimer); muteHideTimer = setTimeout(() => { if (!isMuteHoverLock && !isRecording) { muteOverlayBtn.classList.add('auto-hidden'); muteOverlayBtn.classList.remove('force-visible'); } }, 3500); }
+            document.addEventListener('mousemove', showAllButtons);
+            document.addEventListener('touchstart', showAllButtons);
+            settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsDropdown.classList.toggle('hidden'); isDropdownOpen = !settingsDropdown.classList.contains('hidden'); showAllButtons(); });
+            settingsBtn.addEventListener('mouseenter', showAllButtons);
+            settingsDropdown.addEventListener('mouseenter', () => { if (hideTimer) clearTimeout(hideTimer); settingsBtn.classList.remove('auto-hidden'); settingsBtn.classList.add('force-visible'); });
+            settingsDropdown.addEventListener('mouseleave', () => { resetHideTimers(); });
+            document.addEventListener('click', (e) => { if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) { settingsDropdown.classList.add('hidden'); isDropdownOpen = false; resetHideTimers(); } });
+            muteOverlayBtn.addEventListener('mouseenter', () => { isMuteHoverLock = true; showMuteButton(); });
+            muteOverlayBtn.addEventListener('mouseleave', () => { isMuteHoverLock = false; scheduleMuteHide(); });
+            muteOverlayBtn.addEventListener('click', (e) => { e.stopPropagation(); showMuteButton(); toggleMute(); scheduleMuteHide(); });
+            resetHideTimers();
+            
+            // Clock
+            function updateClock() { const now = new Date(); let hours = now.getHours(); const minutes = now.getMinutes(); const seconds = now.getSeconds(); const ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12 || 12; clockTimeSpan.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`; clockAmPmSpan.textContent = ampm; }
+            updateClock(); setInterval(updateClock, 1000);
+            
+            let canvasCtx = canvas.getContext('2d');
+            let canvasWidth = window.innerWidth;
+            let canvasHeight = 200;
+            function resizeCanvas() { canvasWidth = window.innerWidth; canvas.height = canvasHeight; canvas.width = canvasWidth; canvasCtx = canvas.getContext('2d'); drawStationaryWave(0.2); }
+            window.addEventListener('resize', resizeCanvas);
+            
+            class Particle { constructor(x, y, color) { this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 3; this.vy = (Math.random() - 0.5) * 2 - 1.5; this.life = 40 + Math.random() * 60; this.maxLife = this.life; this.color = color || `hsl(${Math.random() * 60 + 200}, 80%, 65%)`; this.size = 2 + Math.random() * 3; } update() { this.x += this.vx; this.y += this.vy; this.life -= 2.5; } draw(ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.size * (this.life / this.maxLife), 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.shadowBlur = 8; ctx.shadowColor = this.color; ctx.fill(); ctx.shadowBlur = 0; } }
+            
+            function drawStationaryWave(amplitude) { if (!canvasCtx) return; canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight); const centerY = canvasHeight / 2; const frozenTime = stationaryWaveTime; const gradient = canvasCtx.createLinearGradient(0, 0, canvasWidth, 0); const hue1 = 200 + amplitude * 60; const hue2 = 280 + amplitude * 40; gradient.addColorStop(0, `hsl(${hue1}, 100%, 60%)`); gradient.addColorStop(0.5, `hsl(${hue2}, 100%, 65%)`); const steps = Math.max(120, Math.floor(canvasWidth / 2.5)); const stepX = canvasWidth / steps; const maxOffset = canvasHeight * 0.35 * 0.2; canvasCtx.beginPath(); for (let i=0;i<=steps;i++) { const x=i*stepX; const progress=x/canvasWidth; const wave=Math.sin(progress*Math.PI*4)*0.6+Math.sin(progress*Math.PI*8)*0.4; const y=centerY - wave*maxOffset; if(i===0) canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y); } canvasCtx.strokeStyle=gradient; canvasCtx.lineWidth=3.5; canvasCtx.shadowBlur=15; canvasCtx.stroke(); canvasCtx.beginPath(); for(let i=0;i<=steps;i++){ const x=i*stepX; const progress=x/canvasWidth; const wave=Math.sin(progress*Math.PI*4+0.5)*0.6; const y=centerY+wave*maxOffset; if(i===0)canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y); } canvasCtx.stroke(); canvasCtx.shadowBlur=0; }
+            
+            function drawAnimatedWave(amplitude) { if (!canvasCtx) return; canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight); const centerY=canvasHeight/2; const time=Date.now()*0.008; const gradient=canvasCtx.createLinearGradient(0,0,canvasWidth,0); const hue1=200+amplitude*60; gradient.addColorStop(0,`hsl(${hue1},100%,60%)`); const steps=Math.max(120,Math.floor(canvasWidth/2.5)); const stepX=canvasWidth/steps; const ampMultiplier=(!isMicActive)?0.15:Math.min(0.85,amplitude*1.8); const maxOffset=canvasHeight*0.4*ampMultiplier; canvasCtx.beginPath(); for(let i=0;i<=steps;i++){ const x=i*stepX; const progress=x/canvasWidth; let wave=Math.sin(progress*Math.PI*4+time)*0.6+Math.sin(progress*Math.PI*8-time*1.3)*0.4; if(frequencyData.length>0 && isMicActive){ const freqAmp=frequencyData[Math.floor(progress*frequencyData.length)]/255; wave=wave*0.6+freqAmp*0.4; } const y=centerY-wave*maxOffset; if(i===0)canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y); } canvasCtx.strokeStyle=gradient; canvasCtx.lineWidth=3.5; canvasCtx.stroke(); if(isMicActive && amplitude>0.05){ const barCount=Math.min(40,Math.floor(amplitude*80)); for(let i=0;i<barCount;i++){ const progress=i/barCount; const x=progress*canvasWidth; const wave=Math.sin(progress*Math.PI*4+time)*0.6; const yTop=centerY-wave*maxOffset; const yBottom=centerY+wave*maxOffset*0.8; canvasCtx.beginPath(); canvasCtx.moveTo(x,yTop); canvasCtx.lineTo(x,yBottom); canvasCtx.strokeStyle=`hsl(${hue1+amplitude*80},90%,65%)`; canvasCtx.lineWidth=2+Math.abs(yBottom-yTop)/12; canvasCtx.stroke(); if(Math.random()<amplitude*0.25) particles.push(new Particle(x,yTop-5)); } } for(let i=particles.length-1;i>=0;i--){ particles[i].update(); if(particles[i].life<=0) particles.splice(i,1); else particles[i].draw(canvasCtx); } canvasCtx.shadowBlur=0; canvasCtx.beginPath(); canvasCtx.moveTo(0,centerY); canvasCtx.lineTo(canvasWidth,centerY); canvasCtx.strokeStyle=`hsla(${hue1},80%,65%,0.3)`; canvasCtx.lineWidth=1; canvasCtx.stroke(); }
+            
+            function updateAudioLevel() { if(!isMicActive||!analyserNode||isMuted) { frequencyData=new Uint8Array(0); return; } frequencyData=new Uint8Array(analyserNode.frequencyBinCount); analyserNode.getByteFrequencyData(frequencyData); }
+            let smoothAmp=0;
+            function animationLoop() { if(!animationId) return; updateAudioLevel(); let currentAmp=0; if(frequencyData.length>0 && !isMuted){ let sum=0; for(let v of frequencyData) sum+=v; currentAmp=Math.min(0.9,sum/frequencyData.length/180); } smoothAmp=smoothAmp*0.85+currentAmp*0.15; if(isMuted||!isMicActive) drawStationaryWave(0.2); else drawAnimatedWave(smoothAmp); animationId=requestAnimationFrame(animationLoop); }
+            
+            async function initMicrophone() { permStatusSpan.innerText="Requesting mic..."; try{ const stream=await navigator.mediaDevices.getUserMedia({audio:true}); mediaStream=stream; audioCtx=new (window.AudioContext||window.webkitAudioContext)(); analyserNode=audioCtx.createAnalyser(); analyserNode.fftSize=1024; analyserNode.smoothingTimeConstant=0.6; sourceNode=audioCtx.createMediaStreamSource(mediaStream); sourceNode.connect(analyserNode); if(audioCtx.state==='suspended') await audioCtx.resume(); isMicActive=true; isMuted=false; stationaryWaveTime=Date.now()*0.008; updateMuteUI(); if(animationId) cancelAnimationFrame(animationId); animationId=requestAnimationFrame(animationLoop); settingsStatusMsg.innerText="🎤 Active"; permStatusSpan.innerText="✅ Ready"; permissionOverlay.classList.add('hidden'); resizeCanvas(); initWakeWordAfterMic(); } catch(err){ permStatusSpan.innerText="❌ Microphone denied"; } }
+            
+            function toggleMute() { if(!isMicActive) return; isMuted=!isMuted; if(isMuted) stationaryWaveTime=Date.now()*0.008; updateMuteUI(); settingsStatusMsg.innerText=isMuted?"🔇 Muted - Wave Stationary":"🎤 Active"; }
+            function updateMuteUI() { if(isMuted){ muteOverlayBtn.innerHTML="🔊 Unmute"; muteOverlayBtn.classList.add('muted-active'); } else{ muteOverlayBtn.innerHTML="🔇 Mute"; muteOverlayBtn.classList.remove('muted-active'); } }
+            
+            function handleRecordToggle() { if(!isMicActive||!mediaStream){ settingsStatusMsg.innerText="❌ No mic active"; return; } if(isRecording){ if(counterInterval)clearInterval(counterInterval); if(recordingTimeout)clearTimeout(recordingTimeout); if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop(); isRecording=false; recordToggleBtn.classList.remove('recording-active'); recordToggleBtn.innerHTML="⏺ START RECORDING"; settingsStatusMsg.innerText=isMuted?"🔇 Muted":"🎤 Active"; scheduleMuteHide(); return; } startRecording(); }
+            function startRecording(){ recordedChunks=[]; mediaRecorder=new MediaRecorder(mediaStream); mediaRecorder.ondataavailable=(e)=>{ if(e.data.size>0) recordedChunks.push(e.data); }; mediaRecorder.onstop=async()=>{ if(recordedChunks.length){ const blob=new Blob(recordedChunks,{type:'audio/webm'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`wave_recording_${Date.now()}.webm`; a.click(); URL.revokeObjectURL(url); settingsStatusMsg.innerText="💾 Saved!"; setTimeout(()=>{ if(!isRecording) settingsStatusMsg.innerText=isMuted?"🔇 Muted":"🎤 Active"; },1500); } isRecording=false; recordToggleBtn.classList.remove('recording-active'); recordToggleBtn.innerHTML="⏺ START RECORDING"; if(counterInterval)clearInterval(counterInterval); showMuteButton(); scheduleMuteHide(); }; mediaRecorder.start(); isRecording=true; recordToggleBtn.classList.add('recording-active'); recordToggleBtn.innerHTML="⏹️ STOP RECORDING"; muteOverlayBtn.classList.remove('auto-hidden'); muteOverlayBtn.classList.add('force-visible'); let remaining=selectedDuration; settingsStatusMsg.innerText=`🔴 Recording: ${remaining}s`; counterInterval=setInterval(()=>{ remaining--; if(remaining>=0)settingsStatusMsg.innerText=`🔴 Recording: ${remaining}s`; if(remaining<=0&&counterInterval)clearInterval(counterInterval); },1000); recordingTimeout=setTimeout(()=>{ if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop(); recordingTimeout=null; },selectedDuration*1000); }
+            
+            function applyTheme(){ if(localStorage.getItem('theme')==='light') document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme'); }
+            function toggleTheme(){ document.body.classList.toggle('light-theme'); localStorage.setItem('theme',document.body.classList.contains('light-theme')?'light':'dark'); }
+            applyTheme();
+            requestMicBtn.addEventListener('click', initMicrophone);
+            recordToggleBtn.addEventListener('click', handleRecordToggle);
+            durationSelect.addEventListener('change',(e)=>{ selectedDuration=parseInt(e.target.value); });
+            themeSwitch.addEventListener('click', toggleTheme);
+            resizeCanvas();
+            drawStationaryWave(0.2);
+        })();
+    </script>
 </body>
 </html>
+```
