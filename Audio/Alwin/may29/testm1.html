@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Audio Classifier - Alert Popup & Confidence Threshold</title>
+    <!-- TensorFlow.js and Speech Commands model -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 850px;
+            width: 100%;
+            background: rgba(22, 34, 48, 0.75);
+            backdrop-filter: blur(10px);
+            border-radius: 56px;
+            padding: 28px 24px 40px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            text-align: center;
+            background: linear-gradient(135deg, #E0F2FE, #A5F3FC);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sub {
+            text-align: center;
+            color: #9ab3cf;
+            margin-bottom: 28px;
+            font-size: 0.9rem;
+            border-bottom: 1px dashed #2e4a6a;
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            padding-bottom: 6px;
+        }
+
+        /* Threshold control panel */
+        .control-panel {
+            background: #07121cee;
+            border-radius: 48px;
+            padding: 12px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #2e577a;
+        }
+
+        .threshold-slider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #0f1f2c;
+            padding: 6px 18px;
+            border-radius: 60px;
+            flex-wrap: wrap;
+        }
+
+        .threshold-slider label {
+            font-weight: 600;
+            color: #bbdef5;
+            font-size: 0.9rem;
+        }
+
+        #confidenceThreshold {
+            width: 180px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        #thresholdValue {
+            background: #000000aa;
+            padding: 4px 12px;
+            border-radius: 32px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #facc15;
+            min-width: 55px;
+            text-align: center;
+        }
+
+        .reset-alert-btn {
+            background: #2a4b6e;
+            padding: 6px 18px;
+            border-radius: 40px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+
+        .reset-alert-btn:hover {
+            background: #3a6b96;
+        }
+
+        /* Meter cards */
+        .meters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            margin: 20px 0 25px;
+        }
+
+        .meter-card {
+            background: #0b1620cc;
+            backdrop-filter: blur(4px);
+            border-radius: 2rem;
+            flex: 1;
+            min-width: 160px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(80, 140, 200, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .class-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            background: linear-gradient(120deg, #ffffff, #b9e2ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .class-badge {
+            font-size: 0.7rem;
+            background: #1e2f3f;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #bbd4ff;
+            margin-bottom: 14px;
+        }
+
+        .confidence-meter {
+            background: #07121c;
+            border-radius: 60px;
+            height: 20px;
+            width: 100%;
+            overflow: hidden;
+            margin: 12px 0;
+            box-shadow: inset 0 1px 4px #00000055;
+        }
+
+        .meter-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #2dd4bf, #3b82f6, #a855f7);
+            border-radius: 60px;
+            transition: width 0.08s linear;
+        }
+
+        .confidence-value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            font-family: monospace;
+            color: #eef5ff;
+            margin-top: 6px;
+        }
+
+        .status-area {
+            background: #07121cee;
+            border-radius: 48px;
+            padding: 12px 20px;
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            animation: pulse 1.2s infinite;
+            display: inline-block;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.8);}
+            100% { opacity: 1; transform: scale(1.2);}
+        }
+
+        button {
+            background: linear-gradient(95deg, #2b6e9e, #1e4a76);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            filter: brightness(1.05);
+        }
+
+        /* POPUP MODAL */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.25s ease;
+        }
+
+        .popup-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .popup-card {
+            background: #0f212f;
+            border-radius: 48px;
+            max-width: 380px;
+            width: 85%;
+            padding: 28px 24px 32px;
+            text-align: center;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.6);
+            border: 1px solid #4f9fcf;
+            animation: popScale 0.2s ease;
+        }
+
+        @keyframes popScale {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .popup-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .popup-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffde9c;
+            margin-bottom: 8px;
+        }
+
+        .popup-detected-class {
+            font-size: 2.3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFB347, #FF8C42);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 12px 0;
+        }
+
+        .popup-confidence {
+            font-size: 1.2rem;
+            background: #00000066;
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 60px;
+            margin-bottom: 20px;
+        }
+
+        .close-popup-btn {
+            background: #f97316;
+            margin-top: 10px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            width: 80%;
+        }
+
+        .close-popup-btn:hover {
+            background: #ff8c42;
+        }
+
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 22px;
+            color: #6e8eb0;
+        }
+
+        .error-message {
+            background: #b91c1caa;
+            border-radius: 32px;
+            padding: 8px;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <h1>🔊 Smart Audio Monitor</h1>
+    <div style="text-align: center;"><span class="sub">Class 2 · Class 3 · Class 4 | Popup on High Confidence</span></div>
+
+    <!-- Confidence threshold control + reset alert cooldown -->
+    <div class="control-panel">
+        <div class="threshold-slider">
+            <label>🎯 Alert Threshold:</label>
+            <input type="range" id="confidenceThreshold" min="30" max="95" step="5" value="60">
+            <span id="thresholdValue">60%</span>
+        </div>
+        <button id="resetAlertFlagBtn" class="reset-alert-btn">🔄 Reset Popup Block (5s cooldown)</button>
+    </div>
+
+    <!-- 3 dynamic meter cards -->
+    <div class="meters-container" id="metersContainer"></div>
+
+    <div class="status-area">
+        <div><span class="live-dot"></span> <span style="margin-left: 6px;">🎙️ LIVE LISTENING</span></div>
+        <div id="activeWordDisplay" style="background:#00000055; padding:5px 14px; border-radius: 32px; font-family: monospace;">
+            ⏳ Press Start
+        </div>
+    </div>
+    <div style="display: flex; justify-content: center; margin: 18px 0 8px;">
+        <button id="startBtn">🎤 Request Mic & Start</button>
+    </div>
+    <div class="footer-note">
+        ✅ Popup appears when any class (2,3,4) exceeds threshold. Editable threshold slider.<br>
+        ⏱️ 5-second cooldown after popup to avoid spam. Click reset button to clear cooldown.
+    </div>
+    <div id="errorMsg" class="error-message" style="display: none;"></div>
+</div>
+
+<!-- Popup Modal Structure -->
+<div id="alertPopup" class="popup-overlay">
+    <div class="popup-card">
+        <div class="popup-icon">🔔🎤</div>
+        <div class="popup-title">High Confidence Detection!</div>
+        <div id="popupClassName" class="popup-detected-class">Class 2</div>
+        <div id="popupConfidence" class="popup-confidence">Confidence: 78%</div>
+        <button id="closePopupBtn" class="close-popup-btn">✔️ Got it, Close</button>
+    </div>
+</div>
+
+<script>
+    // ------------------------- GLOBALS -------------------------
+    const MODEL_PATH = "my_model/";   // Path where model.json, metadata.json, weights.bin exist
+    let recognizerInstance = null;
+    let isListeningActive = false;
+    let meterElements = [];            // stores fill divs, value spans and class index
+    let classLabelNames = [];          // full labels from model ["Background Noise","Class 2","Class 3","Class 4"]
+    const INTERESTED_INDICES = [1, 2, 3]; // Class2, Class3, Class4
+    
+    // Popup & cooldown logic
+    let lastPopupTimestamp = 0;
+    const POPUP_COOLDOWN_MS = 5000;    // 5 seconds cooldown between popups
+    let currentThreshold = 60;         // default 60%
+    
+    // DOM elements
+    const metersContainer = document.getElementById("metersContainer");
+    const startBtn = document.getElementById("startBtn");
+    const errorDiv = document.getElementById("errorMsg");
+    const activeWordSpan = document.getElementById("activeWordDisplay");
+    const thresholdSlider = document.getElementById("confidenceThreshold");
+    const thresholdValueSpan = document.getElementById("thresholdValue");
+    const resetAlertBtn = document.getElementById("resetAlertFlagBtn");
+    const popupOverlay = document.getElementById("alertPopup");
+    const popupClassNameSpan = document.getElementById("popupClassName");
+    const popupConfidenceSpan = document.getElementById("popupConfidence");
+    const closePopupBtn = document.getElementById("closePopupBtn");
+    
+    // Helper: show error
+    function showError(msg) {
+        errorDiv.textContent = msg;
+        errorDiv.style.display = "block";
+        setTimeout(() => {
+            if (errorDiv) errorDiv.style.display = "none";
+        }, 6000);
+    }
+    
+    // Build meter UI for three classes
+    function buildMetersUI(class2Label, class3Label, class4Label) {
+        metersContainer.innerHTML = "";
+        meterElements = [];
+        const classItems = [
+            { name: class2Label || "Class 2", idx: 1, gradient: "linear-gradient(90deg, #22c55e, #2dd4bf)" },
+            { name: class3Label || "Class 3", idx: 2, gradient: "linear-gradient(90deg, #facc15, #f97316)" },
+            { name: class4Label || "Class 4", idx: 3, gradient: "linear-gradient(90deg, #a855f7, #ec4899)" }
+        ];
+        
+        classItems.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "meter-card";
+            const titleDiv = document.createElement("div");
+            titleDiv.className = "class-title";
+            let displayName = item.name;
+            if (displayName === "Class 2") displayName = "🗣️ Class 2";
+            else if (displayName === "Class 3") displayName = "🗣️ Class 3";
+            else if (displayName === "Class 4") displayName = "🗣️ Class 4";
+            else displayName = displayName.replace("Class", "🎯");
+            titleDiv.textContent = displayName;
+            
+            const badgeSpan = document.createElement("div");
+            badgeSpan.className = "class-badge";
+            badgeSpan.textContent = `index ${item.idx} · trigger`;
+            
+            const meterWrapper = document.createElement("div");
+            meterWrapper.className = "confidence-meter";
+            const fillDiv = document.createElement("div");
+            fillDiv.className = "meter-fill";
+            fillDiv.style.background = item.gradient;
+            meterWrapper.appendChild(fillDiv);
+            
+            const valueSpan = document.createElement("div");
+            valueSpan.className = "confidence-value";
+            valueSpan.innerHTML = `0<span style="font-size:0.8rem;">%</span>`;
+            
+            card.appendChild(titleDiv);
+            card.appendChild(badgeSpan);
+            card.appendChild(meterWrapper);
+            card.appendChild(valueSpan);
+            metersContainer.appendChild(card);
+            
+            meterElements.push({
+                fillDiv: fillDiv,
+                valueSpan: valueSpan,
+                classIdx: item.idx,
+                classNameRaw: item.name
+            });
+        });
+    }
+    
+    // Update meters from scores array and trigger popup if above threshold
+    function updateMetersAndPopup(scores) {
+        if (!meterElements.length) return;
+        // scores: [bg_noise, class2, class3, class4]
+        let highConfidenceDetected = false;
+        let bestClassIdx = -1;
+        let bestConfidence = 0;
+        
+        // update each meter
+        for (let meter of meterElements) {
+            const idx = meter.classIdx;
+            if (idx >= 0 && idx < scores.length) {
+                let confidence = Math.min(1.0, Math.max(0.0, scores[idx]));
+                let percent = confidence * 100;
+                meter.fillDiv.style.width = percent + "%";
+                meter.valueSpan.innerHTML = `${percent.toFixed(1)}<span style="font-size:0.8rem;">%</span>`;
+                
+                // track highest confidence among our classes (1,2,3)
+                if (confidence > bestConfidence) {
+                    bestConfidence = confidence;
+                    bestClassIdx = idx;
+                }
+            } else {
+                meter.fillDiv.style.width = "0%";
+                meter.valueSpan.innerHTML = `0<span style="font-size:0.8rem;">%</span>`;
+            }
+        }
+        
+        // update active word display (live)
+        if (bestClassIdx !== -1 && bestConfidence > 0.2) {
+            let detectedLabel = classLabelNames[bestClassIdx] || `Class ${bestClassIdx}`;
+            let confPercent = (bestConfidence * 100).toFixed(0);
+            activeWordSpan.innerHTML = `🎤 DETECTED: ${detectedLabel} (${confPercent}%)`;
+        } else if (bestConfidence > 0.1) {
+            activeWordSpan.innerHTML = `🔍 low confidence... speak trigger word`;
+        } else {
+            activeWordSpan.innerHTML = `🎙️ listening... say trained words`;
+        }
+        
+        // ------ POPUP LOGIC with threshold & cooldown ------
+        if (bestClassIdx !== -1 && INTERESTED_INDICES.includes(bestClassIdx)) {
+            const confidencePercent = bestConfidence * 100;
+            const now = Date.now();
+            const timeSinceLastPopup = now - lastPopupTimestamp;
+            // check if confidence >= current threshold AND cooldown passed
+            if (confidencePercent >= currentThreshold && timeSinceLastPopup >= POPUP_COOLDOWN_MS) {
+                // show popup with class name and confidence
+                let detectedClassName = classLabelNames[bestClassIdx] || `Class ${bestClassIdx}`;
+                // format nice display
+                let popupDisplay = detectedClassName;
+                if (detectedClassName === "Class 2") popupDisplay = "🔊 Class 2";
+                else if (detectedClassName === "Class 3") popupDisplay = "🔊 Class 3";
+                else if (detectedClassName === "Class 4") popupDisplay = "🔊 Class 4";
+                else popupDisplay = `🎙️ ${detectedClassName}`;
+                
+                popupClassNameSpan.textContent = popupDisplay;
+                popupConfidenceSpan.innerHTML = `Confidence: ${confidencePercent.toFixed(1)}% (≥${currentThreshold}%)`;
+                // show popup
+                popupOverlay.classList.add("active");
+                lastPopupTimestamp = now;
+                highConfidenceDetected = true;
+            }
+        }
+        
+        // optional: small debug
+        if (highConfidenceDetected) {
+            console.log(`Popup triggered at ${bestConfidence*100}% for class idx ${bestClassIdx}`);
+        }
+    }
+    
+    // Explicit microphone permission request
+    async function requestMicrophonePermission() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("Browser does not support microphone access.");
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        console.log("Microphone permission granted");
+        return true;
+    }
+    
+    // Stop listening if active
+    async function stopCurrentListening() {
+        if (recognizerInstance && isListeningActive) {
+            try {
+                recognizerInstance.stopListening();
+            } catch(e) { console.warn(e); }
+            isListeningActive = false;
+        }
+    }
+    
+    // Initialize model & start listening
+    async function initModelAndStart() {
+        startBtn.disabled = true;
+        startBtn.textContent = "⏳ Loading Model...";
+        if (errorDiv) errorDiv.style.display = "none";
+        
+        try {
+            const checkpointURL = MODEL_PATH + "model.json";
+            const metadataURL = MODEL_PATH + "metadata.json";
+            
+            const recognizer = speechCommands.create(
+                "BROWSER_FFT",
+                undefined,
+                checkpointURL,
+                metadataURL
+            );
+            await recognizer.ensureModelLoaded();
+            
+            const labels = recognizer.wordLabels();
+            if (!labels || labels.length < 4) {
+                throw new Error("Model missing required labels (expected 4 classes)");
+            }
+            classLabelNames = labels.slice(); // ["Background Noise","Class 2","Class 3","Class 4"]
+            console.log("Loaded labels:", classLabelNames);
+            
+            let class2Name = (classLabelNames[1] && classLabelNames[1] !== "Class 2") ? classLabelNames[1] : "Class 2";
+            let class3Name = (classLabelNames[2] && classLabelNames[2] !== "Class 3") ? classLabelNames[2] : "Class 3";
+            let class4Name = (classLabelNames[3] && classLabelNames[3] !== "Class 4") ? classLabelNames[3] : "Class 4";
+            
+            buildMetersUI(class2Name, class3Name, class4Name);
+            
+            // request mic permission explicitly
+            await requestMicrophonePermission();
+            
+            if (isListeningActive && recognizerInstance) {
+                await recognizerInstance.stopListening();
+            }
+            
+            recognizerInstance = recognizer;
+            
+            // start listening with low threshold to get continuous scores
+            await recognizerInstance.listen((result) => {
+                if (result && result.scores) {
+                    updateMetersAndPopup(result.scores);
+                }
+            }, {
+                includeSpectrogram: false,
+                probabilityThreshold: 0.05,      // low so we get all updates
+                invokeCallbackOnNoiseAndUnknown: true,
+                overlapFactor: 0.5
+            });
+            
+            isListeningActive = true;
+            startBtn.disabled = false;
+            startBtn.textContent = "🎙️ Active: Listening";
+            startBtn.style.background = "linear-gradient(95deg, #2b8c5e, #1e6b48)";
+            activeWordSpan.innerHTML = "✅ Ready — speak trained words";
+            setTimeout(() => {
+                if (activeWordSpan.innerHTML.includes("Ready")) {
+                    activeWordSpan.innerHTML = "🎙️ listening...";
+                }
+            }, 1800);
+            
+        } catch (err) {
+            console.error(err);
+            let errorMsg = err.message || "Failed to load model or mic error.";
+            if (err.message && err.message.includes("fetch")) {
+                errorMsg = "Model files not found! Make sure model.json, metadata.json, weights.bin are in same folder. " + err.message;
+            } else if (err.message && err.message.includes("permission")) {
+                errorMsg = "Microphone permission denied. Please allow microphone.";
+            }
+            showError(errorMsg);
+            startBtn.textContent = "⚠️ Retry Start";
+            startBtn.disabled = false;
+            isListeningActive = false;
+            if (meterElements.length === 0) {
+                metersContainer.innerHTML = "<div style='color:#ffaa88;text-align:center;padding:20px;'>⚠️ Load error. Check console & file paths.</div>";
+            }
+        }
+    }
+    
+    // reset popup cooldown manually
+    function resetPopupCooldown() {
+        lastPopupTimestamp = 0;
+        // optional: also close popup if open
+        if (popupOverlay.classList.contains("active")) {
+            popupOverlay.classList.remove("active");
+        }
+        // show temporary feedback
+        const originalText = resetAlertBtn.textContent;
+        resetAlertBtn.textContent = "✓ Cooldown Reset!";
+        setTimeout(() => {
+            if (resetAlertBtn) resetAlertBtn.textContent = originalText;
+        }, 1500);
+        activeWordSpan.style.background = "#00000088";
+        setTimeout(() => { if(activeWordSpan) activeWordSpan.style.background = ""; }, 300);
+    }
+    
+    // threshold slider update
+    function updateThreshold() {
+        let val = parseInt(thresholdSlider.value, 10);
+        currentThreshold = val;
+        thresholdValueSpan.textContent = val + "%";
+    }
+    
+    // Close popup handler
+    function closePopup() {
+        popupOverlay.classList.remove("active");
+    }
+    
+    // Start button handler (full restart)
+    async function onStartClick() {
+        if (isListeningActive && recognizerInstance) {
+            await stopCurrentListening();
+            recognizerInstance = null;
+        }
+        if (meterElements.length === 0) {
+            metersContainer.innerHTML = '<div style="color:#ccc;text-align:center;padding:20px;">⏳ Loading model & requesting mic...</div>';
+        }
+        await initModelAndStart();
+    }
+    
+    // ---- Event listeners ----
+    startBtn.addEventListener("click", onStartClick);
+    thresholdSlider.addEventListener("input", (e) => {
+        updateThreshold();
+    });
+    resetAlertBtn.addEventListener("click", resetPopupCooldown);
+    closePopupBtn.addEventListener("click", closePopup);
+    // clicking on overlay background also closes
+    popupOverlay.addEventListener("click", (e) => {
+        if (e.target === popupOverlay) closePopup();
+    });
+    
+    // initial threshold UI
+    updateThreshold();
+    
+    // initial placeholder
+    window.addEventListener("load", () => {
+        metersContainer.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; color:#b0d4ff; background:#0f1f2e; padding: 24px; border-radius: 32px;">
+                🎤 Click "Request Mic & Start" to load Teachable Machine model.<br>
+                Ensure model.json, metadata.json & weights.bin are in same directory.
+            </div>
+        `;
+        activeWordSpan.innerHTML = "⏸ idle — press Start";
+        startBtn.disabled = false;
+        startBtn.textContent = "🎤 Request Mic & Start";
+        lastPopupTimestamp = 0;
+    });
+    
+    window.addEventListener("beforeunload", () => {
+        if (recognizerInstance && isListeningActive) {
+            recognizerInstance.stopListening();
+        }
+    });
+</script>
+</body>
+</html>
