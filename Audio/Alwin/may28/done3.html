@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Silent Flow | Ambient Wave Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #050a14 0%, #0a1020 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Roboto', sans-serif;
+            transition: background 0.3s ease;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body.light-theme {
+            background: linear-gradient(135deg, #e8ecf3 0%, #d4dce8 100%);
+        }
+
+        /* Animated background glow */
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(circle at 50% 80%, rgba(0, 200, 255, 0.05) 0%, transparent 70%);
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        /* Wave canvas - enhanced */
+        .wave-canvas-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: transparent;
+            pointer-events: none;
+            filter: drop-shadow(0 0 15px rgba(0, 200, 255, 0.3));
+        }
+
+        /* System Clock - top left corner */
+        .system-clock {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: 'Inter', 'Segoe UI', 'Courier New', monospace;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+
+        .clock-time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00c8ff;
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+            font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-ampm {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #88aaff;
+            opacity: 0.85;
+        }
+
+        body.light-theme .system-clock {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 160, 210, 0.6);
+        }
+
+        body.light-theme .clock-time {
+            color: #0077aa;
+        }
+
+        /* Mute button - auto-hide behavior */
+        .mute-overlay {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            padding: 0.7rem 1.4rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            color: #c0e4ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+        }
+
+        .mute-overlay:hover {
+            transform: scale(1.02);
+            border-color: #ff66cc;
+        }
+
+        .mute-overlay.muted-active {
+            background: linear-gradient(135deg, #ff3366, #ff80b0);
+            border-color: #ff80b0;
+            color: white;
+            animation: softPulse 1s infinite;
+        }
+        
+        /* Auto-hide classes for mute button */
+        .mute-overlay.auto-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+        }
+        
+        .mute-overlay.force-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        @keyframes softPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+        }
+
+        /* Settings button - auto-hide */
+        .settings-corner {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 300;
+            background: rgba(10, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.3rem;
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.2s, background 0.2s;
+            color: #00c8ff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            pointer-events: auto;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .settings-corner.auto-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+
+        .settings-corner.force-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .settings-corner:hover {
+            background: rgba(0, 200, 255, 0.2);
+            transform: scale(0.98);
+        }
+
+        /* Settings dropdown */
+        .settings-dropdown {
+            position: fixed;
+            top: 75px;
+            right: 20px;
+            background: rgba(12, 22, 40, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 1.6rem;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 200, 255, 0.4);
+            z-index: 310;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 240px;
+            pointer-events: auto;
+        }
+
+        body.light-theme .settings-dropdown {
+            background: rgba(250, 252, 255, 0.98);
+        }
+
+        .dropdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #eef3ff;
+        }
+
+        body.light-theme .dropdown-item {
+            color: #102a38;
+        }
+
+        .theme-toggle-btn, .duration-select {
+            background: rgba(0, 200, 255, 0.2);
+            border: 1px solid rgba(0, 200, 255, 0.6);
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+            color: inherit;
+        }
+
+        .single-record-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00c8ff, #ff50c8);
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: inherit;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .single-record-btn.recording-active {
+            background: linear-gradient(135deg, #ff3366, #ff80b0);
+            animation: pulseRed 1.2s infinite;
+        }
+
+        @keyframes pulseRed {
+            0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 51, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+        }
+
+        .status-badge-mini {
+            font-size: 0.7rem;
+            background: rgba(0, 200, 255, 0.15);
+            padding: 0.35rem 0.7rem;
+            border-radius: 2rem;
+            text-align: center;
+            color: #88ddff;
+            font-weight: 500;
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(0, 200, 255, 0.2);
+            margin: 0.2rem 0;
+        }
+
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 8, 20, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+            flex-direction: column;
+        }
+
+        .perm-card {
+            background: rgba(10, 20, 40, 0.9);
+            border-radius: 2.5rem;
+            padding: 2rem 1.8rem;
+            text-align: center;
+            border: 1px solid rgba(0, 200, 255, 0.5);
+            max-width: 320px;
+            width: 85%;
+        }
+
+        .perm-btn {
+            background: linear-gradient(135deg, #00c8ff, #ff50c8);
+            border: none;
+            padding: 0.8rem 1.8rem;
+            font-weight: 700;
+            border-radius: 3rem;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .live-status {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            font-size: 0.7rem;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            color: #88aaff;
+            pointer-events: none;
+            z-index: 140;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 640px) {
+            .system-clock, .settings-corner { top: 12px; padding: 0.45rem 1rem; }
+            .clock-time { font-size: 0.9rem; }
+            .mute-overlay { bottom: 12px; right: 12px; padding: 0.5rem 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <div class="system-clock">
+        <span class="clock-time" id="clockTime">--:--:--</span>
+        <span class="clock-ampm" id="clockAmPm">--</span>
+    </div>
+
+    <div id="settingsBtn" class="settings-corner">⚙️</div>
+
+    <div id="settingsDropdown" class="settings-dropdown hidden">
+        <div class="dropdown-item"><span>🌗 Theme</span><button id="themeSwitchBtn" class="theme-toggle-btn">Toggle</button></div>
+        <div class="dropdown-item"><span>⏱️ Rec Duration</span><select id="durationSelect" class="duration-select"><option value="5">5 sec</option><option value="10" selected>10 sec</option><option value="15">15 sec</option><option value="30">30 sec</option><option value="60">60 sec</option></select></div>
+        <div class="divider"></div>
+        <button id="recordToggleBtn" class="single-record-btn">⏺ START RECORDING</button>
+        <div id="settingsStatusMsg" class="status-badge-mini">⚪ Ready</div>
+    </div>
+
+    <div id="permissionOverlay" class="permission-overlay">
+        <div class="perm-card">
+            <p>🎙️ Allow microphone to visualize live waves</p>
+            <button id="requestMicBtn" class="perm-btn">✨ Enable Visualizer</button>
+            <div id="permStatusText" style="margin-top: 1rem; font-size: 0.75rem; color:#00c8ff;">Click to start</div>
+        </div>
+    </div>
+
+    <div class="wave-canvas-container">
+        <canvas id="waveCanvas" width="1200" height="200"></canvas>
+    </div>
+
+    <button id="muteOverlayBtn" class="mute-overlay">🔇 Mute</button>
+    <div class="live-status">🎵 Live Audio Visualizer</div>
+
+    <script>
+        (function(){
+            // DOM Elements
+            const permissionOverlay = document.getElementById('permissionOverlay');
+            const requestMicBtn = document.getElementById('requestMicBtn');
+            const permStatusSpan = document.getElementById('permStatusText');
+            const canvas = document.getElementById('waveCanvas');
+            const muteOverlayBtn = document.getElementById('muteOverlayBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            const themeSwitch = document.getElementById('themeSwitchBtn');
+            const durationSelect = document.getElementById('durationSelect');
+            const recordToggleBtn = document.getElementById('recordToggleBtn');
+            const settingsStatusMsg = document.getElementById('settingsStatusMsg');
+            const clockTimeSpan = document.getElementById('clockTime');
+            const clockAmPmSpan = document.getElementById('clockAmPm');
+        
+            // Audio Globals
+            let audioCtx = null;
+            let mediaStream = null;
+            let sourceNode = null;
+            let analyserNode = null;
+            let animationId = null;
+            let isMicActive = false;
+            let isMuted = false;
+            
+            // Recording Globals
+            let mediaRecorder = null;
+            let recordedChunks = [];
+            let isRecording = false;
+            let recordingTimeout = null;
+            let selectedDuration = 10;
+            let counterInterval = null;
+            
+            // Visual data
+            let frequencyData = new Uint8Array(0);
+            let particles = [];
+            let timeOffset = 0;
+            
+            // Stationary wave state - when muted, we freeze the wave pattern
+            let stationaryWaveTime = 0; // frozen time value for wave when muted
+            let isWaveFrozen = false;
+            
+            // Settings button auto-hide
+            let hideTimer = null;
+            let isDropdownOpen = false;
+            
+            // Mute button auto-hide timers
+            let muteHideTimer = null;
+            let isMuteHoverLock = false;
+            
+            function resetHideTimers() {
+                if (hideTimer) clearTimeout(hideTimer);
+                settingsBtn.classList.remove('auto-hidden');
+                settingsBtn.classList.add('force-visible');
+                hideTimer = setTimeout(() => {
+                    if (!isDropdownOpen) {
+                        settingsBtn.classList.add('auto-hidden');
+                        settingsBtn.classList.remove('force-visible');
+                    }
+                }, 3500);
+                
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+                muteHideTimer = setTimeout(() => {
+                    if (!isMuteHoverLock && !isRecording) {
+                        muteOverlayBtn.classList.add('auto-hidden');
+                        muteOverlayBtn.classList.remove('force-visible');
+                    }
+                }, 3500);
+            }
+            
+            function showAllButtons() {
+                settingsBtn.classList.remove('auto-hidden');
+                settingsBtn.classList.add('force-visible');
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+                resetHideTimers();
+            }
+            
+            function showMuteButton() {
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+            }
+            
+            function scheduleMuteHide() {
+                if (muteHideTimer) clearTimeout(muteHideTimer);
+                muteHideTimer = setTimeout(() => {
+                    if (!isMuteHoverLock && !isRecording) {
+                        muteOverlayBtn.classList.add('auto-hidden');
+                        muteOverlayBtn.classList.remove('force-visible');
+                    }
+                }, 3500);
+            }
+            
+            document.addEventListener('mousemove', showAllButtons);
+            document.addEventListener('touchstart', showAllButtons);
+            document.addEventListener('scroll', showAllButtons);
+            
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsDropdown.classList.toggle('hidden');
+                isDropdownOpen = !settingsDropdown.classList.contains('hidden');
+                showAllButtons();
+            });
+            
+            settingsBtn.addEventListener('mouseenter', showAllButtons);
+            
+            settingsDropdown.addEventListener('mouseenter', () => {
+                if (hideTimer) clearTimeout(hideTimer);
+                settingsBtn.classList.remove('auto-hidden');
+                settingsBtn.classList.add('force-visible');
+            });
+            settingsDropdown.addEventListener('mouseleave', () => {
+                resetHideTimers();
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+                    settingsDropdown.classList.add('hidden');
+                    isDropdownOpen = false;
+                    resetHideTimers();
+                }
+            });
+            
+            muteOverlayBtn.addEventListener('mouseenter', () => {
+                isMuteHoverLock = true;
+                showMuteButton();
+            });
+            
+            muteOverlayBtn.addEventListener('mouseleave', () => {
+                isMuteHoverLock = false;
+                scheduleMuteHide();
+            });
+            
+            muteOverlayBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showMuteButton();
+                toggleMute();
+                scheduleMuteHide();
+            });
+            
+            resetHideTimers();
+            
+            // Clock
+            function updateClock() {
+                const now = new Date();
+                let hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                clockTimeSpan.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                clockAmPmSpan.textContent = ampm;
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Canvas setup
+            let ctx = canvas.getContext('2d');
+            let canvasWidth = window.innerWidth;
+            let canvasHeight = 200;
+            
+            function resizeCanvas() {
+                canvasWidth = window.innerWidth;
+                canvas.height = canvasHeight;
+                canvas.width = canvasWidth;
+                ctx = canvas.getContext('2d');
+                drawWaveform(0.3);
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Particle System
+            class Particle {
+                constructor(x, y, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.vx = (Math.random() - 0.5) * 3;
+                    this.vy = (Math.random() - 0.5) * 2 - 1.5;
+                    this.life = 40 + Math.random() * 60;
+                    this.maxLife = this.life;
+                    this.color = color || `hsl(${Math.random() * 60 + 200}, 80%, 65%)`;
+                    this.size = 2 + Math.random() * 3;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.life -= 2.5;
+                }
+                draw(ctx) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * (this.life / this.maxLife), 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+            
+            // Stationary wave drawing function (no motion)
+            function drawStationaryWave(amplitude) {
+                if (!ctx) return;
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                
+                const centerY = canvasHeight / 2;
+                // Use frozen time value for stationary wave
+                const frozenTime = stationaryWaveTime;
+                
+                const gradient = ctx.createLinearGradient(0, 0, canvasWidth, 0);
+                const hue1 = 200 + amplitude * 60;
+                const hue2 = 280 + amplitude * 40;
+                gradient.addColorStop(0, `hsl(${hue1}, 100%, 60%)`);
+                gradient.addColorStop(0.3, `hsl(${hue1 + 20}, 90%, 65%)`);
+                gradient.addColorStop(0.5, `hsl(${hue2}, 100%, 65%)`);
+                gradient.addColorStop(0.7, `hsl(${hue2 - 20}, 90%, 60%)`);
+                gradient.addColorStop(1, `hsl(${hue1}, 100%, 55%)`);
+                
+                const steps = Math.max(120, Math.floor(canvasWidth / 2.5));
+                const stepX = canvasWidth / steps;
+                
+                // When muted, wave amplitude is fixed small and stationary
+                const ampMultiplier = 0.2; // Low, calm stationary wave
+                const maxOffset = canvasHeight * 0.35 * ampMultiplier;
+                
+                // Draw main stationary wave (top) - no time progression
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * stepX;
+                    const progress = x / canvasWidth;
+                    
+                    // Pure mathematical wave without time variation - completely stationary
+                    const wave1 = Math.sin(progress * Math.PI * 4) * 0.6;
+                    const wave2 = Math.sin(progress * Math.PI * 8) * 0.4;
+                    const wave3 = Math.sin(progress * Math.PI * 12) * 0.3;
+                    const wave4 = Math.sin(progress * Math.PI * 2) * 0.2;
+                    
+                    let waveValue = (wave1 + wave2 + wave3 + wave4) / 1.5;
+                    const y = centerY - waveValue * maxOffset;
+                    
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3.5;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = `hsl(${hue1}, 100%, 60%)`;
+                ctx.stroke();
+                
+                // Draw bottom stationary wave
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * stepX;
+                    const progress = x / canvasWidth;
+                    const wave1 = Math.sin(progress * Math.PI * 4 + 0.5) * 0.6;
+                    const wave2 = Math.sin(progress * Math.PI * 8 + 0.3) * 0.4;
+                    const wave3 = Math.sin(progress * Math.PI * 12 + 0.7) * 0.3;
+                    let waveValue = (wave1 + wave2 + wave3) / 1.3;
+                    const y = centerY + waveValue * maxOffset;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = gradient;
+                ctx.stroke();
+                
+                // Draw inner fill
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * stepX;
+                    const progress = x / canvasWidth;
+                    const wave1 = Math.sin(progress * Math.PI * 4) * 0.5;
+                    const wave2 = Math.sin(progress * Math.PI * 8) * 0.3;
+                    let waveValue = (wave1 + wave2) / 0.8;
+                    const y = centerY - waveValue * maxOffset * 0.7;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.lineTo(canvasWidth, centerY);
+                ctx.lineTo(0, centerY);
+                ctx.closePath();
+                ctx.fillStyle = `hsla(${hue1}, 80%, 55%, 0.15)`;
+                ctx.fill();
+                
+                // Center glow line
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(canvasWidth, centerY);
+                ctx.strokeStyle = `hsla(${hue1}, 80%, 65%, 0.3)`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                ctx.shadowBlur = 0;
+            }
+            
+            // Animated wave drawing (when not muted)
+            function drawAnimatedWave(amplitude) {
+                if (!ctx) return;
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                
+                const centerY = canvasHeight / 2;
+                const time = Date.now() * 0.008;
+                timeOffset += 0.02;
+                
+                const gradient = ctx.createLinearGradient(0, 0, canvasWidth, 0);
+                const hue1 = 200 + amplitude * 60;
+                const hue2 = 280 + amplitude * 40;
+                gradient.addColorStop(0, `hsl(${hue1}, 100%, 60%)`);
+                gradient.addColorStop(0.3, `hsl(${hue1 + 20}, 90%, 65%)`);
+                gradient.addColorStop(0.5, `hsl(${hue2}, 100%, 65%)`);
+                gradient.addColorStop(0.7, `hsl(${hue2 - 20}, 90%, 60%)`);
+                gradient.addColorStop(1, `hsl(${hue1}, 100%, 55%)`);
+                
+                const steps = Math.max(120, Math.floor(canvasWidth / 2.5));
+                const stepX = canvasWidth / steps;
+                
+                const ampMultiplier = (!isMicActive) ? 0.15 : Math.min(0.85, amplitude * 1.8);
+                const maxOffset = canvasHeight * 0.4 * ampMultiplier;
+                
+                // Draw main animated wave (top)
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * stepX;
+                    const progress = x / canvasWidth;
+                    
+                    const wave1 = Math.sin(progress * Math.PI * 4 + time) * 0.6;
+                    const wave2 = Math.sin(progress * Math.PI * 8 - time * 1.3) * 0.4;
+                    const wave3 = Math.sin(progress * Math.PI * 12 + time * 0.7) * 0.3;
+                    const wave4 = Math.sin(progress * Math.PI * 2 + timeOffset) * 0.2;
+                    
+                    let waveValue = (wave1 + wave2 + wave3 + wave4) / 1.5;
+                    
+                    if (frequencyData.length > 0 && isMicActive) {
+                        const freqIndex = Math.floor(progress * frequencyData.length);
+                        const freqAmp = frequencyData[freqIndex] / 255;
+                        waveValue = waveValue * 0.6 + freqAmp * 0.4;
+                    }
+                    
+                    const y = centerY - waveValue * maxOffset;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3.5;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = `hsl(${hue1}, 100%, 60%)`;
+                ctx.stroke();
+                
+                // Draw bottom animated wave
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * stepX;
+                    const progress = x / canvasWidth;
+                    const wave1 = Math.sin(progress * Math.PI * 4 + time + 0.5) * 0.6;
+                    const wave2 = Math.sin(progress * Math.PI * 8 - time * 1.3 + 0.3) * 0.4;
+                    const wave3 = Math.sin(progress * Math.PI * 12 + time * 0.7 + 0.7) * 0.3;
+                    let waveValue = (wave1 + wave2 + wave3) / 1.3;
+                    
+                    if (frequencyData.length > 0 && isMicActive) {
+                        const freqIndex = Math.floor(progress * frequencyData.length);
+                        const freqAmp = frequencyData[freqIndex] / 255;
+                        waveValue = waveValue * 0.7 + freqAmp * 0.3;
+                    }
+                    
+                    const y = centerY + waveValue * maxOffset;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = gradient;
+                ctx.stroke();
+                
+                // Draw inner fill
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * stepX;
+                    const progress = x / canvasWidth;
+                    const wave1 = Math.sin(progress * Math.PI * 4 + time) * 0.5;
+                    const wave2 = Math.sin(progress * Math.PI * 8 - time * 1.2) * 0.3;
+                    let waveValue = (wave1 + wave2) / 0.8;
+                    
+                    if (frequencyData.length > 0 && isMicActive) {
+                        const freqIndex = Math.floor(progress * frequencyData.length);
+                        const freqAmp = frequencyData[freqIndex] / 255;
+                        waveValue = waveValue * 0.7 + freqAmp * 0.3;
+                    }
+                    
+                    const y = centerY - waveValue * maxOffset * 0.7;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.lineTo(canvasWidth, centerY);
+                ctx.lineTo(0, centerY);
+                ctx.closePath();
+                ctx.fillStyle = `hsla(${hue1}, 80%, 55%, 0.15)`;
+                ctx.fill();
+                
+                // Particles and bars only when unmuted
+                if (isMicActive && amplitude > 0.05) {
+                    const barCount = Math.min(40, Math.floor(amplitude * 80));
+                    for (let i = 0; i < barCount; i++) {
+                        const progress = i / barCount;
+                        const x = progress * canvasWidth;
+                        const wave1 = Math.sin(progress * Math.PI * 4 + time) * 0.6;
+                        const wave2 = Math.sin(progress * Math.PI * 8 - time * 1.2) * 0.4;
+                        let waveValue = (wave1 + wave2) / 1.0;
+                        
+                        if (frequencyData.length > 0) {
+                            const freqIndex = Math.floor(progress * frequencyData.length);
+                            const freqAmp = frequencyData[freqIndex] / 255;
+                            waveValue = waveValue * 0.6 + freqAmp * 0.4;
+                        }
+                        
+                        const yTop = centerY - waveValue * maxOffset;
+                        const yBottom = centerY + waveValue * maxOffset * 0.8;
+                        const barHeight = Math.abs(yBottom - yTop);
+                        
+                        if (barHeight > 3) {
+                            ctx.beginPath();
+                            ctx.moveTo(x, yTop);
+                            ctx.lineTo(x, yBottom);
+                            ctx.strokeStyle = `hsl(${hue1 + amplitude * 80}, 90%, 65%)`;
+                            ctx.lineWidth = 2 + barHeight / 12;
+                            ctx.shadowBlur = 8;
+                            ctx.stroke();
+                        }
+                        
+                        if (Math.random() < amplitude * 0.3) {
+                            particles.push(new Particle(x, yTop - 5, `hsl(${hue1 + Math.random() * 60}, 85%, 65%)`));
+                            particles.push(new Particle(x, yBottom + 5, `hsl(${hue2 - Math.random() * 40}, 85%, 65%)`));
+                        }
+                    }
+                }
+                
+                // Update and draw particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update();
+                    if (particles[i].life <= 0) {
+                        particles.splice(i, 1);
+                    } else {
+                        particles[i].draw(ctx);
+                    }
+                }
+                
+                ctx.shadowBlur = 0;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(canvasWidth, centerY);
+                ctx.strokeStyle = `hsla(${hue1}, 80%, 65%, 0.3)`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            
+            function updateAudioLevel() {
+                if (!isMicActive || !analyserNode || isMuted) {
+                    frequencyData = new Uint8Array(0);
+                    return;
+                }
+                frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
+                analyserNode.getByteFrequencyData(frequencyData);
+            }
+            
+            let smoothAmp = 0;
+            function animationLoop() {
+                if (!animationId) return;
+                updateAudioLevel();
+                
+                let currentAmp = 0;
+                if (frequencyData.length > 0 && !isMuted) {
+                    let sum = 0;
+                    for (let i = 0; i < frequencyData.length; i++) sum += frequencyData[i];
+                    currentAmp = Math.min(0.9, sum / frequencyData.length / 180);
+                }
+                smoothAmp = smoothAmp * 0.85 + currentAmp * 0.15;
+                
+                // Draw based on mute state
+                if (isMuted || !isMicActive) {
+                    // When muted, draw stationary wave
+                    drawStationaryWave(0.2);
+                } else {
+                    // When unmuted, draw animated wave with audio reactivity
+                    drawAnimatedWave(smoothAmp);
+                }
+                
+                animationId = requestAnimationFrame(animationLoop);
+            }
+            
+            async function initMicrophone() {
+                permStatusSpan.innerText = "Requesting mic...";
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaStream = stream;
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyserNode = audioCtx.createAnalyser();
+                    analyserNode.fftSize = 1024;
+                    analyserNode.smoothingTimeConstant = 0.6;
+                    sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+                    sourceNode.connect(analyserNode);
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                    isMicActive = true;
+                    isMuted = false;
+                    // Capture a stationary wave snapshot when unmuted first
+                    stationaryWaveTime = Date.now() * 0.008;
+                    updateMuteUI();
+                    if (animationId) cancelAnimationFrame(animationId);
+                    animationId = requestAnimationFrame(animationLoop);
+                    settingsStatusMsg.innerText = "🎤 Active";
+                    permStatusSpan.innerText = "✅ Ready";
+                    permissionOverlay.classList.add('hidden');
+                    resizeCanvas();
+                } catch(err) {
+                    permStatusSpan.innerText = "❌ Microphone denied";
+                }
+            }
+            
+            function toggleMute() {
+                if (!isMicActive) return;
+                isMuted = !isMuted;
+                // When muting, capture the current wave time to freeze the pattern
+                if (isMuted) {
+                    stationaryWaveTime = Date.now() * 0.008;
+                }
+                updateMuteUI();
+                settingsStatusMsg.innerText = isMuted ? "🔇 Muted - Wave Stationary" : "🎤 Active";
+            }
+            
+            function updateMuteUI() {
+                if (isMuted) {
+                    muteOverlayBtn.innerHTML = "🔊 Unmute";
+                    muteOverlayBtn.classList.add('muted-active');
+                } else {
+                    muteOverlayBtn.innerHTML = "🔇 Mute";
+                    muteOverlayBtn.classList.remove('muted-active');
+                }
+            }
+            
+            function handleRecordToggle() {
+                if (!isMicActive || !mediaStream) {
+                    settingsStatusMsg.innerText = "❌ No mic active";
+                    return;
+                }
+                if (isRecording) {
+                    if (counterInterval) clearInterval(counterInterval);
+                    if (recordingTimeout) clearTimeout(recordingTimeout);
+                    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                    isRecording = false;
+                    recordToggleBtn.classList.remove('recording-active');
+                    recordToggleBtn.innerHTML = "⏺ START RECORDING";
+                    settingsStatusMsg.innerText = isMuted ? "🔇 Muted - Wave Stationary" : "🎤 Active";
+                    scheduleMuteHide();
+                    return;
+                }
+                startRecording();
+            }
+            
+            function startRecording() {
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(mediaStream);
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                mediaRecorder.onstop = async () => {
+                    if (recordedChunks.length) {
+                        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `wave_recording_${Date.now()}.webm`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        settingsStatusMsg.innerText = "💾 Saved!";
+                        setTimeout(() => { if (!isRecording) settingsStatusMsg.innerText = isMuted ? "🔇 Muted - Wave Stationary" : "🎤 Active"; }, 1500);
+                    }
+                    isRecording = false;
+                    recordToggleBtn.classList.remove('recording-active');
+                    recordToggleBtn.innerHTML = "⏺ START RECORDING";
+                    if (counterInterval) clearInterval(counterInterval);
+                    showMuteButton();
+                    scheduleMuteHide();
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                recordToggleBtn.classList.add('recording-active');
+                recordToggleBtn.innerHTML = "⏹️ STOP RECORDING";
+                
+                muteOverlayBtn.classList.remove('auto-hidden');
+                muteOverlayBtn.classList.add('force-visible');
+                
+                let remaining = selectedDuration;
+                settingsStatusMsg.innerText = `🔴 Recording: ${remaining}s`;
+                counterInterval = setInterval(() => {
+                    remaining--;
+                    if (remaining >= 0) settingsStatusMsg.innerText = `🔴 Recording: ${remaining}s`;
+                    if (remaining <= 0 && counterInterval) clearInterval(counterInterval);
+                }, 1000);
+                
+                recordingTimeout = setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                    recordingTimeout = null;
+                }, selectedDuration * 1000);
+            }
+            
+            function applyTheme() {
+                if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
+                else document.body.classList.remove('light-theme');
+            }
+            function toggleTheme() {
+                document.body.classList.toggle('light-theme');
+                localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+            }
+            applyTheme();
+            
+            requestMicBtn.addEventListener('click', initMicrophone);
+            recordToggleBtn.addEventListener('click', handleRecordToggle);
+            durationSelect.addEventListener('change', (e) => { selectedDuration = parseInt(e.target.value); });
+            themeSwitch.addEventListener('click', toggleTheme);
+            
+            resizeCanvas();
+            drawStationaryWave(0.2);
+        })();
+    </script>
+</body>
+</html>
