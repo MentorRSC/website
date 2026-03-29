@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VoiceWave · Hey/Hi/Hello Neural Recognizer</title>
+
+<!-- TensorFlow.js - Can be loaded offline if you have the files locally -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.5.4/dist/speech-commands.min.js"></script>
+
+<!-- Teachable Machine Audio Library (optional but helpful) -->
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/audio@0.8.5/dist/teachablemachine-audio.min.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+:root {
+    --bg-dark: #05050a;
+    --cyan: #00f3ff;
+    --pink: #ff00aa;
+    --purple: #8800ff;
+    --green: #00ff88;
+    --yellow: #ffcc00;
+}
+
+body {
+    background: var(--bg-dark);
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Chakra Petch', monospace;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Canvas fullscreen */
+#canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 1;
+}
+
+/* UI Overlay */
+.ui-overlay {
+    position: fixed;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Header */
+.header {
+    top: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    position: fixed;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.header h1 {
+    font-size: clamp(18px, 5vw, 28px);
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    font-weight: 700;
+}
+
+.header p {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0, 243, 255, 0.5);
+    margin-top: 5px;
+}
+
+/* Status Card */
+.status-card {
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    background: rgba(5, 5, 10, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 12px 18px;
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    pointer-events: auto;
+    z-index: 20;
+    font-family: monospace;
+}
+
+.status-led {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff3300;
+    box-shadow: 0 0 5px #ff3300;
+    animation: pulse 1s infinite;
+    margin-right: 8px;
+}
+
+.status-led.active {
+    background: #00ff88;
+    box-shadow: 0 0 8px #00ff88;
+    animation: pulse-fast 0.5s infinite;
+}
+
+.status-text {
+    color: #0ff;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes pulse-fast {
+    0%, 100% { opacity: 0.6; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.4); }
+}
+
+/* Word Display */
+.word-display {
+    position: fixed;
+    bottom: 30%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    pointer-events: none;
+    z-index: 15;
+    font-size: clamp(40px, 12vw, 120px);
+    font-weight: 900;
+    text-transform: uppercase;
+    text-shadow: 0 0 30px currentColor;
+    transition: all 0.2s ease;
+    letter-spacing: 8px;
+}
+
+/* Confidence Bar */
+.confidence-container {
+    position: fixed;
+    bottom: 120px;
+    left: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    height: 6px;
+    overflow: hidden;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.confidence-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    transition: width 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    border-radius: 20px;
+    box-shadow: 0 0 10px var(--cyan);
+}
+
+.confidence-label {
+    position: fixed;
+    bottom: 100px;
+    left: 20px;
+    font-size: 10px;
+    color: rgba(0, 243, 255, 0.6);
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+/* Control Buttons */
+.buttons {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    z-index: 20;
+    pointer-events: auto;
+    flex-wrap: wrap;
+    padding: 0 15px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 40px;
+    border: 1px solid;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: monospace;
+    letter-spacing: 1px;
+    font-size: 12px;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.btn-listen {
+    color: var(--cyan);
+    border-color: var(--cyan);
+}
+
+.btn-listen.listening {
+    background: var(--cyan);
+    color: #000;
+    box-shadow: 0 0 20px var(--cyan);
+}
+
+.btn-stop {
+    color: #ff3355;
+    border-color: #ff3355;
+}
+
+.btn-stop:hover {
+    background: #ff3355;
+    color: #000;
+    box-shadow: 0 0 15px #ff3355;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+/* Word Chips */
+.word-chips {
+    position: fixed;
+    bottom: 120px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+    pointer-events: auto;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+.chip:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+/* Model Status */
+.model-status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: monospace;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 8px;
+    border-radius: 6px;
+    pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .word-chips { bottom: 100px; right: 10px; }
+    .word-chips .chip { padding: 4px 10px; font-size: 9px; }
+    .btn { padding: 8px 16px; font-size: 10px; }
+    .status-card { top: 70px; left: 10px; padding: 8px 12px; }
+    .confidence-container { bottom: 100px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="ui-overlay">
+    <div class="header">
+        <h1>🎤 VOICEWAVE AI</h1>
+        <p>HEY · HI · HELLO | NEURAL RECOGNITION</p>
+    </div>
+
+    <div class="status-card">
+        <div style="display: flex; align-items: center;">
+            <div class="status-led" id="statusLed"></div>
+            <span class="status-text" id="statusText">INITIALIZING</span>
+        </div>
+        <div style="font-size: 9px; color: #888; margin-top: 5px;" id="modelInfo">Loading model...</div>
+    </div>
+
+    <div class="word-display" id="wordDisplay"></div>
+
+    <div class="confidence-container">
+        <div class="confidence-fill" id="confidenceFill"></div>
+    </div>
+    <div class="confidence-label">CONFIDENCE LEVEL</div>
+
+    <div class="word-chips">
+        <div class="chip" data-word="hey" style="border-color: #00ff88; color: #00ff88;">HEY</div>
+        <div class="chip" data-word="hi" style="border-color: #00ff88; color: #00ff88;">HI</div>
+        <div class="chip" data-word="hello" style="border-color: #44ff66; color: #44ff66;">HELLO</div>
+    </div>
+
+    <div class="buttons">
+        <button class="btn btn-listen" id="listenBtn">🎙️ START</button>
+        <button class="btn btn-stop" id="stopBtn">⏹️ STOP</button>
+    </div>
+
+    <div class="model-status" id="modelStatus">⚡ OFFLINE READY</div>
+</div>
+
+<script>
+// ============================================
+// CONFIGURATION
+// ============================================
+const TARGET_WORDS = ['hey', 'hi', 'hello'];
+const WORD_COLORS = {
+    'hey': { color: '#00ff88', hue: 150, shadow: 'rgba(0,255,136,0.8)' },
+    'hi': { color: '#00ff88', hue: 150, shadow: 'rgba(0,255,136,0.8)' },
+    'hello': { color: '#44ff66', hue: 130, shadow: 'rgba(68,255,102,0.8)' }
+};
+
+// Canvas elements
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// State variables
+let isListening = false;
+let currentWord = '';
+let currentConfidence = 0;
+let confidenceTarget = 0;
+let flashIntensity = 0;
+let lastWordTime = 0;
+let frameCount = 0;
+
+// Visual effect arrays
+let particles = [];
+let ripples = [];
+let orbs = [];
+let stars = [];
+
+// Audio analyzer
+let audioContext = null;
+let analyser = null;
+let microphone = null;
+let frequencyData = null;
+let volume = 0;
+let bassEnergy = 0;
+
+// Model variables
+let speechRecognizer = null;
+let isModelReady = false;
+let usingTeachableMachine = false;
+
+// ============================================
+// CANVAS SETUP & RESIZE
+// ============================================
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ============================================
+// STARFIELD GENERATION
+// ============================================
+function initStars() {
+    stars = [];
+    for (let i = 0; i < 300; i++) {
+        stars.push({
+            x: Math.random(),
+            y: Math.random(),
+            radius: Math.random() * 2 + 0.5,
+            alpha: Math.random() * 0.5 + 0.2,
+            twinkle: Math.random() * Math.PI * 2
+        });
+    }
+}
+initStars();
+
+// ============================================
+// PARTICLE SYSTEM
+// ============================================
+class Particle {
+    constructor(x, y, color, hue) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.hue = hue;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 8 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 1;
+        this.decay = Math.random() * 0.015 + 0.008;
+        this.size = Math.random() * 4 + 2;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.96;
+        this.vy *= 0.96;
+        this.life -= this.decay;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Ripple {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = 5;
+        this.maxRadius = Math.min(canvas.width, canvas.height) * 0.35;
+        this.life = 1;
+        this.expandSpeed = 8;
+    }
+
+    update() {
+        this.radius += this.expandSpeed;
+        this.life -= 0.02;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life * 0.5;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+class Orb {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = Math.random() * 20 + 10;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.life = 1;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= 0.008;
+        this.radius *= 0.99;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.life * 0.4;
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        gradient.addColorStop(0, this.color);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// ============================================
+// VISUAL EFFECTS TRIGGER
+// ============================================
+function triggerVisuals(word, confidence) {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const wordColor = WORD_COLORS[word]?.color || '#00ff88';
+    const hue = WORD_COLORS[word]?.hue || 150;
+
+    // Create particles
+    for (let i = 0; i < 120; i++) {
+        particles.push(new Particle(centerX, centerY, wordColor, hue));
+    }
+
+    // Create ripples
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            ripples.push(new Ripple(centerX, centerY, wordColor));
+        }, i * 80);
+    }
+
+    // Create orbs
+    for (let i = 0; i < 8; i++) {
+        orbs.push(new Orb(centerX, centerY, wordColor));
+    }
+
+    // Flash effect
+    flashIntensity = 0.3 + confidence * 0.3;
+    currentWord = word;
+    currentConfidence = confidence;
+    confidenceTarget = confidence;
+
+    // Update word display
+    const wordDisplay = document.getElementById('wordDisplay');
+    wordDisplay.textContent = word.toUpperCase();
+    wordDisplay.style.color = wordColor;
+    wordDisplay.style.textShadow = `0 0 40px ${wordColor}`;
+    
+    // Animate confidence bar
+    const fill = document.getElementById('confidenceFill');
+    fill.style.width = `${confidence * 100}%`;
+    fill.style.background = `linear-gradient(90deg, ${wordColor}, ${WORD_COLORS[word]?.color || '#00ff88'})`;
+    
+    setTimeout(() => {
+        if (Date.now() - lastWordTime > 2000) {
+            wordDisplay.textContent = '';
+            fill.style.width = '0%';
+        }
+    }, 2500);
+    
+    lastWordTime = Date.now();
+}
+
+// ============================================
+// LOAD CUSTOM MODEL (OFFLINE FIRST)
+// ============================================
+async function loadCustomModel() {
+    // FIRST OPTION: Try to load custom Teachable Machine model from local files
+    // Place your model.json and metadata.json in a 'model' folder
+    try {
+        document.getElementById('modelInfo').textContent = '📥 Loading offline model...';
+        
+        // Check if we have local model files
+        const modelResponse = await fetch('./model/model.json').catch(() => null);
+        
+        if (modelResponse && modelResponse.ok) {
+            // Load using Teachable Machine library
+            const modelURL = './model/model.json';
+            const metadataURL = './model/metadata.json';
+            
+            const recognizer = await tmAudio.load(modelURL, metadataURL);
+            usingTeachableMachine = true;
+            document.getElementById('modelInfo').textContent = '✅ Offline Model Ready! (Hey/Hi/Hello)';
+            document.getElementById('modelStatus').innerHTML = '🎯 CUSTOM MODEL · OFFLINE';
+            return recognizer;
+        } else {
+            throw new Error('No local model found');
+        }
+    } catch (error) {
+        console.warn('No custom model found, using browser fallback:', error);
+        document.getElementById('modelInfo').textContent = '⚠️ Using Browser Speech Recognition';
+        document.getElementById('modelStatus').innerHTML = '🌐 BROWSER API · OFFLINE';
+        return null;
+    }
+}
+
+// ============================================
+// INITIALIZE BROWSER SPEECH RECOGNITION (FALLBACK)
+// ============================================
+function initBrowserSpeech() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        console.error('Speech recognition not supported');
+        return null;
+    }
+    
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    recognition.maxAlternatives = 3;
+    
+    recognition.onresult = (event) => {
+        if (!isListening) return;
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            for (let j = 0; j < result.length; j++) {
+                const transcript = result[j].transcript.toLowerCase();
+                const confidence = result[j].confidence;
+                
+                for (const word of TARGET_WORDS) {
+                    if (transcript.includes(word) || transcript === word) {
+                        const boostConfidence = Math.min(confidence + 0.2, 0.98);
+                        triggerVisuals(word, boostConfidence);
+                        break;
+                    }
+                }
+            }
+        }
+    };
+    
+    recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+            document.getElementById('statusText').textContent = 'MIC DENIED';
+        }
+    };
+    
+    recognition.onend = () => {
+        if (isListening) {
+            recognition.start();
+        }
+    };
+    
+    return recognition;
+}
+
+let browserRecognizer = null;
+
+// ============================================
+// START/STOP LISTENING
+// ============================================
+async function startListening() {
+    if (isListening) return;
+    
+    // Request microphone first
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            frequencyData = new Uint8Array(analyser.frequencyBinCount);
+            audioContext.resume();
+        }
+    } catch (err) {
+        console.error('Microphone error:', err);
+        document.getElementById('statusText').textContent = 'MIC ERROR';
+        return;
+    }
+    
+    isListening = true;
+    document.getElementById('statusLed').classList.add('active');
+    document.getElementById('statusText').textContent = 'LISTENING...';
+    document.getElementById('listenBtn').classList.add('listening');
+    document.getElementById('listenBtn').innerHTML = '🎤 LISTENING';
+    
+    // Start browser speech recognition as fallback
+    if (!browserRecognizer) {
+        browserRecognizer = initBrowserSpeech();
+    }
+    if (browserRecognizer) {
+        try {
+            browserRecognizer.start();
+        } catch (e) {}
+    }
+    
+    // If custom model is loaded, use it alongside
+    if (speechRecognizer && usingTeachableMachine) {
+        // For Teachable Machine model
+        speechRecognizer.listen(async (result) => {
+            if (!isListening) return;
+            const predictions = await result;
+            for (const word of TARGET_WORDS) {
+                const score = predictions[word] || 0;
+                if (score > 0.7) {
+                    triggerVisuals(word, score);
+                }
+            }
+        });
+    }
+}
+
+function stopListening() {
+    isListening = false;
+    document.getElementById('statusLed').classList.remove('active');
+    document.getElementById('statusText').textContent = 'READY';
+    document.getElementById('listenBtn').classList.remove('listening');
+    document.getElementById('listenBtn').innerHTML = '🎙️ START';
+    
+    if (browserRecognizer) {
+        try {
+            browserRecognizer.stop();
+        } catch (e) {}
+    }
+    
+    if (speechRecognizer && speechRecognizer.stopListening) {
+        speechRecognizer.stopListening();
+    }
+}
+
+// ============================================
+// AUDIO VISUALIZATION DATA
+// ============================================
+function updateAudioData() {
+    if (!analyser || !frequencyData) {
+        volume = Math.random() * 0.3;
+        bassEnergy = Math.random() * 0.4;
+        return;
+    }
+    
+    analyser.getByteFrequencyData(frequencyData);
+    let sum = 0;
+    let bassSum = 0;
+    for (let i = 0; i < frequencyData.length; i++) {
+        sum += frequencyData[i];
+        if (i < 20) bassSum += frequencyData[i];
+    }
+    volume = sum / (frequencyData.length * 255);
+    bassEnergy = bassSum / (20 * 255);
+}
+
+// ============================================
+// DRAW RINGS AND VISUALIZATION
+// ============================================
+function drawRings() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxRadius = Math.min(w, h) * 0.32;
+    const t = Date.now() * 0.003;
+    
+    updateAudioData();
+    
+    // Clear with fade effect
+    ctx.fillStyle = 'rgba(5, 5, 10, 0.15)';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Draw stars
+    stars.forEach(star => {
+        const twinkle = 0.3 + 0.3 * Math.sin(t * 1.5 + star.twinkle);
+        ctx.save();
+        ctx.globalAlpha = star.alpha * twinkle;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(star.x * w, star.y * h, star.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+    
+    // Outer frequency ring (256 bars)
+    const bars = 180;
+    for (let i = 0; i < bars; i++) {
+        const angle = (i / bars) * Math.PI * 2 - Math.PI / 2;
+        const freqIndex = Math.floor((i / bars) * (frequencyData?.length || 128));
+        const freqValue = frequencyData ? frequencyData[freqIndex] / 255 : 0.2;
+        const barHeight = 5 + freqValue * maxRadius * 0.6;
+        const barWidth = (Math.PI * 2 * maxRadius) / bars * 0.7;
+        
+        const hue = (angle * 180 / Math.PI + t * 20) % 360;
+        const brightness = 40 + freqValue * 60;
+        
+        ctx.save();
+        ctx.shadowBlur = freqValue * 12;
+        ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+        ctx.beginPath();
+        ctx.lineWidth = barWidth;
+        ctx.strokeStyle = `hsla(${hue}, 100%, ${brightness}%, ${0.4 + freqValue * 0.5})`;
+        
+        const startX = cx + Math.cos(angle) * maxRadius;
+        const startY = cy + Math.sin(angle) * maxRadius;
+        const endX = cx + Math.cos(angle) * (maxRadius + barHeight);
+        const endY = cy + Math.sin(angle) * (maxRadius + barHeight);
+        
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.restore();
+    }
+    
+    // Inner ring glow
+    ctx.save();
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = `hsl(${200 + volume * 100}, 100%, 60%)`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxRadius * 0.65, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0, 243, 255, ${0.2 + volume * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+    
+    // Waveform ring
+    if (frequencyData) {
+        const points = 200;
+        ctx.beginPath();
+        for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * Math.PI * 2;
+            const idx = Math.floor((i / points) * frequencyData.length);
+            const val = frequencyData ? frequencyData[idx] / 255 : 0.3;
+            const radius = maxRadius * 0.55 + val * maxRadius * 0.12;
+            const x = cx + Math.cos(angle) * radius;
+            const y = cy + Math.sin(angle) * radius;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = currentWord ? (WORD_COLORS[currentWord]?.color || '#00ff88') : '#00f3ff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+    }
+    
+    // Central pulsating orb
+    const pulseRadius = maxRadius * 0.2 + volume * maxRadius * 0.1 + Math.sin(t * 8) * 3;
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, pulseRadius * 2);
+    gradient.addColorStop(0, currentWord ? (WORD_COLORS[currentWord]?.color || '#00ff88') : '#00f3ff');
+    gradient.addColorStop(1, 'rgba(0, 243, 255, 0)');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(cx, cy, pulseRadius * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw particles
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => p.draw(ctx));
+    
+    // Draw ripples
+    ripples = ripples.filter(r => r.life > 0);
+    ripples.forEach(r => {
+        r.update();
+        r.draw(ctx);
+    });
+    
+    // Draw orbs
+    orbs = orbs.filter(o => o.life > 0);
+    orbs.forEach(o => {
+        o.update();
+        o.draw(ctx);
+    });
+    
+    // Flash effect
+    if (flashIntensity > 0) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity * 0.15})`;
+        ctx.fillRect(0, 0, w, h);
+        flashIntensity *= 0.92;
+    }
+}
+
+// ============================================
+// ANIMATION LOOP
+// ============================================
+function animate() {
+    drawRings();
+    requestAnimationFrame(animate);
+    frameCount++;
+    
+    // Update UI elements
+    if (frameCount % 30 === 0) {
+        const volPercent = Math.round(volume * 100);
+        document.getElementById('modelStatus').innerHTML = `🎵 VOL:${volPercent}% | ${usingTeachableMachine ? 'CUSTOM' : 'BROWSER'}`;
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+async function init() {
+    // Try to load custom offline model first
+    speechRecognizer = await loadCustomModel();
+    
+    // Setup UI event handlers
+    document.getElementById('listenBtn').addEventListener('click', startListening);
+    document.getElementById('stopBtn').addEventListener('click', stopListening);
+    
+    // Chip click handlers (demo mode)
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const word = chip.dataset.word;
+            triggerVisuals(word, 0.95);
+        });
+    });
+    
+    // Start animation
+    animate();
+    
+    // Auto-start listening after 1 second
+    setTimeout(() => {
+        startListening();
+    }, 1000);
+}
+
+// Start the app
+init();
+</script>
+</body>
+</html>
