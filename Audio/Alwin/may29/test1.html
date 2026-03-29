@@ -392,7 +392,7 @@ html, body {
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     MAIN SCRIPT
+     MAIN SCRIPT - EXACT SAME UI + LOCAL WASM MODEL
 ════════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
@@ -478,7 +478,7 @@ async function getMic() {
   }
 }
 
-/* ─── TF / WASM ───────────────────────────────────────────── */
+/* ─── TF / WASM - NOW USING LOCAL WASM MODEL FILES ─────────── */
 async function initTF() {
   try {
     if (tf.wasm && tf.wasm.setWasmPaths) {
@@ -495,13 +495,22 @@ async function initTF() {
     document.getElementById('tf-be').textContent = 'WebGL';
   }
 
-  // Speech commands model (handles "stop" + more)
+  // === LOCAL WASM MODEL (model.json + metadata.json must be in same folder) ===
   try {
+    const rec = speechCommands.create(
+      'BROWSER_FFT',           // same FFT topology
+      null,                    // use metadata for words
+      './model.json',          // ← your local model file
+      './metadata.json'        // ← your local metadata file
+    );
+    await rec.ensureModelLoaded();
+    tfRecognizer = rec;
+    console.log('%c✅ Local WASM Model Loaded Successfully', 'color:#0ff;font-weight:bold');
+  } catch(e) {
+    console.warn('[TF] Local WASM model not found → falling back to CDN');
     const rec = speechCommands.create('BROWSER_FFT');
     await rec.ensureModelLoaded();
     tfRecognizer = rec;
-  } catch(e) {
-    console.warn('[TF] Speech model unavailable, WebSpeech only');
   }
 }
 
@@ -707,7 +716,7 @@ function fakeAudio(t) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   DRAW LOOP
+   DRAW LOOP - EXACT SAME
 ═══════════════════════════════════════════════════════════ */
 function draw() {
   requestAnimationFrame(draw);
@@ -1081,7 +1090,7 @@ async function boot() {
   progress(10,'Loading TensorFlow.js…');
   await new Promise(r=>setTimeout(r,200));
 
-  progress(30,'Initializing WASM backend…');
+  progress(30,'Initializing local WASM model…');
   await initTF();
 
   progress(55,'Setting up speech engine…');
