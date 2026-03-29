@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceWave AI · Neural Audio Recognition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<!-- TensorFlow.js core -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+<!-- TF WASM backend -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@4.14.0/dist/tf-backend-wasm.js"></script>
+<!-- Speech Commands Model -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.5.4/dist/speech-commands.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════
+   ROOT VARIABLES
+═══════════════════════════════════════════ */
+:root {
+  --bg:         #020209;
+  --cyan:       #00d4ff;
+  --purple:     #9400ff;
+  --pink:       #ff0077;
+  --green:      #00ff88;
+  --red:        #ff3355;
+  --orange:     #ff8800;
+  --blue:       #4488ff;
+  --gold:       #ffcc00;
+  --f-mono:     'Share Tech Mono', monospace;
+  --f-display:  'Chakra Petch', monospace;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  background: var(--bg);
+  overflow: hidden;
+  font-family: var(--f-display);
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════
+   CANVAS (full-screen visual layer)
+═══════════════════════════════════════════ */
+#canvas {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════
+   LOADING SCREEN
+═══════════════════════════════════════════ */
+#loading {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 24px;
+  transition: opacity .6s ease;
+}
+#loading.fade { opacity: 0; pointer-events: none; }
+
+.loader-logo {
+  font-size: 1.6rem; font-weight: 700; letter-spacing: .25em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.loader-ring {
+  width: 64px; height: 64px; border-radius: 50%;
+  border: 2px solid rgba(0,212,255,.12);
+  border-top-color: var(--cyan);
+  animation: spin 1s linear infinite;
+}
+.loader-step {
+  font-family: var(--f-mono);
+  font-size: .65rem; letter-spacing: .2em;
+  color: rgba(0,212,255,.5);
+  min-height: 1.2em; text-align: center;
+}
+.loader-bar-wrap {
+  width: 260px; height: 2px;
+  background: rgba(255,255,255,.05); border-radius:1px;
+}
+.loader-bar {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  border-radius: 1px;
+  transition: width .4s ease;
+  box-shadow: 0 0 8px var(--cyan);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════
+   TOP HUD
+═══════════════════════════════════════════ */
+#hud-top {
+  position: fixed; top:0; left:0; right:0; z-index: 10;
+  padding: 14px 22px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  background: linear-gradient(180deg, rgba(2,2,9,.95) 0%, transparent 100%);
+  pointer-events: none;
+}
+.hud-brand { pointer-events: none; }
+.hud-brand h1 {
+  font-size: 1.25rem; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(0,212,255,.4));
+}
+.hud-brand .sub {
+  font-family: var(--f-mono);
+  font-size: .52rem; letter-spacing: .3em; text-transform: uppercase;
+  color: rgba(0,212,255,.38); margin-top: 3px;
+}
+
+/* Status badge */
+.status-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 16px; border-radius: 100px;
+  border: 1px solid rgba(0,212,255,.2);
+  background: rgba(0,212,255,.04);
+  font-family: var(--f-mono); font-size: .6rem;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--cyan); transition: all .35s ease;
+}
+.status-pill .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan);
+  animation: dot-idle 2s ease-in-out infinite;
+}
+.status-pill.listen { color: var(--green); border-color: rgba(0,255,136,.35); background: rgba(0,255,136,.05); }
+.status-pill.listen .dot { background: var(--green); animation: dot-fast .7s ease-in-out infinite; }
+.status-pill.record { color: var(--red); border-color: rgba(255,51,85,.4); background: rgba(255,51,85,.07); }
+.status-pill.record .dot { background: var(--red); animation: dot-blink .5s step-end infinite; }
+.status-pill.error { color: var(--red); border-color: rgba(255,51,85,.3); }
+
+@keyframes dot-idle { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.6)} }
+@keyframes dot-fast { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+@keyframes dot-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* HUD corners decoration */
+.hud-corner {
+  position: fixed; z-index: 5; pointer-events: none;
+  font-family: var(--f-mono); font-size: .5rem;
+  letter-spacing: .15em; color: rgba(0,212,255,.18);
+}
+.hud-corner.tl { top:14px; left:14px; }
+.hud-corner.tr { top:14px; right:14px; text-align:right; }
+.hud-corner.bl { bottom: 98px; left:14px; }
+.hud-corner.br { bottom: 98px; right:14px; text-align:right; }
+
+/* ═══════════════════════════════════════════
+   LOG PANEL (right side)
+═══════════════════════════════════════════ */
+#log-panel {
+  position: fixed; right: 18px; top: 80px;
+  width: 220px; max-height: calc(100vh - 200px);
+  overflow: hidden; z-index: 10;
+  display: flex; flex-direction: column; gap: 5px;
+  pointer-events: none;
+}
+.log-entry {
+  font-family: var(--f-mono); font-size: .58rem;
+  letter-spacing: .1em; padding: 7px 10px;
+  border-radius: 5px; border-left: 2px solid;
+  background: rgba(6,6,20,.78);
+  display: flex; align-items: center; gap: 8px;
+  animation: log-slide .3s cubic-bezier(.22,1,.36,1);
+  backdrop-filter: blur(4px);
+}
+@keyframes log-slide { from{ opacity:0; transform:translateX(24px) } to{ opacity:1; transform:none } }
+.log-t  { color: rgba(255,255,255,.3); flex-shrink:0; }
+.log-w  { font-weight:700; font-size:.68rem; }
+.log-c  { margin-left:auto; color:rgba(255,255,255,.3); flex-shrink:0; }
+
+/* ═══════════════════════════════════════════
+   KEYWORD CHIPS
+═══════════════════════════════════════════ */
+#chips {
+  position: fixed; bottom: 100px; left:50%; transform: translateX(-50%);
+  display: flex; flex-wrap: wrap; gap: 7px;
+  justify-content: center; z-index: 10;
+  padding: 0 16px; max-width: 660px;
+}
+.chip {
+  font-family: var(--f-display); font-size: .6rem;
+  font-weight: 600; letter-spacing: .22em; text-transform: uppercase;
+  padding: 5px 13px; border-radius: 100px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: rgba(255,255,255,.3);
+  cursor: pointer;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+}
+.chip:hover {
+  color: rgba(255,255,255,.6);
+  border-color: rgba(255,255,255,.2);
+  transform: scale(1.06);
+}
+.chip.lit {
+  transform: scale(1.14) !important;
+  animation: chip-glow 2s ease forwards;
+}
+@keyframes chip-glow {
+  0%   { box-shadow: 0 0 0px var(--cg,#0ff), 0 0 0px var(--cg,#0ff); }
+  15%  { box-shadow: 0 0 22px var(--cg,#0ff), 0 0 44px var(--cg,#0ff); }
+  100% { box-shadow: 0 0  8px var(--cg,#0ff), 0 0 16px var(--cg,#0ff); opacity:.7; }
+}
+
+/* ═══════════════════════════════════════════
+   CONFIDENCE BAR (left)
+═══════════════════════════════════════════ */
+#conf-wrap {
+  position: fixed; left: 18px; top:50%; transform:translateY(-50%);
+  display:flex; align-items:center; gap: 8px; z-index:10;
+  pointer-events:none;
+}
+#conf-bar {
+  width: 3px; height: 140px;
+  background: rgba(255,255,255,.05); border-radius: 2px; overflow:hidden;
+  position: relative;
+}
+#conf-fill {
+  position: absolute; bottom:0; left:0; right:0; height:0;
+  background: linear-gradient(0deg, var(--cyan), var(--purple));
+  border-radius: 2px;
+  transition: height .4s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 0 6px var(--cyan);
+}
+#conf-label {
+  font-family: var(--f-mono); font-size: .48rem; letter-spacing: .2em;
+  text-transform: uppercase; color: rgba(0,212,255,.3);
+  writing-mode: vertical-rl; transform: rotate(180deg);
+}
+
+/* ═══════════════════════════════════════════
+   TF/WASM BADGE
+═══════════════════════════════════════════ */
+#tf-badge {
+  position: fixed; left:18px; bottom: 98px; z-index:10;
+  font-family: var(--f-mono); font-size: .5rem; letter-spacing:.15em;
+  text-transform: uppercase; color:rgba(0,212,255,.3);
+  padding: 4px 8px; border:1px solid rgba(0,212,255,.1); border-radius:4px;
+  pointer-events:none;
+}
+
+/* ═══════════════════════════════════════════
+   CONTROLS BAR
+═══════════════════════════════════════════ */
+#controls {
+  position: fixed; bottom:0; left:0; right:0; height:88px;
+  display: flex; align-items: center; justify-content: center; gap:14px;
+  background: linear-gradient(0deg, rgba(2,2,9,.97) 0%, transparent 100%);
+  padding: 0 20px; z-index:10;
+}
+.btn {
+  font-family: var(--f-display); font-size: .65rem; font-weight:600;
+  letter-spacing: .2em; text-transform: uppercase;
+  padding: 11px 22px; border-radius: 7px; border:1px solid;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: all .2s ease; position:relative; overflow:hidden;
+  white-space: nowrap;
+}
+.btn::after {
+  content:''; position:absolute; inset:0;
+  background: currentColor; opacity:0; transition: opacity .15s;
+}
+.btn:hover::after { opacity:.07; }
+.btn:active::after { opacity:.14; }
+
+.btn-listen {
+  color: var(--cyan);
+  border-color: rgba(0,212,255,.3);
+  box-shadow: 0 0 16px rgba(0,212,255,.08);
+}
+.btn-listen:hover { box-shadow: 0 0 28px rgba(0,212,255,.25); }
+.btn-listen.on {
+  color: var(--green);
+  border-color: rgba(0,255,136,.45);
+  box-shadow: 0 0 28px rgba(0,255,136,.22);
+}
+
+.btn-rec {
+  color: var(--red);
+  border-color: rgba(255,51,85,.3);
+}
+.btn-rec:hover { box-shadow: 0 0 24px rgba(255,51,85,.2); }
+.btn-rec.on { animation: rec-pulse 1s ease-in-out infinite; }
+@keyframes rec-pulse {
+  0%,100% { box-shadow: 0 0 14px rgba(255,51,85,.25); }
+  50%      { box-shadow: 0 0 36px rgba(255,51,85,.55); }
+}
+
+.btn-dl {
+  color: rgba(255,255,255,.25);
+  border-color: rgba(255,255,255,.08);
+}
+.btn-dl.ready {
+  color: var(--purple);
+  border-color: rgba(148,0,255,.35);
+}
+.btn-dl.ready:hover { box-shadow: 0 0 24px rgba(148,0,255,.2); }
+.btn:disabled { opacity:.35; cursor:not-allowed; pointer-events:none; }
+
+.btn-ico { font-size:.95rem; line-height:1; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width:600px) {
+  #log-panel { display:none; }
+  #conf-wrap { display:none; }
+  #tf-badge  { display:none; }
+  .btn .btn-lbl { display:none; }
+  .btn { padding: 12px 14px; }
+  #chips { bottom: 98px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loader-ring"></div>
+  <div class="loader-logo">VoiceWave AI</div>
+  <div class="loader-bar-wrap"><div class="loader-bar" id="lbar"></div></div>
+  <div class="loader-step" id="lstep">Initializing…</div>
+</div>
+
+<!-- Canvas -->
+<canvas id="canvas"></canvas>
+
+<!-- TOP HUD -->
+<div id="hud-top">
+  <div class="hud-brand">
+    <h1>VoiceWave AI</h1>
+    <div class="sub">Neural Audio Recognition · WASM Engine</div>
+  </div>
+  <div class="status-pill" id="status-pill">
+    <span class="dot"></span>
+    <span id="status-txt">Initializing</span>
+  </div>
+</div>
+
+<!-- HUD corner labels -->
+<div class="hud-corner tl">SYS::AUDIO_ENGINE v2.4</div>
+<div class="hud-corner tr" id="hud-tr">FFT::4096 · SR::48kHz</div>
+<div class="hud-corner bl" id="hud-bl">FRAME::000000</div>
+<div class="hud-corner br" id="hud-br">VOL::—</div>
+
+<!-- TF Badge -->
+<div id="tf-badge">TF.js · <span id="tf-be">WASM</span></div>
+
+<!-- Confidence bar -->
+<div id="conf-wrap">
+  <div id="conf-bar"><div id="conf-fill"></div></div>
+  <div id="conf-label">Confidence</div>
+</div>
+
+<!-- Log -->
+<div id="log-panel"></div>
+
+<!-- Chips -->
+<div id="chips"></div>
+
+<!-- Controls -->
+<div id="controls">
+  <button class="btn btn-listen" id="btn-listen">
+    <span class="btn-ico">🎙️</span>
+    <span class="btn-lbl">Start Listening</span>
+  </button>
+  <button class="btn btn-rec" id="btn-rec">
+    <span class="btn-ico">⏺</span>
+    <span class="btn-lbl">Record</span>
+  </button>
+  <button class="btn btn-dl" id="btn-dl" disabled>
+    <span class="btn-ico">⬇</span>
+    <span class="btn-lbl">Download</span>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN SCRIPT - EXACT SAME UI + LOCAL WASM MODEL
+════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+/* ─── Word config ─────────────────────────────────────────── */
+const WORDS = ['hey','hi','hello','stop','confirm','abort','robot','computer'];
+
+const WC = {
+  hey:      { p:'#00ff88', s:'rgba(0,255,136',  h: 150 },
+  hi:       { p:'#00ff88', s:'rgba(0,255,136',  h: 150 },
+  hello:    { p:'#44ff66', s:'rgba(68,255,102', h: 130 },
+  stop:     { p:'#ff3355', s:'rgba(255,51,85',  h: 347 },
+  confirm:  { p:'#4488ff', s:'rgba(68,136,255', h: 220 },
+  abort:    { p:'#ff8800', s:'rgba(255,136,0',  h:  30 },
+  robot:    { p:'#00d4ff', s:'rgba(0,212,255',  h: 194 },
+  computer: { p:'#bb44ff', s:'rgba(187,68,255', h: 275 },
+};
+
+/* ─── Canvas ──────────────────────────────────────────────── */
+const CV = document.getElementById('canvas');
+const CX = CV.getContext('2d');
+function resizeCv() { CV.width = innerWidth; CV.height = innerHeight; }
+resizeCv();
+addEventListener('resize', resizeCv);
+
+/* ─── State ───────────────────────────────────────────────── */
+let audioCtx, analyser, micStream;
+let freqBuf, waveBuf;
+let tfRecognizer = null;
+let webRec = null;
+let mediaRec = null;
+let recChunks = [];
+let listening = false;
+let recording = false;
+let hasRec = false;
+
+let lastWord = null, lastWordTime = 0;
+let wdAlpha = 0, wdPulse = 0;
+let flashCol = '#00d4ff', flashAmt = 0;
+let confLevel = 0;
+let frameCount = 0;
+let bgHue = 190;
+let particles = [], ripples = [], orbs = [];
+const STARS = [];
+let beatPeak = 0, volume = 0;
+
+/* ─── Stars ───────────────────────────────────────────────── */
+function buildStars() {
+  for (let i = 0; i < 200; i++) {
+    STARS.push({
+      x: Math.random(), y: Math.random(),
+      r: Math.random() * 1.1 + .2,
+      a: Math.random() * .4 + .05,
+      spd: Math.random() * .4 + .05,
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+}
+buildStars();
+
+/* ─── Audio ───────────────────────────────────────────────── */
+async function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = audioCtx.createMediaStreamSource(micStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 4096;
+  analyser.smoothingTimeConstant = 0.80;
+  analyser.minDecibels = -90;
+  analyser.maxDecibels = -10;
+  src.connect(analyser);
+  freqBuf = new Uint8Array(analyser.frequencyBinCount);
+  waveBuf = new Uint8Array(analyser.fftSize);
+}
+
+async function getMic() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio:{ echoCancellation:true, noiseSuppression:true, channelCount:1 }
+    });
+    await initAudio();
+    return true;
+  } catch(e) {
+    setStatus('Mic Denied', 'error'); return false;
+  }
+}
+
+/* ─── TF / WASM - NOW USING LOCAL WASM MODEL FILES ─────────── */
+async function initTF() {
+  try {
+    if (tf.wasm && tf.wasm.setWasmPaths) {
+      tf.wasm.setWasmPaths(
+        'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@4.14.0/dist/'
+      );
+    }
+    await tf.setBackend('wasm');
+    await tf.ready();
+    document.getElementById('tf-be').textContent = tf.getBackend().toUpperCase();
+  } catch(e) {
+    await tf.setBackend('webgl');
+    await tf.ready();
+    document.getElementById('tf-be').textContent = 'WebGL';
+  }
+
+  // === LOCAL WASM MODEL (model.json + metadata.json must be in same folder) ===
+  try {
+    const rec = speechCommands.create(
+      'BROWSER_FFT',           // same FFT topology
+      null,                    // use metadata for words
+      './model.json',          // ← your local model file
+      './metadata.json'        // ← your local metadata file
+    );
+    await rec.ensureModelLoaded();
+    tfRecognizer = rec;
+    console.log('%c✅ Local WASM Model Loaded Successfully', 'color:#0ff;font-weight:bold');
+  } catch(e) {
+    console.warn('[TF] Local WASM model not found → falling back to CDN');
+    const rec = speechCommands.create('BROWSER_FFT');
+    await rec.ensureModelLoaded();
+    tfRecognizer = rec;
+  }
+}
+
+/* ─── Web Speech API ──────────────────────────────────────── */
+function initWebSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 5;
+  r.lang = 'en-US';
+
+  r.onresult = (ev) => {
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      for (let j = 0; j < ev.results[i].length; j++) {
+        const raw = ev.results[i][j].transcript.toLowerCase().trim();
+        const conf = ev.results[i][j].confidence;
+        raw.split(/[\s,.!?;]+/).forEach(tok => {
+          const w = tok.replace(/[^a-z]/g,'');
+          if (WORDS.includes(w)) wordHit(w, Math.max(conf||.8,.72));
+        });
+      }
+    }
+  };
+  r.onerror = e => { if (e.error !== 'no-speech') console.warn('[SR]', e.error); };
+  r.onend = () => { if (listening) { try{ r.start(); }catch(e){} } };
+  return r;
+}
+
+/* ─── TF listening ────────────────────────────────────────── */
+function startTFRec() {
+  if (!tfRecognizer) return;
+  const labels = tfRecognizer.wordLabels();
+  const stopIdx = labels.indexOf('stop');
+  tfRecognizer.listen(res => {
+    if (stopIdx >= 0 && res.scores[stopIdx] > .82) {
+      wordHit('stop', res.scores[stopIdx]);
+    }
+  }, { overlapFactor:.5, probabilityThreshold:.75, invokeCallbackOnNoiseAndUnknown:false });
+}
+
+function stopTFRec() {
+  if (tfRecognizer && tfRecognizer.isListening()) tfRecognizer.stopListening();
+}
+
+/* ─── Word hit ────────────────────────────────────────────── */
+function wordHit(word, conf) {
+  const now = Date.now();
+  if (word === lastWord && now - lastWordTime < 1100) return;
+  lastWord = word; lastWordTime = now; confLevel = conf;
+  wdAlpha = 1; wdPulse = 1;
+  flashCol = WC[word]?.p || '#00d4ff'; flashAmt = 1;
+  spawnParticles(word);
+  spawnRipples(word);
+  spawnOrb(word);
+  activateChip(word);
+  addLog(word, conf);
+  document.getElementById('conf-fill').style.height = (conf*100)+'%';
+  setTimeout(() => { document.getElementById('conf-fill').style.height = '0%'; }, 2200);
+}
+
+/* ─── Particles ────────────────────────────────────────────── */
+class Particle {
+  constructor(x, y, col, h) {
+    this.x=x; this.y=y; this.col=col; this.h=h;
+    const a=Math.random()*Math.PI*2, spd=Math.random()*7+1;
+    this.vx=Math.cos(a)*spd; this.vy=Math.sin(a)*spd;
+    this.life=1; this.dec=Math.random()*.014+.006;
+    this.sz=Math.random()*5+1; this.trail=[];
+  }
+  update() {
+    this.trail.push({x:this.x,y:this.y});
+    if (this.trail.length>6) this.trail.shift();
+    this.x+=this.vx; this.y+=this.vy;
+    this.vx*=.95; this.vy*=.95;
+    this.life-=this.dec;
+  }
+  draw(c) {
+    for (let i=0;i<this.trail.length;i++) {
+      const t=this.trail[i], a=(i/this.trail.length)*this.life*.35;
+      c.beginPath();
+      c.arc(t.x,t.y,this.sz*(i/this.trail.length)*.7,0,Math.PI*2);
+      c.fillStyle=`hsla(${this.h},100%,65%,${a})`; c.fill();
+    }
+    c.save(); c.globalAlpha=this.life;
+    c.shadowBlur=10; c.shadowColor=this.col; c.fillStyle=this.col;
+    c.beginPath(); c.arc(this.x,this.y,this.sz,0,Math.PI*2); c.fill();
+    c.restore();
+  }
+}
+
+function spawnParticles(word) {
+  const wc=WC[word]||WC.robot, cx=CV.width/2, cy=CV.height/2;
+  for (let i=0;i<140;i++) particles.push(new Particle(cx,cy,wc.p,wc.h));
+}
+
+/* ─── Ripples ─────────────────────────────────────────────── */
+class Ripple {
+  constructor(x,y,col) {
+    this.x=x; this.y=y; this.col=col;
+    this.r=0; this.max=Math.min(CV.width,CV.height)*.44; this.life=1;
+  }
+  update() { this.r+=(this.max-this.r)*.055; this.life-=.013; }
+  draw(c) {
+    c.save(); c.globalAlpha=this.life*.45;
+    c.strokeStyle=this.col; c.lineWidth=1.8;
+    c.shadowBlur=12; c.shadowColor=this.col;
+    c.beginPath(); c.arc(this.x,this.y,this.r,0,Math.PI*2); c.stroke();
+    c.restore();
+  }
+}
+function spawnRipples(word) {
+  const wc=WC[word]||WC.robot, cx=CV.width/2, cy=CV.height/2;
+  [0,160,320].forEach(d=>setTimeout(()=>ripples.push(new Ripple(cx,cy,wc.p)),d));
+}
+
+/* ─── Orbs ────────────────────────────────────────────────── */
+class Orb {
+  constructor(x,y,col) {
+    this.x=x; this.y=y; this.col=col;
+    const a=Math.random()*Math.PI*2, spd=Math.random()*1.5+.5;
+    this.vx=Math.cos(a)*spd; this.vy=Math.sin(a)*spd;
+    this.life=1; this.r=Math.random()*16+8;
+  }
+  update() {
+    this.x+=this.vx; this.y+=this.vy; this.vx*=.98; this.vy*=.98;
+    this.life-=.006;
+  }
+  draw(c) {
+    const g=c.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
+    g.addColorStop(0,this.col+'cc'); g.addColorStop(1,this.col+'00');
+    c.save(); c.globalAlpha=this.life*.6;
+    c.beginPath(); c.arc(this.x,this.y,this.r,0,Math.PI*2);
+    c.fillStyle=g; c.fill(); c.restore();
+  }
+}
+function spawnOrb(word) {
+  const wc=WC[word]||WC.robot, cx=CV.width/2, cy=CV.height/2;
+  for (let i=0;i<18;i++) particles.push(new Particle(cx,cy,wc.p,wc.h));
+  for (let i=0;i<10;i++) orbs.push(new Orb(cx,cy,wc.p));
+}
+
+/* ─── Chip UI ─────────────────────────────────────────────── */
+function buildChips() {
+  const el=document.getElementById('chips');
+  WORDS.forEach(w=>{
+    const wc=WC[w], d=document.createElement('div');
+    d.className='chip'; d.id='chip-'+w; d.textContent=w;
+    d.style.cssText=`--cg:${wc.s},.5);border-color:${wc.p}20;color:${wc.p}50;`;
+    d.addEventListener('click',()=>wordHit(w,.99));
+    el.appendChild(d);
+  });
+}
+
+function activateChip(word) {
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('lit'));
+  const c=document.getElementById('chip-'+word);
+  if (!c) return;
+  const wc=WC[word];
+  c.style.cssText=`--cg:${wc.s},.55);border-color:${wc.p};color:${wc.p};background:${wc.s},.07);`;
+  c.classList.add('lit');
+  setTimeout(()=>{
+    c.classList.remove('lit');
+    c.style.cssText=`--cg:${wc.s},.5);border-color:${wc.p}20;color:${wc.p}50;`;
+  },2200);
+}
+
+/* ─── Log ─────────────────────────────────────────────────── */
+function addLog(word, conf) {
+  const panel=document.getElementById('log-panel');
+  const wc=WC[word]||WC.robot;
+  const t=new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const div=document.createElement('div');
+  div.className='log-entry';
+  div.style.borderColor=wc.p;
+  div.innerHTML=`<span class="log-t">${t}</span><span class="log-w" style="color:${wc.p}">${word.toUpperCase()}</span><span class="log-c">${Math.round(conf*100)}%</span>`;
+  panel.prepend(div);
+  while (panel.children.length>18) panel.lastChild.remove();
+}
+
+/* ─── Status ──────────────────────────────────────────────── */
+function setStatus(txt, cls='') {
+  document.getElementById('status-txt').textContent=txt;
+  document.getElementById('status-pill').className='status-pill '+cls;
+}
+
+/* ─── Helpers ─────────────────────────────────────────────── */
+function hexA(hex, a) {
+  if (!hex||hex[0]!=='#') return `rgba(0,212,255,${a})`;
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ─── Idle fake data ──────────────────────────────────────── */
+function fakeAudio(t) {
+  if (!freqBuf) freqBuf=new Uint8Array(512);
+  if (!waveBuf) waveBuf=new Uint8Array(2048);
+  for (let i=0;i<freqBuf.length;i++)
+    freqBuf[i]=Math.max(0,(Math.sin(t*1.5+i*.05)+Math.sin(t*.7+i*.12))*.5*18);
+  for (let i=0;i<waveBuf.length;i++)
+    waveBuf[i]=128+Math.sin(t*2+i*.015)*6;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DRAW LOOP - EXACT SAME
+═══════════════════════════════════════════════════════════ */
+function draw() {
+  requestAnimationFrame(draw);
+  frameCount++;
+  const W=CV.width, H=CV.height, cx=W/2, cy=H/2;
+  const t=performance.now()*.001;
+
+  if (analyser) {
+    analyser.getByteFrequencyData(freqBuf);
+    analyser.getByteTimeDomainData(waveBuf);
+  } else {
+    fakeAudio(t);
+  }
+
+  // Volume
+  volume=0;
+  for (let i=0;i<freqBuf.length;i++) volume+=freqBuf[i];
+  volume/=freqBuf.length*255;
+
+  // Beat detect (low freq energy)
+  let bass=0;
+  for (let i=0;i<16;i++) bass+=freqBuf[i];
+  bass/=16*255;
+  if (bass>beatPeak*1.4 && bass>.25) { flashAmt=Math.max(flashAmt,.2); beatPeak=bass; }
+  beatPeak*=.96;
+
+  // HUD
+  if (frameCount%4===0) {
+    document.getElementById('hud-bl').textContent='FRAME::'+String(frameCount).padStart(6,'0');
+    document.getElementById('hud-br').textContent='VOL::'+Math.round(volume*100)+'%';
+  }
+
+  /* ── Background ── */
+  CX.fillStyle='rgba(2,2,9,.16)';
+  CX.fillRect(0,0,W,H);
+
+  /* ── Flash overlay ── */
+  if (flashAmt>.008) {
+    CX.fillStyle=hexA(flashCol, flashAmt*.13);
+    CX.fillRect(0,0,W,H);
+    flashAmt*=.88;
+  }
+
+  /* ── Ambient nebula background ── */
+  const nebR=Math.min(W,H)*.55;
+  const neb=CX.createRadialGradient(cx,cy,0,cx,cy,nebR);
+  neb.addColorStop(0,`hsla(${bgHue%360},80%,8%,.18)`);
+  neb.addColorStop(.5,`hsla(${(bgHue+60)%360},70%,5%,.08)`);
+  neb.addColorStop(1,'transparent');
+  CX.save(); CX.beginPath(); CX.arc(cx,cy,nebR,0,Math.PI*2);
+  CX.fillStyle=neb; CX.fill(); CX.restore();
+
+  /* ── Stars ── */
+  STARS.forEach(s=>{
+    const flicker=.5+.5*Math.sin(t*s.spd*4+s.phase);
+    CX.save(); CX.globalAlpha=s.a*flicker;
+    CX.fillStyle='#fff';
+    CX.beginPath(); CX.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2); CX.fill();
+    CX.restore();
+  });
+
+  const BR=Math.min(W,H)*.28; // base radius
+
+  /* ── Outer ring: Frequency bars (circular) ── */
+  const BARS=220;
+  for (let i=0;i<BARS;i++) {
+    const angle=(i/BARS)*Math.PI*2-Math.PI/2;
+    const fi=Math.floor((i/BARS)*freqBuf.length*.68);
+    const v=freqBuf[fi]/255;
+    const bLen=v*BR*.95+2;
+    const hue=(i/BARS)*280+bgHue;
+    const bright=50+v*28;
+    const alpha=.45+v*.55;
+
+    CX.save();
+    CX.lineWidth=Math.max(1,(Math.PI*2*BR/BARS)*.6);
+    CX.strokeStyle=`hsla(${hue%360},100%,${bright}%,${alpha})`;
+    CX.shadowBlur=5+v*18; CX.shadowColor=`hsla(${hue%360},100%,${bright}%,.9)`;
+    CX.beginPath();
+    CX.moveTo(cx+Math.cos(angle)*BR, cy+Math.sin(angle)*BR);
+    CX.lineTo(cx+Math.cos(angle)*(BR+bLen), cy+Math.sin(angle)*(BR+bLen));
+    CX.stroke();
+    // Mirror inner
+    if (v>.04) {
+      CX.lineWidth=Math.max(.5,(Math.PI*2*BR/BARS)*.35);
+      CX.strokeStyle=`hsla(${hue%360},100%,${bright}%,${alpha*.35})`;
+      CX.shadowBlur=3;
+      CX.beginPath();
+      CX.moveTo(cx+Math.cos(angle)*(BR-1), cy+Math.sin(angle)*(BR-1));
+      CX.lineTo(cx+Math.cos(angle)*(BR-bLen*.28-1), cy+Math.sin(angle)*(BR-bLen*.28-1));
+      CX.stroke();
+    }
+    CX.restore();
+  }
+
+  /* ── Rotating tick ring ── */
+  const TICKS=48;
+  for (let i=0;i<TICKS;i++) {
+    const a=(i/TICKS)*Math.PI*2+t*.06;
+    const outer=BR+12, inner=BR+6;
+    const tick=i%4===0?8:i%2===0?4:2;
+    CX.save();
+    CX.strokeStyle=`hsla(${(bgHue+i*7)%360},80%,60%,.15)`;
+    CX.lineWidth=i%4===0?1.5:.6;
+    CX.beginPath();
+    CX.moveTo(cx+Math.cos(a)*(outer+tick), cy+Math.sin(a)*(outer+tick));
+    CX.lineTo(cx+Math.cos(a)*outer, cy+Math.sin(a)*outer);
+    CX.stroke();
+    CX.restore();
+  }
+
+  /* ── Outer ring border glow ── */
+  CX.save();
+  CX.beginPath(); CX.arc(cx,cy,BR,0,Math.PI*2);
+  const ringGlow=CX.createRadialGradient(cx,cy,BR-2,cx,cy,BR+2);
+  ringGlow.addColorStop(0,`hsla(${bgHue%360},100%,65%,.0)`);
+  ringGlow.addColorStop(.5,`hsla(${bgHue%360},100%,65%,.25)`);
+  ringGlow.addColorStop(1,`hsla(${bgHue%360},100%,65%,.0)`);
+  CX.strokeStyle=ringGlow; CX.lineWidth=4;
+  CX.shadowBlur=10; CX.shadowColor=`hsla(${bgHue%360},100%,65%,.5)`;
+  CX.stroke(); CX.restore();
+
+  /* ── Waveform ring 1 (main) ── */
+  const wR=BR*.72, wAmp=BR*.13;
+  const wCol=lastWord?(WC[lastWord]?.p||'#00d4ff'):'#00d4ff';
+  const wLen=Math.min(waveBuf.length,1024);
+
+  CX.save();
+  CX.beginPath();
+  for (let i=0;i<=wLen;i++) {
+    const a=(i/wLen)*Math.PI*2-Math.PI/2;
+    const smp=analyser?(waveBuf[i%wLen]/128-1)*1:Math.sin(t*3+i*.02)*.12;
+    const r=wR+smp*wAmp;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    i===0?CX.moveTo(x,y):CX.lineTo(x,y);
+  }
+  CX.closePath();
+  CX.strokeStyle=wCol; CX.lineWidth=2;
+  CX.shadowBlur=14; CX.shadowColor=wCol;
+  CX.globalAlpha=.8; CX.stroke(); CX.restore();
+
+  /* ── Waveform ring 2 (ambient purple offset) ── */
+  const wR2=BR*.61, wLen2=Math.min(waveBuf.length,512);
+  CX.save();
+  CX.beginPath();
+  for (let i=0;i<=wLen2;i++) {
+    const a=(i/wLen2)*Math.PI*2-Math.PI/2+.5;
+    const smp=analyser?(waveBuf[Math.min(i*2,waveBuf.length-1)]/128-1)*.55:Math.sin(t*2.3+i*.04)*.07;
+    const r=wR2+smp*wAmp*.5;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    i===0?CX.moveTo(x,y):CX.lineTo(x,y);
+  }
+  CX.closePath();
+  CX.strokeStyle='#9400ff'; CX.lineWidth=1.2;
+  CX.shadowBlur=8; CX.shadowColor='#9400ff';
+  CX.globalAlpha=.4; CX.stroke(); CX.restore();
+
+  /* ── Waveform ring 3 (thin pink, counter-rotate) ── */
+  const wR3=BR*.53;
+  CX.save();
+  CX.beginPath();
+  for (let i=0;i<=256;i++) {
+    const a=(i/256)*Math.PI*2+Math.PI/2-t*.07;
+    const smp=analyser?(waveBuf[Math.floor(i*4)%waveBuf.length]/128-1)*.4:Math.sin(t*1.8+i*.06)*.06;
+    const r=wR3+smp*wAmp*.35;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    i===0?CX.moveTo(x,y):CX.lineTo(x,y);
+  }
+  CX.closePath();
+  CX.strokeStyle='#ff0077'; CX.lineWidth=.8;
+  CX.shadowBlur=5; CX.shadowColor='#ff0077';
+  CX.globalAlpha=.28; CX.stroke(); CX.restore();
+
+  /* ── Ripples ── */
+  ripples=ripples.filter(r=>r.life>0);
+  ripples.forEach(r=>{r.update();r.draw(CX);});
+
+  /* ── Orbs ── */
+  orbs=orbs.filter(o=>o.life>0);
+  orbs.forEach(o=>{o.update();o.draw(CX);});
+
+  /* ── Inner orb ── */
+  const oR=BR*.25+volume*BR*.1+Math.sin(t*1.8)*3;
+  const oColor=lastWord?(WC[lastWord]?.p||'#00d4ff'):'#00d4ff';
+
+  // Glow halo
+  const orbG=CX.createRadialGradient(cx,cy,0,cx,cy,oR*4);
+  orbG.addColorStop(0,hexA(oColor,.18));
+  orbG.addColorStop(.3,hexA(oColor,.07));
+  orbG.addColorStop(1,'transparent');
+  CX.save(); CX.beginPath(); CX.arc(cx,cy,oR*4,0,Math.PI*2);
+  CX.fillStyle=orbG; CX.fill(); CX.restore();
+
+  // Circle border
+  CX.save();
+  CX.beginPath(); CX.arc(cx,cy,oR,0,Math.PI*2);
+  CX.strokeStyle=oColor; CX.lineWidth=1.5;
+  CX.shadowBlur=22+volume*28; CX.shadowColor=oColor;
+  CX.globalAlpha=.75+volume*.25; CX.stroke(); CX.restore();
+
+  // Dotted inner pulse
+  const dotR=oR*.62;
+  for (let i=0;i<24;i++) {
+    const a=(i/24)*Math.PI*2+t*.25;
+    const dr=dotR+Math.sin(t*3+i*.5)*3;
+    CX.save(); CX.globalAlpha=.18+volume*.3;
+    CX.fillStyle=oColor; CX.shadowBlur=4; CX.shadowColor=oColor;
+    CX.beginPath(); CX.arc(cx+Math.cos(a)*dr, cy+Math.sin(a)*dr, 1.2, 0, Math.PI*2);
+    CX.fill(); CX.restore();
+  }
+
+  /* ── Decorative arcs ── */
+  for (let ring=0;ring<4;ring++) {
+    const rr=BR*(0.34+ring*.09);
+    const segs=6+ring*3;
+    for (let s=0;s<segs;s++) {
+      const a1=(s/segs)*Math.PI*2-Math.PI/2+t*(ring%2?.08:-.06)+ring*.3;
+      const a2=a1+(Math.PI*2/segs)*.42;
+      CX.save();
+      CX.beginPath(); CX.arc(cx,cy,rr,a1,a2);
+      CX.strokeStyle=`hsla(${(bgHue+ring*55+s*25)%360},80%,60%,.12)`;
+      CX.lineWidth=1; CX.stroke(); CX.restore();
+    }
+  }
+
+  /* ── Word display ── */
+  wdAlpha=Math.max(0,wdAlpha*.9948);
+  if (wdPulse>0) wdPulse*=.91;
+
+  if (lastWord && wdAlpha>.008) {
+    const wc=WC[lastWord]?.p||'#fff';
+    const scale=1+wdPulse*.38;
+    const fs=Math.min(W,H)*.08*scale;
+
+    CX.save(); CX.textAlign='center'; CX.textBaseline='middle';
+    // Glow layers
+    for (let g=4;g>=1;g--) {
+      CX.font=`700 ${fs}px 'Chakra Petch',monospace`;
+      CX.fillStyle=wc;
+      CX.globalAlpha=wdAlpha*(g===1?.85:.12);
+      CX.shadowBlur=g===1?20:15+g*18; CX.shadowColor=wc;
+      CX.fillText(lastWord.toUpperCase(),cx,cy);
+    }
+    // Crisp text
+    CX.globalAlpha=wdAlpha;
+    CX.font=`700 ${fs}px 'Chakra Petch',monospace`;
+    CX.fillStyle='#ffffff'; CX.shadowBlur=18; CX.shadowColor=wc;
+    CX.fillText(lastWord.toUpperCase(),cx,cy);
+
+    // Confidence line
+    CX.font=`300 ${fs*.22}px 'Share Tech Mono',monospace`;
+    CX.fillStyle=wc; CX.globalAlpha=wdAlpha*.65;
+    CX.shadowBlur=5; CX.shadowColor=wc;
+    CX.fillText(`◈ DETECTED · ${Math.round(confLevel*100)}% ◈`,cx,cy+fs*.72);
+
+    // Word color underline bar
+    CX.globalAlpha=wdAlpha*.5;
+    CX.fillStyle=wc; CX.shadowBlur=0;
+    const bw=fs*lastWord.length*.35, bh=2;
+    CX.fillRect(cx-bw/2, cy+fs*.56, bw, bh);
+
+    CX.restore();
+  } else if (!lastWord || wdAlpha<.02) {
+    const ia=.12+Math.sin(t*.7)*.07;
+    CX.save(); CX.textAlign='center'; CX.textBaseline='middle';
+    CX.font=`300 ${Math.min(W,H)*.021}px 'Share Tech Mono',monospace`;
+    CX.fillStyle=listening?'#00d4ff':'rgba(0,212,255,.5)';
+    CX.globalAlpha=ia;
+    CX.fillText(listening?'◈  LISTENING · SAY A COMMAND  ◈':'◈  PRESS START TO BEGIN  ◈',cx,cy);
+    CX.restore();
+  }
+
+  /* ── Particles ── */
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.update();p.draw(CX);});
+
+  /* ── Scanline effect (subtle) ── */
+  if (frameCount%3===0) {
+    const scanY=(frameCount*1.5)%H;
+    CX.save(); CX.globalAlpha=.015;
+    CX.fillStyle='rgba(0,212,255,1)';
+    CX.fillRect(0,scanY,W,1); CX.restore();
+  }
+
+  bgHue+=.04; if (bgHue>=360) bgHue-=360;
+}
+
+/* ─── Listen toggle ──────────────────────────────────────── */
+async function startListening() {
+  if (!micStream) { const ok=await getMic(); if(!ok) return; }
+  if (audioCtx && audioCtx.state==='suspended') await audioCtx.resume();
+  listening=true;
+  if (webRec) { try{ webRec.start(); }catch(e){} }
+  startTFRec();
+  const btn=document.getElementById('btn-listen');
+  btn.classList.add('on');
+  btn.querySelector('.btn-ico').textContent='🔴';
+  btn.querySelector('.btn-lbl').textContent='Stop Listening';
+  setStatus('Listening','listen');
+}
+
+function stopListening() {
+  listening=false;
+  if (webRec) { try{ webRec.stop(); }catch(e){} }
+  stopTFRec();
+  const btn=document.getElementById('btn-listen');
+  btn.classList.remove('on');
+  btn.querySelector('.btn-ico').textContent='🎙️';
+  btn.querySelector('.btn-lbl').textContent='Start Listening';
+  setStatus(recording?'Recording':'Ready', recording?'record':'');
+}
+
+/* ─── Record ─────────────────────────────────────────────── */
+function startRec() {
+  if (!micStream) return;
+  recChunks=[];
+  const opts=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+    ?{mimeType:'audio/webm;codecs=opus'}
+    :MediaRecorder.isTypeSupported('audio/webm')
+    ?{mimeType:'audio/webm'}:{};
+  mediaRec=new MediaRecorder(micStream,opts);
+  mediaRec.ondataavailable=e=>{ if(e.data&&e.data.size>0) recChunks.push(e.data); };
+  mediaRec.onstop=()=>{
+    hasRec=true;
+    const dl=document.getElementById('btn-dl');
+    dl.disabled=false; dl.classList.add('ready');
+  };
+  mediaRec.start(100);
+  recording=true;
+  const btn=document.getElementById('btn-rec');
+  btn.classList.add('on');
+  btn.querySelector('.btn-ico').textContent='⏹';
+  btn.querySelector('.btn-lbl').textContent='Stop Rec';
+  if (!listening) setStatus('Recording','record');
+  else {
+    document.getElementById('status-pill').className='status-pill record listen';
+    document.getElementById('status-txt').textContent='Rec + Listening';
+  }
+}
+
+function stopRec() {
+  if (mediaRec&&mediaRec.state!=='inactive') mediaRec.stop();
+  recording=false;
+  const btn=document.getElementById('btn-rec');
+  btn.classList.remove('on');
+  btn.querySelector('.btn-ico').textContent='⏺';
+  btn.querySelector('.btn-lbl').textContent='Record';
+  if (listening) setStatus('Listening','listen');
+  else setStatus('Ready');
+}
+
+function doDownload() {
+  if (!recChunks.length) return;
+  const mime=recChunks[0].type||'audio/webm';
+  const ext=mime.includes('ogg')?'ogg':'webm';
+  const blob=new Blob(recChunks,{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`voicewave-${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}.${ext}`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),8000);
+}
+
+/* ─── Boot ───────────────────────────────────────────────── */
+async function boot() {
+  const bar=document.getElementById('lbar');
+  const step=document.getElementById('lstep');
+
+  const progress=(pct,msg)=>{ bar.style.width=pct+'%'; step.textContent=msg; };
+
+  progress(10,'Loading TensorFlow.js…');
+  await new Promise(r=>setTimeout(r,200));
+
+  progress(30,'Initializing local WASM model…');
+  await initTF();
+
+  progress(55,'Setting up speech engine…');
+  webRec=initWebSpeech();
+  await new Promise(r=>setTimeout(r,150));
+
+  progress(70,'Requesting microphone…');
+  await getMic();
+
+  progress(85,'Building interface…');
+  buildChips();
+
+  progress(100,'Ready!');
+  await new Promise(r=>setTimeout(r,400));
+
+  // Hide loader
+  const loader=document.getElementById('loading');
+  loader.classList.add('fade');
+  setTimeout(()=>{ loader.style.display='none'; },650);
+
+  // Start draw
+  draw();
+
+  setStatus(micStream?'Ready':'No Mic', micStream?'':'error');
+
+  // Controls
+  document.getElementById('btn-listen').addEventListener('click',()=>{
+    listening?stopListening():startListening();
+  });
+  document.getElementById('btn-rec').addEventListener('click',()=>{
+    if (!micStream) { startListening(); return; }
+    recording?stopRec():startRec();
+  });
+  document.getElementById('btn-dl').addEventListener('click',doDownload);
+
+  // If no Web Speech API, show warning
+  if (!webRec) {
+    addLog('warn·use-chrome',.0);
+    console.warn('[VoiceWave] Web Speech API not available. Use Chrome or Edge for best results.');
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
