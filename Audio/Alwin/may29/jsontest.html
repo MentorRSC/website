@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .box {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Model Info</h2>
+  <div id="output" class="box"></div>
+
+  <script>
+    fetch('my_model/metadata.json')
+      .then(res => res.json())
+      .then(data => {
+        const output = document.getElementById('output');
+
+        // Convert wordLabels array into list
+        let labelsList = '<ul>';
+        data.wordLabels.forEach(label => {
+          labelsList += `<li>${label}</li>`;
+        });
+        labelsList += '</ul>';
+
+        output.innerHTML = `
+          <p><strong>Version:</strong> ${data.tfjsSpeechCommandsVersion}</p>
+          <p><strong>Model Name:</strong> ${data.modelName}</p>
+          <p><strong>Timestamp:</strong> ${data.timeStamp}</p>
+          <p><strong>Word Labels:</strong></p>
+          ${labelsList}
+        `;
+      })
+      .catch(err => console.error('Error:', err));
+  </script>
+
+</body>
+</html>
