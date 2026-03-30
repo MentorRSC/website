@@ -820,7 +820,6 @@
     function formatDate(d) { if(!d) return 'TBD'; try{return new Date(d).toLocaleDateString('en-IN');}catch(e){return d;} }
     function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
-
     // Open Detailed Project Modal with full fetched data
     function openDetailModal(project) {
         const modal = document.getElementById('detailModal');
@@ -896,10 +895,8 @@
             const statusTxt = getStatusText(proj.status);
             const teamDisplay = proj.teamName || (proj.members.length>0 ? proj.members[0] : 'Student Team');
             const ratingStars = proj.rating > 0 ? proj.rating.toFixed(1) : 'N/A';
-            const isPeriodicProject = (proj.name && proj.name.toLowerCase().includes('periodic table')) || 
-                                      (proj.tags && proj.tags.some(t=> t.toLowerCase().includes('periodic') || t.toLowerCase().includes('chemistry')));
             return `
-                <div class="project-card" data-project-id="${proj.id}" data-is-periodic="${isPeriodicProject}">
+                <div class="project-card" data-project-id="${proj.id}">
                     <div class="project-header">
                         <div class="project-category"><i class="fas fa-cube"></i> ${escapeHtml(proj.category)}</div>
                         <div class="project-status ${statusCls}">${statusTxt}</div>
@@ -925,31 +922,37 @@
             `;
         }).join('');
 
-        // Attach click: open appropriate modal based on project type
-document.querySelectorAll('.project-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-        if(e.target.closest('.details-btn')) return;
-        const projId = parseInt(card.getAttribute('data-project-id'));
-        const project = projects.find(p => p.id === projId);
-        if(!project) return;
-        openDetailModal(project);
-    });
-});
+        // Attach click event to all project cards
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if(e.target.closest('.details-btn')) return;
+                const projId = parseInt(card.getAttribute('data-project-id'));
+                const project = projects.find(p => p.id === projId);
+                if(!project) return;
+                openDetailModal(project);
+            });
+        });
+    }
+
     function updateStats() {
         document.getElementById('total-projects').innerText = projects.length;
         document.getElementById('completed-projects').innerText = projects.filter(p=>p.status==='completed').length;
         document.getElementById('ongoing-projects').innerText = projects.filter(p=>p.status==='ongoing').length;
     }
 
+    // Event Listeners
     document.getElementById('search-input')?.addEventListener('input', (e) => { searchTerm = e.target.value; renderProjects(); });
     document.getElementById('status-filter')?.addEventListener('change', (e) => { currentStatus = e.target.value; renderProjects(); });
     document.getElementById('category-filter')?.addEventListener('change', (e) => { currentCategory = e.target.value; renderProjects(); });
-    document.getElementById('sort-select')?.addEventListener('change', (e) => { currentSort = e.target.value; renderProjects(); });   
+    document.getElementById('sort-select')?.addEventListener('change', (e) => { currentSort = e.target.value; renderProjects(); });
     document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeDetailModal);
     document.getElementById('detailModal')?.addEventListener('click', (e) => { if(e.target === document.getElementById('detailModal')) closeDetailModal(); });
     document.querySelector('.mobile-menu')?.addEventListener('click', ()=>{ document.querySelector('.nav-menu')?.classList.toggle('active'); });
     
+    // Initialize
     fetchProjects();
-</script>
+                                                                                                                                                          </script>
+    
 </body>
 </html>
+                                
