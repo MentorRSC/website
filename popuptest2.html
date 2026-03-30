@@ -76,9 +76,7 @@ margin:10px;
 </div>
 
 <script>
-   
-    
-    
+
 const SHEET_ID="1r99KCOKgXvZgGaKwMo8PWHLvHVk8ifUiwAxqPeeiF0Q"
 const SHEET_NAME="Sheet1"
 
@@ -97,7 +95,7 @@ let json=JSON.parse(text.substring(47).slice(0,-2))
 
 let rows=json.table.rows
 
-projects=rows.slice(1).map(r=>{
+projects=rows.map(r=>{
 
 return{
 id:r.c[0]?.v,
@@ -107,11 +105,18 @@ images:r.c[2]?.v
 
 })
 
+console.log("Projects Loaded",projects)
+
 }
 
 loadSheet()
 
 function openGallery(projectIndex){
+
+if(!projects.length){
+alert("Images loading... try again")
+return
+}
 
 images=projects[projectIndex].images.split(",")
 
@@ -135,7 +140,7 @@ index++
 
 if(index>=images.length) index=0
 
-galleryImage.src=images[index]
+document.getElementById("galleryImage").src=images[index]
 
 }
 
@@ -145,16 +150,18 @@ index--
 
 if(index<0) index=images.length-1
 
-galleryImage.src=images[index]
+document.getElementById("galleryImage").src=images[index]
 
 }
+
+/* Swipe support */
+
+const galleryImage=document.getElementById("galleryImage")
 
 let startX=0
 
 galleryImage.addEventListener("touchstart",e=>{
-
 startX=e.touches[0].clientX
-
 })
 
 galleryImage.addEventListener("touchend",e=>{
@@ -162,7 +169,6 @@ galleryImage.addEventListener("touchend",e=>{
 let endX=e.changedTouches[0].clientX
 
 if(startX-endX>50) next()
-
 if(endX-startX>50) prev()
 
 })
