@@ -717,7 +717,6 @@
     </div>
 </footer>
 
-
 <!-- Detailed Project Modal Popup (Full details from sheet) -->
 <div id="detailModal" class="detail-modal-overlay">
     <div class="detail-modal-container">
@@ -726,4 +725,257 @@
             <button class="close-detail-btn" id="closeDetailModalBtn"><i class="fas fa-times"></i></button>
         </div>
         <div class="detail-modal-body" id="detailModalBody">
-            <!-
+            <!-- dynamic content injected -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Google Sheet Config
+    const SHEET_ID = '1kAdm80nruqyRdq_vl94_TvAGdq5nslAfrymIL1zwxhM';
+    const SHEET_NAME = 'Sheet1';
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+    let projects = [];
+    let searchTerm = '';
+    let currentStatus = 'all';
+    let currentCategory = 'all';
+    let currentSort = 'default';
+
+    function parseMembers(str) { if (!str) return []; try { let arr = JSON.parse(str); if(Array.isArray(arr)) return arr; else return [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); } }
+    function parseTags(str) { if (!str) return []; try { let arr = JSON.parse(str); if(Array.isArray(arr)) return arr; else return [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); } }
+    function parseAchievements(str) { if (!str) return []; try { let arr = JSON.parse(str); return Array.isArray(arr)?arr:[str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()); } }
+
+    async function fetchProjects() {
+        const grid = document.getElementById('projects-grid');
+        grid.innerHTML = `<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Fetching live data from Innovation Hub sheet...</p></div>`;
+        try {
+            const resp = await fetch(SHEET_URL);
+            if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const text = await resp.text();
+            const json = JSON.parse(text.substring(47, text.length-2));
+            const rows = json.table.rows;
+            if(!rows || rows.length<2) { projects = []; }
+            else {
+                const rawProjects = rows.slice(1).map((row, idx) => {
+                    const c = row.c || [];
+                    return {
+                        id: c[0]?.v ?? idx+1,
+                        name: c[1]?.v ?? 'Unnamed Project',
+                        category: c[2]?.v ?? 'General',
+                        description: c[3]?.v ?? '',
+                        startDate: c[4]?.v ?? '',
+                        endDate: c[5]?.v ?? '',
+                        members: parseMembers(c[6]?.v),
+                        status: (c[7]?.v ?? 'planning').toLowerCase(),
+                        progress: c[8]?.v ? parseInt(c[8].v) : 0,
+                        budget: c[9]?.v ? parseFloat(c[9].v) : 0,
+                        priority: c[10]?.v ?? 'medium',
+                        resources: c[11]?.v ?? '',
+                        milestones: c[12]?.v ?? '',
+                        results: c[13]?.v ?? '',
+                        achievements: parseAchievements(c[14]?.v),
+                        completionDate: c[15]?.v ?? '',
+                        rating: c[16]?.v ? parseFloat(c[16].v) : 0,
+                        tags: parseTags(c[17]?.v),
+                        detailsLink: c[18]?.v ?? '#',
+                        githubLink: c[19]?.v ?? '#',
+                        teamName: c[20]?.v ?? ''
+                    };
+                });
+                projects = rawProjects.filter(p => p.name && p.name.trim().length > 0);
+            }
+            updateStats();
+            renderProjects();
+        } catch(err) {
+            console.error("Sheet fetch error:", err);
+            projects = [];
+            updateStats();
+            renderProjects();
+            document.getElementById('projects-grid').innerHTML = `<div class="no-projects"><i class="fas fa-exclamation-triangle"></i><p>⚠️ Could not load spreadsheet data. Make sure sheet is public.<br>Using fallback view.</p></div>`;
+        }
+    }
+
+    function getFilteredSorted() {
+        let filtered = projects.filter(p => {
+            const matchSearch = searchTerm === '' || 
+                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (p.teamName && p.teamName.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchStatus = currentStatus === 'all' || p.status === currentStatus;
+            const matchCat = currentCategory === 'all' || p.category === currentCategory;
+            return matchSearch && matchStatus && matchCat;
+        });
+        if(currentSort === 'progress-high') filtered.sort((a,b)=> (b.progress||0) - (a.progress||0));
+        else if(currentSort === 'rating-high') filtered.sort((a,b)=> (b.rating||0) - (a.rating||0));
+        else if(currentSort === 'newest') filtered.sort((a,b)=> (b.id||0) - (a.id||0));
+        else filtered.sort((a,b)=> (a.id||0) - (b.id||0));
+        return filtered;
+    }
+
+    function getStatusClass(st) { if(st==='completed') return 'status-completed'; if(st==='ongoing') return 'status-ongoing'; return 'status-planning'; }
+    function getStatusText(st) { if(st==='completed') return 'Completed'; if(st==='ongoing') return 'In Progress'; return 'Planning'; }
+    function formatDate(d) { if(!d) return 'TBD'; try{return new Date(d).toLocaleDateString('en-IN');}catch(e){return d;} }
+    function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // Open Detailed Project Modal with full fetched data
+    function openDetailModal(project) {
+        const modal = document.getElementById('detailModal');
+        const titleEl = document.getElementById('detailModalTitle');
+        const bodyEl = document.getElementById('detailModalBody');
+        titleEl.innerHTML = `<i class="fas fa-project-diagram"></i> ${escapeHtml(project.name)}`;
+        
+        const achievementsHtml = project.achievements && project.achievements.length ? 
+            `<ul class="achievement-list">${project.achievements.map(a => `<li><i class="fas fa-trophy"></i> ${escapeHtml(a)}</li>`).join('')}</ul>` : 
+            '<p>—</p>';
+        
+        const membersHtml = project.members && project.members.length ? 
+            `<div class="members-list">${project.members.map(m => `<span class="member-badge">${escapeHtml(m)}</span>`).join('')}</div>` : 
+            '<p>No members listed</p>';
+        
+        const tagsHtml = project.tags && project.tags.length ? 
+            `<div class="project-tags" style="margin-top:0;">${project.tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : '';
+        
+        bodyEl.innerHTML = `
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-align-left"></i> DESCRIPTION</div>
+                <div class="detail-value">${escapeHtml(project.description || 'No description provided.')}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-users"></i> TEAM / MEMBERS</div>
+                <div class="detail-value">${project.teamName ? `<strong>${escapeHtml(project.teamName)}</strong><br>` : ''}${membersHtml}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-chart-line"></i> PROGRESS & STATUS</div>
+                <div class="detail-value">Status: <strong>${getStatusText(project.status)}</strong> | Progress: ${project.progress || 0}%<br>
+                ${project.startDate ? `Start: ${formatDate(project.startDate)}` : ''} ${project.endDate ? `| End: ${formatDate(project.endDate)}` : ''}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-tag"></i> CATEGORY & PRIORITY</div>
+                <div class="detail-value">${escapeHtml(project.category)} | Priority: ${project.priority}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-star"></i> RATING & ACHIEVEMENTS</div>
+                <div class="detail-value">⭐ Rating: ${project.rating > 0 ? project.rating.toFixed(1) + '/5' : 'Not rated yet'}</div>
+                <div class="detail-value" style="margin-top:0.5rem;"><strong>Achievements:</strong> ${achievementsHtml}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-cogs"></i> RESOURCES & MILESTONES</div>
+                <div class="detail-value"><strong>Resources:</strong> ${escapeHtml(project.resources || '—')}</div>
+                <div class="detail-value"><strong>Milestones:</strong> ${escapeHtml(project.milestones || '—')}</div>
+                <div class="detail-value"><strong>Results:</strong> ${escapeHtml(project.results || '—')}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-chart-simple"></i> BUDGET & COMPLETION</div>
+                <div class="detail-value">Budget: ${project.budget ? `₹${project.budget.toLocaleString()}` : 'Not specified'} | Completion Date: ${formatDate(project.completionDate)}</div>
+            </div>
+            ${tagsHtml ? `<div class="detail-section"><div class="detail-label"><i class="fas fa-hashtag"></i> TAGS</div>${tagsHtml}</div>` : ''}
+            <div class="modal-buttons">
+                <a href="${project.detailsLink && project.detailsLink !== '#' ? project.detailsLink : '#'}" target="_blank" class="action-btn site-btn" ${(!project.detailsLink || project.detailsLink === '#') ? 'style="opacity:0.6; pointer-events:none;"' : ''}><i class="fas fa-globe"></i> Live Site / Details</a>
+                <a href="${project.githubLink && project.githubLink !== '#' ? project.githubLink : '#'}" target="_blank" class="action-btn github-btn" ${(!project.githubLink || project.githubLink === '#') ? 'style="opacity:0.6; pointer-events:none;"' : ''}><i class="fab fa-github"></i> GitHub Repository</a>
+            </div>
+        `;
+        modal.classList.add('active');
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+
+    function renderProjects() {
+        const filtered = getFilteredSorted();
+        const grid = document.getElementById('projects-grid');
+        if(!grid) return;
+        if(filtered.length===0) { 
+            grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>✨ No projects match your filters.</p></div>`; 
+            return; 
+        }
+        
+        grid.innerHTML = filtered.map(proj => {
+            const statusCls = getStatusClass(proj.status);
+            const statusTxt = getStatusText(proj.status);
+            const teamDisplay = proj.teamName || (proj.members.length>0 ? proj.members[0] : 'Student Team');
+            const ratingStars = proj.rating > 0 ? proj.rating.toFixed(1) : 'N/A';
+            return `
+                <div class="project-card" data-project-id="${proj.id}">
+                    <div class="project-header">
+                        <div class="project-category"><i class="fas fa-cube"></i> ${escapeHtml(proj.category)}</div>
+                        <div class="project-status ${statusCls}">${statusTxt}</div>
+                        <h3 class="project-title">${escapeHtml(proj.name)}</h3>
+                    </div>
+                    <div class="project-content">
+                        <p class="project-description">${escapeHtml(proj.description ? proj.description.substring(0, 120) : 'No description')}${proj.description && proj.description.length>120?'...':''}</p>
+                        <div class="project-meta">
+                            <span><i class="fas fa-users"></i> ${escapeHtml(teamDisplay)}</span>
+                            <span><i class="fas fa-calendar"></i> ${formatDate(proj.startDate)}</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-label"><span>Completion</span><span>${proj.progress || 0}%</span></div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${proj.progress || 0}%;"></div></div>
+                        </div>
+                        ${proj.tags && proj.tags.length ? `<div class="project-tags">${proj.tags.slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+                        <div class="project-footer">
+                            <span class="details-btn" style="cursor:pointer;"><i class="fas fa-expand-alt"></i> Quick View</span>
+                            <div class="project-rating"><i class="fas fa-star"></i> ${ratingStars}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // No event listeners added here - using event delegation instead
+    }
+
+    // Event delegation for project cards and quick view buttons
+    function setupEventDelegation() {
+        const grid = document.getElementById('projects-grid');
+        if (!grid) return;
+        
+        // Remove any existing listener to avoid duplicates
+        grid.removeEventListener('click', handleGridClick);
+        grid.addEventListener('click', handleGridClick);
+    }
+
+    function handleGridClick(e) {
+        // Find if clicked element is inside a project-card
+        const card = e.target.closest('.project-card');
+        if (!card) return;
+        
+        const projId = parseInt(card.getAttribute('data-project-id'));
+        const project = projects.find(p => p.id === projId);
+        if (!project) return;
+        
+        // Check if clicked on Quick View button or its children
+        const isQuickView = e.target.closest('.details-btn');
+        
+        if (isQuickView) {
+            e.stopPropagation();
+            openDetailModal(project);
+        } else {
+            // Clicked anywhere else on the card
+            openDetailModal(project);
+        }
+    }
+
+    function updateStats() {
+        document.getElementById('total-projects').innerText = projects.length;
+        document.getElementById('completed-projects').innerText = projects.filter(p=>p.status==='completed').length;
+        document.getElementById('ongoing-projects').innerText = projects.filter(p=>p.status==='ongoing').length;
+    }
+
+    // Event Listeners for filters
+    document.getElementById('search-input')?.addEventListener('input', (e) => { searchTerm = e.target.value; renderProjects(); });
+    document.getElementById('status-filter')?.addEventListener('change', (e) => { currentStatus = e.target.value; renderProjects(); });
+    document.getElementById('category-filter')?.addEventListener('change', (e) => { currentCategory = e.target.value; renderProjects(); });
+    document.getElementById('sort-select')?.addEventListener('change', (e) => { currentSort = e.target.value; renderProjects(); });
+    document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeDetailModal);
+    document.getElementById('detailModal')?.addEventListener('click', (e) => { if(e.target === document.getElementById('detailModal')) closeDetailModal(); });
+    document.querySelector('.mobile-menu')?.addEventListener('click', ()=>{ document.querySelector('.nav-menu')?.classList.toggle('active'); });
+    
+    // Initialize
+    fetchProjects();
+    setupEventDelegation();
+</script>
+    
+</body>
+</html>
