@@ -936,26 +936,25 @@
         grid.addEventListener('click', handleGridClick);
     }
 
-    function handleGridClick(e) {
-        // Find if clicked element is inside a project-card
-        const card = e.target.closest('.project-card');
-        if (!card) return;
-        
-        const projId = parseInt(card.getAttribute('data-project-id'));
-        const project = projects.find(p => p.id === projId);
-        if (!project) return;
-        
-        // Check if clicked on Quick View button or its children
-        const isQuickView = e.target.closest('.details-btn');
-        
-        if (isQuickView) {
-            e.stopPropagation();
-            openDetailModal(project);
-        } else {
-            // Clicked anywhere else on the card
-            openDetailModal(project);
-        }
+function handleGridClick(e) {
+
+    const card = e.target.closest('.project-card');
+    if (!card) return;
+
+    const projId = card.getAttribute('data-project-id');
+
+    const project = projects.find(p => String(p.id) === projId);
+    if (!project) return;
+
+    const isQuickView = e.target.closest('.details-btn');
+
+    if (isQuickView) {
+        e.stopPropagation();
+        openDetailModal(project);
+    } else {
+        openDetailModal(project);
     }
+}
 
     function updateStats() {
         document.getElementById('total-projects').innerText = projects.length;
