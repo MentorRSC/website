@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Nexus Gallery | Dynamic Project Showcase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            background: linear-gradient(145deg, #f6f9fc 0%, #eef2f5 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            color: #1a2c3e;
+        }
+
+        /* smooth container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* header section */
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero h2 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1E3C5C, #2B5F8A);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .sub {
+            font-size: 1.1rem;
+            color: #4a627a;
+            max-width: 580px;
+            margin: 0 auto;
+            border-bottom: 2px solid rgba(43, 95, 138, 0.2);
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+
+        /* project grid - modern card layout */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .project-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(0px);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0,0,0,0.02);
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border: 1px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 28px 40px -16px rgba(0, 20, 40, 0.25);
+            background: white;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .project-card:hover .card-img {
+            transform: scale(1.02);
+        }
+
+        .card-content {
+            padding: 1.5rem 1.2rem 1.8rem;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #0F2B3B;
+            letter-spacing: -0.2px;
+        }
+
+        .project-badge {
+            display: inline-block;
+            background: #e9f0f5;
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1e5a7a;
+            margin-bottom: 1rem;
+        }
+
+        .view-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1.5px solid #2B5F8A;
+            color: #2B5F8A;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.25s;
+            margin-top: 0.6rem;
+            cursor: pointer;
+        }
+
+        .view-btn:hover {
+            background: #2B5F8A;
+            color: white;
+            box-shadow: 0 6px 12px -8px rgba(43,95,138,0.4);
+        }
+
+        /* loading skeleton */
+        .loader {
+            text-align: center;
+            padding: 3rem;
+            color: #2B5F8A;
+            font-weight: 500;
+        }
+
+        /* MODAL / POPUP — cinematic experience */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 22, 32, 0.92);
+            backdrop-filter: blur(12px);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .popup.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .popup-box {
+            background: #ffffffea;
+            backdrop-filter: blur(2px);
+            border-radius: 36px;
+            width: 90%;
+            max-width: 900px;
+            position: relative;
+            padding: 18px 18px 24px;
+            box-shadow: 0 40px 70px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.2);
+            transform: scale(0.96);
+            transition: transform 0.2s ease-out;
+            animation: modalPop 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.94); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .close {
+            position: absolute;
+            top: 16px;
+            right: 22px;
+            font-size: 32px;
+            font-weight: 300;
+            cursor: pointer;
+            color: #2c3e44;
+            background: rgba(255,255,240,0.8);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 60px;
+            transition: all 0.2s;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+
+        .close:hover {
+            background: #1e2f3a;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .gallery-img {
+            width: 100%;
+            max-height: 65vh;
+            object-fit: contain;
+            border-radius: 28px;
+            background: #f0f2f5;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            background: #1e3a4d;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(2px);
+        }
+
+        .nav-btn:hover {
+            background: #0f2c3c;
+            transform: scale(0.97);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .counter-badge {
+            text-align: center;
+            margin-top: 14px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #2c5a74;
+            background: #eef3f7;
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 60px;
+            letter-spacing: 0.3px;
+        }
+
+        .gallery-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            padding: 0 8px;
+        }
+
+        /* responsive touches */
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+            .hero h2 {
+                font-size: 2rem;
+            }
+            .project-grid {
+                gap: 1.2rem;
+            }
+            .nav-btn {
+                padding: 8px 20px;
+                font-size: 0.9rem;
+            }
+            .popup-box {
+                width: 95%;
+                padding: 14px;
+            }
+            .close {
+                top: 12px;
+                right: 14px;
+                width: 38px;
+                height: 38px;
+            }
+        }
+
+        /* empty / error */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 48px;
+            margin-top: 2rem;
+        }
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            font-size: 0.8rem;
+            color: #6f8eaa;
+        }
+        button {
+            background: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="hero">
+        <h2>✦ Visual Archive ✦</h2>
+        <div class="sub">immersive project stories · cinematic gallery</div>
+    </div>
+
+    <div id="projectsContainer" class="project-grid">
+        <div class="loader">✨ loading dynamic gallery ...</div>
+    </div>
+    <footer>swipe on image → next / prev  •  premium showcase</footer>
+</div>
+
+<!-- Enhanced Popup Modal -->
+<div id="popup" class="popup">
+    <div class="popup-box">
+        <span class="close" id="closePopupBtn">✕</span>
+        <img id="galleryImage" class="gallery-img" alt="gallery visual">
+        <div class="gallery-footer">
+            <span id="imageCounter" class="counter-badge">1 / 0</span>
+            <div style="display: flex; gap: 4px;">
+                <!-- optional indicators -->
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-btn" id="prevBtn">◀  Prev</button>
+            <button class="nav-btn" id="nextBtn">Next  ▶</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ----------------------------- CONFIG ---------------------------------
+    const SHEET_ID = "1r99KCOKgXvZgGaKwMo8PWHLvHVk8ifUiwAxqPeeiF0Q";
+    const SHEET_NAME = "Sheet1";
+    const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+    let projects = [];       // store { id, name, images (string with commas) }
+    let currentProjectImages = [];
+    let currentImageIndex = 0;
+    let currentProjectId = null;
+
+    // DOM elements
+    const projectsContainer = document.getElementById("projectsContainer");
+    const popup = document.getElementById("popup");
+    const galleryImage = document.getElementById("galleryImage");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const closePopupBtn = document.getElementById("closePopupBtn");
+    const imageCounterSpan = document.getElementById("imageCounter");
+
+    // helper: parse images from comma string (allow spaces)
+    function parseImageList(rawStr) {
+        if (!rawStr || typeof rawStr !== "string") return [];
+        return rawStr.split(",").map(img => img.trim()).filter(img => img.length > 0);
+    }
+
+    // load data from google sheet (robust + dynamic)
+    async function fetchSheetData() {
+        try {
+            const response = await fetch(API_URL);
+            const text = await response.text();
+            // Google sheets returns a JS function call: /*O_o*/ google.visualization.Query.setResponse(...)
+            // extract JSON part: find first '{' after the prefix
+            let jsonStart = text.indexOf('{');
+            let jsonEnd = text.lastIndexOf('}');
+            if (jsonStart === -1 || jsonEnd === -1) throw new Error("Invalid response format");
+            let rawJson = text.substring(jsonStart, jsonEnd + 1);
+            const data = JSON.parse(rawJson);
+            const rows = data.table.rows;
+            if (!rows || rows.length < 2) {
+                projects = [];
+                renderProjectGrid();
+                return;
+            }
+            // first row: column headers (optional) we assume col0 = id, col1 = project name, col2 = image urls
+            // start from index 1 to skip headers
+            const parsed = [];
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || !row.c) continue;
+                const id = row.c[0]?.v ?? `project_${i}`;
+                const name = row.c[1]?.v ?? "Untitled Project";
+                let imagesRaw = row.c[2]?.v ?? "";
+                // if imagesRaw is empty but maybe we fallback? keep empty array
+                parsed.push({
+                    id: String(id),
+                    name: String(name),
+                    imagesRaw: String(imagesRaw)
+                });
+            }
+            projects = parsed;
+            renderProjectGrid();
+        } catch (error) {
+            console.error("Sheet loading error:", error);
+            projectsContainer.innerHTML = `<div class="empty-state">⚠️ unable to load gallery data<br><small>check connection or sheet permissions</small></div>`;
+        }
+    }
+
+    // render modern project cards
+    function renderProjectGrid() {
+        if (!projectsContainer) return;
+        if (!projects.length) {
+            projectsContainer.innerHTML = `<div class="empty-state">✨ No projects found. Add data to Google Sheet!<br><span style="font-size:0.8rem;">Columns: ID | Project Name | Image URLs (comma separated)</span></div>`;
+            return;
+        }
+
+        let cardsHTML = "";
+        for (let i = 0; i < projects.length; i++) {
+            const proj = projects[i];
+            const imageList = parseImageList(proj.imagesRaw);
+            const previewImg = (imageList.length > 0 && imageList[0].startsWith("http")) ? imageList[0] : "https://placehold.co/600x400/eef2fa/2B5F8A?text=Preview+unavailable";
+            // if preview image looks invalid, fallback placeholder
+            const safePreview = (imageList[0] && (imageList[0].startsWith("http") || imageList[0].startsWith("https"))) ? imageList[0] : "https://placehold.co/600x400/ced8e3/2c3e50?text=Image+ready";
+            cardsHTML += `
+                <div class="project-card" data-project-index="${i}">
+                    <img class="card-img" src="${safePreview}" alt="${escapeHtml(proj.name)}" loading="lazy" onerror="this.src='https://placehold.co/600x400/d9e2ec/2B5F8A?text=✨+artwork'">
+                    <div class="card-content">
+                        <div class="project-title">${escapeHtml(proj.name)}</div>
+                        <div class="project-badge">${imageList.length} ${imageList.length === 1 ? 'visual' : 'visuals'}</div>
+                        <div class="view-btn" data-open="${i}">⟳ Explore gallery →</div>
+                    </div>
+                </div>
+            `;
+        }
+        projectsContainer.innerHTML = cardsHTML;
+
+        // attach event listeners to dynamic buttons and cards
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = btn.getAttribute('data-open');
+                if (idx !== null) openGallery(parseInt(idx));
+            });
+        });
+        // also make whole card clickable for better UX
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                // avoid double trigger if click on button already handled
+                if (e.target.classList && e.target.classList.contains('view-btn')) return;
+                const idx = card.getAttribute('data-project-index');
+                if (idx !== null) openGallery(parseInt(idx));
+            });
+        });
+    }
+
+    // helper: escape html
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // core gallery logic
+    function openGallery(projectIndex) {
+        if (!projects[projectIndex]) return;
+        const project = projects[projectIndex];
+        const rawImages = project.imagesRaw;
+        let imagesArray = parseImageList(rawImages);
+        
+        // if still no images, provide elegant fallback
+        if (!imagesArray.length) {
+            imagesArray = ["https://placehold.co/1000x700/334e68/ffffff?text=No+media+available"];
+        }
+        
+        currentProjectImages = imagesArray;
+        currentImageIndex = 0;
+        currentProjectId = project.id;
+        
+        updateGalleryImage();
+        updateCounterText();
+        
+        // show popup with smooth transition
+        popup.classList.add("active");
+        document.body.style.overflow = "hidden"; // prevent background scroll
+    }
+    
+    function updateGalleryImage() {
+        if (!currentProjectImages.length) return;
+        let imgUrl = currentProjectImages[currentImageIndex];
+        // add a cross-origin friendly approach + high quality lazy
+        galleryImage.src = imgUrl;
+        galleryImage.alt = `gallery view ${currentImageIndex+1}`;
+        // handle broken images gracefully
+        galleryImage.onerror = () => {
+            if (galleryImage.src !== "https://placehold.co/1000x700/d9e2ec/1f4e6e?text=image+load+error") {
+                galleryImage.src = "https://placehold.co/1000x700/d9e2ec/1f4e6e?text=🖼️+load+retry";
+            }
+        };
+    }
+    
+    function updateCounterText() {
+        if (imageCounterSpan) {
+            imageCounterSpan.innerText = `${currentImageIndex+1} / ${currentProjectImages.length}`;
+        }
+    }
+    
+    function nextImage() {
+        if (!currentProjectImages.length) return;
+        currentImageIndex = (currentImageIndex + 1) % currentProjectImages.length;
+        updateGalleryImage();
+        updateCounterText();
+    }
+    
+    function prevImage() {
+        if (!currentProjectImages.length) return;
+        currentImageIndex = (currentImageIndex - 1 + currentProjectImages.length) % currentProjectImages.length;
+        updateGalleryImage();
+        updateCounterText();
+    }
+    
+    function closeGallery() {
+        popup.classList.remove("active");
+        document.body.style.overflow = "";
+        // reset image to avoid flash
+        setTimeout(() => {
+            if (!popup.classList.contains("active")) {
+                // optional cleanup
+            }
+        }, 200);
+    }
+    
+    // ---- touch events for mobile swipe (beautiful interaction) ----
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    function handleTouchStart(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }
+    
+    function handleTouchEnd(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        const delta = touchEndX - touchStartX;
+        if (Math.abs(delta) < 50) return;
+        if (delta > 0) {
+            // swipe right → previous
+            prevImage();
+        } else {
+            // swipe left → next
+            nextImage();
+        }
+        // haptic subtle feedback (optional)
+    }
+    
+    // keyboard navigation (professional)
+    function handleKeydown(e) {
+        if (!popup.classList.contains("active")) return;
+        if (e.key === "ArrowRight") {
+            e.preventDefault();
+            nextImage();
+        } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            prevImage();
+        } else if (e.key === "Escape") {
+            closeGallery();
+        }
+    }
+    
+    // attach all event listeners
+    function bindGlobalEvents() {
+        if (prevBtn) prevBtn.addEventListener("click", (e) => { e.stopPropagation(); prevImage(); });
+        if (nextBtn) nextBtn.addEventListener("click", (e) => { e.stopPropagation(); nextImage(); });
+        if (closePopupBtn) closePopupBtn.addEventListener("click", closeGallery);
+        // clicking on background (popup overlay) closes gallery
+        popup.addEventListener("click", (e) => {
+            if (e.target === popup) closeGallery();
+        });
+        // touch for swipe on image element
+        const imgElement = gall
