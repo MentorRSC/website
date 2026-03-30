@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 Leaderboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f0f0f0;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 2px solid #ddd;
+        }
+
+        th:hover {
+            background: #e0e0e0;
+        }
+
+        th.sortable::after {
+            content: ' ↕️';
+            font-size: 0.8em;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+            transform: scale(1.01);
+        }
+
+        td {
+            padding: 15px;
+            color: #333;
+        }
+
+        .rank {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+        .rank-other { color: #667eea; }
+
+        .medal {
+            display: inline-block;
+            width: 30px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+
+        .stats {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .medal-icon {
+            margin-right: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            input[type="text"],
+            input[type="number"] {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            td, th {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Leaderboard</h1>
+            <p>Top Performers</p>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="🔍 Search by name...">
+            <input type="text" id="newName" placeholder="Enter name">
+            <input type="number" id="newScore" placeholder="Enter score" min="0">
+            <button onclick="addEntry()">➕ Add Entry</button>
+            <select id="sortBy" onchange="updateLeaderboard()">
+                <option value="score">Sort by Score</option>
+                <option value="name">Sort by Name</option>
+            </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Rank</th>
+                        <th class="sortable" onclick="sortBy('name')">Name</th>
+                        <th class="sortable" onclick="sortBy('score')">Score</th>
+                        <th style="width: 80px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="stats">
+            Total Players: <span id="totalPlayers">0</span> | Highest Score: <span id="highestScore">0</span>
+        </div>
+    </div>
+
+    <script>
+        let leaderboardData = [
+            { name: 'Alice', score: 2500 },
+            { name: 'Bob', score: 2100 },
+            { name: 'Charlie', score: 1950 },
+            { name: 'Diana', score: 1850 },
+            { name: 'Eve', score: 1700 },
+            { name: 'Frank', score: 1550 },
+            { name: 'Grace', score: 1400 },
+            { name: 'Henry', score: 1250 }
+        ];
+
+        let currentSort = 'score';
+        let sortAscending = false;
+
+        function getMedal(rank) {
+            const medals = ['🥇', '🥈', '🥉'];
+            return rank - 1 < medals.length ? medals[rank - 1] : '';
+        }
+
+        function addEntry() {
+            const name = document.getElementById('newName').value.trim();
+            const score = parseInt(document.getElementById('newScore').value);
+
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+            if (isNaN(score) || score < 0) {
+                alert('Please enter a valid score');
+                return;
+            }
+
+            leaderboardData.push({ name, score });
+            document.getElementById('newName').value = '';
+            document.getElementById('newScore').value = '';
+            updateLeaderboard();
+        }
+
+        function deleteEntry(index) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                leaderboardData.splice(index, 1);
+                updateLeaderboard();
+            }
+        }
+
+        function sortBy(field) {
+            if (currentSort === field) {
+                sortAscending = !sortAscending;
+            } else {
+                currentSort = field;
+                sortAscending = false;
+            }
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            let filtered = leaderboardData.filter(entry =>
+                entry.name.toLowerCase().includes(
+                    document.getElementById('searchInput').value.toLowerCase()
+                )
+            );
+
+            const sortField = document.getElementById('sortBy').value || currentSort;
+
+            filtered.sort((a, b) => {
+                let comparison = 0;
+                if (sortField === 'score') {
+                    comparison = b.score - a.score;
+                } else if (sortField === 'name') {
+                    comparison = a.name.localeCompare(b.name);
+                }
+                return sortAscending ? -comparison : comparison;
+            });
+
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-results">No players found</td></tr>';
+            } else {
+                filtered.forEach((entry, index) => {
+                    const rank = index + 1;
+                    const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+                    const originalIndex = leaderboardData.indexOf(entry);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="rank ${rankClass}">
+                            <span class="medal-icon">${getMedal(rank)}</span>${rank}
+                        </td>
+                        <td><strong>${entry.name}</strong></td>
+                        <td><strong>${entry.score.toLocaleString()}</strong></td>
+                        <td><button class="delete-btn" onclick="deleteEntry(${originalIndex})">🗑️ Delete</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Update stats
+            document.getElementById('totalPlayers').textContent = leaderboardData.length;
+            const highestScore = leaderboardData.length > 0 ? Math.max(...leaderboardData.map(e => e.score)) : 0;
+            document.getElementById('highestScore').textContent = highestScore.toLocaleString();
+        }
+
+        // Initial load
+        updateLeaderboard();
+    </script>
+</body>
+</html>
