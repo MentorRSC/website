@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+font-family:Arial;
+text-align:center;
+}
+
+/* popup */
+.popup{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.8);
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:white;
+padding:10px;
+border-radius:10px;
+width:90%;
+max-width:600px;
+position:relative;
+}
+
+.gallery-img{
+width:100%;
+border-radius:8px;
+}
+
+.close{
+position:absolute;
+top:5px;
+right:10px;
+font-size:25px;
+cursor:pointer;
+}
+
+button{
+padding:8px 15px;
+margin:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Project Gallery</h2>
+
+<button onclick="openGallery(0)">Open Project Images</button>
+
+<div id="popup" class="popup">
+
+<div class="popup-box">
+
+<span class="close" onclick="closeGallery()">✖</span>
+
+<img id="galleryImage" class="gallery-img">
+
+<br>
+
+<button onclick="prev()">Prev</button>
+<button onclick="next()">Next</button>
+
+</div>
+</div>
+
+<script>
+
+const SHEET_ID="YOUR_SHEET_ID"
+const SHEET_NAME="Sheet1"
+
+const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`
+
+let projects=[]
+let images=[]
+let index=0
+
+async function loadSheet(){
+
+let res=await fetch(url)
+let text=await res.text()
+
+let json=JSON.parse(text.substring(47).slice(0,-2))
+
+let rows=json.table.rows
+
+projects=rows.slice(1).map(r=>{
+
+return{
+id:r.c[0]?.v,
+name:r.c[1]?.v,
+images:r.c[2]?.v
+}
+
+})
+
+}
+
+loadSheet()
+
+function openGallery(projectIndex){
+
+images=projects[projectIndex].images.split(",")
+
+index=0
+
+document.getElementById("galleryImage").src=images[index]
+
+document.getElementById("popup").style.display="flex"
+
+}
+
+function closeGallery(){
+
+document.getElementById("popup").style.display="none"
+
+}
+
+function next(){
+
+index++
+
+if(index>=images.length) index=0
+
+galleryImage.src=images[index]
+
+}
+
+function prev(){
+
+index--
+
+if(index<0) index=images.length-1
+
+galleryImage.src=images[index]
+
+}
+
+let startX=0
+
+galleryImage.addEventListener("touchstart",e=>{
+
+startX=e.touches[0].clientX
+
+})
+
+galleryImage.addEventListener("touchend",e=>{
+
+let endX=e.changedTouches[0].clientX
+
+if(startX-endX>50) next()
+
+if(endX-startX>50) prev()
+
+})
+
+</script>
+
+</body>
+</html>
