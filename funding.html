@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,7 +87,7 @@
             transition: color 0.3s;
         }
 
-        .nav-menu a:hover {
+        .nav-menu a:hover, .nav-menu a.active {
             color: var(--primary);
         }
 
@@ -191,30 +192,12 @@
             font-size: 1rem;
         }
 
-        .category-filters {
-            display: flex;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 0.5rem 1.2rem;
+        .sort-select {
+            padding: 0.5rem 1rem;
             border-radius: 50px;
             border: 1px solid var(--border);
             background: white;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .filter-btn:hover:not(.active) {
-            background: var(--light);
         }
 
         /* Projects Grid */
@@ -242,7 +225,7 @@
         }
 
         .project-image {
-            height: 200px;
+            height: 160px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             display: flex;
             align-items: center;
@@ -252,15 +235,20 @@
             position: relative;
         }
 
-        .project-category {
+        .project-rating {
             position: absolute;
             top: 1rem;
             right: 1rem;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             padding: 0.3rem 0.8rem;
             border-radius: 50px;
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 600;
+        }
+
+        .project-rating i {
+            color: #ffc107;
+            margin-right: 0.3rem;
         }
 
         .project-content {
@@ -351,7 +339,7 @@
             background: var(--secondary);
         }
 
-        .project-impact {
+        .project-supporters {
             display: flex;
             align-items: center;
             gap: 0.3rem;
@@ -486,12 +474,14 @@
                 <i class="fas fa-bars"></i>
             </div>
             <nav class="nav-menu">
-                <ul>
-                    <li><a href="index.html">Home</a></li>
+                      <ul>
+                    <li><i class="fa-solid fa-share-nodes"><a href="linktree.html"></i> Social Media</li>
+                    <li><a href="https://rscpcalicut.org.in/"  class="active">Home</a></li>
                     <li><a href="resources.html">Resources</a></li>
                     <li><a href="projects.html">Projects</a></li>
-                    <li><a href="funding.html" class="active" style="color: var(--primary);">Funding</a></li>
+                    <li><a href="puzzles.html">Puzzles</a></li>
                     <li><a href="members.html">Members</a></li>
+                                        <li><a href="funding.html">Investment</a></li>
                     <li><a href="joiningform.html" class="cta-button">Join Now</a></li>
                 </ul>
             </nav>
@@ -520,7 +510,7 @@
                 </div>
                 <div class="stat-card">
                     <h3 id="total-backers">0</h3>
-                    <p>Supporters</p>
+                    <p>Total Supporters</p>
                 </div>
             </div>
         </div>
@@ -533,9 +523,13 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="search-input" placeholder="Search projects by title, team, or description...">
             </div>
-            <div class="category-filters" id="category-filters">
-                <button class="filter-btn active" data-category="all">All Projects</button>
-            </div>
+            <select id="sort-select" class="sort-select">
+                <option value="default">Sort by: Default</option>
+                <option value="goal-high">Highest Funding Goal</option>
+                <option value="goal-low">Lowest Funding Goal</option>
+                <option value="supporters">Most Supporters</option>
+                <option value="rating">Highest Rated</option>
+            </select>
         </div>
     </section>
 
@@ -592,76 +586,24 @@
 
     <script>
         // Google Sheet Configuration
-        // IMPORTANT: After making your sheet public, replace SHEET_ID with your actual Sheet ID
-        // Your Sheet ID is in the URL: https://docs.google.com/spreadsheets/d/[SHEET_ID]/edit...
-        const SHEET_ID = 'YOUR_SHEET_ID_HERE'; // Replace with your actual Sheet ID
-        const SHEET_NAME = 'Sheet1'; // Change if your sheet has a different name
+        const SHEET_ID = '14_pYwhbnTi1yMojs0Ul4NLUqVnya8OHo9cTUylNH0tk';
+        const SHEET_NAME = 'Sheet1';
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
 
-        // Sample data structure for fallback (in case sheet is not accessible)
+        let projects = [];
+        let searchTerm = '';
+        let currentSort = 'default';
+
+        // Sample fallback data based on your structure
         const SAMPLE_PROJECTS = [
-            {
-                id: 1,
-                title: "Smart Agriculture Drone",
-                team: "Team AgriTech",
-                category: "Tech Innovation",
-                description: "An autonomous drone for precision farming that detects crop health and optimizes irrigation.",
-                goal: 50000,
-                raised: 28500,
-                backers: 45,
-                impact: "Helps 100+ farmers reduce water waste by 30%"
-            },
-            {
-                id: 2,
-                title: "Eco-Friendly Packaging",
-                team: "Green Innovators",
-                category: "Social Innovation",
-                description: "Biodegradable packaging material made from agricultural waste, replacing single-use plastics.",
-                goal: 35000,
-                raised: 21000,
-                backers: 32,
-                impact: "Reduces plastic waste by 2 tons annually"
-            },
-            {
-                id: 3,
-                title: "Accessible Learning App",
-                team: "EdTech For All",
-                category: "Product Design",
-                description: "Mobile app with AI-powered accessibility features for visually impaired students.",
-                goal: 40000,
-                raised: 42000,
-                backers: 78,
-                impact: "500+ students with visual impairments can access education"
-            },
-            {
-                id: 4,
-                title: "Solar-Powered Water Purifier",
-                team: "Clean Water Initiative",
-                category: "Sustainable Tech",
-                description: "Low-cost water purification system using solar energy for rural communities.",
-                goal: 60000,
-                raised: 15000,
-                backers: 22,
-                impact: "Provides clean drinking water to 200+ families"
-            }
+            { slno: 1, title: "Smart Agriculture Drone", team: "AgriTech Innovators", description: "Autonomous drone for precision farming and crop monitoring", goal: 50000, supporters: 45, contact: "team@agritech.com", rating: 4.8 },
+            { slno: 2, title: "Eco-Friendly Packaging", team: "Green Future", description: "Biodegradable packaging from agricultural waste", goal: 35000, supporters: 32, contact: "green@ecopack.com", rating: 4.5 },
+            { slno: 3, title: "Accessible Learning App", team: "EdTech For All", description: "AI-powered accessibility features for visually impaired students", goal: 40000, supporters: 78, contact: "edtech@access.com", rating: 4.9 },
+            { slno: 4, title: "Solar Water Purifier", team: "Clean Water Initiative", description: "Low-cost solar-powered water purification for rural areas", goal: 60000, supporters: 22, contact: "cleanwater@solarlab.com", rating: 4.2 }
         ];
 
-        let projects = [];
-        let currentCategory = 'all';
-        let searchTerm = '';
-
-        // Fetch data from Google Sheet
         async function fetchProjects() {
             try {
-                if (SHEET_ID === 'https://docs.google.com/spreadsheets/d/14_pYwhbnTi1yMojs0Ul4NLUqVnya8OHo9cTUylNH0tk/edit?usp=sharing') {
-                    console.log('Using sample data - Please configure your Google Sheet ID');
-                    projects = SAMPLE_PROJECTS;
-                    renderCategories();
-                    renderProjects();
-                    updateStats();
-                    return;
-                }
-
                 const response = await fetch(SHEET_URL);
                 const text = await response.text();
                 const json = JSON.parse(text.substring(47, text.length - 2));
@@ -670,20 +612,18 @@
                 if (!rows || rows.length < 2) {
                     projects = SAMPLE_PROJECTS;
                 } else {
-                    // Assume first row is headers: Title, Team, Category, Description, Goal, Raised, Backers, Impact
-                    const headers = rows[0].c.map(cell => cell ? cell.v : '');
+                    // Skip header row (row 0)
                     projects = rows.slice(1).map((row, index) => {
                         const cells = row.c || [];
                         return {
-                            id: index + 1,
-                            title: cells[0] ? cells[0].v : 'Untitled',
-                            team: cells[1] ? cells[1].v : 'Unknown Team',
-                            category: cells[2] ? cells[2].v : 'General',
+                            slno: cells[0] ? cells[0].v : index + 1,
+                            title: cells[1] ? cells[1].v : 'Untitled',
+                            team: cells[2] ? cells[2].v : 'Unknown Team',
                             description: cells[3] ? cells[3].v : '',
                             goal: cells[4] ? parseFloat(cells[4].v) || 0 : 0,
-                            raised: cells[5] ? parseFloat(cells[5].v) || 0 : 0,
-                            backers: cells[6] ? parseInt(cells[6].v) || 0 : 0,
-                            impact: cells[7] ? cells[7].v : ''
+                            supporters: cells[5] ? parseInt(cells[5].v) || 0 : 0,
+                            contact: cells[6] ? cells[6].v : '',
+                            rating: cells[7] ? parseFloat(cells[7].v) || 0 : 0
                         };
                     });
                 }
@@ -692,87 +632,72 @@
                 projects = SAMPLE_PROJECTS;
             }
             
-            renderCategories();
-            renderProjects();
             updateStats();
+            renderProjects();
         }
 
-        // Extract unique categories
-        function getCategories() {
-            const categories = ['all', ...new Set(projects.map(p => p.category))];
-            return categories;
-        }
-
-        // Render category filter buttons
-        function renderCategories() {
-            const categories = getCategories();
-            const container = document.getElementById('category-filters');
-            container.innerHTML = categories.map(cat => `
-                <button class="filter-btn ${currentCategory === cat ? 'active' : ''}" data-category="${cat}">
-                    ${cat === 'all' ? 'All Projects' : cat}
-                </button>
-            `).join('');
-            
-            // Add event listeners
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    currentCategory = btn.dataset.category;
-                    renderCategories();
-                    renderProjects();
-                });
-            });
-        }
-
-        // Filter projects based on category and search
-        function getFilteredProjects() {
-            return projects.filter(project => {
-                const matchesCategory = currentCategory === 'all' || project.category === currentCategory;
+        function getFilteredAndSortedProjects() {
+            let filtered = projects.filter(project => {
                 const matchesSearch = searchTerm === '' || 
                     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     project.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
-                return matchesCategory && matchesSearch;
+                return matchesSearch;
             });
+
+            // Apply sorting
+            switch(currentSort) {
+                case 'goal-high':
+                    filtered.sort((a, b) => (b.goal || 0) - (a.goal || 0));
+                    break;
+                case 'goal-low':
+                    filtered.sort((a, b) => (a.goal || 0) - (b.goal || 0));
+                    break;
+                case 'supporters':
+                    filtered.sort((a, b) => (b.supporters || 0) - (a.supporters || 0));
+                    break;
+                case 'rating':
+                    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    break;
+                default:
+                    filtered.sort((a, b) => (a.slno || 0) - (b.slno || 0));
+            }
+            return filtered;
         }
 
-        // Format currency
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-IN', {
                 style: 'currency',
                 currency: 'INR',
                 maximumFractionDigits: 0
-            }).format(amount);
+            }).format(amount || 0);
         }
 
-        // Get random icon based on category
-        function getCategoryIcon(category) {
-            const icons = {
-                'Tech Innovation': 'fa-microchip',
-                'Social Innovation': 'fa-hand-holding-heart',
-                'Product Design': 'fa-pencil-ruler',
-                'Sustainable Tech': 'fa-leaf',
-                'General': 'fa-lightbulb'
-            };
-            return icons[category] || 'fa-rocket';
+        function getRandomIcon() {
+            const icons = ['fa-microchip', 'fa-leaf', 'fa-hand-holding-heart', 'fa-pencil-ruler', 'fa-rocket', 'fa-brain', 'fa-robot'];
+            return icons[Math.floor(Math.random() * icons.length)];
         }
 
-        // Render projects grid
         function renderProjects() {
-            const filtered = getFilteredProjects();
+            const filtered = getFilteredAndSortedProjects();
             const grid = document.getElementById('projects-grid');
             
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>No projects found matching your criteria.</p></div>`;
+                grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>No projects found matching your search.</p></div>`;
                 return;
             }
             
+            // For demo, assume raised amount is 30-80% of goal
             grid.innerHTML = filtered.map(project => {
-                const percent = Math.min(100, (project.raised / project.goal) * 100);
+                const raisedPercent = Math.min(95, 30 + Math.random() * 50);
+                const raised = Math.round((project.goal * raisedPercent) / 100);
                 return `
                     <div class="project-card">
-                        <div class="project-image" style="background: linear-gradient(135deg, #4361ee, #3a0ca3);">
-                            <i class="fas ${getCategoryIcon(project.category)}"></i>
-                            <span class="project-category">${project.category}</span>
+                        <div class="project-image">
+                            <i class="fas ${getRandomIcon()}"></i>
+                            <div class="project-rating">
+                                <i class="fas fa-star"></i> ${project.rating || 'N/A'}
+                            </div>
                         </div>
                         <div class="project-content">
                             <h3 class="project-title">${project.title}</h3>
@@ -782,55 +707,58 @@
                             <p class="project-description">${project.description || 'No description provided.'}</p>
                             <div class="funding-progress">
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${percent}%;"></div>
+                                    <div class="progress-fill" style="width: ${raisedPercent}%;"></div>
                                 </div>
                                 <div class="funding-stats">
-                                    <span class="funding-raised">${formatCurrency(project.raised)} raised</span>
+                                    <span class="funding-raised">${formatCurrency(raised)} raised</span>
                                     <span class="funding-goal">of ${formatCurrency(project.goal)}</span>
                                 </div>
                             </div>
                             <div class="project-footer">
-                                <a href="#" class="donate-btn" data-id="${project.id}">
+                                <a href="#" class="donate-btn" data-contact="${project.contact}" data-title="${project.title}">
                                     <i class="fas fa-hand-holding-heart"></i> Support Project
                                 </a>
-                                <div class="project-impact" title="${project.impact || 'Impact data coming soon'}">
-                                    <i class="fas fa-chart-line"></i> ${project.backers} supporters
+                                <div class="project-supporters">
+                                    <i class="fas fa-user-friends"></i> ${project.supporters || 0} supporters
                                 </div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
-            
+
             // Add donate button event listeners
             document.querySelectorAll('.donate-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const projectId = btn.dataset.id;
-                    const project = projects.find(p => p.id == projectId);
-                    alert(`Thank you for your interest in supporting "${project.title}"!\n\nOur payment integration is coming soon. For now, please contact us at mentorinnovationhub@gmail.com to contribute.`);
+                    const title = btn.dataset.title;
+                    const contact = btn.dataset.contact;
+                    alert(`Thank you for your interest in supporting "${title}"!\n\nContact the team: ${contact || 'mentorinnovationhub@gmail.com'}\n\nOur online payment system is coming soon.`);
                 });
             });
         }
 
-        // Update statistics
         function updateStats() {
             const totalProjects = projects.length;
-            const totalRaised = projects.reduce((sum, p) => sum + (p.raised || 0), 0);
-            const totalBackers = projects.reduce((sum, p) => sum + (p.backers || 0), 0);
+            const totalRaised = projects.reduce((sum, p) => sum + (Math.round((p.goal || 0) * (0.3 + Math.random() * 0.5))), 0);
+            const totalSupporters = projects.reduce((sum, p) => sum + (p.supporters || 0), 0);
             
             document.getElementById('total-projects').textContent = totalProjects;
             document.getElementById('total-funding').textContent = formatCurrency(totalRaised);
-            document.getElementById('total-backers').textContent = totalBackers;
+            document.getElementById('total-backers').textContent = totalSupporters;
         }
 
-        // Search functionality
+        // Event listeners
         document.getElementById('search-input').addEventListener('input', (e) => {
             searchTerm = e.target.value;
             renderProjects();
         });
 
-        // Mobile menu toggle
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            renderProjects();
+        });
+
         document.querySelector('.mobile-menu').addEventListener('click', () => {
             document.querySelector('.nav-menu').classList.toggle('active');
         });
