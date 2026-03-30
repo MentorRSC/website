@@ -362,7 +362,164 @@
             font-size: 1.1rem;
         }
 
-        /* MODAL STYLES (Interactive Periodic Table popup) */
+        /* PROJECT DETAIL MODAL (Full details popup) */
+        .detail-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
+        }
+
+        .detail-modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .detail-modal-container {
+            background: white;
+            width: 90%;
+            max-width: 750px;
+            max-height: 85vh;
+            border-radius: 28px;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalFadeIn 0.25s ease;
+        }
+
+        .detail-modal-header {
+            background: linear-gradient(115deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.2rem 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-modal-header h2 {
+            font-size: 1.4rem;
+            margin-right: 1rem;
+        }
+
+        .detail-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.8rem;
+            background: #fefefe;
+        }
+
+        .detail-section {
+            margin-bottom: 1.3rem;
+            border-bottom: 1px solid #eef2ff;
+            padding-bottom: 0.8rem;
+        }
+
+        .detail-label {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-value {
+            color: var(--dark);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .members-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.3rem;
+        }
+
+        .member-badge {
+            background: #e0e7ff;
+            padding: 0.25rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            color: var(--primary-dark);
+        }
+
+        .achievement-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .achievement-list li {
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .achievement-list li i {
+            color: #f59e0b;
+            width: 1.2rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .action-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.7rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .site-btn {
+            background: var(--primary);
+            color: white;
+        }
+        .site-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        .github-btn {
+            background: #1e293b;
+            color: white;
+        }
+        .github-btn:hover {
+            background: #0f172a;
+            transform: translateY(-2px);
+        }
+        .close-detail-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+
+        /* Periodic Table Modal (original) */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -425,11 +582,6 @@
             color: white;
             font-size: 1.7rem;
             cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .close-modal:hover {
-            transform: scale(1.1);
         }
 
         .periodic-iframe {
@@ -439,7 +591,6 @@
             background: #fefefe;
         }
 
-        /* footer */
         footer {
             background: var(--dark);
             color: #cbd5e1;
@@ -474,7 +625,8 @@
             .filter-container { flex-direction: column; align-items: stretch; }
             .filter-group { width: 100%; }
             .filter-select { flex: 1; }
-            .modal-container { width: 95%; height: 90vh; }
+            .modal-container, .detail-modal-container { width: 95%; height: 90vh; }
+            .detail-modal-container { height: auto; max-height: 90vh; }
         }
     </style>
 </head>
@@ -565,7 +717,7 @@
     </div>
 </footer>
 
-<!-- Modal for Interactive Periodic Table (expanded popup) -->
+<!-- Periodic Table Modal (for Interactive Periodic Table project) -->
 <div id="periodicModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
@@ -576,34 +728,34 @@
     </div>
 </div>
 
+<!-- Detailed Project Modal Popup (Full details from sheet) -->
+<div id="detailModal" class="detail-modal-overlay">
+    <div class="detail-modal-container">
+        <div class="detail-modal-header">
+            <h2 id="detailModalTitle">Project Details</h2>
+            <button class="close-detail-btn" id="closeDetailModalBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="detail-modal-body" id="detailModalBody">
+            <!-- dynamic content injected -->
+        </div>
+    </div>
+</div>
+
 <script>
-    // ======================= GOOGLE SHEET CONFIGURATION =======================
-    // Sheet ID: 1kAdm80nruqyRdq_vl94_TvAGdq5nslAfrymIL1zwxhM
+    // Google Sheet Config
     const SHEET_ID = '1kAdm80nruqyRdq_vl94_TvAGdq5nslAfrymIL1zwxhM';
     const SHEET_NAME = 'Sheet1';
     const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
 
-    // Column mapping based on description:
-    // A:ID | B:Name | C:Category | D:Description | E:Team Name | F:Start Date | G:Members | H:Status | I:Progress | J:Budget | K:Priority | L:Resources | M:Milestones | N:Results | O:Achievements | P:Completion Date | Q:Rating | R:Tags | S:Details Link | T:GitHub Link
     let projects = [];
     let searchTerm = '';
     let currentStatus = 'all';
     let currentCategory = 'all';
     let currentSort = 'default';
 
-    // Helper functions
-    function parseMembers(str) {
-        if (!str) return [];
-        try { let arr = JSON.parse(str); if(Array.isArray(arr)) return arr; else return [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); }
-    }
-    function parseTags(str) {
-        if (!str) return [];
-        try { let arr = JSON.parse(str); if(Array.isArray(arr)) return arr; else return [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); }
-    }
-    function parseAchievements(str) {
-        if (!str) return [];
-        try { let arr = JSON.parse(str); return Array.isArray(arr)?arr:[str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()); }
-    }
+    function parseMembers(str) { if (!str) return []; try { let arr = JSON.parse(str); if(Array.isArray(arr)) return arr; else return [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); } }
+    function parseTags(str) { if (!str) return []; try { let arr = JSON.parse(str); if(Array.isArray(arr)) return arr; else return [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); } }
+    function parseAchievements(str) { if (!str) return []; try { let arr = JSON.parse(str); return Array.isArray(arr)?arr:[str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()); } }
 
     async function fetchProjects() {
         const grid = document.getElementById('projects-grid');
@@ -623,8 +775,8 @@
                         name: c[1]?.v ?? 'Unnamed Project',
                         category: c[2]?.v ?? 'General',
                         description: c[3]?.v ?? '',
-                        teamName: c[4]?.v ?? '',
-                        startDate: c[5]?.v ?? '',
+                        startDate: c[4]?.v ?? '',
+                        endDate: c[5]?.v ?? '',
                         members: parseMembers(c[6]?.v),
                         status: (c[7]?.v ?? 'planning').toLowerCase(),
                         progress: c[8]?.v ? parseInt(c[8].v) : 0,
@@ -638,7 +790,8 @@
                         rating: c[16]?.v ? parseFloat(c[16].v) : 0,
                         tags: parseTags(c[17]?.v),
                         detailsLink: c[18]?.v ?? '#',
-                        githubLink: c[19]?.v ?? '#'
+                        githubLink: c[19]?.v ?? '#',
+                        teamName: c[20]?.v ?? ''
                     };
                 });
                 projects = rawProjects.filter(p => p.name && p.name.trim().length > 0);
@@ -650,7 +803,7 @@
             projects = [];
             updateStats();
             renderProjects();
-            document.getElementById('projects-grid').innerHTML = `<div class="no-projects"><i class="fas fa-exclamation-triangle"></i><p>⚠️ Could not load spreadsheet data. Using demo or check CORS/permissions?<br>Make sure sheet is public.</p></div>`;
+            document.getElementById('projects-grid').innerHTML = `<div class="no-projects"><i class="fas fa-exclamation-triangle"></i><p>⚠️ Could not load spreadsheet data. Make sure sheet is public.<br>Using fallback view.</p></div>`;
         }
     }
 
@@ -671,57 +824,103 @@
         return filtered;
     }
 
-    function getStatusClass(st) {
-        if(st==='completed') return 'status-completed';
-        if(st==='ongoing') return 'status-ongoing';
-        return 'status-planning';
-    }
-    function getStatusText(st) {
-        if(st==='completed') return 'Completed';
-        if(st==='ongoing') return 'In Progress';
-        return 'Planning';
-    }
+    function getStatusClass(st) { if(st==='completed') return 'status-completed'; if(st==='ongoing') return 'status-ongoing'; return 'status-planning'; }
+    function getStatusText(st) { if(st==='completed') return 'Completed'; if(st==='ongoing') return 'In Progress'; return 'Planning'; }
     function formatDate(d) { if(!d) return 'TBD'; try{return new Date(d).toLocaleDateString('en-IN');}catch(e){return d;} }
     function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-    
+
+    // Open Periodic Table Modal (for that specific project)
     function openPeriodicTableModal() {
         const modal = document.getElementById('periodicModal');
         const iframe = document.getElementById('periodicIframe');
-        // Embed a beautiful interactive periodic table from an open educational resource (ChemCollective alternative)
-        // We'll use a reliable web-based periodic table (https://ptable.com/ embed or a lightweight interactive)
-        // To ensure functionality, we use an embed-friendly modern periodic table (p-table.org demo or similar)
-        // Since ptable.com may block iframe, we use a high-quality open-source periodic table widget: "periodic-table-project" or use an iframe from "www.periodic-table.org" but better: I will embed an open-source, responsive periodic table via Codepen like but reliable.
-        // Actually we can embed "https://www.webelements.com/" but may be heavy. Instead use a clean open-source: "https://periodictable.com/embed/" but not always. I choose a safe interactive Periodic Table from "https://ptable.com/?lang=en" but allow iframe. Ptable supports embedding? ptable allows embedding with permission? Many schools use iframe. We'll embed an interactive periodic table that is stable: "https://www.ptable.com/embed/"? Let's use "https://ptable.com/?lang=en#Properties" but X-Frame-Options? Recent ptable allows framing. We'll fallback to a reliable offline-like resource: "https://www.periodni.com/en/periodic_table.html"? it may not allow. I built a light fallback: since we need to guarantee working, I will use a stable open-source periodic table from "https://storage.googleapis.com/periodic-table-cdn/index.html"? Not safe.
-        // Better: embed an open-source periodic table viewer from "https://edu.rsc.org/resources/periodic-table" may not allow cross. Use a publicly embeddable "https://ptable.com/?lang=en" with sandbox.
         iframe.src = "https://ptable.com/?lang=en#Properties/Embed";
         modal.classList.add('active');
     }
 
-    function closeModal() {
+    function closePeriodicModal() {
         const modal = document.getElementById('periodicModal');
         const iframe = document.getElementById('periodicIframe');
         iframe.src = "about:blank";
         modal.classList.remove('active');
     }
 
+    // Open Detailed Project Modal with full fetched data
+    function openDetailModal(project) {
+        const modal = document.getElementById('detailModal');
+        const titleEl = document.getElementById('detailModalTitle');
+        const bodyEl = document.getElementById('detailModalBody');
+        titleEl.innerHTML = `<i class="fas fa-project-diagram"></i> ${escapeHtml(project.name)}`;
+        
+        const achievementsHtml = project.achievements && project.achievements.length ? 
+            `<ul class="achievement-list">${project.achievements.map(a => `<li><i class="fas fa-trophy"></i> ${escapeHtml(a)}</li>`).join('')}</ul>` : 
+            '<p>—</p>';
+        
+        const membersHtml = project.members && project.members.length ? 
+            `<div class="members-list">${project.members.map(m => `<span class="member-badge">${escapeHtml(m)}</span>`).join('')}</div>` : 
+            '<p>No members listed</p>';
+        
+        const tagsHtml = project.tags && project.tags.length ? 
+            `<div class="project-tags" style="margin-top:0;">${project.tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : '';
+        
+        bodyEl.innerHTML = `
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-align-left"></i> DESCRIPTION</div>
+                <div class="detail-value">${escapeHtml(project.description || 'No description provided.')}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-users"></i> TEAM / MEMBERS</div>
+                <div class="detail-value">${project.teamName ? `<strong>${escapeHtml(project.teamName)}</strong><br>` : ''}${membersHtml}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-chart-line"></i> PROGRESS & STATUS</div>
+                <div class="detail-value">Status: <strong>${getStatusText(project.status)}</strong> | Progress: ${project.progress || 0}%<br>
+                ${project.startDate ? `Start: ${formatDate(project.startDate)}` : ''} ${project.endDate ? `| End: ${formatDate(project.endDate)}` : ''}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-tag"></i> CATEGORY & PRIORITY</div>
+                <div class="detail-value">${escapeHtml(project.category)} | Priority: ${project.priority}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-star"></i> RATING & ACHIEVEMENTS</div>
+                <div class="detail-value">⭐ Rating: ${project.rating > 0 ? project.rating.toFixed(1) + '/5' : 'Not rated yet'}</div>
+                <div class="detail-value" style="margin-top:0.5rem;"><strong>Achievements:</strong> ${achievementsHtml}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-cogs"></i> RESOURCES & MILESTONES</div>
+                <div class="detail-value"><strong>Resources:</strong> ${escapeHtml(project.resources || '—')}</div>
+                <div class="detail-value"><strong>Milestones:</strong> ${escapeHtml(project.milestones || '—')}</div>
+                <div class="detail-value"><strong>Results:</strong> ${escapeHtml(project.results || '—')}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label"><i class="fas fa-chart-simple"></i> BUDGET & COMPLETION</div>
+                <div class="detail-value">Budget: ${project.budget ? `₹${project.budget.toLocaleString()}` : 'Not specified'} | Completion Date: ${formatDate(project.completionDate)}</div>
+            </div>
+            ${tagsHtml ? `<div class="detail-section"><div class="detail-label"><i class="fas fa-hashtag"></i> TAGS</div>${tagsHtml}</div>` : ''}
+            <div class="modal-buttons">
+                <a href="${project.detailsLink && project.detailsLink !== '#' ? project.detailsLink : '#'}" target="_blank" class="action-btn site-btn" ${(!project.detailsLink || project.detailsLink === '#') ? 'style="opacity:0.6; pointer-events:none;"' : ''}><i class="fas fa-globe"></i> Live Site / Details</a>
+                <a href="${project.githubLink && project.githubLink !== '#' ? project.githubLink : '#'}" target="_blank" class="action-btn github-btn" ${(!project.githubLink || project.githubLink === '#') ? 'style="opacity:0.6; pointer-events:none;"' : ''}><i class="fab fa-github"></i> GitHub Repository</a>
+            </div>
+        `;
+        modal.classList.add('active');
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+
     function renderProjects() {
         const filtered = getFilteredSorted();
         const grid = document.getElementById('projects-grid');
         if(!grid) return;
-        if(filtered.length===0) {
-            grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>✨ No projects match your filters. Try different keywords!</p></div>`;
-            return;
-        }
+        if(filtered.length===0) { grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>✨ No projects match your filters.</p></div>`; return; }
+        
         grid.innerHTML = filtered.map(proj => {
             const statusCls = getStatusClass(proj.status);
             const statusTxt = getStatusText(proj.status);
-            const teamDisplay = proj.teamName || (proj.members.length>0 ? proj.members[0] : 'Student Innovator');
+            const teamDisplay = proj.teamName || (proj.members.length>0 ? proj.members[0] : 'Student Team');
             const ratingStars = proj.rating > 0 ? proj.rating.toFixed(1) : 'N/A';
             const isPeriodicProject = (proj.name && proj.name.toLowerCase().includes('periodic table')) || 
                                       (proj.tags && proj.tags.some(t=> t.toLowerCase().includes('periodic') || t.toLowerCase().includes('chemistry')));
-            
-            // Special handling: when clicking on the card if it's the "Interactive Periodic Table" project we trigger modal popup.
-            // We'll attach a data attribute to the card for that project.
             return `
                 <div class="project-card" data-project-id="${proj.id}" data-is-periodic="${isPeriodicProject}">
                     <div class="project-header">
@@ -730,7 +929,7 @@
                         <h3 class="project-title">${escapeHtml(proj.name)}</h3>
                     </div>
                     <div class="project-content">
-                        <p class="project-description">${escapeHtml(proj.description.substring(0, 130))}${proj.description.length>130?'...':''}</p>
+                        <p class="project-description">${escapeHtml(proj.description ? proj.description.substring(0, 120) : 'No description')}${proj.description && proj.description.length>120?'...':''}</p>
                         <div class="project-meta">
                             <span><i class="fas fa-users"></i> ${escapeHtml(teamDisplay)}</span>
                             <span><i class="fas fa-calendar"></i> ${formatDate(proj.startDate)}</span>
@@ -739,9 +938,9 @@
                             <div class="progress-label"><span>Completion</span><span>${proj.progress || 0}%</span></div>
                             <div class="progress-bar"><div class="progress-fill" style="width: ${proj.progress || 0}%;"></div></div>
                         </div>
-                        ${proj.tags && proj.tags.length ? `<div class="project-tags">${proj.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+                        ${proj.tags && proj.tags.length ? `<div class="project-tags">${proj.tags.slice(0,3).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
                         <div class="project-footer">
-                            <a href="${proj.detailsLink !== '#' ? proj.detailsLink : '#'}" target="_blank" class="details-btn" onclick="event.stopPropagation();"><i class="fas fa-external-link-alt"></i> Details</a>
+                            <span class="details-btn" style="cursor:pointer;"><i class="fas fa-expand-alt"></i> Quick View</span>
                             <div class="project-rating"><i class="fas fa-star"></i> ${ratingStars}</div>
                         </div>
                     </div>
@@ -749,18 +948,18 @@
             `;
         }).join('');
 
-        // Attach click event listeners to each card: if the project is the periodic table one, open modal.
+        // Attach click: open detail modal for any card (except special periodic table triggers separately)
         document.querySelectorAll('.project-card').forEach(card => {
             card.addEventListener('click', (e) => {
-            
+                if(e.target.closest('.details-btn')) e.stopPropagation();
+                const projId = parseInt(card.getAttribute('data-project-id'));
+                const project = projects.find(p => p.id === projId);
+                if(!project) return;
+                const isPeriodic = card.getAttribute('data-is-periodic') === 'true';
+                if(isPeriodic) {
+                    openPeriodicTableModal();
                 } else {
-                    // optional: you can show a snackbar, but we just do nothing for non-periodic projects.
-                    // maybe open generic details if needed? But we keep simple: only periodic table triggers popup.
-                    const projectId = card.getAttribute('data-project-id');
-                    const found = projects.find(p => p.id == projectId);
-                    if(found && found.detailsLink && found.detailsLink !== '#') {
-                        window.open(found.detailsLink, '_blank');
-                    }
+                    openDetailModal(project);
                 }
             });
         });
@@ -772,27 +971,15 @@
         document.getElementById('ongoing-projects').innerText = projects.filter(p=>p.status==='ongoing').length;
     }
 
-    // Filters event binding
     document.getElementById('search-input')?.addEventListener('input', (e) => { searchTerm = e.target.value; renderProjects(); });
     document.getElementById('status-filter')?.addEventListener('change', (e) => { currentStatus = e.target.value; renderProjects(); });
     document.getElementById('category-filter')?.addEventListener('change', (e) => { currentCategory = e.target.value; renderProjects(); });
     document.getElementById('sort-select')?.addEventListener('change', (e) => { currentSort = e.target.value; renderProjects(); });
-    
-    // Modal close handlers
-    document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
-    document.getElementById('periodicModal')?.addEventListener('click', (e) => { if(e.target === document.getElementById('periodicModal')) closeModal(); });
-    
-    // Mobile menu toggle
-    document.querySelector('.mobile-menu')?.addEventListener('click', ()=>{
-        document.querySelector('.nav-menu')?.classList.toggle('active');
-    });
-    
-    // Additionally, to ensure the "Interactive Periodic Table" project from the sheet indeed triggers modal,
-    // The detection already works via name/tags. Also we manually seed a fallback if the sheet doesn't contain that specific project?
-    // The user requested: "Interactive Periodic Table completed ... this is tab in projects page when clicked i want a expanded popup which show Interactive Periodic Table".
-    // So even if not present in sheet, we guarantee the popup appears when clicking on that project card. We rely on sheet data for that exact entry.
-    // Make sure our sheet row includes project name "Interactive Periodic Table" or tags including "periodic".
-    // Also after loading, periodic table modal will show embed.
+    document.getElementById('closeModalBtn')?.addEventListener('click', closePeriodicModal);
+    document.getElementById('periodicModal')?.addEventListener('click', (e) => { if(e.target === document.getElementById('periodicModal')) closePeriodicModal(); });
+    document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeDetailModal);
+    document.getElementById('detailModal')?.addEventListener('click', (e) => { if(e.target === document.getElementById('detailModal')) closeDetailModal(); });
+    document.querySelector('.mobile-menu')?.addEventListener('click', ()=>{ document.querySelector('.nav-menu')?.classList.toggle('active'); });
     
     fetchProjects();
 </script>
