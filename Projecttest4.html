@@ -922,17 +922,29 @@
             `;
         }).join('');
 
-        // Attach click event to all project cards
-        document.querySelectorAll('.project-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if(e.target.closest('.details-btn')) return;
-                const projId = parseInt(card.getAttribute('data-project-id'));
-                const project = projects.find(p => p.id === projId);
-                if(!project) return;
-                openDetailModal(project);
-            });
+// Attach click events to all project cards and quick view buttons
+document.querySelectorAll('.project-card').forEach(card => {
+    // Card click handler (opens modal when clicking anywhere except the Quick View button)
+    card.addEventListener('click', (e) => {
+        if(e.target.closest('.details-btn')) return;  // Don't open modal if clicking Quick View button
+        const projId = parseInt(card.getAttribute('data-project-id'));
+        const project = projects.find(p => p.id === projId);
+        if(!project) return;
+        openDetailModal(project);
+    });
+    
+    // Quick View button click handler
+    const quickViewBtn = card.querySelector('.details-btn');
+    if (quickViewBtn) {
+        quickViewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();  // Prevent card click from firing
+            const projId = parseInt(card.getAttribute('data-project-id'));
+            const project = projects.find(p => p.id === projId);
+            if(!project) return;
+            openDetailModal(project);
         });
     }
+});
 
     function updateStats() {
         document.getElementById('total-projects').innerText = projects.length;
