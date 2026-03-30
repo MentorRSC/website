@@ -594,19 +594,17 @@
         let currentSort = 'default';
 
         // Helper: Check if a project has all essential fields and a valid title
-        function isValidProject(project) {
-            // Must have a non-empty title (after trimming) and goal should be a positive number (or at least defined)
-            const titleValid = project.title && typeof project.title === 'string' && project.title.trim().length > 0;
-            // Avoid showing projects with "untitled" or placeholder titles
-            const notPlaceholder = titleValid && !project.title.toLowerCase().includes('untitled');
-            // Goal should be a number greater than 0 (meaningful funding goal)
-            const goalValid = typeof project.goal === 'number' && project.goal > 0;
-            // Also ensure team name is present and not empty
-            const teamValid = project.team && typeof project.team === 'string' && project.team.trim().length > 0;
-            
-            // Only return true if we have meaningful data: real title, real team, positive goal
-            return notPlaceholder && goalValid && teamValid;
-        }
+function isValidProject(project) {
+    // Must have non-empty title (no "untitled")
+    const titleValid = project.title && project.title.trim().length > 0;
+    const notPlaceholder = titleValid && !project.title.toLowerCase().includes('untitled');
+    // Goal must be > 0
+    const goalValid = typeof project.goal === 'number' && project.goal > 0;
+    // Team name must be present
+    const teamValid = project.team && project.team.trim().length > 0;
+    
+    return notPlaceholder && goalValid && teamValid;
+}
 
         // Calculate a realistic "raised" amount based on supporters count (dynamic per project, not random)
         // This ensures stats are consistent with actual sheet data
