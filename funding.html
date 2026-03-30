@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funding Hub | Support Student Projects</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --text: #334155;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background-color: #f1f5f9;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .nav-menu ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            transition: background 0.3s;
+        }
+
+        .cta-button:hover {
+            background: var(--secondary);
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: white;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .stat-card p {
+            color: var(--text);
+        }
+
+        /* Filters */
+        .filters-section {
+            background: white;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .search-box i {
+            color: #94a3b8;
+            margin-right: 0.5rem;
+        }
+
+        .search-box input {
+            border: none;
+            background: none;
+            width: 100%;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .sort-select {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+        }
+
+        /* Projects Grid */
+        .projects-section {
+            padding: 3rem 0;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        .project-image {
+            height: 160px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .project-rating {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0,0,0,0.7);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .project-rating i {
+            color: #ffc107;
+            margin-right: 0.3rem;
+        }
+
+        .project-content {
+            padding: 1.5rem;
+        }
+
+        .project-title {
+            font-size: 1.3rem;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .project-team {
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .project-description {
+            color: var(--text);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .funding-progress {
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            background: var(--border);
+            border-radius: 50px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--success);
+            height: 100%;
+            border-radius: 50px;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .funding-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .funding-raised {
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .funding-goal {
+            color: #64748b;
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .donate-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .donate-btn:hover {
+            background: var(--secondary);
+        }
+
+        .project-supporters {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .loading, .no-projects {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: var(--text);
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0 1rem;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 1rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-column a {
+            color: #cbd5e1;
+            text-decoration: none;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+            .nav-menu {
+                display: none;
+            }
+            .nav-menu.active {
+                display: block;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .nav-menu ul {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="https://rscpcalicut.org.in/">Home</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html">Projects</a></li>
+                    <li><a href="puzzles.html">Puzzles</a></li>
+                    <li><a href="members.html">Members</a></li>
+                    <li><a href="funding.html">Investment</a></li>
+                    <li><a href="joiningform.html" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <h1><i class="fas fa-hand-holding-heart"></i> Support Student Innovation</h1>
+            <p>Help young innovators bring their ideas to life. Every contribution, big or small, makes a difference in shaping tomorrow's solutions.</p>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="total-projects">0</h3>
+                    <p>Active Projects</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-funding">₹0</h3>
+                    <p>Total Fund Raised</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-backers">0</h3>
+                    <p>Total Supporters</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters-section">
+        <div class="container filter-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search projects by title, team, or description...">
+            </div>
+            <select id="sort-select" class="sort-select">
+                <option value="default">Sort by: Default</option>
+                <option value="goal-high">Highest Funding Goal</option>
+                <option value="goal-low">Lowest Funding Goal</option>
+                <option value="supporters">Most Supporters</option>
+                <option value="rating">Highest Rated</option>
+                <option value="raised-high">Most Fund Raised</option>
+            </select>
+        </div>
+    </section>
+
+    <!-- Projects Grid -->
+    <section class="projects-section">
+        <div class="container">
+            <div class="projects-grid" id="projects-grid">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading projects from spreadsheet...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and funding support.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="funding.html">Funding Hub</a></li>
+                        <li><a href="joiningform.html">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentorinnovationhub@gmail.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Google Sheet Configuration
+        const SHEET_ID = '14_pYwhbnTi1yMojs0Ul4NLUqVnya8OHo9cTUylNH0tk';
+        const SHEET_NAME = 'Sheet1';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+        let projects = [];
+        let searchTerm = '';
+        let currentSort = 'default';
+
+        // Helper: Check if a project has all essential fields and a valid title
+        function isValidProject(project) {
+            // Must have non-empty title (no "untitled" or empty)
+            const titleValid = project.title && typeof project.title === 'string' && project.title.trim().length > 0;
+            const notPlaceholder = titleValid && !project.title.toLowerCase().includes('untitled');
+            // Goal must be > 0
+            const goalValid = typeof project.goal === 'number' && project.goal > 0;
+            // Team name must be present and not empty
+            const teamValid = project.team && typeof project.team === 'string' && project.team.trim().length > 0;
+            
+            return notPlaceholder && goalValid && teamValid;
+        }
+
+        async function fetchProjects() {
+            const grid = document.getElementById('projects-grid');
+            grid.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i><p>Fetching live projects from spreadsheet...</p></div>`;
+            
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                
+                const rows = json.table.rows;
+                if (!rows || rows.length < 2) {
+                    // No data rows found - show empty state, no fallback
+                    projects = [];
+                } else {
+                    // Parse rows (skip header row at index 0)
+                    const rawProjects = rows.slice(1).map((row, index) => {
+                        const cells = row.c || [];
+                        // UPDATED COLUMN MAPPING:
+                        // Column 0: SlNo
+                        // Column 1: Title
+                        // Column 2: Team
+                        // Column 3: Description
+                        // Column 4: Goal (Target Amount)
+                        // Column 5: Supporters (Number of Backers)
+                        // Column 6: Contact
+                        // Column 7: Rating
+                        // Column 8: COLLECTED/RAISED AMOUNT (NEW COLUMN)
+                        
+                        let title = cells[1] ? cells[1].v : '';
+                        let team = cells[2] ? cells[2].v : '';
+                        let description = cells[3] ? cells[3].v : '';
+                        let goal = cells[4] ? parseFloat(cells[4].v) : 0;
+                        let supporters = cells[5] ? parseInt(cells[5].v) : 0;
+                        let contact = cells[6] ? cells[6].v : '';
+                        let rating = cells[7] ? parseFloat(cells[7].v) : 0;
+                        let raised = cells[8] ? parseFloat(cells[8].v) : 0;  // NEW: Actual collected amount from sheet
+                        
+                        // Clean up data types
+                        if (isNaN(goal)) goal = 0;
+                        if (isNaN(supporters)) supporters = 0;
+                        if (isNaN(rating)) rating = 0;
+                        if (isNaN(raised)) raised = 0;
+                        
+                        // Clean strings
+                        if (typeof title === 'string') title = title.trim();
+                        else title = '';
+                        if (typeof team === 'string') team = team.trim();
+                        else team = '';
+                        if (typeof description === 'string') description = description.trim();
+                        else description = '';
+                        if (typeof contact === 'string') contact = contact.trim();
+                        else contact = '';
+                        
+                        return {
+                            slno: index + 1,
+                            title: title,
+                            team: team,
+                            description: description || 'No description provided. Contact the team for more details.',
+                            goal: goal,
+                            supporters: supporters,
+                            contact: contact,
+                            rating: rating,
+                            raised: raised  // NEW: Actual collected amount
+                        };
+                    });
+                    
+                    // Filter out invalid projects - ONLY keep valid ones from sheet
+                    projects = rawProjects.filter(project => isValidProject(project));
+                    
+                    // Log for debugging (optional)
+                    console.log('Loaded projects:', projects.map(p => ({title: p.title, raised: p.raised, goal: p.goal})));
+                }
+                
+                updateStats();
+                renderProjects();
+                
+            } catch (error) {
+                console.error('Error fetching Google Sheet data:', error);
+                // On error, show empty state - NO FALLBACK SAMPLE DATA
+                projects = [];
+                updateStats();
+                renderProjects();
+                const gridElem = document.getElementById('projects-grid');
+                if (gridElem && projects.length === 0) {
+                    gridElem.innerHTML = `<div class="no-projects"><i class="fas fa-exclamation-triangle"></i><p>Unable to load projects from spreadsheet. Please check your connection or sheet permissions.</p></div>`;
+                }
+            }
+        }
+
+        function getFilteredAndSortedProjects() {
+            let filtered = projects.filter(project => {
+                const matchesSearch = searchTerm === '' || 
+                    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    project.team.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+                return matchesSearch;
+            });
+
+            // Apply sorting - Added 'raised-high' option
+            switch(currentSort) {
+                case 'goal-high':
+                    filtered.sort((a, b) => (b.goal || 0) - (a.goal || 0));
+                    break;
+                case 'goal-low':
+                    filtered.sort((a, b) => (a.goal || 0) - (b.goal || 0));
+                    break;
+                case 'supporters':
+                    filtered.sort((a, b) => (b.supporters || 0) - (a.supporters || 0));
+                    break;
+                case 'rating':
+                    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    break;
+                case 'raised-high':
+                    filtered.sort((a, b) => (b.raised || 0) - (a.raised || 0));
+                    break;
+                default:
+                    filtered.sort((a, b) => (a.slno || 0) - (b.slno || 0));
+            }
+            return filtered;
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(amount || 0);
+        }
+
+        function getRandomIcon() {
+            const icons = ['fa-microchip', 'fa-leaf', 'fa-hand-holding-heart', 'fa-pencil-ruler', 'fa-rocket', 'fa-brain', 'fa-robot'];
+            return icons[Math.floor(Math.random() * icons.length)];
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function renderProjects() {
+            const filtered = getFilteredAndSortedProjects();
+            const grid = document.getElementById('projects-grid');
+            
+            if (!grid) return;
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>No active projects found. Check back later for new student innovations!</p></div>`;
+                return;
+            }
+            
+            // Render each project using ACTUAL raised amount from sheet
+            grid.innerHTML = filtered.map(project => {
+                // Use actual raised amount from sheet (Column 8)
+                const raisedAmount = project.raised || 0;
+                const percentRaised = project.goal > 0 ? Math.min(100, (raisedAmount / project.goal) * 100) : 0;
+                const displayRating = project.rating > 0 ? project.rating.toFixed(1) : 'New';
+                
+                return `
+                    <div class="project-card">
+                        <div class="project-image">
+                            <i class="fas ${getRandomIcon()}"></i>
+                            <div class="project-rating">
+                                <i class="fas fa-star"></i> ${displayRating}
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">${escapeHtml(project.title)}</h3>
+                            <div class="project-team">
+                                <i class="fas fa-users"></i> ${escapeHtml(project.team)}
+                            </div>
+                            <p class="project-description">${escapeHtml(project.description)}</p>
+                            <div class="funding-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${percentRaised}%;"></div>
+                                </div>
+                                <div class="funding-stats">
+                                    <span class="funding-raised">${formatCurrency(raisedAmount)} raised</span>
+                                    <span class="funding-goal">of ${formatCurrency(project.goal)}</span>
+                                </div>
+                            </div>
+                            <div class="project-footer">
+                                <a href="#" class="donate-btn" data-contact="${escapeHtml(project.contact || 'mentorinnovationhub@gmail.com')}" data-title="${escapeHtml(project.title)}" data-project-id="${project.slno}">
+                                    <i class="fas fa-hand-holding-heart"></i> Support Project
+                                </a>
+                                <div class="project-supporters">
+                                    <i class="fas fa-user-friends"></i> ${project.supporters || 0} supporters
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add donate button event listeners
+            document.querySelectorAll('.donate-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const title = btn.dataset.title;
+                    const contact = btn.dataset.contact;
+                    const projectId = btn.dataset.projectId;
+                    
+                    // Show donation dialog with amount input
+                    const amount = prompt(`How much would you like to donate to "${title}"?\n\nEnter amount in INR (Minimum ₹100):`, "500");
+                    
+                    if (amount && !isNaN(amount) && parseInt(amount) >= 100) {
+                        alert(`Thank you for your donation of ₹${amount} to "${title}"!\n\nYou will receive a confirmation email shortly.\nContact: ${contact}\n\n(Note: Payment gateway integration coming soon. For now, please contact the team directly.)`);
+                        
+                        // In a real implementation, you would:
+                        // 1. Process payment through Razorpay/PayTM
+                        // 2. After successful payment, update the sheet with new raised amount
+                        // 3. Increment supporters count
+                        // 4. Refresh the projects list
+                    } else if (amount) {
+                        alert("Minimum donation amount is ₹100. Please try again.");
+                    }
+                });
+            });
+        }
+
+        function updateStats() {
+            const totalProjects = projects.length;
+            // Calculate total raised based on ACTUAL raised amounts from sheet
+            const totalRaised = projects.reduce((sum, p) => sum + (p.raised || 0), 0);
+            const totalSupporters = projects.reduce((sum, p) => sum + (p.supporters || 0), 0);
+            
+            const totalProjectsElem = document.getElementById('total-projects');
+            const totalFundingElem = document.getElementById('total-funding');
+            const totalBackersElem = document.getElementById('total-backers');
+            
+            if (totalProjectsElem) totalProjectsElem.textContent = totalProjects;
+            if (totalFundingElem) totalFundingElem.textContent = formatCurrency(totalRaised);
+            if (totalBackersElem) totalBackersElem.textContent = totalSupporters;
+        }
+
+        // Event listeners
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                renderProjects();
+            });
+        }
+
+        const sortSelect = document.getElementById('sort-select');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderProjects();
+            });
+        }
+
+        const mobileMenu = document.querySelector('.mobile-menu');
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', () => {
+                const navMenu = document.querySelector('.nav-menu');
+                if (navMenu) navMenu.classList.toggle('active');
+            });
+        }
+
+        // Initialize
+        fetchProjects();
+    </script>
+</body>
+</html>
