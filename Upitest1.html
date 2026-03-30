@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>UPI Payment · Pay ₹1000</title>
+    <!-- QRCode.js library (lightweight, pure JS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f7fc 0%, #e9eef4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+            padding: 1.5rem;
+        }
+
+        .payment-card {
+            max-width: 540px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 48px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .card-header {
+            background: #1a2a3f;
+            padding: 1.5rem 1.8rem;
+            color: white;
+        }
+
+        .card-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-header .sub {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .amount-badge {
+            background: #ffb347;
+            color: #1e2a3a;
+            padding: 0.25rem 0.9rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .content {
+            padding: 2rem 1.8rem 2rem 1.8rem;
+        }
+
+        .upi-id-area {
+            background: #f0f3f9;
+            border-radius: 36px;
+            padding: 0.75rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .upi-id-label {
+            font-weight: 600;
+            color: #1e2f41;
+            background: #ffffffb3;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+        }
+
+        .upi-id-value {
+            font-family: monospace;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #0f2b3d;
+            word-break: break-all;
+            letter-spacing: 0.3px;
+            background: white;
+            padding: 6px 14px;
+            border-radius: 48px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .qr-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0 1.5rem 0;
+        }
+
+        #qrcode {
+            background: white;
+            padding: 16px;
+            border-radius: 32px;
+            box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.2);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #qrcode canvas, #qrcode img {
+            width: 220px;
+            height: 220px;
+            display: block;
+            border-radius: 20px;
+        }
+
+        .qr-caption {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #3a546d;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 28px 0 16px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 60px;
+            padding: 1rem 1.2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            background: #f0f2f5;
+            color: #1f2f3e;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary {
+            background: #006a4e;
+            color: white;
+            box-shadow: 0 6px 14px rgba(0, 106, 78, 0.25);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+            background: #00563f;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: #1e2f3c;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.97);
+            background: #0f212e;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1.5px solid #cbd5e1;
+            color: #1f3a4b;
+        }
+
+        .btn-outline:active {
+            background: #f8fafc;
+            transform: scale(0.97);
+        }
+
+        .toast-msg {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #1e2a36;
+            color: #fff;
+            text-align: center;
+            border-radius: 60px;
+            padding: 12px 20px;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            background-color: #1e293bb3;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .toast-msg.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .footer-note {
+            margin-top: 1.2rem;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #6c7e94;
+            border-top: 1px solid #e9edf2;
+            padding-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .content {
+                padding: 1.5rem;
+            }
+            .btn {
+                padding: 0.85rem 1rem;
+                font-size: 1rem;
+            }
+            #qrcode canvas, #qrcode img {
+                width: 190px;
+                height: 190px;
+            }
+            .upi-id-value {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="payment-card">
+    <div class="card-header">
+        <h1>💸 Pay ₹1000</h1>
+        <div class="sub">
+            <span>🔐 secure UPI payment</span>
+            <span>⚡ instant transfer</span>
+        </div>
+        <div class="amount-badge">
+            💰 AMOUNT: ₹1000 INR
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- UPI ID display area -->
+        <div class="upi-id-area">
+            <span class="upi-id-label">📱 UPI ID</span>
+            <span class="upi-id-value" id="upiIdDisplay">16050098000216@cnrb</span>
+        </div>
+
+        <!-- QR code container -->
+        <div class="qr-wrapper">
+            <div id="qrcode"></div>
+        </div>
+        <div class="qr-caption">
+            ⬇️ Scan with any UPI app (Google Pay, PhonePe, Paytm, etc.)
+        </div>
+
+        <!-- Two buttons: Open UPI app + Copy UPI ID -->
+        <div class="button-group">
+            <button class="btn btn-primary" id="openUpiBtn">
+                📲 Open in UPI App
+                <span style="font-size:1.2rem;">→</span>
+            </button>
+            <button class="btn btn-secondary" id="copyUpiBtn">
+                📋 Copy UPI ID
+            </button>
+        </div>
+        
+        <div class="footer-note">
+            ⚡ Tap "Open in UPI App" → choose your preferred app. <br>
+            If app doesn't open, copy UPI ID and paste manually.
+        </div>
+    </div>
+</div>
+
+<div id="liveToast" class="toast-msg">✨ Copied to clipboard!</div>
+
+<script>
+    (function() {
+        // ---------- CONFIGURATION ----------
+        const UPI_ID = "16050098000216@cnrb";
+        const AMOUNT = "1000";
+        const RECIPIENT_NAME = "Alwin";      // appears as payee name in some apps
+        const CURRENCY = "INR";
+        
+        // Build the official UPI deep link (intent url)
+        // Format: upi://pay?pa=payee@bank&pn=recipient&am=amount&cu=INR
+        // Encoding ensures special chars are safe
+        const encodedPa = encodeURIComponent(UPI_ID);
+        const encodedPn = encodeURIComponent(RECIPIENT_NAME);
+        const upiIntentUrl = `upi://pay?pa=${encodedPa}&pn=${encodedPn}&am=${AMOUNT}&cu=${CURRENCY}`;
+        
+        // Fallback: for older BharatQR / generic upi link
+        const upiFallbackUrl = `upi://pay?pa=${encodedPa}&pn=${encodedPn}&am=${AMOUNT}&cu=${CURRENCY}`;
+        
+        // ---------- QR CODE GENERATION (shows the UPI intent + amount) ----------
+        // The QR code contains the exact UPI payment link so any scanner reads it as payment request.
+        const qrText = upiIntentUrl;   // contains amount 1000, upi id, etc.
+        
+        // Get container
+        const qrContainer = document.getElementById("qrcode");
+        if (qrContainer) {
+            // Clear any previous content (just to be safe)
+            qrContainer.innerHTML = "";
+            try {
+                // QRCode.js usage: new QRCode(element, options)
+                new QRCode(qrContainer, {
+                    text: qrText,
+                    width: 220,
+                    height: 220,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (err) {
+                console.warn("QR generation error", err);
+                qrContainer.innerHTML = "<div style='padding:1rem;background:#f9e2cf;border-radius:24px;'>⚠️ Could not generate QR, but UPI ID is above.</div>";
+            }
+        } else {
+            console.error("QR container missing");
+        }
+        
+        // Helper: show temporary toast message
+        function showToast(message, duration = 2000) {
+            const toastEl = document.getElementById("liveToast");
+            if (!toastEl) return;
+            toastEl.textContent = message || "✅ Copied!";
+            toastEl.classList.add("show");
+            setTimeout(() => {
+                toastEl.classList.remove("show");
+            }, duration);
+        }
+        
+        // ---------- 1. BUTTON: OPEN UPI APP (deep link) ----------
+        const openBtn = document.getElementById("openUpiBtn");
+        if (openBtn) {
+            openBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                // Directly attempt to open the UPI intent link
+                // Most modern Android/iOS devices with UPI apps handle 'upi://'
+                window.location.href = upiIntentUrl;
+                
+                // Optional: fallback hint if nothing happens
+                // Show a small toast after 0.6s to help user (if no app opens)
+                setTimeout(() => {
+                    showToast("⚠️ No UPI app found? Copy UPI ID & open manually.", 3000);
+                }, 800);
+            });
+        }
+        
+        // ---------- 2. BUTTON: COPY UPI ID ----------
+        const copyBtn = document.getElementById("copyUpiBtn");
+        if (copyBtn) {
+            copyBtn.addEventListener("click", async () => {
+                try {
+                    // Use modern clipboard API
+                    await navigator.clipboard.writeText(UPI_ID);
+                    showToast(`✅ Copied: ${UPI_ID}`, 1800);
+                    // Optional button feedback
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = "✓ Copied!";
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 1500);
+                } catch (err) {
+                    console.error("Clipboard failed: ", err);
+                    // fallback for older browsers
+                    const textarea = document.createElement("textarea");
+                    textarea.value = UPI_ID;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    const success = document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                    if (success) {
+                        showToast(`📋 Copied: ${UPI_ID}`, 1800);
+                    } else {
+                        alert("Unable to copy. Please select and copy manually.");
+                    }
+                }
+            });
+        }
+        
+        // Additional: display the UPI ID visibly again for clarity
+        const upiSpan = document.getElementById("upiIdDisplay");
+        if (upiSpan) upiSpan.innerText = UPI_ID;
+        
+        // (Optional) show a subtle console log for debugging
+        console.log("UPI Payment Page Ready — Amount: ₹" + AMOUNT + " | ID: " + UPI_ID);
+        console.log("QR contains: " + qrText);
+    })();
+</script>
+</body>
+  </html>
