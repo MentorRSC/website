@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects Gallery | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --text: #334155;
+            --border: #e2e8f0;
+            --completed: #10b981;
+            --ongoing: #f59e0b;
+            --planning: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background-color: #f1f5f9;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .nav-menu ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            transition: background 0.3s;
+        }
+
+        .cta-button:hover {
+            background: var(--secondary);
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: white;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .stat-card p {
+            color: var(--text);
+        }
+
+        /* Filters */
+        .filters-section {
+            background: white;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            background: var(--light);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .search-box i {
+            color: #94a3b8;
+            margin-right: 0.5rem;
+        }
+
+        .search-box input {
+            border: none;
+            background: none;
+            width: 100%;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+        }
+
+        /* Projects Grid */
+        .projects-section {
+            padding: 3rem 0;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        .project-header {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            position: relative;
+        }
+
+        .project-category {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-completed { background: var(--completed); }
+        .status-ongoing { background: var(--ongoing); }
+        .status-planning { background: var(--planning); }
+
+        .project-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            padding-right: 80px;
+        }
+
+        .project-content {
+            padding: 1.5rem;
+        }
+
+        .project-description {
+            color: var(--text);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .project-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .project-meta i {
+            width: 20px;
+            color: var(--primary);
+        }
+
+        .project-members {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: var(--light);
+            border-radius: 8px;
+        }
+
+        .project-members h4 {
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+            color: var(--primary);
+        }
+
+        .member-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .member-tag {
+            background: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar-container {
+            margin: 1rem 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .progress-bar {
+            background: var(--border);
+            border-radius: 50px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--success);
+            height: 100%;
+            border-radius: 50px;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .tag {
+            background: var(--light);
+            padding: 0.2rem 0.6rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            color: var(--primary);
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .details-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .details-btn:hover {
+            background: var(--secondary);
+        }
+
+        .project-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #ffc107;
+        }
+
+        .loading, .no-projects {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: var(--text);
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0 1rem;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 1rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-column a {
+            color: #cbd5e1;
+            text-decoration: none;
+        }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+            .nav-menu {
+                display: none;
+            }
+            .nav-menu.active {
+                display: block;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .nav-menu ul {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-container {
+                flex-direction: column;
+            }
+            .filter-group {
+                width: 100%;
+            }
+            .filter-select {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="https://rscpcalicut.org.in/">Home</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="projects.html" class="active">Projects</a></li>
+                    <li><a href="puzzles.html">Puzzles</a></li>
+                    <li><a href="members.html">Members</a></li>
+                    <li><a href="funding.html">Investment</a></li>
+                    <li><a href="joiningform.html" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <h1><i class="fas fa-flask"></i> Student Innovation Projects</h1>
+            <p>Explore innovative projects created by our talented students. From tech solutions to scientific discoveries, witness the future of innovation.</p>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="total-projects">0</h3>
+                    <p>Total Projects</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="completed-projects">0</h3>
+                    <p>Completed</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="ongoing-projects">0</h3>
+                    <p>In Progress</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters-section">
+        <div class="container filter-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search projects by name, team, or description...">
+            </div>
+            <div class="filter-group">
+                <select id="status-filter" class="filter-select">
+                    <option value="all">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="ongoing">In Progress</option>
+                    <option value="planning">Planning</option>
+                </select>
+                <select id="category-filter" class="filter-select">
+                    <option value="all">All Categories</option>
+                    <option value="tech">Technology</option>
+                    <option value="science">Science</option>
+                    <option value="education">Education</option>
+                    <option value="environment">Environment</option>
+                </select>
+                <select id="sort-select" class="filter-select">
+                    <option value="default">Sort by: Default</option>
+                    <option value="progress-high">Highest Progress</option>
+                    <option value="rating-high">Highest Rated</option>
+                    <option value="newest">Newest First</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Grid -->
+    <section class="projects-section">
+        <div class="container">
+            <div class="projects-grid" id="projects-grid">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading projects from spreadsheet...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>Innovation <span>Hub</span></h3>
+                    <p>Empowering students to transform ideas into reality through resources, mentorship, and funding support.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="projects.html">Projects Gallery</a></li>
+                        <li><a href="funding.html">Funding Hub</a></li>
+                        <li><a href="joiningform.html">Join Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact Us</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Innovation Hub, Regional Science Centre and Planetarium, Calicut</li>
+                        <li><i class="fas fa-phone"></i> 0495 2770571</li>
+                        <li><i class="fas fa-envelope"></i> mentorinnovationhub@gmail.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Google Sheet Configuration
+        const SHEET_ID = '1kAdm80nruqyRdq_vl94_TvAGdq5nslAfrymIL1zwxhM';
+        const SHEET_NAME = 'Sheet1';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+
+        let projects = [];
+        let searchTerm = '';
+        let currentStatus = 'all';
+        let currentCategory = 'all';
+        let currentSort = 'default';
+
+        // Column Mapping based on your sheet structure:
+        // A: ID | B: Name | C: Category | D: Description | E: Start Date | F: End Date | G: Members | H: Status | I: Progress | J: Budget | K: Priority | L: Resources | M: Milestones | N: Results | O: Achievements | P: Completion Date | Q: Rating | R: Tags | S: Details Link | T: GitHub Link | U: Team Name
+
+        function isValidProject(project) {
+            const nameValid = project.name && typeof project.name === 'string' && project.name.trim().length > 0;
+            return nameValid;
+        }
+
+        function parseMembers(membersStr) {
+            if (!membersStr) return [];
+            // Handle JSON array format or comma-separated
+            try {
+                const parsed = JSON.parse(membersStr);
+                if (Array.isArray(parsed)) return parsed;
+                return [membersStr];
+            } catch(e) {
+                // Split by comma or semicolon
+                return membersStr.split(/[,;]/).map(m => m.trim()).filter(m => m);
+            }
+        }
+
+        function parseTags(tagsStr) {
+            if (!tagsStr) return [];
+            try {
+                const parsed = JSON.parse(tagsStr);
+                if (Array.isArray(parsed)) return parsed;
+                return [tagsStr];
+            } catch(e) {
+                return tagsStr.split(/[,;]/).map(t => t.trim()).filter(t => t);
+            }
+        }
+
+        function parseAchievements(achievementsStr) {
+            if (!achievementsStr) return [];
+            try {
+                const parsed = JSON.parse(achievementsStr);
+                if (Array.isArray(parsed)) return parsed;
+                return [achievementsStr];
+            } catch(e) {
+                return achievementsStr.split(/[,;]/).map(a => a.trim()).filter(a => a);
+            }
+        }
+
+        async function fetchProjects() {
+            const grid = document.getElementById('projects-grid');
+            grid.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i><p>Loading projects from spreadsheet...</p></div>`;
+            
+            try {
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47, text.length - 2));
+                
+                const rows = json.table.rows;
+                if (!rows || rows.length < 2) {
+                    projects = [];
+                } else {
+                    // Parse rows (skip header row at index 0)
+                    const rawProjects = rows.slice(1).map((row, index) => {
+                        const cells = row.c || [];
+                        
+                        return {
+                            id: cells[0] ? cells[0].v : index + 1,
+                            name: cells[1] ? cells[1].v : '',
+                            category: cells[2] ? cells[2].v : 'tech',
+                            description: cells[3] ? cells[3].v : '',
+                            startDate: cells[4] ? cells[4].v : '',
+                            endDate: cells[5] ? cells[5].v : '',
+                            members: parseMembers(cells[6] ? cells[6].v : ''),
+                            status: cells[7] ? cells[7].v : 'planning',
+                            progress: cells[8] ? parseInt(cells[8].v) : 0,
+                            budget: cells[9] ? parseFloat(cells[9].v) : 0,
+                            priority: cells[10] ? cells[10].v : 'medium',
+                            resources: cells[11] ? cells[11].v : '',
+                            milestones: cells[12] ? cells[12].v : '',
+                            results: cells[13] ? cells[13].v : '',
+                            achievements: parseAchievements(cells[14] ? cells[14].v : ''),
+                            completionDate: cells[15] ? cells[15].v : '',
+                            rating: cells[16] ? parseFloat(cells[16].v) : 0,
+                            tags: parseTags(cells[17] ? cells[17].v : ''),
+                            detailsLink: cells[18] ? cells[18].v : '#',
+                            githubLink: cells[19] ? cells[19].v : '#',
+                            teamName: cells[20] ? cells[20].v : ''
+                        };
+                    });
+                    
+                    // Filter out invalid projects
+                    projects = rawProjects.filter(project => isValidProject(project));
+                }
+                
+                updateStats();
+                renderProjects();
+                
+            } catch (error) {
+                console.error('Error fetching Google Sheet data:', error);
+                projects = [];
+                updateStats();
+                renderProjects();
+                const gridElem = document.getElementById('projects-grid');
+                if (gridElem) {
+                    gridElem.innerHTML = `<div class="no-projects"><i class="fas fa-exclamation-triangle"></i><p>Unable to load projects from spreadsheet. Please check your connection or sheet permissions.</p></div>`;
+                }
+            }
+        }
+
+        function getFilteredAndSortedProjects() {
+            let filtered = projects.filter(project => {
+                // Search filter
+                const matchesSearch = searchTerm === '' || 
+                    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (project.teamName && project.teamName.toLowerCase().includes(searchTerm.toLowerCase()));
+                
+                // Status filter
+                const matchesStatus = currentStatus === 'all' || project.status === currentStatus;
+                
+                // Category filter
+                const matchesCategory = currentCategory === 'all' || project.category === currentCategory;
+                
+                return matchesSearch && matchesStatus && matchesCategory;
+            });
+
+            // Apply sorting
+            switch(currentSort) {
+                case 'progress-high':
+                    filtered.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+                    break;
+                case 'rating-high':
+                    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    break;
+                case 'newest':
+                    filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
+                    break;
+                default:
+                    filtered.sort((a, b) => (a.id || 0) - (b.id || 0));
+            }
+            return filtered;
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'completed': return 'status-completed';
+                case 'ongoing': return 'status-ongoing';
+                default: return 'status-planning';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'completed': return 'Completed';
+                case 'ongoing': return 'In Progress';
+                default: return 'Planning';
+            }
+        }
+
+        function getCategoryIcon(category) {
+            switch(category) {
+                case 'tech': return 'fa-microchip';
+                case 'science': return 'fa-flask';
+                case 'education': return 'fa-graduation-cap';
+                case 'environment': return 'fa-leaf';
+                default: return 'fa-project-diagram';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'TBD';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch(e) {
+                return dateStr;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function renderProjects() {
+            const filtered = getFilteredAndSortedProjects();
+            const grid = document.getElementById('projects-grid');
+            
+            if (!grid) return;
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="no-projects"><i class="fas fa-folder-open"></i><p>No projects found matching your criteria.</p></div>`;
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(project => {
+                const statusClass = getStatusClass(project.status);
+                const statusText = getStatusText(project.status);
+                const categoryIcon = getCategoryIcon(project.category);
+                const displayRating = project.rating > 0 ? project.rating.toFixed(1) : 'N/A';
+                const teamDisplay = project.teamName || (project.members.length > 0 ? project.members[0] : 'Student Team');
+                
+                return `
+                    <div class="project-card">
+                        <div class="project-header">
+                            <div class="project-category">
+                                <i class="fas ${categoryIcon}"></i> ${project.category.charAt(0).toUpperCase() + project.category.slice(1)}
+                            </div>
+                            <div class="project-status ${statusClass}">
+                                ${statusText}
+                            </div>
+                            <h3 class="project-title">${escapeHtml(project.name)}</h3>
+                        </div>
+                        <div class="project-content">
+                            <p class="project-description">${escapeHtml(project.description || 'No description available.')}</p>
+                            
+                            <div class="project-meta">
+                                <div><i class="fas fa-calendar-alt"></i> Start: ${formatDate(project.startDate)}</div>
+                                <div><i class="fas fa-flag-checkered"></i> End: ${formatDate(project.endDate)}</div>
+                                <div><i class="fas fa-users"></i> Team: ${escapeHtml(teamDisplay)}</div>
+                            </div>
+                            
+                            ${project.members.length > 0 && !project.teamName ? `
+                            <div class="project-members">
+                                <h4><i class="fas fa-user-friends"></i> Team Members</h4>
+                                <div class="member-list">
+                                    ${project.members.map(m => `<span class="member-tag">${escapeHtml(m)}</span>`).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="progress-bar-container">
+                                <div class="progress-label">
+                                    <span>Project Progress</span>
+                                    <span>${project.progress || 0}%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${project.progress || 0}%;"></div>
+                                </div>
+                            </div>
+                            
+                            ${project.tags.length > 0 ? `
+                            <div class="project-tags">
+                                ${project.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
+                            </div>
+                            ` : ''}
+                            
+                            <div class="project-footer">
+                                <a href="${project.detailsLink}" class="details-btn" target="_blank">
+                                    <i class="fas fa-eye"></i> View Project
+                                </a>
+                                <div class="project-rating">
+                                    <i class="fas fa-star"></i> ${displayRating}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const totalProjects = projects.length;
+            const completedProjects = projects.filter(p => p.status === 'completed').length;
+            const ongoingProjects = projects.filter(p => p.status === 'ongoing').length;
+            
+            const totalElem = document.getElementById('total-projects');
+            const completedElem = document.getElementById('completed-projects');
+            const ongoingElem = document.getElementById('ongoing-projects');
+            
+            if (totalElem) totalElem.textContent = totalProjects;
+            if (completedElem) completedElem.textContent = completedProjects;
+            if (ongoingElem) ongoingElem.textContent = ongoingProjects;
+        }
+
+        // Event listeners
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                renderProjects();
+            });
+        }
+
+        const statusFilter = document.getElementById('status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', (e) => {
+                currentStatus = e.target.value;
+                renderProjects();
+            });
+        }
+
+        const categoryFilter = document.getElementById('category-filter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', (e) => {
+                currentCategory = e.target.value;
+                renderProjects();
+            });
+        }
+
+        const sortSelect = document.getElementById('sort-select');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderProjects();
+            });
+        }
+
+        const mobileMenu = document.querySelector('.mobile-menu');
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', () => {
+                const navMenu = document.querySelector('.nav-menu');
+                if (navMenu) navMenu.classList.toggle('active');
+            });
+        }
+
+        // Initialize
+        fetchProjects();
+    </script>
+</body>
+</html>
