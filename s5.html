@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FutureClub | Join</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f1c 0%, #0f1725 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .future-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .club-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .club-title h1 {
+            font-size: 5rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff 0%, #a5f3c3 40%, #4ade80 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .main-btn {
+            padding: 18px 48px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-join {
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            color: #0a0f1c;
+        }
+
+        .btn-login {
+            background: rgba(255,255,255,0.08);
+            color: white;
+            border: 1px solid rgba(74, 222, 128, 0.5);
+        }
+
+        .main-btn:hover {
+            transform: translateY(-4px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: #111827;
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .modal-card h2 {
+            color: #4ade80;
+            margin-bottom: 1rem;
+        }
+
+        .option-btn {
+            background: #1e293b;
+            padding: 1.2rem;
+            border-radius: 1.2rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .option-btn:hover {
+            background: #2d3a4e;
+            border-color: #4ade80;
+            transform: scale(1.01);
+        }
+
+        .option-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .option-desc {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            color: white;
+        }
+
+        .submit-btn {
+            background: #4ade80;
+            color: #0a0f1c;
+            font-weight: bold;
+            padding: 12px;
+            border: none;
+            border-radius: 2rem;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .review-box {
+            background: #0f1725;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 3px solid #4ade80;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="future-container" id="appRoot">
+    <div class="club-title">
+        <h1>FUTURECLUB</h1>
+    </div>
+    <div class="button-row">
+        <button class="main-btn btn-join" id="joinBtn">✦ JOIN</button>
+        <button class="main-btn btn-login" id="loginBtn">🔐 LOGIN</button>
+    </div>
+</div>
+
+<script>
+    let selectedPackage = null;
+    let userContribution = "";
+    let userName = "";
+    let userAge = "";
+    let userMobile = "";
+
+    function removeModals() {
+        document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+    }
+
+    // STEP 1: Package Selection (FIXED)
+    function showPackageSelection() {
+        removeModals();
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <button class="close-modal" id="closeModalBtn">✕</button>
+                <h2>✦ Choose your future ✦</h2>
+                <div class="option-grid">
+                    <div class="option-btn" id="optAssets">
+                        <div class="option-title">🏠 ₹50 Lakh Assets</div>
+                        <div class="option-desc">Free house, car, land, water, food, electricity, scooter, utilities.</div>
+                    </div>
+                    <div class="option-btn" id="optMonthly">
+                        <div class="option-title">💰 ₹30,000 / month</div>
+                        <div class="option-desc">Lifetime monthly cash. No work. Pure freedom.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        overlay.querySelector('#closeModalBtn').onclick = () => overlay.remove();
+        
+        overlay.querySelector('#optAssets').onclick = () => {
+            selectedPackage = "assets";
+            overlay.remove();
+            setTimeout(() => askFairnessQuestion(), 100);
+        };
+        
+        overlay.querySelector('#optMonthly').onclick = () => {
+            selectedPackage = "monthly";
+            overlay.remove();
+            setTimeout(() => askFairnessQuestion(), 100);
+        };
+    }
+
+    // STEP 2: Fairness Question (NOW WORKING)
+    function askFairnessQuestion() {
+        removeModals();
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <button class="close-modal" id="closeModalBtn">✕</button>
+                <h2>🌱 Keep the club running forever</h2>
+                <p style="color: #cbd5e1; margin-bottom: 0.5rem;">"To keep this club running forever for everyone, what feels fair to you?"</p>
+                <textarea id="fairnessAnswer" rows="3" placeholder="e.g., I can give 3 hours weekly / share my car / one-time ₹2000 / bring a friend..."></textarea>
+                <button class="submit-btn" id="submitFairness">✓ Continue →</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        overlay.querySelector('#closeModalBtn').onclick = () => overlay.remove();
+        
+        overlay.querySelector('#submitFairness').onclick = () => {
+            const answer = overlay.querySelector('#fairnessAnswer').value.trim();
+            if (!answer) {
+                alert("Please share what feels fair to you.");
+                return;
+            }
+            userContribution = answer;
+            overlay.remove();
+            setTimeout(() => askPersonalDetails(), 100);
+        };
+    }
+
+    // STEP 3: Personal Details
+    function askPersonalDetails() {
+        removeModals();
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <button class="close-modal" id="closeModalBtn">✕</button>
+                <h2>✨ Almost a member ✨</h2>
+                <label style="color:white;">Full Name</label>
+                <input type="text" id="memberName" placeholder="Full Name">
+                <label style="color:white;">Age / Date of Birth</label>
+                <input type="text" id="memberAge" placeholder="e.g., 28 or 15-04-1995">
+                <label style="color:white;">Mobile Number</label>
+                <input type="tel" id="memberMobile" placeholder="10 digit number">
+                <button class="submit-btn" id="submitDetails">📋 Review & Join →</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        overlay.querySelector('#closeModalBtn').onclick = () => overlay.remove();
+        
+        overlay.querySelector('#submitDetails').onclick = () => {
+            const name = overlay.querySelector('#memberName').value.trim();
+            const age = overlay.querySelector('#memberAge').value.trim();
+            const mobile = overlay.querySelector('#memberMobile').value.trim();
+            
+            if (!name) { alert("Please enter your name."); return; }
+            if (!age) { alert("Please enter your age."); return; }
+            if (!mobile) { alert("Please enter mobile number."); return; }
+            
+            userName = name;
+            userAge = age;
+            userMobile = mobile;
+            overlay.remove();
+            setTimeout(() => showSummaryAndRedirect(), 100);
+        };
+    }
+
+    // STEP 4: Summary & Redirect
+    function showSummaryAndRedirect() {
+        removeModals();
+        const packageText = selectedPackage === "assets" 
+            ? "🏠 ₹50 Lakh Assets Package"
+            : "💰 ₹30,000 per month";
+            
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <h2>✅ Welcome to FutureClub</h2>
+                <div class="review-box">
+                    <strong>👤 Name:</strong> ${escapeHtml(userName)}<br>
+                    <strong>🎂 Age:</strong> ${escapeHtml(userAge)}<br>
+                    <strong>📞 Mobile:</strong> ${escapeHtml(userMobile)}<br>
+                    <strong>📦 Package:</strong> ${packageText}<br>
+                    <strong>🤝 Contribution:</strong> "${escapeHtml(userContribution)}"
+                </div>
+                <p style="color: #a5f3c3;">✨ Redirecting to members area...</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        setTimeout(() => {
+            window.location.href = "members.html";
+        }, 2500);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function handleJoin() {
+        const container = document.getElementById('appRoot');
+        if (container) {
+            container.innerHTML = `
+                <div class="club-title">
+                    <h1>FUTURECLUB</h1>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="color: #a5f3c3;">⚡ shaping your membership ⚡</p>
+                </div>
+            `;
+        }
+        showPackageSelection();
+    }
+
+    function handleLogin() {
+        window.location.href = "dashboard.html";
+    }
+
+    document.getElementById('joinBtn').onclick = handleJoin;
+    document.getElementById('loginBtn').onclick = handleLogin;
+</script>
+</body>
+          </html>
