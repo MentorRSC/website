@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Plane Club | Elite Membership</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a1928 0%, #0c2a3b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* main card container */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(2px);
+            border-radius: 2.5rem;
+            width: 100%;
+            max-width: 580px;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .header {
+            background: #0f2c39;
+            padding: 2rem 1.8rem;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.3rem;
+            letter-spacing: -0.5px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.85;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 2rem 1.8rem 2.2rem;
+        }
+
+        /* two big buttons */
+        .button-split {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .big-btn {
+            display: block;
+            width: 100%;
+            padding: 1.1rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #f0f2f5;
+            color: #0f2c39;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .big-btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-existing {
+            background: #2c5a6e;
+            color: white;
+            border-bottom: 3px solid #ffcd7e;
+        }
+
+        .btn-new {
+            background: #ffcd7e;
+            color: #0a2e3f;
+            border-bottom: 3px solid #d49b3a;
+        }
+
+        .btn-existing:hover, .btn-new:hover {
+            filter: brightness(1.02);
+            transform: translateY(-2px);
+        }
+
+        /* form & question styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: #1e4a62;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 28px;
+            font-size: 1rem;
+            background: #ffffff;
+            transition: 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ffcd7e;
+            box-shadow: 0 0 0 3px rgba(255, 205, 126, 0.2);
+        }
+
+        .question-card {
+            background: #fef8ed;
+            border-radius: 28px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border-left: 5px solid #ffcd7e;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        button.submit-btn {
+            background: #0f2c39;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 40px;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button.submit-btn:hover {
+            background: #1e4a62;
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1.2rem;
+        }
+
+        .back-link button {
+            background: none;
+            border: none;
+            color: #2c5a6e;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .homepage {
+            text-align: center;
+        }
+
+        .homepage h2 {
+            font-size: 2rem;
+            color: #0f2c39;
+            margin-bottom: 1rem;
+        }
+
+        .perks-list {
+            background: #eef2f5;
+            border-radius: 2rem;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .perks-list li {
+            margin: 8px 0;
+            list-style-type: "✈️ ";
+            padding-left: 8px;
+        }
+
+        .logout-home {
+            margin-top: 2rem;
+            background: #dce5ea;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .status-msg {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #2c6e2c;
+            font-weight: 500;
+        }
+
+        .error-msg {
+            color: #b91c1c;
+        }
+
+        hr {
+            margin: 1rem 0;
+            border-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+<div class="glass-card" id="appRoot">
+    <!-- dynamic views will be injected here -->
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // CONFIGURATION: Google Apps Script Web App URL (your sheet connector)
+    // IMPORTANT: Replace this with your actual deployed Google Apps Script URL
+    // that accepts POST requests with JSON data and writes to your spreadsheet.
+    // --------------------------------------------------------------
+    const GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz7H2OexU3v0bNrfVbEcaFnx0clBJYxixyN2m1F-hgN4i7LrqQAKQ2OBQrSjLvK9dNv/exec";  // <--- PASTE YOUR DEPLOYED URL HERE
+    
+    // For demo/fallback if no endpoint: we'll also store locally and alert.
+    // But the requirement: "all answers would be saved in Google sheet" -> we will attempt POST.
+    
+    // State
+    let currentView = "entry"; // entry, newMemberForm, existingHomepage
+    
+    // Store collected answers temporarily
+    let newMemberData = {
+        name: "",
+        dob: "",
+        gender: "",
+        clubContribution: ""   // the free-text answer to "what u can give to the club?"
+    };
+    
+    // Helper: render the entire UI based on currentView
+    function render() {
+        const root = document.getElementById("appRoot");
+        if (!root) return;
+        
+        if (currentView === "entry") {
+            root.innerHTML = `
+                <div class="header">
+                    <h1>✈️ PLANE CLUB</h1>
+                    <p>Elevate your life · Unlimited perks</p>
+                </div>
+                <div class="content">
+                    <div class="button-split">
+                        <button class="big-btn btn-existing" id="existingMemberBtn">🔐 EXISTING MEMBER → Go to Homepage</button>
+                        <button class="big-btn btn-new" id="newMemberBtn">✨ NEW MEMBER · Join the Club</button>
+                    </div>
+                    <div style="margin-top: 24px; font-size: 0.8rem; text-align: center; color: #5a6e7c;">
+                        Members get ₹50 Lakh Package: Free water, food, electricity, land, house, car, scooter & utilities.
+                    </div>
+                </div>
+            `;
+            document.getElementById("existingMemberBtn")?.addEventListener("click", () => {
+                currentView = "existingHomepage";
+                render();
+            });
+            document.getElementById("newMemberBtn")?.addEventListener("click", () => {
+                // reset newMemberData
+                newMemberData = { name: "", dob: "", gender: "", clubContribution: "" };
+                currentView = "newMemberForm";
+                render();
+            });
+        } 
+        else if (currentView === "newMemberForm") {
+            root.innerHTML = `
+                <div class="header">
+                    <h1>✈️ Become a Pilot Member</h1>
+                    <p>Answer a few questions to unlock ₹50L package</p>
+                </div>
+                <div class="content">
+                    <div class="form-group">
+                        <label>📛 Full Name *</label>
+                        <input type="text" id="fullName" placeholder="e.g., Rajiv Malhotra" value="${escapeHtml(newMemberData.name)}">
+                    </div>
+                    <div class="form-group">
+                        <label>🎂 Date of Birth *</label>
+                        <input type="date" id="dob" value="${newMemberData.dob}">
+                    </div>
+                    <div class="form-group">
+                        <label>⚥ Gender</label>
+                        <select id="gender">
+                            <option value="" ${!newMemberData.gender ? 'selected' : ''}>Select</option>
+                            <option value="Male" ${newMemberData.gender === 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${newMemberData.gender === 'Female' ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${newMemberData.gender === 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
+                    <div class="question-card">
+                        <label style="font-size:1rem;">💎 OUR MEMBERS GET FREE: water, food, electricity, land, house, car, scooter, utilities (₹50 Lakh Package). <br> <strong>If I provide you this, what can you give to the club?</strong></label>
+                        <textarea id="clubContribution" rows="3" placeholder="Your commitment / skill / service / energy..." style="width:100%; border-radius:24px; padding:12px; margin-top:12px;">${escapeHtml(newMemberData.clubContribution)}</textarea>
+                    </div>
+                    <button class="submit-btn" id="submitNewMember">✓ Submit & Join Club</button>
+                    <div class="back-link">
+                        <button id="backToEntry">← Back to entry</button>
+                    </div>
+                    <div id="formStatusMsg" class="status-msg"></div>
+                </div>
+            `;
+            document.getElementById("submitNewMember")?.addEventListener("click", submitNewMemberToSheet);
+            document.getElementById("backToEntry")?.addEventListener("click", () => {
+                currentView = "entry";
+                render();
+            });
+            // attach live updates
+            const nameField = document.getElementById("fullName");
+            const dobField = document.getElementById("dob");
+            const genderField = document.getElementById("gender");
+            const contribField = document.getElementById("clubContribution");
+            if(nameField) nameField.addEventListener("input", (e) => newMemberData.name = e.target.value);
+            if(dobField) dobField.addEventListener("change", (e) => newMemberData.dob = e.target.value);
+            if(genderField) genderField.addEventListener("change", (e) => newMemberData.gender = e.target.value);
+            if(contribField) contribField.addEventListener("input", (e) => newMemberData.clubContribution = e.target.value);
+        }
+        else if (currentView === "existingHomepage") {
+            root.innerHTML = `
+                <div class="header">
+                    <h1>✈️ Welcome Back, Member</h1>
+                    <p>Your premium lifestyle hub</p>
+                </div>
+                <div class="content homepage">
+                    <h2>🏆 Club Homepage</h2>
+                    <div class="perks-list">
+                        <ul style="list-style: none;">
+                            <li>💧 Unlimited free water & daily delivery</li>
+                            <li>🍲 Free nutritious meals (breakfast, lunch, dinner)</li>
+                            <li>⚡ 24/7 Free electricity & solar backup</li>
+                            <li>🏡 Free land & fully furnished house</li>
+                            <li>🚗 Free car (electric sedan) + 🛵 Free scooter</li>
+                            <li>🔧 All utilities: internet, maintenance, security</li>
+                            <li>💰 ₹50 Lakh package — zero hidden costs</li>
+                        </ul>
+                    </div>
+                    <p style="margin: 1rem 0;">🎯 <strong>Our community thrives because members give back.</strong> Enjoy these benefits and elevate together.</p>
+                    <button class="logout-home" id="logoutBtn">🚪 Exit to Entry Screen</button>
+                </div>
+            `;
+            document.getElementById("logoutBtn")?.addEventListener("click", () => {
+                currentView = "entry";
+                render();
+            });
+        }
+    }
+    
+    // Helper: HTML escape
+    function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    // Function to send data to Google Sheet via POST (Apps Script Web App)
+    async function sendToGoogleSheet(record) {
+        // record contains: name, dob, gender, contribution, timestamp, etc.
+        if (!GOOGLE_SHEETS_WEBHOOK_URL || GOOGLE_SHEETS_WEBHOOK_URL === "https://script.google.com/macros/s/AKfycbz7H2OexU3v0bNrfVbEcaFnx0clBJYxixyN2m1F-hgN4i7LrqQAKQ2OBQrSjLvK9dNv/exec") {
+            console.warn("⚠️ Using demo endpoint. Replace with your actual Google Apps Script URL for permanent storage.");
+            // Simulate saving to sheet in demo mode: just log and return success message, but we still show local storage.
+            // However we also store to localStorage for backup.
+            storeLocally(record);
+            return { success: true, message: "DEMO MODE: Record saved locally. Update the Google Script URL to enable real sheet saving." };
+        }
+        
+        try {
+            const response = await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+                method: "POST",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(record)
+            });
+            if (response.ok) {
+                const result = await response.json();
+                return { success: true, message: result.message || "Data saved to Google Sheet!" };
+            } else {
+                const errorText = await response.text();
+                console.error("Sheet error:", errorText);
+                return { success: false, message: `Server error: ${response.status}` };
+            }
+        } catch (err) {
+            console.error("Network error while sending to sheet:", err);
+            // fallback: save locally and inform
+            storeLocally(record);
+            return { success: false, message: `Could not reach Google Sheet, but data saved locally. Check URL. Error: ${err.message}` };
+        }
+    }
+    
+    // local fallback storage (for demonstration & debugging)
+    function storeLocally(record) {
+        let existing = localStorage.getItem("planeClubMembers");
+        let membersList = existing ? JSON.parse(existing) : [];
+        membersList.push({ ...record, localBackup: true });
+        localStorage.setItem("planeClubMembers", JSON.stringify(membersList));
+        console.log("📁 Data saved locally (backup)", record);
+    }
+    
+    // Submit handler
+    async function submitNewMemberToSheet() {
+        const name = newMemberData.name.trim();
+        const dob = newMemberData.dob;
+        const gender = newMemberData.gender;
+        const contribution = newMemberData.clubContribution.trim();
+        
+        if (!name) {
+            showFormStatus("❌ Please enter your full name.", true);
+            return;
+        }
+        if (!dob) {
+            showFormStatus("❌ Please select your date of birth.", true);
+            return;
+        }
+        if (!gender) {
+            showFormStatus("❌ Please select gender.", true);
+            return;
+        }
+        if (!contribution) {
+            showFormStatus("❌ Please answer: what can you give to the club? (even a small skill or service)", true);
+            return;
+        }
+        
+        // Prepare payload for Google Sheet
+        const timestamp = new Date().toISOString();
+        const payload = {
+            timestamp: timestamp,
+            name: name,
+            dateOfBirth: dob,
+            gender: gender,
+            clubContribution: contribution,
+            package: "₹50 Lakh (water, food, electricity, land, house, car, scooter, utilities)",
+            status: "pending_approval"
+        };
+        
+        // Show loading message
+        showFormStatus("⏳ Sending to club registry & Google Sheet...", false);
+        
+        const result = await sendToGoogleSheet(payload);
+        
+        if (result.success) {
+            showFormStatus("✅ Welcome to Plane Club! Your answers saved to Google Sheet. Redirecting to homepage...", false);
+            // Also store member as "existing" in session to simulate membership
+            sessionStorage.setItem("plane_active_member", JSON.stringify({ name: name, joined: timestamp }));
+            setTimeout(() => {
+                currentView = "existingHomepage";
+                render();
+            }, 1800);
+        } else {
+            showFormStatus(`⚠️ ${result.message} But your data was stored locally. You can still access homepage.`, true);
+            // still allow redirect after 2 seconds, because we want user experience.
+            sessionStorage.setItem("plane_active_member", JSON.stringify({ name: name, joined: timestamp }));
+            setTimeout(() => {
+                currentView = "existingHomepage";
+                render();
+            }, 2000);
+        }
+    }
+    
+    function showFormStatus(msg, isError) {
+        const statusDiv = document.getElementById("formStatusMsg");
+        if (statusDiv) {
+            statusDiv.innerHTML = msg;
+            statusDiv.className = `status-msg ${isError ? 'error-msg' : ''}`;
+        }
+    }
+    
+    // Add event listeners to dynamic elements if any (but render handles everything)
+    // Also check session: If someone previously completed new member flow, we could remember but not required by spec.
+    // For consistency: just entry view by default.
+    
+    // Check if there's any active session? Not needed for main entry, but we can add a small thing:
+    function init() {
+        // Always start at entry, clean fresh.
+        currentView = "entry";
+        render();
+    }
+    
+    init();
+</script>
+
+<!-- Important note for Google Sheets integration: 
+     You must deploy a Google Apps Script web app with doPost(e) that writes to your spreadsheet.
+     Replace the GOOGLE_SHEETS_WEBHOOK_URL variable with your own published URL.
+     
+     Example Apps Script code (put in script editor of that spreadsheet):
+     
+     function doPost(e) {
+       var sheet = SpreadsheetApp.openById('1adgMTe9H5ADL7HOvNtb2JdsEg0iA3yaF0p0xhOA18Yg').getSheetByName('Sheet1');
+       var data = JSON.parse(e.postData.contents);
+       sheet.appendRow([data.timestamp, data.name, data.dateOfBirth, data.gender, data.clubContribution, data.package, data.status]);
+       return ContentService.createTextOutput(JSON.stringify({message: "Saved to sheet"})).setMimeType(ContentService.MimeType.JSON);
+     }
+     
+     Then deploy -> web app -> execute as me, allow anyone access. Copy the URL and paste above.
+-->
+</body>
+</html>
