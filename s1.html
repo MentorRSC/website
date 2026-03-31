@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sahayak Gram | Village Authority Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f2e8 0%, #e9e2d0 100%);
+            color: #1e2a2b;
+            padding: 20px 24px 60px;
+        }
+
+        /* main container */
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* header & hero */
+        .hero {
+            background: #1e3b2c;
+            background-image: radial-gradient(circle at 10% 30%, #2a5a42, #0f2c1f);
+            border-radius: 2rem;
+            padding: 2rem 2rem 1.8rem;
+            margin-bottom: 2rem;
+            color: #fef7e0;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .welcome-badge {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .welcome-text h1 {
+            font-size: 2.8rem;
+            letter-spacing: -0.5px;
+            font-weight: 700;
+            text-shadow: 2px 2px 0 #0f2c1f;
+        }
+
+        .welcome-text p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 14px;
+        }
+
+        .btn {
+            border: none;
+            background: #f4c542;
+            color: #1e3b2c;
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #f4c542;
+            color: #f4c542;
+        }
+
+        .btn-outline:hover {
+            background: #f4c542;
+            color: #1e3b2c;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            background: #ffb82e;
+        }
+
+        /* tab bar */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            border-radius: 60px;
+            padding: 6px 12px;
+            margin-bottom: 28px;
+            background: #fef9ef;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            color: #2c4b3e;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #1e3b2c;
+            color: #fef2cf;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* panels */
+        .panel {
+            display: none;
+            background: #fffcf3;
+            border-radius: 2rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+            animation: fade 0.2s ease;
+        }
+
+        .panel.active-panel {
+            display: block;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(6px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* cards grid */
+        .grid-2, .leader-grid, .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.6rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.4rem;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.05);
+            border: 1px solid #ede3cd;
+        }
+
+        .complaint-form, .ad-area {
+            background: #fef6e8;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #cfc5ae;
+            border-radius: 28px;
+            background: white;
+        }
+
+        .election-card {
+            background: #e6f0ea;
+            border-left: 8px solid #f4c542;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #4e5e54;
+        }
+
+        .member-area {
+            background: #2c5a44;
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        hr {
+            margin: 20px 0;
+            border-color: #e9dfcd;
+        }
+
+        .badge {
+            background: #f4c542;
+            color: #1e3b2c;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 700px) {
+            .hero { padding: 1.5rem; }
+            .welcome-text h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- Hero + Membership / Auth -->
+    <div class="hero">
+        <div class="welcome-badge">
+            <div class="welcome-text">
+                <h1>🌾 सहायक ग्राम · Sahayak Gram</h1>
+                <p>✨ No taxes · Only service · Government by helping ✨<br>🏡 Assets for all · Common Company delivers daily needs</p>
+            </div>
+            <div class="auth-buttons" id="authButtons">
+                <button class="btn" id="joinBtn">📋 Join / Signup</button>
+                <button class="btn btn-outline" id="memberLoginBtn">🔑 Member Login</button>
+            </div>
+        </div>
+        <div id="memberStatus" style="margin-top: 18px; font-size: 0.9rem; background: #00000033; padding: 8px 16px; border-radius: 40px; display: inline-block;">
+            👥 Guest · Not a member yet? Join the club.
+        </div>
+    </div>
+
+    <!-- Tabs navigation -->
+    <div class="tabs" id="tabsContainer">
+        <button class="tab-btn active" data-tab="home">🏠 Home</button>
+        <button class="tab-btn" data-tab="constitution">📜 Constitution</button>
+        <button class="tab-btn" data-tab="rules">⚖️ Rules & Code</button>
+        <button class="tab-btn" data-tab="leaders">👥 Leaders & Council</button>
+        <button class="tab-btn" data-tab="election">🗳️ Election Hub</button>
+        <button class="tab-btn" data-tab="devices">📱 Device Section</button>
+        <button class="tab-btn" data-tab="complaint">📢 Complaint Register</button>
+        <button class="tab-btn" data-tab="advert">📺 Village Ads</button>
+    </div>
+
+    <!-- ========================== HOME PANEL ========================= -->
+    <div id="home" class="panel active-panel">
+        <h2>🏡 Welcome to the Sahayak Gram Village Authority</h2>
+        <p style="margin: 1rem 0;">Every citizen receives assets (₹50L worth), daily water(10L), 2 meals, waste pickup, electricity, and home delivery via <strong>Common Company</strong>. No tax, just membership.</p>
+        <div class="member-area">
+            <span>⭐ <strong>Club Membership</strong> — one-time ₹1000 fee (or waived). Access to assets & daily services.</span>
+            <span class="badge">📢 3,200+ happy citizens</span>
+        </div>
+        <div class="grid-2">
+            <div class="card"><h3>🌱 Common Company</h3><p>Delivers water, hot meals, waste pickup twice/week. Funded by selling surplus to outside towns.</p></div>
+            <div class="card"><h3>🏛️ Four Community Funds</h3><p>Health, Education, Maintenance, Elder/Disability — from Company profits.</p></div>
+            <div class="card"><h3>🗳️ Next Election</h3><p id="nextElectionDisplay">Loading...</p><button class="btn" style="margin-top: 10px;" id="quickElectionTab">Go to Election tab</button></div>
+            <div class="card"><h3>📢 Recent Notice</h3><p>✅ Village assembly on 15th April — discuss expansion fund. New membership drive open!</p></div>
+        </div>
+    </div>
+
+    <!-- CONSTITUTION PANEL -->
+    <div id="constitution" class="panel">
+        <h2>📜 The Sahayak Gram Constitution</h2>
+        <p><em>Adopted by founding citizens — No taxes, No coercion, Only Service.</em></p>
+        <hr>
+        <h3>Article 1: Membership & Assets</h3>
+        <p>Every citizen receives home, bike, solar connection, land plot, utility link (value ₹50L). Newborns & accepted immigrants receive same within 6 months. One-time ₹1000 fee (waived for zero income).</p>
+        <h3>Article 2: Common Company</h3>
+        <p>Delivers daily: 10L water, 2 meals, waste pickup. Funded by selling surplus. Profit → 4 community funds.</p>
+        <h3>Article 3: Village Council</h3>
+        <p>5 elected members every 2 years. Handles disputes, fines, new member approval. No police, no jail — penalties: warnings, fines, temporary service suspension, expulsion by 2/3 vote.</p>
+        <h3>Article 4: Rights</h3>
+        <p>Free speech, assembly, start private business, leave village anytime, refuse meals.</p>
+        <h3>Article 5: Four Funds</h3>
+        <p>Health, Education, Maintenance, Elder & Disability. Accessible to all members.</p>
+        <h3>Article 6: Population & Expansion</h3>
+        <p>At 1200 residents, new village founded. Old village helps with loan from Maintenance Fund.</p>
+    </div>
+
+    <!-- RULES PANEL -->
+    <div id="rules" class="panel">
+        <h2>⚖️ Village Rules & Code of Conduct</h2>
+        <ul style="margin: 1rem 0 1rem 1.8rem; line-height: 1.6;">
+            <li>1. No violence or intimidation — disputes go to Village Council.</li>
+            <li>2. Waste must be segregated at source; improper disposal → fine to Community Fund.</li>
+            <li>3. Shared assets (e-bikes, water points) must not be damaged; repair costs from Maintenance Fund, but intentional damage fined.</li>
+            <li>4. Common Company delivery timings: 7-9 AM & 5-7 PM. No late noise after 10 PM.</li>
+            <li>5. Membership subscription (₹1000) due upon joining. Life-long access.</li>
+            <li>6. Election campaigns: No personal attacks. Posters allowed only on notice boards.</li>
+            <li>7. Any citizen can propose new rule in monthly assembly; needs 60% approval.</li>
+        </ul>
+        <div class="card">📌 Council enforces with transparency. Appeals can be raised in open assembly.</div>
+    </div>
+
+    <!-- LEADERS PANEL -->
+    <div id="leaders" class="panel">
+        <h2>👥 Current Village Council (2025–2027)</h2>
+        <div class="leader-grid">
+            <div class="card"><strong>🌾 Sarpanch (Head)</strong><br>Anjali Deshmukh<br><small>Former farmer, 12 years experience</small></div>
+            <div class="card"><strong>⚖️ Justice Lead</strong><br>Rameshwar Iyer<br><small>Retired mediator</small></div>
+            <div class="card"><strong>💰 Common Company Director</strong><br>Meera Nair<br><small>Social entrepreneur</small></div>
+            <div class="card"><strong>📚 Education Fund Head</strong><br>John Varghese<br><small>Teacher & innovator</small></div>
+            <div class="card"><strong>🏥 Health Fund Lead</strong><br>Sunita Pawar<br><small>Nurse & community carer</small></div>
+        </div>
+        <p style="margin-top: 1rem;">📅 Next leadership election: <strong id="electionDateShow">March 2027</strong> (Election tab for details)</p>
+    </div>
+
+    <!-- ELECTION HUB -->
+    <div id="election" class="panel">
+        <h2>🗳️ Election Commission & Schedule</h2>
+        <div class="election-card card">
+            <h3>📅 Next General Election</h3>
+            <p><strong>Date:</strong> 15th March 2027 · Polling from 8 AM to 6 PM</p>
+            <p><strong>Positions:</strong> 5 Council members + 1 Common Company Ombudsperson</p>
+            <p><strong>Voter Eligibility:</strong> All members (joined before 1st Jan 2027)</p>
+            <button class="btn" id="registerCandidateBtn">📢 Register as Candidate (demo)</button>
+            <div id="candidateMsg" style="margin-top: 12px;"></div>
+        </div>
+        <div class="card">
+            <h3>🗳️ Past Election Results (2025)</h3>
+            <p>✔️ Anjali Deshmukh - 78% | Rameshwar Iyer - 65% | Meera Nair - 71% | John Varghese - 59% | Sunita Pawar - 82%</p>
+            <p>Turnout: 91% — highest in region.</p>
+        </div>
+        <div><button class="btn" id="mockVoteBtn">🎫 Mock Vote (demo experience)</button><span id="voteDemoMsg" style="margin-left: 16px;"></span></div>
+    </div>
+
+    <!-- DEVICE SECTION -->
+    <div id="devices" class="panel">
+        <h2>📱 Device & Infrastructure Section</h2>
+        <p>Track village-owned devices, shared e-bikes, solar panels, and public screens.</p>
+        <div class="device-grid" id="deviceGrid">
+            <!-- js loaded -->
+        </div>
+        <div class="card" style="margin-top: 20px;">
+            <h3>➕ Request Device / Repair</h3>
+            <input type="text" id="deviceReq" placeholder="Device name (eg. water pump, e-bike)" />
+            <button id="requestDeviceBtn" class="btn">Submit maintenance request</button>
+            <p id="deviceFeedback" style="margin-top: 8px;"></p>
+        </div>
+    </div>
+
+    <!-- COMPLAINT REGISTRATION -->
+    <div id="complaint" class="panel">
+        <h2>📢 Complaint Registration & Grievance</h2>
+        <div class="complaint-form">
+            <label>Your Name (Member ID or name)</label>
+            <input type="text" id="complaintName" placeholder="e.g., Rajesh K." />
+            <label>Issue Type</label>
+            <select id="complaintType">
+                <option>Water delivery</option>
+                <option>Food quality</option>
+                <option>Waste collection</option>
+                <option>Neighbour dispute</option>
+                <option>Council issue</option>
+                <option>Other</option>
+            </select>
+            <label>Description</label>
+            <textarea rows="3" id="complaintDesc" placeholder="Describe the issue..."></textarea>
+            <button id="submitComplaintBtn" class="btn">📨 Register Complaint</button>
+            <div id="complaintStatus"></div>
+        </div>
+        <div class="card">
+            <h4>📋 Recent Complaints (resolved by Council)</h4>
+            <ul id="recentComplaintsList">
+                <li>✔️ Waste missed on Patel street - resolved with extra pickup</li>
+                <li>✔️ Solar light repair - maintenance fund fixed within 2 days</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ADVERTISEMENT SECTION -->
+    <div id="advert" class="panel">
+        <h2>📺 Village Announcements & Advertisements</h2>
+        <div class="ad-area" id="adContainer">
+            <div class="card">🌾 "Local organic honey sale – Village Coop, every Sunday"</div>
+            <div class="card">🚲 "New shared e-bikes available at central depot"</div>
+            <div class="card">📢 "Council Meeting 10th April – all members invited"</div>
+        </div>
+        <div style="margin-top: 20px;">
+            <h3>📣 Post new advertisement (moderated)</h3>
+            <input type="text" id="newAdText" placeholder="Your ad message" style="width:70%;"/>
+            <button id="postAdBtn" class="btn">Post</button>
+            <p><small>Ads appear on village portal & digital notice board</small></p>
+        </div>
+    </div>
+
+    <footer>🏛️ Sahayak Gram · No tax, only service · Assets for all · Powered by Common Company</footer>
+</div>
+
+<script>
+    // ---------- MEMORY STATE ----------
+    let loggedInMember = null;   // null = guest
+    let members = [{ id: "member1", name: "Arjun Singh", joined: "2025-01-10" }];  // sample
+    let complaints = [
+        { name: "Neha", type: "Waste collection", desc: "Missed Tuesday pickup", status: "resolved" }
+    ];
+    let devices = [
+        { name: "Shared E-bike Fleet (40 units)", status: "Operational" },
+        { name: "Solar Microgrid (2.5 MW)", status: "Active" },
+        { name: "Community Water ATMs (6 units)", status: "Maintenance due 5th April" },
+        { name: "Village Digital Board", status: "Online" }
+    ];
+    let ads = ["🌾 Local organic honey sale – Village Coop, every Sunday", "🚲 New shared e-bikes available at central depot", "📢 Council Meeting 10th April – all members invited"];
+    let elections = { nextDate: "15th March 2027", candidates: [] };
+
+    // Helper: update device grid
+    function renderDevices() {
+        const grid = document.getElementById('deviceGrid');
+        if(grid) {
+            grid.innerHTML = devices.map(d => `<div class="card"><strong>📟 ${d.name}</strong><br>Status: ${d.status}</div>`).join('');
+        }
+    }
+
+    function renderComplaintList() {
+        const listUl = document.getElementById('recentComplaintsList');
+        if(listUl) {
+            listUl.innerHTML = complaints.slice(-4).reverse().map(c => `<li>📌 ${c.type}: ${c.desc.substring(0, 60)} - ${c.status || 'pending'}</li>`).join('');
+        }
+    }
+
+    function renderAds() {
+        const adContainer = document.getElementById('adContainer');
+        if(adContainer) {
+            adContainer.innerHTML = ads.map(ad => `<div class="card">📢 ${ad}</div>`).join('');
+        }
+    }
+
+    function updateElectionDisplay() {
+        const nextSpan = document.getElementById('nextElectionDisplay');
+        if(nextSpan) nextSpan.innerText = `🗓️ ${elections.nextDate} · Register now`;
+        const electionDateShow = document.getElementById('electionDateShow');
+        if(electionDateShow) electionDateShow.innerText = elections.nextDate;
+    }
+
+    function updateMemberStatusUI() {
+        const statusDiv = document.getElementById('memberStatus');
+        if(loggedInMember) {
+            statusDiv.innerHTML = `✅ Logged in as: ${loggedInMember.name} (Member since ${loggedInMember.joined}) · 🎉 Access to all assets & daily delivery.`;
+        } else {
+            statusDiv.innerHTML = `👥 Guest · Not a member yet? Click 'Join / Signup' to become citizen (₹1000 one-time).`;
+        }
+    }
+
+    // JOIN / SIGNUP simulation
+    document.getElementById('joinBtn')?.addEventListener('click', () => {
+        let newName = prompt("Enter your full name to join Sahayak Gram (one-time ₹1000 fee waived for now demo):", "Lakshmi Nair");
+        if(newName && newName.trim()) {
+            const newMember = { id: "mem_" + Date.now(), name: newName.trim(), joined: new Date().toLocaleDateString() };
+            members.push(newMember);
+            loggedInMember = newMember;
+            updateMemberStatusUI();
+            alert(`🎉 Welcome ${newName}! You are now a citizen. You get assets, daily meals, water, waste pickup. Common Company will deliver tomorrow.`);
+        }
+    });
+
+    document.getElementById('memberLoginBtn')?.addEventListener('click', () => {
+        let existing = prompt("Enter member name (demo list: Arjun Singh, or new join first):", "Arjun Singh");
+        if(existing) {
+            const found = members.find(m => m.name.toLowerCase() === existing.toLowerCase());
+            if(found) {
+                loggedInMember = found;
+                updateMemberStatusUI();
+                alert(`Welcome back ${found.name}, you have full village rights.`);
+            } else {
+                alert("Member not found. Please use Join/Signup first.");
+            }
+        }
+    });
+
+      // Tabs logic
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.panel');
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            panels.forEach(panel => panel.classList.remove('active-panel'));
+            const activePanel = document.getElementById(tabId);
+            if(activePanel) activePanel.classList.add('active-panel');
+            tabs.forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // quick election tab
+    document.getElementById('quickElectionTab')?.addEventListener('click', () => {
+        document.querySelector('[data-tab="election"]').click();
+    });
+
+    // candidate registration
+    document.getElementById('registerCandidateBtn')?.addEventListener('click', () => {
+        if(!loggedInMember) { alert("Please login or join first to register as candidate."); return; }
+        let candName = prompt("Enter your statement (name & vision) to register for upcoming election:", `${loggedInMember.name} - for Council`);
+        if(candName) {
+            elections.candidates.push(candName);
+            document.getElementById('candidateMsg').innerHTML = `✅ Registered: ${candName}. Election commission will verify.`;
+        }
+    });
+
+    // mock vote
+    document.getElementById('mockVoteBtn')?.addEventListener('click', () => {
+        if(!loggedInMember) { alert("Only members can vote. Please join."); return; }
+        document.getElementById('voteDemoMsg').innerHTML = "🗳️ You cast a mock vote! (demo system). Real voting opens March 2027.";
+    });
+
+    // device request
+    document.getElementById('requestDeviceBtn')?.addEventListener('click', () => {
+        const req = document.getElementById('deviceReq').value;
+        if(req.trim()) {
+            devices.push({ name: `🛠️ Repair request: ${req}`, status: "Pending review by Maintenance Fund" });
+            renderDevices();
+            document.getElementById('deviceFeedback').innerHTML = "Request submitted. Maintenance team will respond within 48h.";
+            document.getElementById('deviceReq').value = '';
+        } else alert("Enter device name");
+    });
+
+    // complaint registration
+    document.getElementById('submitComplaintBtn')?.addEventListener('click', () => {
+        const name = document.getElementById('complaintName').value || (loggedInMember ? loggedInMember.name : "Anonymous");
+        const type = document.getElementById('complaintType').value;
+        const desc = document.getElementById('complaintDesc').value;
+        if(!desc) { alert("Please describe the issue"); return; }
+        const newComp = { name, type, desc, status: "pending review", date: new Date().toLocaleString() };
+        complaints.unshift(newComp);
+        renderComplaintList();
+        document.getElementById('complaintStatus').innerHTML = "✅ Complaint registered. Council will address within 3 days.";
+        document.getElementById('complaintDesc').value = '';
+        document.getElementById('complaintName').value = '';
+    });
+
+    // post advertisement
+    document.getElementById('postAdBtn')?.addEventListener('click', () => {
+        const adText = document.getElementById('newAdText').value;
+        if(adText.trim()) {
+            ads.unshift(adText.trim());
+            renderAds();
+            document.getElementById('newAdText').value = '';
+        } else alert("Enter ad content");
+    });
+
+    // initial render
+    renderDevices();
+    renderComplaintList();
+    renderAds();
+    updateElectionDisplay();
+    updateMemberStatusUI();
+
+    // add default device section dynamic
+    setInterval(() => {
+        // just keep fresh
+    }, 100);
+    // extra: if home election date update 
+    if(document.getElementById('nextElectionDisplay')) {
+        setInterval(() => updateElectionDisplay(), 100);
+    }
+    // election tab dynamic update
+    document.querySelector('[data-tab="election"]')?.addEventListener('click',()=>{
+        const candMsgDiv = document.getElementById('candidateMsg');
+        if(elections.candidates.length) candMsgDiv.innerHTML = `📢 Registered candidates: ${elections.candidates.join(', ')}`;
+    });
+</script>
+</body>
+</html>
