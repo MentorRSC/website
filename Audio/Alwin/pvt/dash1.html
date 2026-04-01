@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Member Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .popup-container {
+            background: white;
+            border-radius: 20px;
+            width: 500px;
+            max-width: 95%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            padding: 30px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .info-msg {
+            color: #3498db;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .main-page {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+
+        .main-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            position: relative;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .member-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .member-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #667eea;
+        }
+
+        .member-header h2 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .details-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .detail-row:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .detail-label {
+            font-weight: 700;
+            min-width: 120px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-size: 16px;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .welcome-message {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .detail-label {
+                margin-bottom: 5px;
+            }
+            
+            .logout-btn {
+                position: static;
+                margin-bottom: 15px;
+                width: 100%;
+            }
+            
+            .header {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="popup" class="popup-overlay">
+    <div class="popup-container">
+        <div class="tabs">
+            <div class="tab active" data-tab="tab1">🔑 Login with ID</div>
+            <div class="tab" data-tab="tab2">📱 Login with Mobile & DOB</div>
+        </div>
+        
+        <div id="tab1" class="tab-content active">
+            <form id="loginFormID">
+                <div class="form-group">
+                    <label>ID Number</label>
+                    <input type="text" id="idNumber" placeholder="Enter your ID" required autocomplete="off">
+                    <div class="error-msg" id="idError"></div>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+        
+        <div id="tab2" class="tab-content">
+            <form id="loginFormMobile">
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="text" id="mobileNumber" placeholder="Enter mobile number" required autocomplete="off">
+                    <div class="info-msg">📱 Enter your 10-digit mobile number</div>
+                    <div class="error-msg" id="mobileError"></div>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="text" id="dob" placeholder="DD/MM/YYYY or YYYY-MM-DD" required>
+                    <div class="info-msg">📅 Enter your date of birth</div>
+                    <div class="error-msg" id="dobError"></div>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="mainPage" class="main-page">
+    <div class="header">
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        <h1>🏆 Club Member Portal</h1>
+        <p>Welcome to your personal dashboard</p>
+    </div>
+    <div id="memberDetails">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading your details...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SPREADSHEET_ID = '1YXbTbLd7KhsdHy9QJXxoftKT8YJ-JyPbFJG7qhKNId0';
+    let sheetData = [];
+    let currentUser = null;
+
+    // Smart date comparison function
+    function compareDates(date1, date2) {
+        if (!date1 || !date2) return false;
+        
+        // Normalize both dates to multiple formats and compare
+        const normalized1 = normalizeDate(date1);
+        const normalized2 = normalizeDate(date2);
+        
+        return normalized1 === normalized2;
+    }
+
+    function normalizeDate(dateStr) {
+        if (!dateStr) return '';
+        
+        const str = dateStr.toString().trim();
+        
+        // Check if it's already in YYYY-MM-DD format
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+            return str;
+        }
+        
+        // Try to parse different formats
+        const parts = str.split(/[/-]/);
+        if (parts.length === 3) {
+            // If first part is 4 digits, it's YYYY/MM/DD or YYYY-MM-DD
+            if (parts[0].length === 4) {
+                return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            }
+            
+            // Try DD/MM/YYYY
+            let date = new Date(parts[2], parts[1] - 1, parts[0]);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+            
+            // Try MM/DD/YYYY
+            date = new Date(parts[2], parts[0] - 1, parts[1]);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+        }
+        
+        // Try standard Date parsing
+        const date = new Date(str);
+        if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        return str;
+    }
+
+    // Function to fetch data from Google Sheets
+    async function fetchSheetData() {
+        try {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv`;
+            const response = await fetch(csvUrl);
+            
+            if (!response.ok) throw new Error('Failed to fetch data');
+            
+            const csvText = await response.text();
+            const rows = csvText.split('\n').map(row => row.split(','));
+            
+            const headers = rows[0].map(h => h.trim().toLowerCase());
+            const data = [];
+            
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].length > 1 && rows[i][0] && rows[i][0].trim()) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        if (header && rows[i][index]) {
+                            row[header] = rows[i][index].trim();
+                        }
+                    });
+                    data.push(row);
+                }
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error fetching sheet data:', error);
+            return getMockData();
+        }
+    }
+
+    // Mock data for testing
+    function getMockData() {
+        return [
+            { "sl no.": "1", "name": "John Doe", "dob": "1990-01-15", "id": "M001", "mobile": "9876543210", "level": "Gold" },
+            { "sl no.": "2", "name": "Jane Smith", "dob": "1985-05-20", "id": "M002", "mobile": "9876543211", "level": "Platinum" },
+            { "sl no.": "3", "name": "Mike Johnson", "dob": "1992-11-08", "id": "M003", "mobile": "9876543212", "level": "Silver" }
+        ];
+    }
+
+    // Function to validate user credentials
+    async function validateUser(credentials, type) {
+        try {
+            if (sheetData.length === 0) {
+                sheetData = await fetchSheetData();
+            }
+            
+            let user = null;
+            
+            if (type === 'id') {
+                const searchId = credentials.id.toString().trim();
+                user = sheetData.find(row => {
+                    const rowId = row['id'] ? row['id'].toString().trim() : '';
+                    return rowId === searchId;
+                });
+            } 
+            else if (type === 'mobile') {
+                const searchMobile = credentials.mobile.toString().trim();
+                const searchDob = credentials.dob.toString().trim();
+                
+                user = sheetData.find(row => {
+                    const rowMobile = row['mobile'] ? row['mobile'].toString().trim() : '';
+                    const rowDob = row['dob'] ? row['dob'].toString().trim() : '';
+                    
+                    const mobileMatch = rowMobile === searchMobile;
+                    const dobMatch = compareDates(rowDob, searchDob);
+                    
+                    return mobileMatch && dobMatch;
+                });
+            }
+            
+            if (user) {
+                currentUser = user;
+                return true;
+            }
+            
+            return false;
+            
+        } catch (error) {
+            console.error('Validation error:', error);
+            return false;
+        }
+    }
+
+    // Function to display specific user's details
+    function displayUserDetails() {
+        const container = document.getElementById('memberDetails');
+        
+        if (!currentUser) {
+            container.innerHTML = '<div class="error-container">No user data found</div>';
+            return;
+        }
+        
+        const levelColors = {
+            'Gold': '#FFD700',
+            'Platinum': '#E5E4E2',
+            'Silver': '#C0C0C0',
+            'Bronze': '#CD7F32'
+        };
+        
+        const level = currentUser['level'] || 'Member';
+        const levelColor = levelColors[level] || '#667eea';
+        
+        const html = `
+            <div class="welcome-message">
+                🎉 Welcome, ${escapeHtml(currentUser['name'] || 'Member')}! 🎉
+            </div>
+            <div class="member-card">
+                <div class="member-header">
+                    <h2>${escapeHtml(currentUser['name'] || 'Member Details')}</h2>
+                    <div class="badge" style="background: ${levelColor}">
+                        ${escapeHtml(level)} Member
+                    </div>
+                </div>
+                <div class="details-grid">
+                    ${createDetailRow('📋 SL No.', currentUser['sl no.'])}
+                    ${createDetailRow('🆔 ID Number', currentUser['id'])}
+                    ${createDetailRow('📱 Mobile Number', currentUser['mobile'])}
+                    ${createDetailRow('🎂 Date of Birth', formatDisplayDate(currentUser['dob']))}
+                    ${createDetailRow('⭐ Member Level', currentUser['level'])}
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+    }
+    
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return 'Not provided';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+    
+    function createDetailRow(label, value) {
+        if (!value || value === '') {
+            return '';
+        }
+        return `
+            <div class="detail-row">
+                <div class="detail-label">${label}</div>
+                <div class="detail-value">${escapeHtml(value)}</div>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            const tabId = tab.getAttribute('data-tab');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.error-msg').forEach(error => {
+                error.style.display = 'none';
+            });
+        });
+    });
+    
+    // Login handlers
+    document.getElementById('loginFormID').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const idNumber = document.getElementById('idNumber').value.trim();
+        const idError = document.getElementById('idError');
+        
+        if (!idNumber) {
+            idError.textContent = 'Please enter your ID';
+            idError.style.display = 'block';
+            return;
+        }
+        
+        idError.style.display = 'none';
+        
+        const submitBtn = e.target.querySelector('.login-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Verifying...';
+        submitBtn.disabled = true;
+        
+        const isValid = await validateUser({ id: idNumber }, 'id');
+        
+        if (isValid) {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('mainPage').classList.add('active');
+            displayUserDetails();
+        } else {
+            idError.textContent = 'Invalid ID. Please try again.';
+            idError.style.display = 'block';
+        }
+        
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+    
+    document.getElementById('loginFormMobile').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const mobileNumber = document.getElementById('mobileNumber').value.trim();
+        const dob = document.getElementById('dob').value.trim();
+        const mobileError = document.getElementById('mobileError');
+        const dobError = document.getElementById('dobError');
+        
+        let hasError = false;
+        
+        if (!mobileNumber) {
+            mobileError.textContent = 'Please enter mobile number';
+            mobileError.style.display = 'block';
+            hasError = true;
+        } else {
+            mobileError.style.display = 'none';
+        }
+        
+        if (!dob) {
+            dobError.textContent = 'Please enter date of birth';
+            dobError.style.display = 'block';
+            hasError = true;
+        } else {
+            dobError.style.display = 'none';
+        }
+        
+        if (hasError) return;
+        
+        const submitBtn = e.target.querySelector('.login-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Verifying...';
+        submitBtn.disabled = true;
+        
+        const isValid = await validateUser({ mobile: mobileNumber, dob: dob }, 'mobile');
+        
+        if (isValid) {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('mainPage').classList.add('active');
+            displayUserDetails();
+        } else {
+            mobileError.textContent = 'Invalid credentials. Mobile number and DOB do not match.';
+            mobileError.style.display = 'block';
+        }
+        
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+    
+    function logout() {
+        currentUser = null;
+        document.getElementById('popup').style.display = 'flex';
+        document.getElementById('mainPage').classList.remove('active');
+        
+        document.getElementById('idNumber').value = '';
+        document.getElementById('mobileNumber').value = '';
+        document.getElementById('dob').value = '';
+        
+        document.querySelectorAll('.error-msg').forEach(error => {
+            error.style.display = 'none';
+        });
+        
+        document.querySelector('.tab[data-tab="tab1"]').click();
+        
+        document.getElementById('memberDetails').innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading your details...</p>
+            </div>
+        `;
+    }
+    
+    // Initialize
+    (async function init() {
+        sheetData = await fetchSheetData();
+    })();
+</script>
+
+</body>
+</html>
