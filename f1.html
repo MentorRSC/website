@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Golden Ratio | Dynamic Loading Canvas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Poppins', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* FULL BLACK SCREEN CANVAS LAYER */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 1;
+        }
+
+        /* OVERLAY UI — sleek, minimal, shows current number and elegant loading vibe */
+        .info-panel {
+            position: fixed;
+            bottom: 28px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 2;
+            pointer-events: none;
+            font-weight: 400;
+            letter-spacing: 1px;
+            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.55);
+            width: fit-content;
+            margin: 0 auto;
+            padding: 12px 28px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 215, 150, 0.25);
+            box-shadow: 0 0 18px rgba(0,0,0,0.6);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .number-badge {
+            font-size: 1.2rem;
+            color: #e9c891;
+            text-shadow: 0 0 6px rgba(233,200,145,0.4);
+        }
+
+        .number-badge span {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #FFD966;
+            margin: 0 6px;
+            letter-spacing: 2px;
+        }
+
+        .sub {
+            font-size: 0.7rem;
+            color: #bbaa7f;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .control-bar {
+            position: fixed;
+            top: 28px;
+            right: 28px;
+            z-index: 3;
+            display: flex;
+            gap: 12px;
+            background: rgba(10,10,10,0.7);
+            backdrop-filter: blur(12px);
+            padding: 8px 18px;
+            border-radius: 48px;
+            border: 1px solid rgba(255,215,0,0.3);
+            pointer-events: auto;
+        }
+
+        button {
+            background: #1e1a10;
+            border: none;
+            color: #f3deba;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-family: monospace;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,210,90,0.4);
+        }
+
+        button:hover {
+            background: #3a2c18;
+            color: #ffeaac;
+            border-color: #ffcf6e;
+            transform: scale(1.02);
+        }
+
+        .value-display {
+            background: #000000aa;
+            padding: 4px 16px;
+            border-radius: 32px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffde9c;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .control-bar { top: 16px; right: 16px; padding: 4px 12px; gap: 6px; }
+            button { padding: 4px 12px; font-size: 1rem; }
+            .value-display { font-size: 1rem; padding: 2px 12px; }
+            .info-panel { bottom: 18px; padding: 8px 20px; }
+            .number-badge span { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="control-bar">
+    <button id="decrBtn">−</button>
+    <div class="value-display" id="numberValue">1</div>
+    <button id="incrBtn">+</button>
+</div>
+
+<div class="info-panel">
+    <div class="number-badge">
+        🌟 GOLDEN LOAD · <span id="activeNumber">1</span> · BOXES & CURVES
+    </div>
+    <div class="sub">✦ each number blooms unique rhythm ✦</div>
+</div>
+
+<canvas id="goldenCanvas"></canvas>
+
+<script>
+    (function(){
+        // -------- GOLDEN RATIO essence ----------
+        const PHI = (1 + Math.sqrt(5)) / 2;  // 1.618...
+        
+        // current interactive number (1,2,3,...)
+        let currentNumber = 1;      // default = 1 (full black screen + 1 box + curve)
+        const maxNumber = 12;       // beautiful upper limit (stays performant)
+        const minNumber = 1;
+        
+        // canvas references
+        const canvas = document.getElementById('goldenCanvas');
+        let ctx = null;
+        let width = 0, height = 0;
+        
+        // animation state
+        let animationId = null;
+        let timeOffset = 0;
+        let lastTimestamp = 0;
+        
+        // each "box + curve" element will be described by an object
+        // we regenerate the structure each time currentNumber changes
+        let elements = [];   // array of { cx, cy, size, angleSpeed, phase, colorVar, curveAmplitude, curveWavelength }
+        
+        // -------- helper: regenerate all visual elements based on currentNumber ----------
+        function regenerateElements() {
+            const newElements = [];
+            const num = currentNumber;
+            if (num < 1) return;
+            
+            // golden inspired layout: use spiral distribution or radial golden angle
+            // to place boxes in an elegant, non-overlapping harmony
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const maxRadius = Math.min(width, height) * 0.38;
+            const minRadius = Math.min(width, height) * 0.12;
+            
+            for (let i = 0; i < num; i++) {
+                // golden angle based placement -> 137.5° (golden angle related to phi)
+                const goldenAngle = i * 2 * Math.PI / PHI;   // using phi for divergence
+                // radius grows with index, using sqrt for even visual weight
+                const t = (i + 1) / (num + 0.5);
+                const radius = minRadius + (maxRadius - minRadius) * Math.pow(t, 0.85);
+                
+                let cx = centerX + Math.cos(goldenAngle) * radius;
+                let cy = centerY + Math.sin(goldenAngle) * radius;
+                
+                // adaptive size: bigger when fewer elements, elegant scaling
+                let baseSize = Math.min(width, height) * 0.09;
+                if (num <= 3) baseSize = Math.min(width, height) * 0.12;
+                if (num >= 8) baseSize = Math.min(width, height) * 0.065;
+                const sizeVariation = 0.7 + (i % 3) * 0.12;
+                let size = baseSize * (0.8 + (i / (num + 2)) * 0.6) * sizeVariation;
+                size = Math.min(size, Math.min(width, height) * 0.14);
+                
+                // each box gets unique motion speed related to phi and golden ratio
+                const angleSpeed = 0.6 + (i * 0.27) / PHI;
+                const phase = i * 1.2;
+                
+                // color palette: rich gold, amber, burnt orange, deep rose gold — dark background synergy
+                const hue = (35 + (i * 28) % 45) % 360;    // warm 30-75 range
+                const sat = 65 + (i % 3) * 12;
+                const light = 58 + (i % 4) * 8;
+                const colorVar = `hsla(${hue}, ${sat}%, ${light}%, 0.92)`;
+                const glowColor = `hsla(${hue}, ${sat}%, 65%, 0.5)`;
+                
+                // curve parameters: each box gets a dynamic trailing curve / wavy line
+                const curveAmplitude = 18 + (i % 7) * 5;
+                const curveWavelength = 1.2 + (i * 0.21) % 2.3;
+                
+                newElements.push({
+                    cx, cy, size, angleSpeed, phase, colorVar, glowColor,
+                    curveAmplitude, curveWavelength,
+                    // extra floating offset for organic motion
+                    floatOffsetX: i * 0.93,
+                    floatOffsetY: i * 1.27,
+                });
+            }
+            return newElements;
+        }
+        
+        // update elements on resize or number change
+        function updateElementsGeometry() {
+            if (!width || !height) return;
+            elements = regenerateElements();
+        }
+        
+        // ------ draw single box + its unique curve (organic loading flourish) ------
+        function drawBoxWithCurve(el, nowSec) {
+            if (!ctx) return;
+            
+            // dynamic motion: gentle orbiting / breathing using sine based on time and element phase
+            const breath = Math.sin(nowSec * 0.8 + el.phase) * 3.2;
+            const orbitX = Math.sin(nowSec * 0.45 + el.floatOffsetX) * 5.2;
+            const orbitY = Math.cos(nowSec * 0.52 + el.floatOffsetY) * 4.7;
+            
+            const x = el.cx + breath * 0.6 + orbitX;
+            const y = el.cy + breath * 0.4 + orbitY;
+            const sz = el.size + Math.sin(nowSec * 1.8 + el.phase) * (el.size * 0.045);
+            
+            // ---- draw curve (elegant flowing line that emerges from the box) ----
+            // curve direction uses golden angle inspired direction per element
+            const dirAngle = (nowSec * el.angleSpeed + el.phase * 0.9) % (Math.PI * 2);
+            const dirX = Math.cos(dirAngle);
+            const dirY = Math.sin(dirAngle);
+            
+            const curveLength = el.size * 1.7;
+            const amp = el.curveAmplitude * (0.7 + Math.sin(nowSec * 1.2 + el.phase) * 0.3);
+            const wavelen = el.curveWavelength;
+            
+            ctx.beginPath();
+            ctx.lineWidth = Math.max(2.2, el.size * 0.12);
+            ctx.lineCap = 'round';
+            
+            // gradient on curve: shimmering golden thread
+            const grad = ctx.createLinearGradient(x, y, x + dirX * curveLength, y + dirY * curveLength);
+            grad.addColorStop(0, `rgba(255, 210, 110, 0.9)`);
+            grad.addColorStop(0.6, `rgba(200, 150, 70, 0.7)`);
+            grad.addColorStop(1, `rgba(180, 120, 50, 0.4)`);
+            ctx.strokeStyle = grad;
+            
+            // draw organic wave curve
+            let steps = 28;
+            let prevX = x, prevY = y;
+            for (let step = 1; step <= steps; step++) {
+                const t = step / steps;
+                const along = t * curveLength;
+                const perp = Math.sin(t * Math.PI * wavelen * 2.5 + nowSec * 3.0 + el.phase) * amp * (1 - t * 0.6);
+                // perpendicular direction (rotate 90°)
+                const perpX = -dirY * perp;
+                const perpY = dirX * perp;
+                const cxCurve = x + dirX * along + perpX;
+                const cyCurve = y + dirY * along + perpY;
+                if (step === 1) {
+                    ctx.moveTo(cxCurve, cyCurve);
+                } else {
+                    ctx.lineTo(cxCurve, cyCurve);
+                }
+                prevX = cxCurve; prevY = cyCurve;
+            }
+            ctx.stroke();
+            
+            // add subtle glow dots along curve tip
+            ctx.save();
+            ctx.shadowBlur = 0;
+            for (let glow = 0; glow < 3; glow++) {
+                const tGlow = 0.85 + glow * 0.07;
+                const alongGlow = tGlow * curveLength;
+                const perpGlow = Math.sin(tGlow * Math.PI * wavelen * 2.5 + nowSec * 3.0 + el.phase) * amp * (1 - tGlow * 0.6);
+                const perpXg = -dirY * perpGlow;
+                const perpYg = dirX * perpGlow;
+                const px = x + dirX * alongGlow + perpXg;
+                const py = y + dirY * alongGlow + perpYg;
+                ctx.beginPath();
+                ctx.arc(px, py, 2.2 + glow*0.8, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 190, 80, ${0.5 - glow*0.1})`;
+                ctx.fill();
+            }
+            ctx.restore();
+            
+            // ----- draw main BOX with elegant rotation & metallic edges -----
+            ctx.save();
+            ctx.shadowColor = el.glowColor || "rgba(255,180,60,0.5)";
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            
+            const boxRot = nowSec * 0.55 * el.angleSpeed + el.phase;
+            ctx.translate(x, y);
+            ctx.rotate(boxRot);
+            ctx.fillStyle = el.colorVar;
+            ctx.fillRect(-sz/2, -sz/2, sz, sz);
+            
+            // golden inner border
+            ctx.strokeStyle = `rgba(255, 215, 120, 0.85)`;
+            ctx.lineWidth = Math.max(1.8, sz * 0.07);
+            ctx.strokeRect(-sz/2, -sz/2, sz, sz);
+            
+            // draw mini golden ratio symbol inside each box (Phi mark)
+            ctx.font = `bold ${Math.floor(sz * 0.45)}px "Georgia", monospace`;
+            ctx.fillStyle = "#F5D742";
+            ctx.shadowBlur = 5;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("φ", 0, 0);
+            
+            ctx.restore();
+            
+            // extra: spark particles around box (loading liveliness)
+            if (currentNumber <= 6 || (nowSec * 2) % 1.2 > 0.6) {
+                for (let s = 0; s < 3; s++) {
+                    const angleSpark = (nowSec * 5 + el.phase + s * 2.0) % (Math.PI*2);
+                    const rad = sz * 0.7;
+                    const sx = x + Math.cos(angleSpark) * rad;
+                    const sy = y + Math.sin(angleSpark) * rad;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 1.8, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(255, 200, 100, 0.7)`;
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // draw background ornaments: golden ratio spiral hint / subtle vignette
+        function drawBackgroundGlow(nowSec) {
+            if (!ctx) return;
+            const grad = ctx.createRadialGradient(width/2, height/2, 30, width/2, height/2, Math.max(width, height)*0.7);
+            grad.addColorStop(0, '#020200');
+            grad.addColorStop(0.7, '#0a0701');
+            grad.addColorStop(1, '#000000');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+            
+            // faint golden ratio spiral lines (static elegance)
+            ctx.save();
+            ctx.globalAlpha = 0.2 + Math.sin(nowSec * 0.2) * 0.05;
+            ctx.strokeStyle = "#dbb45c";
+            ctx.lineWidth = 1.2;
+            for (let s = 0; s < 3; s++) {
+                ctx.beginPath();
+                let angleOffset = nowSec * 0.1 + s;
+                for (let t = 0; t <= 1; t += 0.02) {
+                    const r = Math.pow(t, 1.2) * Math.min(width, height) * 0.48;
+                    const angle = t * 4 * Math.PI * PHI + angleOffset;
+                    const x = width/2 + Math.cos(angle) * r;
+                    const y = height/2 + Math.sin(angle) * r;
+                    if (t === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        
+        // draw loading text subtle animation (if number changes it feels like loading)
+        function drawLoadingEssence(nowSec) {
+            if (!ctx) return;
+            ctx.font = `300 14px 'Inter', monospace`;
+            ctx.fillStyle = `rgba(220, 180, 100, ${0.4 + Math.sin(nowSec * 2.5) * 0.15})`;
+            ctx.textAlign = "center";
+            ctx.shadowBlur = 0;
+            ctx.fillText("⚡ φ-LOAD · DYNAMIC BOXES & CURVES", width/2, height - 38);
+            ctx.fillStyle = `rgba(180, 145, 80, 0.5)`;
+            ctx.font = `10px monospace`;
+            ctx.fillText("golden ratio rhythm · each number unique", width/2, height - 20);
+        }
+        
+        // ---------- MAIN ANIMATION LOOP (beautiful smooth loading) ----------
+        let lastFrameTime = 0;
+        function animate(timestamp) {
+            if (!ctx || width === 0 || height === 0) {
+                animationId = requestAnimationFrame(animate);
+                return;
+            }
+            
+            const nowSec = timestamp * 0.001;  // seconds for organic motion
+            
+            // clear canvas with absolute black base
+            ctx.clearRect(0, 0, width, height);
+            
+            // draw deep black + subtle spiral
+            drawBackgroundGlow(nowSec);
+            
+            // draw all boxes and their unique curves (loading elements)
+            for (let el of elements) {
+                drawBoxWithCurve(el, nowSec);
+            }
+            
+            // extra: floating particles that resonate with currentNumber
+            if (currentNumber > 0) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                for (let p = 0; p < currentNumber * 3; p++) {
+                    const anglePart = (nowSec * 1.2 + p) % (Math.PI * 2);
+                    const rad = Math.min(width, height) * 0.42;
+                    const px = width/2 + Math.cos(anglePart + p) * rad * (0.5 + Math.sin(nowSec * 0.7 + p) * 0.2);
+                    const py = height/2 + Math.sin(anglePart * 1.3 + p) * rad * 0.5;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 1.5 + (p % 3), 0, Math.PI*2);
+                    ctx.fillStyle = `hsla(${45 + p * 12}, 75%, 60%, 0.3)`;
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+            
+            drawLoadingEssence(nowSec);
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // ----- resize handler: recalc canvas dimensions & regenerate positions -----
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            if (ctx) {
+                // regenerate elements with new dimensions
+                updateElementsGeometry();
+            }
+        }
+        
+        // ------ update number from UI and refresh loading world ------
+        function setNumberAndRefresh(newVal) {
+            let val = Math.floor(newVal);
+            if (isNaN(val)) val = 1;
+            val = Math.min(maxNumber, Math.max(minNumber, val));
+            if (currentNumber === val) return;
+            currentNumber = val;
+            
+            // update UI displays
+            const numberSpan = document.getElementById('activeNumber');
+            const valueDiv = document.getElementById('numberValue');
+            if (numberSpan) numberSpan.innerText = currentNumber;
+            if (valueDiv) valueDiv.innerText = currentNumber;
+            
+            // regenerate the elements array based on new number & current canvas size
+            if (width && height) {
+                elements = regenerateElements();
+            } else {
+                // if canvas not ready, just flag, resize will call update
+                setTimeout(() => {
+                    if (width && height) elements = regenerateElements();
+                }, 10);
+            }
+        }
+        
+        function increment() {
+            setNumberAndRefresh(currentNumber + 1);
+        }
+        
+        function decrement() {
+            setNumberAndRefresh(currentNumber - 1);
+        }
+        
+        // ---- initialize everything -----
+        function init() {
+            ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            
+            resizeCanvas();
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                // re-evaluate geometry
+                if (currentNumber >= 1) {
+                    elements = regenerateElements();
+                }
+            });
+                     // set initial number = 1 -> full black screen, one box, one curve
+            currentNumber = 1;
+            const numberSpan = document.getElementById('activeNumber');
+            const valueDiv = document.getElementById('numberValue');
+            if (numberSpan) numberSpan.innerText = '1';
+            if (valueDiv) valueDiv.innerText = '1';
+            
+            // generate elements after dimensions are ready
+            elements = regenerateElements();
+            
+            // bind UI buttons
+            const incBtn = document.getElementById('incrBtn');
+            const decBtn = document.getElementById('decrBtn');
+            if (incBtn) incBtn.addEventListener('click', increment);
+            if (decBtn) decBtn.addEventListener('click', decrement);
+            
+            // start animation
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // start everything when DOM ready
+        window.addEventListener('DOMContentLoaded', init);
+    })();
+</script>
+</body>
+</html>
+            // set initial number = 1 -> full bl
