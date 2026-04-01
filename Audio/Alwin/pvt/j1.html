@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Member Registration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Popup Styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .popup-container {
+            background: white;
+            border-radius: 20px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .popup-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .popup-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .popup-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-msg {
+            color: #27ae60;
+            font-size: 14px;
+            text-align: center;
+            padding: 15px;
+            background: #d5f4e6;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f5f5f5;
+            color: #999;
+            position: relative;
+        }
+
+        .step.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed {
+            background: #27ae60;
+            color: white;
+        }
+
+        .step:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .step:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- First Popup: Join Confirmation -->
+<div id="joinPopup" class="popup-overlay">
+    <div class="popup-container">
+        <div class="popup-header">
+            <h2>🌟 Join Our Exclusive Club</h2>
+            <p>Become a member today!</p>
+        </div>
+        <div class="popup-content">
+            <div class="info-box">
+                <p>✨ <strong>Benefits of Membership:</strong><br>
+                • Networking opportunities<br>
+                • Exclusive events and workshops<br>
+                • Special discounts and offers<br>
+                • Community support</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="showRegistrationForm()">Yes, I want to join! 🎉</button>
+                <button class="btn btn-secondary" onclick="declineJoin()">No, thanks 😔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Popup: Registration Form -->
+<div id="registrationPopup" class="popup-overlay" style="display: none;">
+    <div class="popup-container">
+        <div class="popup-header">
+            <h2>📝 Member Registration</h2>
+            <p>Please provide your details</p>
+        </div>
+        <div class="popup-content">
+            <div class="step-indicator">
+                <div class="step active" id="step1">Step 1</div>
+                <div class="step" id="step2">Step 2</div>
+            </div>
+            
+            <!-- Step 1: Personal Details -->
+            <div id="step1Content">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="fullName" placeholder="Enter your full name" required>
+                    <div class="error-msg" id="nameError"></div>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth *</label>
+                    <input type="date" id="dob" required>
+                    <div class="error-msg" id="dobError"></div>
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number *</label>
+                    <input type="tel" id="mobile" placeholder="10-digit mobile number" required>
+                    <div class="error-msg" id="mobileError"></div>
+                </div>
+                <button class="btn btn-primary" onclick="nextStep()">Next →</button>
+            </div>
+            
+            <!-- Step 2: Offerings -->
+            <div id="step2Content" style="display: none;">
+                <div class="info-box">
+                    <p>💡 <strong>What can you offer?</strong><br>
+                    Tell us about your skills, talents, or resources that you can contribute to our community.</p>
+                </div>
+                <div class="form-group">
+                    <label>What can you offer for the membership? *</label>
+                    <textarea id="offering" placeholder="Examples: Event planning, Technical skills, Mentoring, Venue space, Social media management, etc." rows="4" required></textarea>
+                    <div class="error-msg" id="offeringError"></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+                    <button class="btn btn-primary" onclick="submitRegistration()">Submit Application</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Third Popup: Success Message -->
+<div id="successPopup" class="popup-overlay" style="display: none;">
+    <div class="popup-container">
+        <div class="popup-header" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
+            <h2>✅ Application Submitted!</h2>
+        </div>
+        <div class="popup-content">
+            <div class="success-msg" style="background: #d5f4e6; margin-bottom: 20px;">
+                <p style="font-size: 16px; margin-bottom: 10px;">🎉 Thank you for your interest!</p>
+                <p>Your registration has been received.</p>
+            </div>
+            <div class="info-box">
+                <p>📞 <strong>Important Note:</strong><br>
+                You cannot register directly for membership. Our club administrator will review your application and contact you if you're eligible. Please wait for our call within 2-3 business days.</p>
+            </div>
+            <button class="btn btn-primary" onclick="goToDashboard()">Go to Dashboard →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Google Apps Script Web App URL - REPLACE WITH YOUR DEPLOYED URL
+    // To deploy: Go to Apps Script > Deploy > New deployment > Web app
+    const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+    
+    let registrationData = {};
+
+    // Show registration form
+    function showRegistrationForm() {
+        document.getElementById('joinPopup').style.display = 'none';
+        document.getElementById('registrationPopup').style.display = 'flex';
+    }
+
+    // Decline joining
+    function declineJoin() {
+        if (confirm('Are you sure you want to decline? You can always join later.')) {
+            window.location.href = 'https://www.google.com'; // Redirect to Google or your desired page
+        }
+    }
+
+    // Next step in registration
+    function nextStep() {
+        // Validate step 1
+        const name = document.getElementById('fullName').value.trim();
+        const dob = document.getElementById('dob').value;
+        const mobile = document.getElementById('mobile').value.trim();
+        
+        let isValid = true;
+        
+        if (!name) {
+            document.getElementById('nameError').textContent = 'Please enter your full name';
+            document.getElementById('nameError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('nameError').style.display = 'none';
+        }
+        
+        if (!dob) {
+            document.getElementById('dobError').textContent = 'Please select your date of birth';
+            document.getElementById('dobError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('dobError').style.display = 'none';
+        }
+        
+        if (!mobile) {
+            document.getElementById('mobileError').textContent = 'Please enter your mobile number';
+            document.getElementById('mobileError').style.display = 'block';
+            isValid = false;
+        } else if (!/^\d{10}$/.test(mobile)) {
+            document.getElementById('mobileError').textContent = 'Please enter a valid 10-digit mobile number';
+            document.getElementById('mobileError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('mobileError').style.display = 'none';
+        }
+        
+        if (isValid) {
+            // Save data
+            registrationData.name = name;
+            registrationData.dob = dob;
+            registrationData.mobile = mobile;
+            
+            // Update step indicators
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step2').classList.add('active');
+            
+            // Show step 2
+            document.getElementById('step1Content').style.display = 'none';
+            document.getElementById('step2Content').style.display = 'block';
+        }
+    }
+    
+    // Previous step
+    function prevStep() {
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step1').classList.add('active');
+        document.getElementById('step1').classList.remove('completed');
+        
+        document.getElementById('step2Content').style.display = 'none';
+        document.getElementById('step1Content').style.display = 'block';
+    }
+    
+    // Submit registration
+    async function submitRegistration() {
+        const offering = document.getElementById('offering').value.trim();
+        
+        if (!offering) {
+            document.getElementById('offeringError').textContent = 'Please tell us what you can offer';
+            document.getElementById('offeringError').style.display = 'block';
+            return;
+        }
+        
+        document.getElementById('offeringError').style.display = 'none';
+        
+        // Add offering to data
+        registrationData.offering = offering;
+        
+        // Show loading state
+        const submitBtn = event.target;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Submitting...';
+        submitBtn.disabled = true;
+        
+        try {
+            // Save to Google Sheets via Apps Script
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Use no-cors for web app
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(registrationData)
+            });
+            
+            // Close registration popup
+            document.getElementById('registrationPopup').style.display = 'none';
+            
+            // Show success popup
+            document.getElementById('successPopup').style.display = 'flex';
+            
+            // Store in localStorage for dashboard
+            localStorage.setItem('registrationData', JSON.stringify(registrationData));
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('There was an error submitting your application. Please try again.');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+    
+    // Go to dashboard
+    function goToDashboard() {
+        window.location.href = 'dashboard.html';
+    }
+    
+    // Prevent closing popups by clicking outside
+    document.querySelectorAll('.popup-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                // Don't close on outside click for registration forms
+                if (this.id !== 'registrationPopup') {
+                    this.style.display = 'none';
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
