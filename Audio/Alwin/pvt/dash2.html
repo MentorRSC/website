@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Club Member Portal | Secure Access</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Popup overlay with click-outside detection */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(6px);
+            transition: all 0.2s ease;
+            cursor: pointer; /* Indicates clickable area for redirect */
+        }
+
+        /* The actual modal box - clicking on it won't close (stopPropagation) */
+        .popup-container {
+            background: white;
+            border-radius: 28px;
+            width: 520px;
+            max-width: 94%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
+            overflow: hidden;
+            animation: slideIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            cursor: default;
+            position: relative;
+        }
+
+        /* Close (X) button styling - top right corner */
+        .close-modal-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            width: 34px;
+            height: 34px;
+            background: #f0f0f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 20;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border: none;
+            font-family: monospace;
+        }
+
+        .close-modal-btn:hover {
+            background: #e74c3c;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-40px) scale(0.96);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9ff;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 16px 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+            color: #5a626e;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            padding: 28px 30px 32px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: #fefefe;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            background: white;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(105deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+            box-shadow: 0 6px 14px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: wait;
+            transform: none;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .info-msg {
+            color: #4a6fa5;
+            font-size: 12px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Main dashboard */
+        .main-page {
+            display: none;
+            width: 100%;
+            max-width: 860px;
+            background: white;
+            border-radius: 32px;
+            padding: 28px 32px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .main-page.active {
+            display: block;
+            animation: fadeScale 0.4s ease;
+        }
+
+        @keyframes fadeScale {
+            from { opacity: 0; transform: scale(0.97);}
+            to { opacity: 1; transform: scale(1);}
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 3px solid #667eea;
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #1e293b;
+            font-size: 1.8rem;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            color: #475569;
+            margin-top: 6px;
+        }
+
+        .logout-btn {
+            padding: 10px 22px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+            transform: scale(1.02);
+        }
+
+        .member-card {
+            background: linear-gradient(115deg, #f8fafc 0%, #eef2ff 100%);
+            border-radius: 28px;
+            padding: 28px;
+            margin-top: 18px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+        }
+
+        .member-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 2px dashed #a5b4fc;
+        }
+
+        .member-header h2 {
+            color: #4338ca;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 20px;
+            background: #6366f1;
+            color: white;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .details-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 20px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .detail-row:hover {
+            transform: translateX(6px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            background: #ffffff;
+        }
+
+        .detail-label {
+            font-weight: 800;
+            min-width: 125px;
+            color: #4f46e5;
+            font-size: 0.95rem;
+        }
+
+        .detail-value {
+            color: #0f172a;
+            font-weight: 500;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .welcome-message {
+            background: linear-gradient(95deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 60px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 22px;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 45px;
+            color: #334155;
+        }
+
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            animation: spin 0.8s linear infinite;
+            margin: 18px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Redirect hint (optional tiny text) */
+        .click-hint {
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 16px;
+            padding-bottom: 12px;
+            cursor: default;
+            border-top: 1px solid #edf2f7;
+            padding-top: 14px;
+        }
+
+        @media (max-width: 680px) {
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .detail-label {
+                margin-bottom: 4px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .logout-btn {
+                width: 100%;
+            }
+            .tab-content {
+                padding: 22px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN POPUP MODAL -->
+<div id="popup" class="popup-overlay">
+    <div class="popup-container" id="popupContainer">
+        <!-- Close (X) button inside modal -->
+        <div class="close-modal-btn" id="closeModalBtn" aria-label="Close and redirect">✕</div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="tab1">🔑 Login with ID</div>
+            <div class="tab" data-tab="tab2">📱 Login with Mobile & DOB</div>
+        </div>
+        
+        <div id="tab1" class="tab-content active">
+            <form id="loginFormID">
+                <div class="form-group">
+                    <label>🆔 ID Number</label>
+                    <input type="text" id="idNumber" placeholder="Enter your unique ID" required autocomplete="off">
+                    <div class="error-msg" id="idError"></div>
+                </div>
+                <button type="submit" class="login-btn">➡️ Access Portal</button>
+            </form>
+        </div>
+        
+        <div id="tab2" class="tab-content">
+            <form id="loginFormMobile">
+                <div class="form-group">
+                    <label>📞 Mobile Number</label>
+                    <input type="text" id="mobileNumber" placeholder="10-digit mobile" required autocomplete="off">
+                    <div class="info-msg">📱 Enter registered mobile number</div>
+                    <div class="error-msg" id="mobileError"></div>
+                </div>
+                <div class="form-group">
+                    <label>🎂 Date of Birth</label>
+                    <input type="text" id="dob" placeholder="DD/MM/YYYY or YYYY-MM-DD" required>
+                    <div class="info-msg">📅 Format: DD/MM/YYYY or YYYY-MM-DD</div>
+                    <div class="error-msg" id="dobError"></div>
+                </div>
+                <button type="submit" class="login-btn">📲 Verify & Login</button>
+            </form>
+        </div>
+        <div class="click-hint">
+            ⚡ Click outside the box → redirect to club homepage
+        </div>
+    </div>
+</div>
+
+<!-- MAIN PORTAL DASHBOARD -->
+<div id="mainPage" class="main-page">
+    <div class="header">
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        <div>
+            <h1>🏆 Club Member Portal</h1>
+            <p>Exclusive member dashboard</p>
+        </div>
+    </div>
+    <div id="memberDetails">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading premium details...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- CONFIGURATION ----------
+    const SPREADSHEET_ID = '1YXbTbLd7KhsdHy9QJXxoftKT8YJ-JyPbFJG7qhKNId0';
+    let sheetData = [];
+    let currentUser = null;
+
+    // ---------- HELPER FUNCTIONS (Date, fetch, validation) ----------
+    function normalizeDate(dateStr) {
+        if (!dateStr) return '';
+        const str = dateStr.toString().trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+        const parts = str.split(/[/-]/);
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+            }
+            let date = new Date(parts[2], parts[1]-1, parts[0]);
+            if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+            date = new Date(parts[2], parts[0]-1, parts[1]);
+            if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+        }
+        const date = new Date(str);
+        if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+        return str;
+    }
+
+    function compareDates(date1, date2) {
+        if (!date1 || !date2) return false;
+        return normalizeDate(date1) === normalizeDate(date2);
+    }
+
+    async function fetchSheetData() {
+        try {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv`;
+            const response = await fetch(csvUrl);
+            if (!response.ok) throw new Error('Network error');
+            const csvText = await response.text();
+            const rows = csvText.split('\n').map(row => row.split(','));
+            const headers = rows[0].map(h => h.trim().toLowerCase());
+            const data = [];
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].length > 1 && rows[i][0] && rows[i][0].trim()) {
+                    const row = {};
+                    headers.forEach((header, idx) => {
+                        if (header && rows[i][idx]) row[header] = rows[i][idx].trim();
+                    });
+                    data.push(row);
+                }
+            }
+            return data.length ? data : getMockData();
+        } catch (error) {
+            console.warn("Using mock data due to fetch issue", error);
+            return getMockData();
+        }
+    }
+
+    function getMockData() {
+        return [
+            { "sl no.": "1", "name": "Olivia Chen", "dob": "1992-03-22", "id": "M101", "mobile": "9988776655", "level": "Platinum" },
+            { "sl no.": "2", "name": "Ethan Rodriguez", "dob": "1988-07-14", "id": "M202", "mobile": "9876543210", "level": "Gold" },
+            { "sl no.": "3", "name": "Sophia Kumar", "dob": "1995-12-01", "id": "M303", "mobile": "9123456789", "level": "Diamond" },
+            { "sl no.": "4", "name": "Liam Walker", "dob": "1985-09-09", "id": "M404", "mobile": "9988001122", "level": "Silver" }
+        ];
+    }
+
+    async function validateUser(credentials, type) {
+        try {
+            if (sheetData.length === 0) sheetData = await fetchSheetData();
+            let user = null;
+            if (type === 'id') {
+                const searchId = credentials.id.toString().trim();
+                user = sheetData.find(row => (row['id'] ? row['id'].toString().trim() : '') === searchId);
+            } else if (type === 'mobile') {
+                const searchMobile = credentials.mobile.toString().trim();
+                const searchDob = credentials.dob.toString().trim();
+                user = sheetData.find(row => {
+                    const rowMobile = row['mobile'] ? row['mobile'].toString().trim() : '';
+                    const rowDob = row['dob'] ? row['dob'].toString().trim() : '';
+                    return rowMobile === searchMobile && compareDates(rowDob, searchDob);
+                });
+            }
+            if (user) {
+                currentUser = user;
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.error(err);
+            return false;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return 'Not provided';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch(e) { return dateStr; }
+    }
+
+    function createDetailRow(label, value) {
+        if (!value || value === '') return '';
+        return `<div class="detail-row"><div class="detail-label">${label}</div><div class="detail-value">${escapeHtml(value)}</div></div>`;
+    }
+
+    function displayUserDetails() {
+        const container = document.getElementById('memberDetails');
+        if (!currentUser) {
+            container.innerHTML = '<div class="error-container" style="text-align:center;padding:2rem;">Session expired</div>';
+            return;
+        }
+        const levelColors = { 'Gold': '#F59E0B', 'Platinum': '#94A3B8', 'Silver': '#6B7280', 'Diamond': '#3B82F6' };
+        const level = currentUser['level'] || 'Member';
+        const levelColor = levelColors[level] || '#667eea';
+        const html = `
+            <div class="welcome-message">✨ Welcome back, ${escapeHtml(currentUser['name'] || 'Champion')}! ✨</div>
+            <div class="member-card">
+                <div class="member-header">
+                    <h2>${escapeHtml(currentUser['name'] || 'Member')}</h2>
+                    <div class="badge" style="background: ${levelColor}">🏅 ${escapeHtml(level)} Tier</div>
+                </div>
+                <div class="details-grid">
+                    ${createDetailRow('📌 SL No.', currentUser['sl no.'])}
+                    ${createDetailRow('🆔 Member ID', currentUser['id'])}
+                    ${createDetailRow('📱 Mobile', currentUser['mobile'])}
+                    ${createDetailRow('🎂 Date of Birth', formatDisplayDate(currentUser['dob']))}
+                    ${createDetailRow('⭐ Membership Level', currentUser['level'])}
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    // ---------- REDIRECT FUNCTION (close + external page) ----------
+    function redirectToExternalPage() {
+        // Change this URL to your desired external page
+        window.location.href = "https://example.com/club-landing";  // <--- Replace with actual redirect URL
+        // For demonstration, we use a placeholder. In production, replace with your club homepage.
+        // For safety we keep a comment: modify the line above.
+    }
+
+    // ---------- CLOSE MODAL & REDIRECT (with option to bypass if already logged in) ----------
+    function closePopupAndRedirect() {
+        // Only redirect if popup is visible AND user is NOT logged in (prevents accidental redirect from dashboard)
+        const popup = document.getElementById('popup');
+        if (popup && popup.style.display !== 'none' && !currentUser) {
+            redirectToExternalPage();
+        } else if (popup && popup.style.display !== 'none' && currentUser) {
+            // edge: if popup somehow visible while logged in? but we keep consistency
+            popup.style.display = 'none';
+        }
+    }
+
+    // ---------- Initialize UI / Event Listeners ----------
+    function initEventHandlers() {
+        // 1. CLOSE BUTTON (X) inside modal
+        const closeBtn = document.getElementById('closeModalBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();  // prevent bubbling to overlay
+                closePopupAndRedirect();
+            });
+        }
+
+        // 2. CLICK OUTSIDE THE MODAL BOX (on overlay but NOT on container)
+        const overlay = document.getElementById('popup');
+        const modalContainer = document.getElementById('popupContainer');
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                // If the click target is the overlay itself (background) and NOT the container
+                if (e.target === overlay) {
+                    closePopupAndRedirect();
+                }
+            });
+        }
+
+        // 3. Prevent clicks inside modal from closing
+        if (modalContainer) {
+            modalContainer.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // Tab switching logic
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                document.querySelectorAll('.error-msg').forEach(err => err.style.display = 'none');
+            });
+        });
+    }
+
+    // Login handlers
+    async function setupLoginForms() {
+        const idForm = document.getElementById('loginFormID');
+        const mobileForm = document.getElementById('loginFormMobile');
+        
+        idForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const idNumber = document.getElementById('idNumber').value.trim();
+            const idError = document.getElementById('idError');
+            if (!idNumber) {
+                idError.textContent = 'ID is required';
+                idError.style.display = 'block';
+                return;
+            }
+            idError.style.display = 'none';
+            const btn = e.target.querySelector('.login-btn');
+            const orig = btn.textContent;
+            btn.disabled = true; btn.textContent = '🔍 Verifying...';
+            const valid = await validateUser({ id: idNumber }, 'id');
+            if (valid) {
+                document.getElementById('popup').style.display = 'none';
+                document.getElementById('mainPage').classList.add('active');
+                displayUserDetails();
+            } else {
+                idError.textContent = '❌ ID not found. Please check credentials.';
+                idError.style.display = 'block';
+            }
+            btn.disabled = false; btn.textContent = orig;
+        });
+
+        mobileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mobile = document.getElementById('mobileNumber').value.trim();
+            const dob = document.getElementById('dob').value.trim();
+            const mobileError = document.getElementById('mobileError');
+            const dobError = document.getElementById('dobError');
+            let hasErr = false;
+            if (!mobile) { mobileError.textContent = 'Mobile required'; mobileError.style.display = 'block'; hasErr = true; } 
+            else { mobileError.style.display = 'none'; }
+            if (!dob) { dobError.textContent = 'Date of birth required'; dobError.style.display = 'block'; hasErr = true; } 
+            else { dobError.style.display = 'none'; }
+            if (hasErr) return;
+            
+            const btn = e.target.querySelector('.login-btn');
+            const orig = btn.textContent;
+            btn.disabled = true; btn.textContent = '🔄 Validating...';
+            const valid = await validateUser({ mobile: mobile, dob: dob }, 'mobile');
+            if (valid) {
+                document.getElementById('popup').style.display = 'none';
+                document.getElementById('mainPage').classList.add('active');
+                displayUserDetails();
+            } else {
+                mobileError.textContent = '❌ Mobile & DOB combination not matched.';
+                mobileError.style.display = 'block';
+            }
+            btn.disabled = false; btn.textContent = orig;
+        });
+    }
+
+    function logout() {
+        currentUser = null;
+        const popup = document.getElementById('popup');
+        const mainPage = document.getElementById('mainPage');
+        popup.style.display = 'flex';
+        mainPage.classList.remove('active');
+        // reset fields
+        document.getElementById('idNumber').value = '';
+        document.getElementById('mobileNumber').value = '';
+        document.getElementById('dob').value = '';
+        document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+        document.querySelector('.tab[data-tab="tab1"]').click();
+        document.getElementById('memberDetails').innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading dashboard...</p></div>`;
+    }
+
+    // Expose logout globally
+    window.logout = logout;
+
+    // Initialize everything
+    (async function init() {
+        sheetData = await fetchSheetData();
+        initEventHandlers();
+        setupLoginForms();
+        // Ensure popup is visible at start
+        document.getElementById('popup').style.display = 'flex';
+        document.getElementById('mainPage').classList.remove('active');
+    })();
+</script>
+</body>
+</html>
