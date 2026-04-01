@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Member Dashboard | Secure Portal</title>
+  <!-- Google Fonts & Simple Icons (Font Awesome) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: #f4f7fc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* MODAL POPUP (Login / ID verification) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      transition: all 0.2s ease;
+    }
+
+    .login-card {
+      background: white;
+      max-width: 460px;
+      width: 90%;
+      border-radius: 32px;
+      padding: 2rem 1.8rem;
+      box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+      text-align: center;
+      animation: fadeSlideUp 0.25s ease-out;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+
+    .login-card h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1e2a3e;
+    }
+
+    .login-card p {
+      color: #5b6e8c;
+      margin-bottom: 1.8rem;
+      font-size: 0.9rem;
+    }
+
+    .input-group {
+      text-align: left;
+      margin-bottom: 1.2rem;
+    }
+
+    .input-group label {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #2c3e66;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 1rem;
+      transition: 0.2s;
+      outline: none;
+      background: #fefefe;
+    }
+
+    .input-group input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+
+    .login-btn {
+      background: #1e293b;
+      color: white;
+      border: none;
+      padding: 12px 0;
+      width: 100%;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .login-btn:hover {
+      background: #0f172a;
+      transform: scale(0.98);
+    }
+
+    .error-msg {
+      color: #e53e3e;
+      font-size: 0.8rem;
+      margin-top: 12px;
+      background: #fff5f5;
+      padding: 8px;
+      border-radius: 40px;
+    }
+
+    /* MAIN DASHBOARD (hidden until login) */
+    .dashboard-container {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .app-header {
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border-bottom: 1px solid #e9edf2;
+      padding: 0 2rem;
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 1rem 0;
+    }
+
+    .logo-area h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1f3b4c, #2c5282);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+
+    /* TABS */
+    .tabs-nav {
+      display: flex;
+      gap: 0.8rem;
+      background: #f1f5f9;
+      padding: 0.5rem;
+      border-radius: 48px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn i {
+      font-size: 1rem;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: #1e3a8a;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .logout-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
+    }
+
+    /* BODY / MAIN */
+    .main-body {
+      flex: 1;
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      width: 100%;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fade 0.2s ease;
+    }
+
+    .tab-pane.active-pane {
+      display: block;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Cards & tables */
+    .welcome-card {
+      background: white;
+      border-radius: 28px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+      border: 1px solid #eef2f6;
+    }
+
+    .member-badge {
+      display: inline-block;
+      background: #e6f0ff;
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1e40af;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+      margin-top: 1.2rem;
+    }
+
+    .stat-card {
+      background: #f8fafc;
+      border-radius: 24px;
+      padding: 1.2rem;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .transaction-table {
+      width: 100%;
+      background: white;
+      border-radius: 24px;
+      overflow-x: auto;
+      border-collapse: collapse;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .transaction-table th, .transaction-table td {
+      padding: 1rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #eef2f6;
+    }
+
+    .transaction-table th {
+      background: #f9fbfd;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #6c7a91;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: #6c7a8f;
+      font-size: 0.8rem;
+      border-top: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    @media (max-width: 700px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .tabs-nav {
+        order: 2;
+      }
+      .logout-btn {
+        order: 3;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN MODAL (popup on first load) -->
+<div id="loginModal" class="modal-overlay">
+  <div class="login-card">
+    <i class="fas fa-id-card" style="font-size: 2.5rem; color:#2c3e66; margin-bottom: 0.5rem;"></i>
+    <h2>Member Access</h2>
+    <p>Enter credentials to view dashboard</p>
+    <div class="input-group">
+      <label><i class="fas fa-phone-alt"></i> Mobile Number</label>
+      <input type="tel" id="mobileInput" placeholder="9876543210" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label><i class="fas fa-calendar-alt"></i> Date of Birth (YYYY-MM-DD)</label>
+      <input type="text" id="dobInput" placeholder="1990-01-01" autocomplete="off">
+    </div>
+    <button id="loginSubmitBtn" class="login-btn"><i class="fas fa-sign-in-alt"></i> Login & Verify</button>
+    <div id="loginErrorMsg" class="error-msg" style="display: none;">Invalid credentials or member not found.</div>
+    <div id="loadingMsg" style="font-size:0.8rem; margin-top:12px; color:#2b6cb0; display: none;"><i class="fas fa-spinner fa-pulse"></i> Verifying with central records...</div>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD (initially hidden) -->
+<div id="dashboardApp" class="dashboard-container">
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <h1><i class="fas fa-chalkboard-user"></i> Dashboard</h1>
+      </div>
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="status"><i class="fas fa-chart-line"></i> Status</button>
+        <button class="tab-btn" data-tab="transaction"><i class="fas fa-history"></i> Transaction</button>
+        <button class="tab-btn" data-tab="logout" id="logoutTabBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+      <button class="logout-btn" id="headerLogoutBtn"><i class="fas fa-door-open"></i> Exit</button>
+    </div>
+  </header>
+
+  <main class="main-body">
+    <!-- STATUS PANE -->
+    <div id="statusPane" class="tab-pane active-pane">
+      <div class="welcome-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <h2><i class="fas fa-user-check"></i> Member Overview</h2>
+          <span id="memberBadgeSpan" class="member-badge"><i class="fas fa-id-badge"></i> Member ID: --</span>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+          <!-- dynamic stats like balance, join date, etc from sheet row -->
+          <div class="stat-card"><i class="fas fa-wallet"></i> <strong>Current Balance</strong><br><span id="balanceValue">--</span></div>
+          <div class="stat-card"><i class="fas fa-calendar-week"></i> <strong>Membership Since</strong><br><span id="joinDateValue">--</span></div>
+          <div class="stat-card"><i class="fas fa-trophy"></i> <strong>Status Tier</strong><br><span id="statusTier">--</span></div>
+          <div class="stat-card"><i class="fas fa-coins"></i> <strong>Total Credits</strong><br><span id="totalCredits">--</span></div>
+        </div>
+        <div style="margin-top: 20px; background:#f1f9fe; border-radius: 20px; padding: 1rem;">
+          <i class="fas fa-info-circle"></i> <span id="personalInfo">Loading member details...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION PANE -->
+    <div id="transactionPane" class="tab-pane">
+      <div class="welcome-card">
+        <h3><i class="fas fa-receipt"></i> Transaction History</h3>
+        <div style="overflow-x: auto;">
+          <table class="transaction-table" id="transactionTable">
+            <thead>
+              <tr><th>Date</th><th>Description</th><th>Type</th><th>Amount (₹)</th></tr>
+            </thead>
+            <tbody id="transactionTbody">
+              <tr class="empty-state"><td colspan="4">Loading transactions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Member Portal | Secured by Google Sheets Integration</p>
+  </footer>
+</div>
+
+<script>
+  // ------------------------- CONFIGURATION ---------------------------------
+  // IMPORTANT: Replace these with your actual Google Sheets API credentials & sheet IDs
+  // For demo, this script uses public sheets via Google Sheets API v4 (requires API key with sheets readonly)
+  // We'll implement a robust fetch to Google Sheets. For the login validation, we check master sheet (members registry)
+  // MASTER_SHEET_ID: contains all members with columns: Mobile, DOB, MemberSheetID (Row10 as per requirement)
+  // Columns assumption: A=mobile, B=DOB, J (column 10) = linked sheet ID for that member's transaction/history.
+  // You can adjust column mapping. We'll design so that row 10 of master sheet (column J) is the google sheet id for that member's data.
+  // For demo simplicity, we use a public test spreadsheet but explain replacement.
+  
+  // PLEASE UPDATE THESE VALUES WITH YOUR ACTUAL GOOGLE SHEET IDs & API KEY
+  const GOOGLE_API_KEY = 'YOUR_API_KEY';        // Replace with your actual Google API key (enable Sheets API)
+  const MASTER_SHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'; // Example public sheet (for demo only)
+  // Note: The demo master sheet above is a public test sheet; we'll mock fallback to show functionality if key missing.
+  // For real use, update masterSheet range and column mapping.
+  // ------------------------------------------------------------------------
+  
+  // For robust demo, we implement a flexible sheet fetcher with fallback mock data when no API key.
+  // In production, user must set API key & correct sheet IDs.
+  
+  let currentMemberData = null;     // stores member details from master row
+  let memberTransactions = [];       // stores transaction list from member's own sheet
+  let memberSheetId = null;          // from master row column 10 (index 9)
+  
+  // DOM elements
+  const modalOverlay = document.getElementById('loginModal');
+  const dashboardContainer = document.getElementById('dashboardApp');
+  const loginBtn = document.getElementById('loginSubmitBtn');
+  const mobileInput = document.getElementById('mobileInput');
+  const dobInput = document.getElementById('dobInput');
+  const loginError = document.getElementById('loginErrorMsg');
+  const loadingMsgSpan = document.getElementById('loadingMsg');
+  
+  // tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panes = {
+    status: document.getElementById('statusPane'),
+    transaction: document.getElementById('transactionPane')
+  };
+  
+  // Helper: show/hide modal
+  function closeModalAndShowDashboard() {
+    modalOverlay.style.display = 'none';
+    dashboardContainer.style.display = 'flex';
+  }
+  
+  function resetAndLogout() {
+    currentMemberData = null;
+    memberTransactions = [];
+    memberSheetId = null;
+    dashboardContainer.style.display = 'none';
+    modalOverlay.style.display = 'flex';
+    mobileInput.value = '';
+    dobInput.value = '';
+    loginError.style.display = 'none';
+    // reset active tab to status
+    document.querySelector('.tab-btn.active')?.classList.remove('active');
+    document.querySelector('[data-tab="status"]').classList.add('active');
+    panes.status.classList.add('active-pane');
+    panes.transaction.classList.remove('active-pane');
+  }
+  
+  // ----------- Google Sheets API fetch functions (generic) ----------
+  async function fetchSheetData(sheetId, range, apiKey = GOOGLE_API_KEY) {
+    // if no api key or dummy, we provide mock for demonstration to showcase flow
+    if (!apiKey || apiKey === 'YOUR_API_KEY') {
+      console.warn("No valid API key. Using demo mock data for showcase. Replace with actual key for real sheets.");
+      return null; // triggers mock later
+    }
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      return data.values;
+    } catch (err) {
+      console.error("Sheet fetch error:", err);
+      return null;
+    }
+  }
+  
+  // LOGIN: Validate mobile + DOB against master sheet (assume columns: Mobile, DOB, ... memberSheetID at col10)
+  // We'll use a defined range: "A:J" to capture row data
+  async function validateMember(mobile, dob) {
+    // attempt real fetch if API key available, else fallback mock for demo
+    let rows = null;
+    if (GOOGLE_API_KEY && GOOGLE_API_KEY !== 'YOUR_API_KEY') {
+      rows = await fetchSheetData(MASTER_SHEET_ID, "A:J", GOOGLE_API_KEY);
+    }
+    // Mock data for demonstration (if no key or fetch fails)
+    if (!rows) {
+      console.log("Using built-in mock member dataset for demo. Replace with real sheet!");
+      // mock members: mobile, dob, memberSheetId (col10)
+      return mockMemberValidation(mobile, dob);
+    }
+    if (!rows || rows.length < 2) return null;
+    // rows[0] is header, start from index 1
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const rowMobile = row[0] ? row[0].toString().trim() : "";
+      const rowDob = row[1] ? row[1].toString().trim() : "";
+      if (rowMobile === mobile && rowDob === dob) {
+        // column J (index 9) is the member's own Google Sheet ID
+        const linkedSheetId = (row[9] && row[9].trim()) ? row[9].trim() : null;
+        return { memberRow: row, linkedSheetId: linkedSheetId };
+      }
+    }
+    return null;
+  }
+  
+  // mock data for seamless demo if no google api key configured
+  function mockMemberValidation(mobile, dob) {
+    const mockMembers = [
+      { mobile: "9876543210", dob: "1990-01-01", sheetId: "1MockMemberSheetTransactions1", rowData: ["9876543210","1990-01-01","John Doe","Gold","5000","2023-01-01","Active","Premium","Referral","1MockMemberSheetTransactions1"] },
+      { mobile: "9998887776", dob: "1985-05-15", sheetId: "2MockMemberSheetTransactions2", rowData: ["9998887776","1985-05-15","Alice Brown","Silver","12000","2022-06-10","Active","Standard","Bonus","2MockMemberSheetTransactions2"] }
+    ];
+    const found = mockMembers.find(m => m.mobile === mobile && m.dob === dob);
+    if (found) {
+      return { memberRow: found.rowData, linkedSheetId: found.sheetId };
+    }
+    return null;
+  }
+  
+  // Fetch member transactions from the member-specific sheet (using sheet ID from column10)
+  async function fetchMemberTransactions(sheetId) {
+    if (!sheetId) return [];
+    let transactionRows = null;
+    if (GOOGLE_API_KEY && GOOGLE_API_KEY !== 'YOUR_API_KEY') {
+      transactionRows = await fetchSheetData(sheetId, "A:D", GOOGLE_API_KEY);
+    }
+    if (!transactionRows) {
+      // mock transactions based on sheetId for demo
+      return mockTransactionsForMember(sheetId);
+    }
+    if (!transactionRows || transactionRows.length < 2) return [];
+    // assume header: Date, Description, Type, Amount
+    const transactions = [];
+    for (let i = 1; i < transactionRows.length; i++) {
+      const row = transactionRows[i];
+      if (row.length >= 4) {
+        transactions.push({
+          date: row[0] || "",
+          desc: row[1] || "",
+          type: row[2] || "",
+          amount: row[3] || "0"
+        });
+      }
+    }
+    return transactions;
+  }
+  
+  function mockTransactionsForMember(sheetId) {
+    if (sheetId === "1MockMemberSheetTransactions1") {
+      return [
+        { date: "2025-02-10", desc: "Deposit", type: "Credit", amount: "5000" },
+        { date: "2025-02-18", desc: "Purchase", type: "Debit", amount: "1200" },
+        { date: "2025-03-01", desc: "Reward Bonus", type: "Credit", amount: "300" }
+      ];
+    } else if (sheetId === "2MockMemberSheetTransactions2") {
+      return [
+        { date: "2025-01-05", desc: "Initial Deposit", type: "Credit", amount: "10000" },
+        { date: "2025-02-20", desc: "Withdrawal", type: "Debit", amount: "2000" }
+      ];
+    }
+    return [];
+  }
+  
+  // populate dashboard after successful login
+  async function populateDashboard(masterRow, linkedSheetId) {
+    // masterRow contains member info: we can extract name/status/balance etc from specific columns
+    // For flexible mapping: (index 2: name, index3: tier, index4: balance, index5: joinDate, etc)
+    const name = masterRow[2] || "Member";
+    const tier = masterRow[3] || "Standard";
+    const balance = masterRow[4] || "0";
+    const joinDate = masterRow[5] || "N/A";
+    const statusText = masterRow[6] || "Active";
+    const totalCredits = masterRow[7] || balance;
+    
+    document.getElementById("memberBadgeSpan").innerHTML = `<i class="fas fa-id-badge"></i> ${name} | ID: ${linkedSheetId?.slice(0,8) || "MEMBER"}`;
+    document.getElementById("balanceValue").innerHTML = `₹ ${Number(balance).toLocaleString()}`;
+    document.getElementById("joinDateValue").innerHTML = joinDate;
+    document.getElementById("statusTier").innerHTML = `${tier} (${statusText})`;
+    document.getElementById("totalCredits").innerHTML = `₹ ${Number(totalCredits).toLocaleString()}`;
+    document.getElementById("personalInfo").innerHTML = `<strong>${name}</strong> • ${mobileInput.value} • DOB: ${dobInput.value}`;
+    
+// fetch transactions from linkedSheetId
+    const transactions = await fetchMemberTransactions(linkedSheetId);
+    memberTransactions = transactions;
+    renderTransactionTable(transactions);
+  }
+  
+  function renderTransactionTable(transactions) {
+    const tbody = document.getElementById("transactionTbody");
+    if (!transactions || transactions.length === 0) {
+      tbody.innerHTML = '<tr class="empty-state"><td colspan="4">No transactions found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = transactions.map(tx => `
+      <tr>
+        <td>${tx.date}</td>
+        <td>${tx.desc}</td>
+        <td><span style="background:${tx.type === 'Credit' ? '#e0f2e9' : '#ffe6e5'}; padding:4px 10px; border-radius:30px;">${tx.type}</span></td>
+        <td style="font-weight:500;">₹ ${tx.amount}</td>
+      </tr>
+    `).join('');
+  }
+  
+  // login handler
+  async function onLogin() {
+    const mobile = mobileInput.value.trim();
+    const dob = dobInput.value.trim();
+    if (!mobile || !dob) {
+      loginError.style.display = "block";
+      loginError.innerText = "Please enter both mobile number and date of birth (YYYY-MM-DD).";
+      return;
+    }
+    loginError.style.display = "none";
+    loadingMsgSpan.style.display = "block";
+    loginBtn.disabled = true;
+    try {
+      const result = await validateMember(mobile, dob);
+      if (!result) {
+        loginError.style.display = "block";
+        loginError.innerText = "❌ No matching member found. Check mobile & DOB.";
+        loadingMsgSpan.style.display = "none";
+        loginBtn.disabled = false;
+        return;
+      }
+      // success
+      currentMemberData = result.memberRow;
+      memberSheetId = result.linkedSheetId;
+      await populateDashboard(currentMemberData, memberSheetId);
+      closeModalAndShowDashboard();
+    } catch (err) {
+      console.error(err);
+      loginError.style.display = "block";
+      loginError.innerText = "Server error, try again.";
+    } finally {
+      loadingMsgSpan.style.display = "none";
+      loginBtn.disabled = false;
+    }
+  }
+  
+  // Tab switching logic
+  function switchTab(tabId) {
+    if (tabId === 'logout') {
+      resetAndLogout();
+      return;
+    }
+    // update active buttons
+    tabBtns.forEach(btn => {
+      if (btn.getAttribute('data-tab') === tabId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    // show pane
+    Object.keys(panes).forEach(key => {
+      if (key === tabId) {
+        panes[key].classList.add('active-pane');
+      } else {
+        panes[key].classList.remove('active-pane');
+      }
+    });
+  }
+  
+  // attach event listeners
+  loginBtn.addEventListener('click', onLogin);
+  document.getElementById('headerLogoutBtn').addEventListener('click', resetAndLogout);
+  document.getElementById('logoutTabBtn').addEventListener('click', () => switchTab('logout'));
+  tabBtns.forEach(btn => {
+    if (btn.getAttribute('data-tab') !== 'logout') {
+      btn.addEventListener('click', (e) => {
+        const tabId = btn.getAttribute('data-tab');
+        switchTab(tabId);
+      });
+    }
+  });
+  // initial: modal is visible, dashboard hidden
+  dashboardContainer.style.display = 'none';
+  
+  // Additional small note: if user tries to open directly, modal ensures login first.
+  // For production, please replace API_KEY and sheet IDs accordingly.
+  // The mock fallback ensures the page works for demonstration with fake transactions.
+</script>
+</body>
+</html>
