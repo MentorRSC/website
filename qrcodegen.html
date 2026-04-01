@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>QR Code Generator | Create & Download Free QR Codes</title>
+    <title>QR Genius | Unified QR Card with Theme Border & Complete Download</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -20,6 +20,7 @@
             min-height: 100vh;
             color: #0f172a;
             line-height: 1.5;
+            transition: background 0.3s ease;
         }
 
         :root {
@@ -28,26 +29,17 @@
             --secondary: #8b5cf6;
             --dark: #0f172a;
             --border-light: #e2e8f0;
-            --card-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
             --transition: all 0.2s ease;
             --success: #10b981;
-            --warning: #f59e0b;
             --error: #ef4444;
+            --theme-border-color: #000000;
         }
 
-        /* Theme Variables */
-        body[data-theme="purple"] {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        body[data-theme="ocean"] {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        }
-        body[data-theme="sunset"] {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        body[data-theme="forest"] {
-            background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
-        }
+        body[data-theme="purple"] { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --theme-border-color: #5b21b6; }
+        body[data-theme="ocean"] { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); --theme-border-color: #0c4a6e; }
+        body[data-theme="sunset"] { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); --theme-border-color: #c2410c; }
+        body[data-theme="forest"] { background: linear-gradient(135deg, #134e5e 0%, #71b280 100%); --theme-border-color: #14532d; }
 
         .container {
             max-width: 1280px;
@@ -55,7 +47,6 @@
             padding: 0 24px;
         }
 
-        /* Header Styles */
         header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -70,6 +61,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 24px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .logo {
@@ -98,6 +91,7 @@
             gap: 28px;
             list-style: none;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .nav-menu ul li a {
@@ -111,7 +105,6 @@
             color: var(--primary);
         }
 
-        /* Theme Selector */
         .theme-selector {
             display: flex;
             gap: 12px;
@@ -127,63 +120,53 @@
             border: 2px solid transparent;
         }
         
-        .theme-btn:hover {
-            transform: scale(1.1);
-        }
-        
-        .theme-btn.active {
-            border-color: white;
-            box-shadow: 0 0 0 2px var(--primary);
-        }
-        
+        .theme-btn:hover { transform: scale(1.1); }
+        .theme-btn.active { border-color: white; box-shadow: 0 0 0 2px var(--primary); }
         .theme-purple { background: linear-gradient(135deg, #667eea, #764ba2); }
         .theme-ocean { background: linear-gradient(135deg, #1e3c72, #2a5298); }
         .theme-sunset { background: linear-gradient(135deg, #f093fb, #f5576c); }
         .theme-forest { background: linear-gradient(135deg, #134e5e, #71b280); }
 
-        /* Main Content */
         .qr-generator-wrapper {
-            padding: 60px 0 80px;
+            padding: 50px 0 70px;
             min-height: 80vh;
             display: flex;
             align-items: center;
         }
 
         .generator-card {
-            max-width: 680px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             border-radius: 48px;
             box-shadow: var(--card-shadow);
             overflow: hidden;
-            transition: transform 0.3s ease;
         }
 
         .card-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 32px 36px;
+            padding: 28px 32px;
             text-align: center;
         }
 
         .card-header h2 {
             color: white;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .card-header p {
             color: rgba(255, 255, 255, 0.9);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .card-body {
-            padding: 40px;
+            padding: 32px;
         }
 
-        /* Input Section */
         .input-section {
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
         .input-label {
@@ -208,7 +191,6 @@
             font-family: 'Inter', sans-serif;
             font-size: 1rem;
             transition: var(--transition);
-            background-color: #fff;
         }
 
         .input-wrapper input:focus {
@@ -237,65 +219,106 @@
             box-shadow: 0 8px 20px rgba(59,130,246,0.3);
         }
 
-        /* QR Code Display */
-        .qr-display {
-            background: #f8fafc;
+        /* UNIFIED BOX - contains text label, QR code, thank you message */
+        .unified-qr-card {
+            background: #ffffff;
             border-radius: 32px;
-            padding: 40px;
+            margin: 20px 0;
+            padding: 28px 24px;
             text-align: center;
-            margin: 24px 0;
-            border: 2px dashed var(--border-light);
             transition: all 0.3s ease;
+            border: 3px solid var(--theme-border-color);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
         }
 
-        .qr-placeholder {
+        /* Theme border updates dynamically */
+        body[data-theme="purple"] .unified-qr-card { border-color: #5b21b6; }
+        body[data-theme="ocean"] .unified-qr-card { border-color: #0c4a6e; }
+        body[data-theme="sunset"] .unified-qr-card { border-color: #c2410c; }
+        body[data-theme="forest"] .unified-qr-card { border-color: #14532d; }
+
+        .scan-label-text {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scan-label-text i {
+            font-size: 1.2rem;
+            background: none;
+            -webkit-text-fill-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .qr-code-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 12px 0 8px;
+        }
+
+        #qrcodeCanvas {
+            display: block;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .thankyou-message-card {
+            margin-top: 24px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 12px 20px;
+            border-radius: 60px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .thankyou-message-card i {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        .qr-placeholder-content {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 280px;
+            padding: 50px 20px;
             color: #94a3b8;
         }
 
-        .qr-placeholder i {
-            font-size: 80px;
+        .qr-placeholder-content i {
+            font-size: 70px;
             margin-bottom: 16px;
             opacity: 0.5;
         }
 
-        .qr-placeholder p {
-            font-size: 0.9rem;
-        }
-
-        #qrcode {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            background: white;
-            padding: 20px;
-            border-radius: 24px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        #qrcode canvas, #qrcode img {
-            width: 220px;
-            height: 220px;
-            display: block;
-            border-radius: 16px;
-        }
-
-        /* Download Button */
         .download-section {
             display: flex;
             gap: 16px;
             justify-content: center;
-            margin-top: 24px;
+            margin: 20px 0 8px;
+            flex-wrap: wrap;
         }
 
-        .download-btn {
-            background: var(--success);
-            color: white;
-            border: none;
+        .download-btn, .reset-btn {
             padding: 12px 28px;
             border-radius: 60px;
             font-weight: 600;
@@ -305,6 +328,12 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
+            border: none;
+        }
+
+        .download-btn {
+            background: var(--success);
+            color: white;
         }
 
         .download-btn:hover {
@@ -316,16 +345,6 @@
         .reset-btn {
             background: #e2e8f0;
             color: #475569;
-            border: none;
-            padding: 12px 28px;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .reset-btn:hover {
@@ -333,10 +352,9 @@
             transform: translateY(-2px);
         }
 
-        /* QR Options */
         .qr-options {
             margin-top: 24px;
-            padding-top: 24px;
+            padding-top: 20px;
             border-top: 1px solid var(--border-light);
         }
 
@@ -368,11 +386,37 @@
             color: white;
         }
 
-        .size-btn:hover:not(.active) {
-            border-color: var(--primary);
+        .examples-row {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 20px;
         }
 
-        /* Toast Notification */
+        .examples-row p {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .example-buttons span {
+            cursor: pointer;
+            color: var(--primary);
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .example-buttons span:hover {
+            color: var(--primary-dark);
+            transform: scale(1.02);
+        }
+
         .toast-notification {
             position: fixed;
             bottom: 30px;
@@ -399,23 +443,22 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Footer */
         footer {
             background: #0f172a;
             color: #e2e8f0;
-            padding: 48px 0 24px;
+            padding: 40px 0 24px;
         }
 
         .footer-content {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 40px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
         }
 
         .footer-column h3 {
-            font-size: 1.2rem;
-            margin-bottom: 18px;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
             color: white;
         }
 
@@ -424,7 +467,7 @@
         }
 
         .footer-column ul li {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .footer-column ul li a {
@@ -435,14 +478,14 @@
 
         .social-links {
             display: flex;
-            gap: 16px;
-            margin-top: 20px;
+            gap: 14px;
+            margin-top: 16px;
         }
 
         .social-links a {
             background: #1e293b;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -458,30 +501,18 @@
 
         .footer-bottom {
             text-align: center;
-            padding-top: 24px;
+            padding-top: 20px;
             border-top: 1px solid #1e293b;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
-        @media (max-width: 768px) {
-            .card-body {
-                padding: 24px;
-            }
-            .input-wrapper {
-                flex-direction: column;
-            }
-            .generate-btn {
-                justify-content: center;
-            }
-            .download-section {
-                flex-direction: column;
-            }
-            .theme-selector {
-                margin-top: 10px;
-            }
-            .header-container {
-                flex-wrap: wrap;
-            }
+        @media (max-width: 680px) {
+            .card-body { padding: 20px; }
+            .unified-qr-card { padding: 20px 16px; }
+            .scan-label-text { font-size: 0.85rem; }
+            .thankyou-message-card { font-size: 0.9rem; padding: 10px 16px; }
+            .generate-btn { width: 100%; justify-content: center; }
+            .input-wrapper input { width: 100%; }
         }
     </style>
 </head>
@@ -492,12 +523,12 @@
                 <i class="fas fa-qrcode"></i>
                 <h1>QR<span>Genius</span></h1>
             </a>
-            <div style="display: flex; align-items: center; gap: 24px;">
+            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                 <div class="theme-selector">
-                    <div class="theme-btn theme-purple active" onclick="changeTheme('purple')" title="Purple Theme"></div>
-                    <div class="theme-btn theme-ocean" onclick="changeTheme('ocean')" title="Ocean Theme"></div>
-                    <div class="theme-btn theme-sunset" onclick="changeTheme('sunset')" title="Sunset Theme"></div>
-                    <div class="theme-btn theme-forest" onclick="changeTheme('forest')" title="Forest Theme"></div>
+                    <div class="theme-btn theme-purple active" data-theme="purple"></div>
+                    <div class="theme-btn theme-ocean" data-theme="ocean"></div>
+                    <div class="theme-btn theme-sunset" data-theme="sunset"></div>
+                    <div class="theme-btn theme-forest" data-theme="forest"></div>
                 </div>
                 <nav class="nav-menu">
                     <ul>
@@ -514,65 +545,61 @@
         <div class="container">
             <div class="generator-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-qrcode"></i> Free QR Code Generator</h2>
-                    <p>Create custom QR codes for URLs, text, and more — instantly!</p>
+                    <h2><i class="fas fa-qrcode"></i> Premium QR Code Studio</h2>
+                    <p>Generate & download complete QR card with border, label & thank you</p>
                 </div>
                 <div class="card-body">
-                    <!-- Input Section -->
                     <div class="input-section">
-                        <label class="input-label">
-                            <i class="fas fa-pencil-alt"></i> Enter Text or URL
-                        </label>
+                        <label class="input-label"><i class="fas fa-link"></i> Enter URL or Text</label>
                         <div class="input-wrapper">
-                            <input type="text" id="qrInput" placeholder="https://example.com or any text..." autocomplete="off">
-                            <button class="generate-btn" onclick="generateQRCode()">
-                                <i class="fas fa-magic"></i> Generate QR Code
-                            </button>
+                            <input type="text" id="qrInput" placeholder="https://yourwebsite.com or any text..." autocomplete="off">
+                            <button class="generate-btn" id="generateBtn"><i class="fas fa-magic"></i> Generate QR</button>
                         </div>
                     </div>
 
-                    <!-- QR Code Display -->
-                    <div class="qr-display" id="qrDisplay">
-                        <div class="qr-placeholder" id="qrPlaceholder">
+                    <!-- UNIFIED BOX: Contains Scan Label + QR Code + Thank You Message -->
+                    <div class="unified-qr-card" id="unifiedCard">
+                        <div id="placeholderUI" class="qr-placeholder-content">
                             <i class="fas fa-qrcode"></i>
-                            <p>Your QR code will appear here</p>
-                            <p style="font-size: 0.8rem; margin-top: 8px;">Enter text above and click Generate</p>
+                            <p><strong>Your QR card will appear here</strong></p>
+                            <p style="font-size: 0.8rem; margin-top: 6px;">Enter text & click Generate</p>
                         </div>
-                        <div id="qrcode" style="display: none;"></div>
-                    </div>
-
-                    <!-- QR Options -->
-                    <div class="qr-options">
-                        <div class="options-title">
-                            <i class="fas fa-sliders-h"></i> QR Code Size
-                        </div>
-                        <div class="size-selector">
-                            <button class="size-btn" data-size="150" onclick="setSize(150)">Small (150px)</button>
-                            <button class="size-btn active" data-size="220" onclick="setSize(220)">Medium (220px)</button>
-                            <button class="size-btn" data-size="300" onclick="setSize(300)">Large (300px)</button>
+                        <div id="activeQRUI" style="display: none;">
+                            <div class="scan-label-text">
+                                <i class="fas fa-camera-retro"></i> SCAN FOR LINK <i class="fas fa-qrcode"></i>
+                            </div>
+                            <div class="qr-code-wrapper">
+                                <canvas id="qrcodeCanvas"></canvas>
+                            </div>
+                            <div class="thankyou-message-card">
+                                <i class="fas fa-heart"></i> Thank You! <i class="fas fa-smile-beam"></i>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Download Section -->
                     <div class="download-section" id="downloadSection" style="display: none;">
-                        <button class="download-btn" onclick="downloadQRCode()">
-                            <i class="fas fa-download"></i> Download QR Code (PNG)
-                        </button>
-                        <button class="reset-btn" onclick="resetQRCode()">
-                            <i class="fas fa-trash-alt"></i> Clear
-                        </button>
+                        <button class="download-btn" id="downloadBtn"><i class="fas fa-download"></i> Download Full Card (PNG)</button>
+                        <button class="reset-btn" id="resetBtn"><i class="fas fa-trash-alt"></i> Clear All</button>
                     </div>
 
-                    <!-- Example Suggestions -->
-                    <div style="margin-top: 24px; padding: 16px; background: #f1f5f9; border-radius: 20px;">
-                        <p style="font-size: 0.85rem; color: #475569; margin-bottom: 8px;">
-                            <i class="fas fa-lightbulb"></i> <strong>Quick Examples:</strong>
-                        </p>
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <span style="cursor: pointer; color: var(--primary);" onclick="setExample('https://innovationhub.in')">🔗 Website URL</span>
-                            <span style="cursor: pointer; color: var(--primary);" onclick="setExample('UPI: 16050098000216@cnrb')">💳 UPI ID</span>
-                            <span style="cursor: pointer; color: var(--primary);" onclick="setExample('Hello, scan this QR!')">📝 Text Message</span>
-                            <span style="cursor: pointer; color: var(--primary);" onclick="setExample('tel:+919876543210')">📞 Phone Number</span>
+                    <div class="qr-options">
+                        <div class="options-title"><i class="fas fa-expand-alt"></i> QR Code Size</div>
+                        <div class="size-selector">
+                            <button class="size-btn" data-size="150">150px</button>
+                            <button class="size-btn active" data-size="220">220px</button>
+                            <button class="size-btn" data-size="300">300px</button>
+                            <button class="size-btn" data-size="380">380px</button>
+                        </div>
+                    </div>
+
+                    <div class="examples-row">
+                        <p><i class="fas fa-lightbulb"></i> <strong>Quick Examples</strong> (click to try):</p>
+                        <div class="example-buttons">
+                            <span data-example="https://github.com">🔗 GitHub</span>
+                            <span data-example="https://www.google.com">🌐 Google</span>
+                            <span data-example="https://www.linkedin.com">💼 LinkedIn</span>
+                            <span data-example="https://wa.me/14155552671">📱 WhatsApp</span>
+                            <span data-example="https://open.spotify.com">🎵 Spotify</span>
                         </div>
                     </div>
                 </div>
@@ -585,7 +612,7 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h3>QR<span style="color: #3b82f6;">Genius</span></h3>
-                    <p>Free, fast, and easy QR code generator. Create custom QR codes for any purpose — URLs, text, contact info, and more.</p>
+                    <p>Unified QR card design with theme border, "Scan for link" label & thank you message. Download complete card as PNG.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
@@ -594,217 +621,229 @@
                     </div>
                 </div>
                 <div class="footer-column">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="#">Home</a></li>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                    </ul>
+                    <h3>Resources</h3>
+                    <ul><li><a href="#">About</a></li><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Support</a></li></ul>
                 </div>
                 <div class="footer-column">
                     <h3>Features</h3>
-                    <ul>
-                        <li><i class="fas fa-check-circle"></i> Free forever</li>
-                        <li><i class="fas fa-check-circle"></i> No signup required</li>
-                        <li><i class="fas fa-check-circle"></i> Download as PNG</li>
-                        <li><i class="fas fa-check-circle"></i> Multiple themes</li>
-                    </ul>
+                    <ul><li><i class="fas fa-check-circle"></i> Unified card design</li><li><i class="fas fa-check-circle"></i> Theme-matching border</li><li><i class="fas fa-check-circle"></i> One-click full card download</li></ul>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 QR Genius - Free QR Code Generator. All rights reserved.</p>
-            </div>
+            <div class="footer-bottom"><p>&copy; 2025 QR Genius - Complete QR Card Generator. All rights reserved.</p></div>
         </div>
     </footer>
 
     <script>
-        let currentQRCode = null;
+        // DOM elements
+        const qrInput = document.getElementById('qrInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const qrCanvas = document.getElementById('qrcodeCanvas');
+        const placeholderUI = document.getElementById('placeholderUI');
+        const activeQRUI = document.getElementById('activeQRUI');
+        const downloadSectionDiv = document.getElementById('downloadSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const unifiedCard = document.getElementById('unifiedCard');
+        
         let currentSize = 220;
+        let currentQRData = null;
         let currentText = "";
 
-        // Change Theme
+        // Generate QR code using reliable library
+        function generateQRMatrix(text, sizePx) {
+            if (!text || text.trim() === "") return false;
+            try {
+                const qr = qrcode(0, 'H');
+                qr.addData(text);
+                qr.make();
+                const moduleCount = qr.getModuleCount();
+                const cellSize = sizePx / moduleCount;
+                qrCanvas.width = sizePx;
+                qrCanvas.height = sizePx;
+                const ctx = qrCanvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, sizePx, sizePx);
+                ctx.fillStyle = '#000000';
+                for (let row = 0; row < moduleCount; row++) {
+                    for (let col = 0; col < moduleCount; col++) {
+                        if (qr.isDark(row, col)) {
+                            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                        }
+                    }
+                }
+                return { qrInstance: qr, moduleCount, text };
+            } catch(e) { console.error(e); return false; }
+        }
+
+        function updateQRCode() {
+            const inputVal = qrInput.value.trim();
+            if (!inputVal) {
+                showToast("Please enter a URL or text", true);
+                return false;
+            }
+            currentText = inputVal;
+            const result = generateQRMatrix(currentText, currentSize);
+            if (result) {
+                currentQRData = result;
+                placeholderUI.style.display = "none";
+                activeQRUI.style.display = "block";
+                downloadSectionDiv.style.display = "flex";
+                showToast("✅ QR Card ready! Unified box with theme border + Thank You.");
+                return true;
+            } else {
+                showToast("QR generation failed", true);
+                return false;
+            }
+        }
+
+        function regenerateWithSize(newSize) {
+            if (!currentText) return false;
+            const result = generateQRMatrix(currentText, newSize);
+            if (result) {
+                currentQRData = result;
+                currentSize = newSize;
+                return true;
+            }
+            return false;
+        }
+
+        function setQrSize(size) {
+            currentSize = size;
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                if (parseInt(btn.getAttribute('data-size')) === size) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            if (currentText && activeQRUI.style.display === "block") {
+                regenerateWithSize(currentSize);
+                showToast(`QR size updated to ${size}px`);
+            }
+        }
+
+        // Download entire unified card (box with border, scan label, qr, thank you)
+        async function downloadFullCard() {
+            if (!currentQRData || activeQRUI.style.display !== "block") {
+                showToast("Generate a QR code first before downloading", true);
+                return;
+            }
+            
+            try {
+                // Get the unified card element dimensions
+                const cardElement = unifiedCard;
+                const originalDisplay = cardElement.style.display;
+                const originalOverflow = document.body.style.overflow;
+                
+                // Use html2canvas-like approach but manual? Actually we use native canvas to capture the DOM element precisely
+                // Since we need to capture the exact card with border, we'll use html2canvas CDN for reliable capture
+                if (typeof html2canvas === 'undefined') {
+                    // Load html2canvas dynamically
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                    script.onload = () => captureCard();
+                    document.head.appendChild(script);
+                } else {
+                    captureCard();
+                }
+                
+                function captureCard() {
+                    html2canvas(cardElement, {
+                        scale: 2.5,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        useCORS: false
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `QR_Card_${Date.now()}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        showToast("📸 Full QR Card downloaded! Border, label & thank you included.");
+                    }).catch(err => {
+                        console.error(err);
+                        showToast("Download failed, please try again", true);
+                    });
+                }
+            } catch(e) {
+                showToast("Error capturing card", true);
+            }
+        }
+
+        function resetAll() {
+            qrInput.value = "";
+            placeholderUI.style.display = "flex";
+            activeQRUI.style.display = "none";
+            downloadSectionDiv.style.display = "none";
+            currentQRData = null;
+            currentText = "";
+            const ctx = qrCanvas.getContext('2d');
+            ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+            showToast("Card cleared. Start fresh!");
+        }
+
+        function setExample(text) {
+            qrInput.value = text;
+            updateQRCode();
+        }
+
+        function showToast(msg, isErr = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${isErr ? 'toast-error' : ''}`;
+            toast.innerHTML = `<i class="fas ${isErr ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2800);
+        }
+
         function changeTheme(theme) {
             document.body.setAttribute('data-theme', theme);
+            const headerDiv = document.querySelector('.card-header');
+            if (theme === 'purple') headerDiv.style.background = 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
+            else if (theme === 'ocean') headerDiv.style.background = 'linear-gradient(135deg, #1e3c72, #2a5298)';
+            else if (theme === 'sunset') headerDiv.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)';
+            else if (theme === 'forest') headerDiv.style.background = 'linear-gradient(135deg, #134e5e, #71b280)';
             
-            // Update active state on theme buttons
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.classList.contains(`theme-${theme}`)) {
-                    btn.classList.add('active');
-                }
+                if (btn.classList.contains(`theme-${theme}`)) btn.classList.add('active');
             });
-            
-            // Update gradient colors in header
-            const header = document.querySelector('.card-header');
-            if (theme === 'purple') {
-                header.style.background = 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
-            } else if (theme === 'ocean') {
-                header.style.background = 'linear-gradient(135deg, #1e3c72, #2a5298)';
-            } else if (theme === 'sunset') {
-                header.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)';
-            } else if (theme === 'forest') {
-                header.style.background = 'linear-gradient(135deg, #134e5e, #71b280)';
-            }
+            // Update unified card border color automatically via CSS variables
         }
 
-        // Show Toast Notification
-        function showToast(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `toast-notification ${isError ? 'toast-error' : ''}`;
-            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Generate QR Code
-        function generateQRCode() {
-            const input = document.getElementById('qrInput').value.trim();
-            
-            if (!input) {
-                showToast('Please enter some text or URL first!', true);
-                document.getElementById('qrInput').focus();
-                return;
-            }
-            
-            currentText = input;
-            
-            // Clear previous QR code
-            const qrContainer = document.getElementById('qrcode');
-            const placeholder = document.getElementById('qrPlaceholder');
-            
-            qrContainer.innerHTML = '';
-            qrContainer.style.display = 'flex';
-            placeholder.style.display = 'none';
-            
-            try {
-                // Generate new QR code
-                currentQRCode = new QRCode(qrContainer, {
-                    text: input,
-                    width: currentSize,
-                    height: currentSize,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                
-                // Show download section
-                document.getElementById('downloadSection').style.display = 'flex';
-                
-                showToast('✅ QR Code generated successfully!');
-                
-            } catch (error) {
-                console.error('QR Generation Error:', error);
-                showToast('Error generating QR code. Please try again.', true);
-                qrContainer.style.display = 'none';
-                placeholder.style.display = 'flex';
-                document.getElementById('downloadSection').style.display = 'none';
-            }
-        }
-
-        // Set QR Code Size
-        function setSize(size) {
-            currentSize = size;
-            
-            // Update active button style
-            document.querySelectorAll('.size-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (parseInt(btn.getAttribute('data-size')) === size) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            // Regenerate QR if there's existing text
-            if (currentText) {
-                const qrContainer = document.getElementById('qrcode');
-                qrContainer.innerHTML = '';
-                
-                currentQRCode = new QRCode(qrContainer, {
-                    text: currentText,
-                    width: currentSize,
-                    height: currentSize,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                
-                showToast(`QR Code size changed to ${size}px`);
-            }
-        }
-
-        // Download QR Code as PNG
-        function downloadQRCode() {
-            const qrCanvas = document.querySelector('#qrcode canvas');
-            const qrImg = document.querySelector('#qrcode img');
-            
-            let canvas;
-            
-            if (qrCanvas) {
-                canvas = qrCanvas;
-            } else if (qrImg) {
-                // If it's an image, create a canvas and draw it
-                canvas = document.createElement('canvas');
-                canvas.width = currentSize;
-                canvas.height = currentSize;
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.src = qrImg.src;
-                img.onload = function() {
-                    ctx.drawImage(img, 0, 0, currentSize, currentSize);
-                    downloadCanvas(canvas);
-                };
-                return;
-            } else {
-                showToast('No QR code to download. Generate one first!', true);
-                return;
-            }
-            
-            downloadCanvas(canvas);
-        }
+        // Event listeners
+        generateBtn.addEventListener('click', updateQRCode);
+        downloadBtn.addEventListener('click', downloadFullCard);
+        resetBtn.addEventListener('click', resetAll);
+        qrInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') updateQRCode(); });
         
-        function downloadCanvas(canvas) {
-            try {
-                const link = document.createElement('a');
-                link.download = `qrcode_${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showToast('📥 QR Code downloaded successfully!');
-            } catch (error) {
-                showToast('Error downloading QR code', true);
-            }
-        }
-
-        // Reset/Clear QR Code
-        function resetQRCode() {
-            document.getElementById('qrInput').value = '';
-            const qrContainer = document.getElementById('qrcode');
-            const placeholder = document.getElementById('qrPlaceholder');
-            
-            qrContainer.innerHTML = '';
-            qrContainer.style.display = 'none';
-            placeholder.style.display = 'flex';
-            document.getElementById('downloadSection').style.display = 'none';
-            currentText = "";
-            
-            showToast('QR Code cleared');
-        }
-
-        // Set Example Text
-        function setExample(text) {
-            document.getElementById('qrInput').value = text;
-            generateQRCode();
-        }
-
-        // Enter key support
-        document.getElementById('qrInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                generateQRCode();
-            }
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sz = parseInt(btn.getAttribute('data-size'));
+                if (!isNaN(sz)) setQrSize(sz);
+            });
         });
-
-        // Initialize theme
+        
+        document.querySelectorAll('[data-example]').forEach(el => {
+            el.addEventListener('click', () => setExample(el.getAttribute('data-example')));
+        });
+        
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                let theme = 'purple';
+                if (btn.classList.contains('theme-purple')) theme = 'purple';
+                else if (btn.classList.contains('theme-ocean')) theme = 'ocean';
+                else if (btn.classList.contains('theme-sunset')) theme = 'sunset';
+                else if (btn.classList.contains('theme-forest')) theme = 'forest';
+                changeTheme(theme);
+            });
+        });
+        
+        // initial state
         changeTheme('purple');
+        setQrSize(220);
+        placeholderUI.style.display = "flex";
+        activeQRUI.style.display = "none";
+        downloadSectionDiv.style.display = "none";
+        
+        // Ensure canvas initial empty
+        const ctxInit = qrCanvas.getContext('2d');
+        ctxInit.clearRect(0, 0, 220, 220);
     </script>
 </body>
 </html>
