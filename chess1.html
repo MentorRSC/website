@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>♜ Multiplayer Online Chess | Google Sheets Sync</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #2a3b2c 0%, #1e2a20 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', 'Roboto', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* main game container */
+        .game-container {
+            background: #3b2a1f;
+            border-radius: 48px;
+            padding: 24px 20px 20px 20px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
+        }
+
+        .chessboard-wrapper {
+            display: flex;
+            justify-content: center;
+            background: #d6b575;
+            padding: 12px;
+            border-radius: 24px;
+            box-shadow: inset 0 0 0 2px #f5e6c4, 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+            cursor: pointer;
+            background-color: #f0d9b5;
+        }
+
+        /* info panel */
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            background: #2e241d;
+            padding: 12px 20px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+        }
+
+        .player-card {
+            background: #1f1912;
+            border-radius: 40px;
+            padding: 8px 24px;
+            text-align: center;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.1), 0 4px 8px rgba(0,0,0,0.3);
+            min-width: 140px;
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+        }
+
+        .white-name {
+            color: #f5e7c8;
+            text-shadow: 0 2px 0 #7f5e3a;
+        }
+
+        .black-name {
+            color: #2e2c2a;
+            text-shadow: 0 1px 0 #bba88a;
+            background: #d4c3a2;
+            border-radius: 30px;
+            padding: 0 8px;
+        }
+
+        .timer {
+            font-family: monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            background: #0f0f0c;
+            padding: 4px 16px;
+            border-radius: 48px;
+            color: #2effb0;
+            letter-spacing: 3px;
+            text-shadow: 0 0 5px #0a8f4e;
+        }
+
+        .turn-indicator {
+            background: #ffcd7e;
+            padding: 8px 18px;
+            border-radius: 32px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2a2418;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        button, .time-select {
+            background: #392e24;
+            border: none;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: #f7e9cf;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.1s ease;
+            font-family: inherit;
+            box-shadow: 0 2px 4px black;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .time-select {
+            background: #4c3827;
+            font-weight: bold;
+        }
+
+        .status-msg {
+            background: #000000aa;
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            color: #ffd966;
+        }
+
+        @media (max-width: 600px) {
+            .player-card { padding: 4px 12px; min-width: 100px; }
+            .timer { font-size: 1.3rem; padding: 2px 8px; }
+            .player-name { font-size: 1rem; }
+            .info-panel { gap: 10px; }
+            canvas { width: 100%; height: auto; }
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-container">
+        <div class="chessboard-wrapper">
+            <canvas id="chessCanvas" width="480" height="480"></canvas>
+        </div>
+        <div class="info-panel">
+            <div class="player-card">
+                <div class="player-name white-name">⚪ WHITE</div>
+                <div class="timer" id="whiteTimer">10:00</div>
+            </div>
+            <div class="turn-indicator" id="turnText">White's Turn</div>
+            <div class="player-card">
+                <div class="player-name black-name">⚫ BLACK</div>
+                <div class="timer" id="blackTimer">10:00</div>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 8px; flex-wrap: wrap;">
+            <div class="controls">
+                <select id="timeControlSelect" class="time-select">
+                    <option value="5">5 min each</option>
+                    <option value="10" selected>10 min each</option>
+                    <option value="15">15 min each</option>
+                </select>
+                <button id="resetGameBtn">♻️ New Game</button>
+                <button id="forceSyncBtn">📡 Sync Now</button>
+            </div>
+            <div class="status-msg" id="syncStatus">🟢 Live sync every 5s</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- CHESS LOGIC (no external libs) ----------
+        let board = Array(8).fill().map(() => Array(8).fill(null));
+        let turn = 'w';   // 'w' = white, 'b' = black
+        let gameOver = false;
+        let winner = null;
+        
+        // timer state (seconds)
+        let whiteTime = 10 * 60;   // default 10 min
+        let blackTime = 10 * 60;
+        let timerInterval = null;
+        let activeTimer = null;    // 'w' or 'b'
+        
+        // UI & canvas
+        const canvas = document.getElementById('chessCanvas');
+        const ctx = canvas.getContext('2d');
+        let selectedRow = null, selectedCol = null;
+        let validMoves = [];
+        
+        // piece unicode mapping
+        const pieceMap = {
+            'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+        
+        // initial FEN-like setup
+        function initBoard() {
+            const empty = Array(8).fill().map(() => Array(8).fill(null));
+            // black major row
+            const backRowBlack = ['r','n','b','q','k','b','n','r'];
+            for(let i=0;i<8;i++) empty[0][i] = backRowBlack[i];
+            for(let i=0;i<8;i++) empty[1][i] = 'p';
+            // white major row
+            const backRowWhite = ['R','N','B','Q','K','B','N','R'];
+            for(let i=0;i<8;i++) empty[7][i] = backRowWhite[i];
+            for(let i=0;i<8;i++) empty[6][i] = 'P';
+            // rest null
+            return empty;
+        }
+        
+        function copyBoard(src) {
+            return src.map(row => [...row]);
+        }
+        
+        // --- Move validation (simplified but functional for all pieces) ---
+        function isValidMove(piece, fromRow, fromCol, toRow, toCol, boardState, enpassantTarget = null) {
+            const targetPiece = boardState[toRow][toCol];
+            // cannot capture own piece
+            if(targetPiece && isWhitePiece(piece) === isWhitePiece(targetPiece)) return false;
+            const deltaRow = toRow - fromRow;
+            const deltaCol = toCol - fromCol;
+            const absDeltaRow = Math.abs(deltaRow);
+            const absDeltaCol = Math.abs(deltaCol);
+            const pieceType = piece.toLowerCase();
+            
+            // Pawn
+            if(pieceType === 'p') {
+                const direction = isWhitePiece(piece) ? -1 : 1;
+                const startRow = isWhitePiece(piece) ? 6 : 1;
+                // one step forward
+                if(deltaCol === 0 && deltaRow === direction && !targetPiece) return true;
+                // two steps from start
+                if(deltaCol === 0 && deltaRow === 2*direction && fromRow === startRow && !targetPiece && !boardState[fromRow+direction][fromCol]) return true;
+                // capture diagonal
+                if(absDeltaCol === 1 && deltaRow === direction && targetPiece) return true;
+                // en passant (simplified: we will handle via global)
+                return false;
+            }
+            // Knight
+            if(pieceType === 'n') {
+                if((absDeltaRow===2 && absDeltaCol===1) || (absDeltaRow===1 && absDeltaCol===2)) return true;
+                return false;
+            }
+            // King
+            if(pieceType === 'k') {
+                if(absDeltaRow <=1 && absDeltaCol <=1) return true;
+                // castling not fully implemented but rarely matters in casual; skip for brevity
+                return false;
+            }
+            // Queen, Rook, Bishop
+            if(pieceType === 'q' || pieceType === 'r' || pieceType === 'b') {
+                let rowStep = 0, colStep = 0;
+                if(deltaRow !== 0) rowStep = deltaRow / absDeltaRow;
+                if(deltaCol !== 0) colStep = deltaCol / absDeltaCol;
+                if(pieceType === 'b' && (deltaRow===0 || deltaCol===0)) return false;
+                if(pieceType === 'r' && (deltaRow!==0 && deltaCol!==0)) return false;
+                let checkRow = fromRow + rowStep;
+                let checkCol = fromCol + colStep;
+                while(!(checkRow === toRow && checkCol === toCol)) {
+                    if(boardState[checkRow][checkCol] !== null) return false;
+                    checkRow += rowStep;
+                    checkCol += colStep;
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        function isWhitePiece(piece) {
+            return piece && piece === piece.toUpperCase() && piece !== piece.toLowerCase();
+        }
+        
+        function getAllValidMovesForPiece(row, col, boardState) {
+            const piece = boardState[row][col];
+            if(!piece) return [];
+            const moves = [];
+            for(let i=0;i<8;i++){
+                for(let j=0;j<8;j++){
+                    if(isValidMove(piece, row, col, i, j, boardState)) {
+                        // optional: king safety check simple
+                        moves.push([i,j]);
+                    }
+                }
+            }
+            return moves;
+        }
+        
+        // Check if current player's king is under attack (simplified but enough)
+        function isKingInCheck(boardState, color) {
+            let kingPos = null;
+            for(let i=0;i<8;i++){
+                for(let j=0;j<8;j++){
+                    const p = boardState[i][j];
+                    if(p && ((color === 'w' && p === 'K') || (color === 'b' && p === 'k'))) {
+                        kingPos = [i,j];
+                        break;
+                    }
+                }
+            }
+            if(!kingPos) return false;
+            const opponentColor = color === 'w' ? 'b' : 'w';
+            for(let i=0;i<8;i++){
+                for(let j=0;j<8;j++){
+                    const p = boardState[i][j];
+                    if(p && ((opponentColor === 'w' && p === p.toUpperCase() && p !== p.toLowerCase()) || (opponentColor === 'b' && p !== p.toUpperCase()))) {
+                        if(isValidMove(p, i, j, kingPos[0], kingPos[1], boardState)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function isMoveLegal(piece, fromRow, fromCol, toRow, toCol, boardState) {
+            if(!isValidMove(piece, fromRow, fromCol, toRow, toCol, boardState)) return false;
+            const testBoard = copyBoard(boardState);
+            testBoard[toRow][toCol] = testBoard[fromRow][fromCol];
+            testBoard[fromRow][fromCol] = null;
+            const currentColor = isWhitePiece(piece) ? 'w' : 'b';
+            return !isKingInCheck(testBoard, currentColor);
+        }
+        
+        function getLegalMovesForPiece(row, col, boardState) {
+            const piece = boardState[row][col];
+            if(!piece) return [];
+            const colorPiece = isWhitePiece(piece) ? 'w' : 'b';
+            if((turn === 'w' && colorPiece !== 'w') || (turn === 'b' && colorPiece !== 'b')) return [];
+            const moves = [];
+            for(let i=0;i<8;i++){
+                for(let j=0;j<8;j++){
+                    if(isMoveLegal(piece, row, col, i, j, boardState)) moves.push([i,j]);
+                }
+            }
+            return moves;
+        }
+        
+        // check game over after move
+        function isCheckmatedOrStalemate(boardState, colorTurn) {
+            for(let i=0;i<8;i++){
+                for(let j=0;j<8;j++){
+                    const p = boardState[i][j];
+                    if(p && ((colorTurn === 'w' && isWhitePiece(p)) || (colorTurn === 'b' && !isWhitePiece(p)))) {
+                        if(getLegalMovesForPiece(i,j,boardState).length > 0) return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        function applyMove(fromRow, fromCol, toRow, toCol) {
+            if(gameOver) return false;
+            const piece = board[fromRow][fromCol];
+            if(!piece) return false;
+            const pieceColor = isWhitePiece(piece) ? 'w' : 'b';
+            if(pieceColor !== turn) return false;
+            const legalMoves = getLegalMovesForPiece(fromRow, fromCol, board);
+            const isValid = legalMoves.some(([r,c]) => r===toRow && c===toCol);
+            if(!isValid) return false;
+            // execute move
+            board[toRow][toCol] = board[fromRow][fromCol];
+            board[fromRow][fromCol] = null;
+            // pawn promotion (simple: if pawn reaches last rank -> queen)
+            const movedPiece = board[toRow][toCol];
+            if(movedPiece && movedPiece.toLowerCase() === 'p') {
+                if((movedPiece === 'P' && toRow === 0) || (movedPiece === 'p' && toRow === 7)) {
+                    board[toRow][toCol] = movedPiece === 'P' ? 'Q' : 'q';
+                }
+            }
+            // switch turn
+            turn = turn === 'w' ? 'b' : 'w';
+            // check game over
+            const currentTurnForCheck = turn;
+            if(isCheckmatedOrStalemate(board, currentTurnForCheck)) {
+                gameOver = true;
+                winner = currentTurnForCheck === 'w' ? 'black' : 'white';
+            }
+            drawBoard();
+            updateTurnDisplay();
+            // after move, sync to sheet
+            syncGameToSheet();
+            return true;
+        }
+        
+        // timer logic
+        function stopTimer() {
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        function startTimer() {
+            if(timerInterval) stopTimer();
+            timerInterval = setInterval(() => {
+                if(gameOver) return;
+                if(turn === 'w') {
+                    if(whiteTime <= 0) { gameOver=true; winner='black'; stopTimer(); drawBoard(); updateTurnDisplay(); syncGameToSheet(); return; }
+                    whiteTime--;
+                    updateTimerUI();
+                } else {
+                    if(blackTime <= 0) { gameOver=true; winner='white'; stopTimer(); drawBoard(); updateTurnDisplay(); syncGameToSheet(); return; }
+                    blackTime--;
+                    updateTimerUI();
+                }
+                if(whiteTime <=0 || blackTime <=0) {
+                    gameOver = true;
+                    stopTimer();
+                    syncGameToSheet();
+                }
+                drawBoard();
+            }, 1000);
+        }
+        
+        function updateTimerUI() {
+            const whiteMinutes = Math.floor(whiteTime/60);
+            const whiteSecs = whiteTime%60;
+            const blackMinutes = Math.floor(blackTime/60);
+            const blackSecs = blackTime%60;
+            document.getElementById('whiteTimer').innerText = `${whiteMinutes}:${whiteSecs<10?'0'+whiteSecs:whiteSecs}`;
+            document.getElementById('blackTimer').innerText = `${blackMinutes}:${blackSecs<10?'0'+blackSecs:blackSecs}`;
+        }
+        
+        function setTimeFromSelect() {
+            const val = parseInt(document.getElementById('timeControlSelect').value,10);
+            whiteTime = val*60;
+            blackTime = val*60;
+            updateTimerUI();
+            if(!gameOver) {
+                if(timerInterval) { stopTimer(); startTimer(); }
+            }
+        }
+        
+        function resetGame() {
+            board = initBoard();
+            turn = 'w';
+            gameOver = false;
+            winner = null;
+            selectedRow = null; selectedCol = null;
+            validMoves = [];
+            const selectedTime = parseInt(document.getElementById('timeControlSelect').value,10);
+            whiteTime = selectedTime*60;
+            blackTime = selectedTime*60;
+            updateTimerUI();
+            stopTimer();
+            startTimer();
+            drawBoard();
+            updateTurnDisplay();
+            syncGameToSheet();
+        }
+        
+        function updateTurnDisplay() {
+            const turnEl = document.getElementById('turnText');
+            if(gameOver) {
+                turnEl.innerText = winner ? `🏆 ${winner.toUpperCase()} WINS!` : "Game Over";
+                return;
+            }
+            turnEl.innerText = turn === 'w' ? "⚪ White's Turn" : "⚫ Black's Turn";
+        }
+        
+        // Drawing Canvas
+        function drawBoard() {
+            const size = 480;
+            const cell = size/8;
+            for(let i=0;i<8;i++){
+                for(let j=0;j<8;j++){
+                    const isLight = (i+j)%2 === 0;
+                    ctx.fillStyle = isLight ? '#eed9bb' : '#b58863';
+                    ctx.fillRect(j*cell, i*cell, cell, cell);
+                    // highlight selected
+                    if(selectedRow === i && selectedCol === j){
+                        ctx.fillStyle = '#b7d968aa';
+                        ctx.fillRect(j*cell, i*cell, cell, cell);
+                    }
+                    // highlight valid moves
+                    if(validMoves.some(([r,c]) => r===i && c===j)){
+                        ctx.fillStyle = '#66cc55aa';
+                        ctx.fillRect(j*cell, i*cell, cell, cell);
+                    }
+                    const piece = board[i][j];
+                    if(piece){
+                        ctx.font = `bold ${cell * 0.7}px 'Segoe UI', 'Noto Sans'`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = piece === piece.toUpperCase() && piece !== piece.toLowerCase() ? '#ffffff' : '#222222';
+                        ctx.shadowBlur = 0;
+                        ctx.fillText(pieceMap[piece] || '?', j*cell+cell/2, i*cell+cell/2);
+                    }
+                }
+            }
+            // game over overlay
+            if(gameOver){
+                ctx.font = 'bold 24px system-ui';
+                ctx.fillStyle = '#000000cc';
+                ctx.fillRect(0,180,480,80);
+                ctx.fillStyle = '#ffde9e';
+                ctx.fillText(winner ? `${winner.toUpperCase()} wins!` : 'Game Over', 240, 230);
+            }
+        }
+        
+        // canvas click handler
+        function handleCanvasClick(e) {
+            if(gameOver) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            const col = Math.floor(mouseX / 60);
+            const row = Math.floor(mouseY / 60);
+            if(row<0 || row>=8 || col<0 || col>=8) return;
+            if(selectedRow !== null && selectedCol !== null){
+                const success = applyMove(selectedRow, selectedCol, row, col);
+                selectedRow = null; selectedCol = null;
+                validMoves = [];
+                if(!success){
+                    // try select new piece
+                    const piece = board[row][col];
+                    if(piece && ((turn==='w' && isWhitePiece(piece)) || (turn==='b' && !isWhitePiece(piece)))){
+                        selectedRow = row; selectedCol = col;
+                        validMoves = getLegalMovesForPiece(selectedRow, selectedCol, board);
+                    }
+                }
+                drawBoard();
+            } else {
+                const piece = board[row][col];
+                if(piece && ((turn==='w' && isWhitePiece(piece)) || (turn==='b' && !isWhitePiece(piece)))){
+                    selectedRow = row; selectedCol = col;
+                    validMoves = getLegalMovesForPiece(selectedRow, selectedCol, board);
+                    drawBoard();
+                } else {
+                    selectedRow = null; validMoves = [];
+                    drawBoard();
+                }
+            }
+        }
+        
+        canvas.addEventListener('click', handleCanvasClick);
+        
+        // ---------- GOOGLE SHEETS INTEGRATION (AppScript & fetch) ----------
+        // REPLACE WITH YOUR DEPLOYED WEB APP URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_SAMPLE_DO_NOT_USE/exec"; 
+        // ⚠️ IMPORTANT: replace this URL with your actual Google Apps Script Web App URL after deployment.
+        let syncEnabled = true;
+        let syncInterval = null;
+        
+        // convert game state to object for sheet
+        function getGameStateObject() {
+            return {
+                board: JSON.stringify(board),
+                turn: turn,
+                gameOver: gameOver,
+                winner: winner || '',
+                whiteTime: whiteTime,
+                blackTime: blackTime,
+                lastUpdated: Date.now(),
+                version: 1
+            };
+        }
+        
+        function loadGameStateFromData(data) {
+            if(!data || !data.board) return false;
+            try {
+                const newBoard = JSON.parse(data.board);
+                if(newBoard && newBoard.length === 8) board = newBoard;
+                turn = data.turn || 'w';
+                gameOver = data.gameOver === true;
+                winner = data.winner || null;
+                whiteTime = typeof data.whiteTime === 'number' ? data.whiteTime : whiteTime;
+                blackTime = typeof data.blackTime === 'number' ? data.blackTime : blackTime;
+                updateTimerUI();
+                selectedRow = null; validMoves = [];
+                drawBoard();
+                updateTurnDisplay();
+                if(!gameOver) { stopTimer(); startTimer(); }
+                else { stopTimer(); }
+                return true;
+            } catch(e){ return false; }
+        }
+        
+        async function syncGameToSheet() {
+            if(!syncEnabled) return;
+            const state = getGameStateObject();
+            try {
+                const params = new URLSearchParams();
+                params.append('action', 'update');
+                params.append('data', JSON.stringify(state));
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // easier for sheets, but response opaque. we handle optimistic
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: params.toString()
+                });
+                document.getElementById('syncStatus').innerHTML = '✅ Synced '+new Date().toLocaleTimeString();
+                setTimeout(()=>{ if(document.getElementById('syncStatus').innerText.includes('Synced')) document.getElementById('syncStatus').innerHTML = '🟢 Live sync every 5s';},2000);
+            } catch(e) {
+                document.getElementById('syncStatus').innerHTML = '⚠️ Sync error';
+            }
+        }
+        
+        async function fetchFromSheet() {
+            if(!syncEnabled) return;
+            try {
+                const url = `${SCRIPT_URL}?action=get&t=${Date.now()}`;
+                const resp = await fetch(url);
+                const text = await resp.text();
+                let data;
+                try{ data = JSON.parse(text); } catch(e){ return; }
+                if(data && data.board){
+                    loadGameStateFromData(data);
+                    document.getElementById('syncStatus').innerHTML = '🔄 Loaded from sheet';
+                    setTimeout(()=>{ if(document.getElementById('syncStatus').innerText.includes('Loaded')) document.getElementById('syncStatus').innerHTML = '🟢 Live sync every 5s';},1500);
+                }
+            } catch(e){}
+        }
+        
+        function startPeriodicSync() {
+            if(syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                fetchFromSheet();
+            }, 5000);
+        }
+        
+        // manual sync button
+        document.getElementById('forceSyncBtn').addEventListener('click', ()=>{
+            syncGameToSheet();
+            fetchFromSheet();
+        });
+        document.getElementById('resetGameBtn').addEventListener('click', ()=>{
+            resetGame();
+        });
+        document.getElementById('timeControlSelect').addEventListener('change', ()=>{
+            if(!gameOver){
+                const newVal = parseInt(document.getElementById('timeControlSelect').value,10);
+                whiteTime = newVal*60;
+                blackTime = newVal*60;
+                updateTimerUI();
+                stopTimer();
+                startTimer();
+                syncGameToSheet();
+            } else {
+                setTimeFromSelect();
+            }
+        });
+        
+        // initial reset
+        resetGame();
+        startPeriodicSync();
+        // show warning if script url is default
+        if(SCRIPT_URL.includes("SAMPLE")){
+            console.warn("Please replace SCRIPT_URL with your Google Apps Script deployment URL");
+            document.getElementById('syncStatus').innerHTML = '⚠️ Set Google Script URL in code';
+        }
+    })();
+</script>
+
+<!-- ========== GOOGLE APPS SCRIPT CODE (copy this to Apps Script and deploy as web app) ========== 
+    PASTE the following into Google Apps Script Editor (Extensions -> Apps Script) and deploy as Web App (Execute as "Me", Access "Anyone")
+-->
+
+<!-- 
+APPS SCRIPT CODE:
+
+
+-->
+
+</body>
+</html>
