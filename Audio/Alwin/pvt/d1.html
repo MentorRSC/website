@@ -21,7 +21,6 @@
             padding: 20px;
         }
 
-        /* Popup Overlay */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -57,7 +56,6 @@
             }
         }
 
-        /* Tabs */
         .tabs {
             display: flex;
             background: #f5f5f5;
@@ -101,7 +99,6 @@
             }
         }
 
-        /* Form Elements */
         .form-group {
             margin-bottom: 20px;
         }
@@ -145,6 +142,11 @@
             transform: translateY(-2px);
         }
 
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .error-msg {
             color: #e74c3c;
             font-size: 12px;
@@ -152,11 +154,17 @@
             display: none;
         }
 
-        /* Main Page */
+        .info-msg {
+            color: #3498db;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
         .main-page {
             display: none;
             width: 100%;
-            max-width: 1200px;
+            max-width: 800px;
             background: white;
             border-radius: 20px;
             padding: 30px;
@@ -173,6 +181,7 @@
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 3px solid #667eea;
+            position: relative;
         }
 
         .header h1 {
@@ -186,8 +195,8 @@
 
         .logout-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 0;
+            right: 0;
             padding: 10px 20px;
             background: #e74c3c;
             color: white;
@@ -195,32 +204,26 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            transition: background 0.3s;
         }
 
-        .records-container {
-            display: grid;
-            gap: 15px;
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .member-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
             margin-top: 20px;
-        }
-
-        .record-card {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            border-radius: 10px;
-            transition: transform 0.2s, box-shadow 0.2s;
-            animation: slideUp 0.3s ease;
-        }
-
-        .record-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease;
         }
 
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
@@ -228,15 +231,85 @@
             }
         }
 
-        .record-card strong {
+        .member-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #667eea;
+        }
+
+        .member-header h2 {
             color: #667eea;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .badge {
             display: inline-block;
-            min-width: 80px;
+            padding: 5px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .details-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .detail-row:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .detail-label {
+            font-weight: 700;
+            min-width: 120px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-size: 16px;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .welcome-message {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
         }
 
         .loading {
             text-align: center;
-            padding: 20px;
+            padding: 40px;
             color: #666;
         }
 
@@ -254,114 +327,200 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 12px;
+            font-family: monospace;
+            display: none;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .detail-label {
+                margin-bottom: 5px;
+            }
+            
+            .logout-btn {
+                position: static;
+                margin-bottom: 15px;
+                width: 100%;
+            }
+            
+            .header {
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
 
-<!-- Popup for Login -->
 <div id="popup" class="popup-overlay">
     <div class="popup-container">
         <div class="tabs">
-            <div class="tab active" data-tab="tab1">Login with ID</div>
-            <div class="tab" data-tab="tab2">Login with Mobile & DOB</div>
+            <div class="tab active" data-tab="tab1">🔑 Login with ID</div>
+            <div class="tab" data-tab="tab2">📱 Login with Mobile & DOB</div>
         </div>
         
-        <!-- Tab 1: Login with ID -->
         <div id="tab1" class="tab-content active">
             <form id="loginFormID">
                 <div class="form-group">
                     <label>ID Number</label>
-                    <input type="text" id="idNumber" placeholder="Enter your ID" required>
+                    <input type="text" id="idNumber" placeholder="Enter your ID (e.g., M001, 001, etc.)" required autocomplete="off">
                     <div class="error-msg" id="idError"></div>
                 </div>
                 <button type="submit" class="login-btn">Login</button>
             </form>
         </div>
         
-        <!-- Tab 2: Login with Mobile & DOB -->
         <div id="tab2" class="tab-content">
             <form id="loginFormMobile">
                 <div class="form-group">
                     <label>Mobile Number</label>
-                    <input type="tel" id="mobileNumber" placeholder="Enter mobile number" required>
+                    <input type="tel" id="mobileNumber" placeholder="Enter mobile number (10 digits)" required autocomplete="off">
+                    <div class="info-msg">📱 Format: 10-digit number (e.g., 9876543210)</div>
                     <div class="error-msg" id="mobileError"></div>
                 </div>
                 <div class="form-group">
                     <label>Date of Birth</label>
                     <input type="date" id="dob" required>
+                    <div class="info-msg">📅 Format: YYYY-MM-DD (e.g., 1990-01-15)</div>
                     <div class="error-msg" id="dobError"></div>
                 </div>
                 <button type="submit" class="login-btn">Login</button>
             </form>
         </div>
+        
+        <!-- Debug Panel -->
+        <div id="debugPanel" class="debug-panel" style="margin: 10px; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+            <strong>🔧 Debug Info:</strong>
+            <div id="debugInfo"></div>
+        </div>
     </div>
 </div>
 
-<!-- Main Page -->
 <div id="mainPage" class="main-page">
-    <button class="logout-btn" onclick="logout()">Logout</button>
     <div class="header">
-        <h1>🎉 Club Member Details</h1>
-        <p>Welcome to the members portal</p>
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        <h1>🏆 Club Member Portal</h1>
+        <p>Welcome to your personal dashboard</p>
     </div>
-    <div id="recordsList" class="records-container">
+    <div id="memberDetails">
         <div class="loading">
             <div class="spinner"></div>
-            <p>Loading member details...</p>
+            <p>Loading your details...</p>
         </div>
     </div>
 </div>
 
 <script>
-    // Google Sheets configuration
-    // IMPORTANT: You need to set up Google Sheets API and get an API key
-    // For this demo, I'm using a public sheet ID. For production, you'll need to enable API access
     const SPREADSHEET_ID = '1YXbTbLd7KhsdHy9QJXxoftKT8YJ-JyPbFJG7qhKNId0';
-    const API_KEY = ''; // You need to get this from Google Cloud Console
-    
-    // For demo purposes, I'll create a mock data structure
-    // In production, replace this with actual Google Sheets API calls
     let sheetData = [];
+    let currentUser = null;
+    
+    // Function to normalize data for comparison
+    function normalizeData(value) {
+        if (!value) return '';
+        return String(value).trim().toLowerCase();
+    }
+    
+    // Function to normalize mobile number (remove spaces, special chars)
+    function normalizeMobile(mobile) {
+        if (!mobile) return '';
+        return String(mobile).replace(/[\s\-\(\)\+]/g, '').trim();
+    }
+    
+    // Function to normalize date to YYYY-MM-DD format
+    function normalizeDate(dateStr) {
+        if (!dateStr) return '';
+        
+        // Try to parse the date
+        let date;
+        
+        // If it's already in YYYY-MM-DD format
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            return dateStr;
+        }
+        
+        // Try to parse as DD/MM/YYYY or MM/DD/YYYY
+        const parts = dateStr.split(/[/\-]/);
+        if (parts.length === 3) {
+            // Assume YYYY-MM-DD if first part is 4 digits
+            if (parts[0].length === 4) {
+                return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            }
+            // Try to parse as DD/MM/YYYY
+            date = new Date(parts[2], parts[1] - 1, parts[0]);
+            if (!isNaN(date)) {
+                return date.toISOString().split('T')[0];
+            }
+            // Try to parse as MM/DD/YYYY
+            date = new Date(parts[2], parts[0] - 1, parts[1]);
+            if (!isNaN(date)) {
+                return date.toISOString().split('T')[0];
+            }
+        }
+        
+        // Try standard Date parsing
+        date = new Date(dateStr);
+        if (!isNaN(date)) {
+            return date.toISOString().split('T')[0];
+        }
+        
+        return dateStr;
+    }
     
     // Function to fetch data from Google Sheets
     async function fetchSheetData() {
         try {
-            // Note: This requires Google Sheets API to be enabled
-            // For now, we'll use a proxy approach or mock data
-            // You can also use the following URL to fetch as CSV:
-            // https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv
-            
             const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv`;
-            
             const response = await fetch(csvUrl);
             if (!response.ok) throw new Error('Failed to fetch data');
             
             const csvText = await response.text();
             const rows = csvText.split('\n').map(row => row.split(','));
             
-            // Parse CSV data (first row is headers)
-            const headers = rows[0];
+            const headers = rows[0].map(h => h.trim().toLowerCase());
             const data = [];
             
             for (let i = 1; i < rows.length; i++) {
-                if (rows[i].length > 1 && rows[i][0]) {
+                if (rows[i].length > 1 && rows[i][0] && rows[i][0].trim()) {
                     const row = {};
                     headers.forEach((header, index) => {
-                        row[header.trim().toLowerCase()] = rows[i][index]?.trim() || '';
+                        if (header && rows[i][index]) {
+                            let value = rows[i][index].trim();
+                            row[header] = value;
+                        }
                     });
                     data.push(row);
                 }
             }
             
+            // Log data for debugging
+            console.log('Fetched data:', data);
+            updateDebugInfo(`Loaded ${data.length} records from sheet`);
+            
             return data;
         } catch (error) {
             console.error('Error fetching sheet data:', error);
-            // Return mock data for demo if API fails
+            updateDebugInfo(`Error: ${error.message}. Using mock data.`);
             return getMockData();
         }
     }
     
-    // Mock data for demonstration (in case Google Sheets API isn't configured)
+    // Mock data with various date formats for testing
     function getMockData() {
         return [
             { "sl no.": "1", "name": "John Doe", "dob": "1990-01-15", "id": "M001", "mobile": "9876543210", "level": "Gold" },
@@ -372,76 +531,166 @@
         ];
     }
     
+    // Update debug information
+    function updateDebugInfo(message) {
+        const debugDiv = document.getElementById('debugInfo');
+        if (debugDiv) {
+            debugDiv.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+            const debugPanel = document.getElementById('debugPanel');
+            if (debugPanel) {
+                debugPanel.classList.add('show');
+            }
+        }
+    }
+    
     // Function to validate user credentials
     async function validateUser(credentials, type) {
         try {
-            // Fetch sheet data if not already loaded
             if (sheetData.length === 0) {
                 sheetData = await fetchSheetData();
             }
             
+            updateDebugInfo(`Validating with ${type}: ${JSON.stringify(credentials)}`);
+            
+            let user = null;
+            
             if (type === 'id') {
-                return sheetData.find(row => row['id'] === credentials.id);
-            } else if (type === 'mobile') {
-                return sheetData.find(row => 
-                    row['mobile'] === credentials.mobile && 
-                    row['dob'] === credentials.dob
-                );
+                const searchId = normalizeData(credentials.id);
+                user = sheetData.find(row => normalizeData(row['id']) === searchId);
+                updateDebugInfo(`ID search: looking for "${searchId}"`);
+            } 
+            else if (type === 'mobile') {
+                const searchMobile = normalizeMobile(credentials.mobile);
+                const searchDob = normalizeDate(credentials.dob);
+                
+                updateDebugInfo(`Mobile search: looking for "${searchMobile}"`);
+                updateDebugInfo(`DOB search: looking for "${searchDob}"`);
+                
+                user = sheetData.find(row => {
+                    const rowMobile = normalizeMobile(row['mobile']);
+                    const rowDob = normalizeDate(row['dob']);
+                    const match = rowMobile === searchMobile && rowDob === searchDob;
+                    
+                    if (match) {
+                        updateDebugInfo(`Found match: ${row['name']} (Mobile: ${rowMobile}, DOB: ${rowDob})`);
+                    }
+                    return match;
+                });
             }
-            return null;
+            
+            if (user) {
+                currentUser = user;
+                updateDebugInfo(`Validation successful: ${user['name']}`);
+                return true;
+            }
+            
+            updateDebugInfo(`No matching user found`);
+            return false;
+            
         } catch (error) {
             console.error('Validation error:', error);
-            return null;
+            updateDebugInfo(`Validation error: ${error.message}`);
+            return false;
         }
     }
     
-    // Function to display all records on main page
-    function displayAllRecords() {
-        const recordsContainer = document.getElementById('recordsList');
+    // Function to display specific user's details
+    function displayUserDetails() {
+        const container = document.getElementById('memberDetails');
         
-        if (!sheetData || sheetData.length === 0) {
-            recordsContainer.innerHTML = '<div class="loading">No records found</div>';
+        if (!currentUser) {
+            container.innerHTML = '<div class="error-container">No user data found</div>';
             return;
         }
         
-        recordsContainer.innerHTML = '';
+        const levelColors = {
+            'Gold': '#FFD700',
+            'Platinum': '#E5E4E2',
+            'Silver': '#C0C0C0',
+            'Bronze': '#CD7F32'
+        };
         
-        sheetData.forEach((record, index) => {
-            const card = document.createElement('div');
-            card.className = 'record-card';
-            card.style.animationDelay = `${index * 0.05}s`;
-            
-            let html = '<div style="margin-bottom: 5px;"><strong>📋 Record #' + (index + 1) + '</strong></div>';
-            
-            // Display all fields dynamically
-            Object.keys(record).forEach(key => {
-                if (record[key]) {
-                    html += `<div><strong>${key.toUpperCase()}:</strong> ${record[key]}</div>`;
-                }
-            });
-            
-            card.innerHTML = html;
-            recordsContainer.appendChild(card);
-        });
+        const level = currentUser['level'] || 'Member';
+        const levelColor = levelColors[level] || '#667eea';
+        
+        const html = `
+            <div class="welcome-message">
+                🎉 Welcome, ${escapeHtml(currentUser['name'] || 'Member')}! 🎉
+            </div>
+            <div class="member-card">
+                <div class="member-header">
+                    <h2>${escapeHtml(currentUser['name'] || 'Member Details')}</h2>
+                    <div class="badge" style="background: ${levelColor}">
+                        ${escapeHtml(level)} Member
+                    </div>
+                </div>
+                <div class="details-grid">
+                    ${createDetailRow('📋 SL No.', currentUser['sl no.'])}
+                    ${createDetailRow('🆔 ID Number', currentUser['id'])}
+                    ${createDetailRow('📱 Mobile Number', currentUser['mobile'])}
+                    ${createDetailRow('🎂 Date of Birth', formatDisplayDate(currentUser['dob']))}
+                    ${createDetailRow('⭐ Member Level', currentUser['level'])}
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
     }
     
-    // Tab switching functionality
+    // Format date for display
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return 'Not provided';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+    
+    function createDetailRow(label, value) {
+        if (!value || value === '') {
+            return '';
+        }
+        return `
+            <div class="detail-row">
+                <div class="detail-label">${label}</div>
+                <div class="detail-value">${escapeHtml(value)}</div>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    
+    // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            // Update tabs
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             
-            // Update content
             const tabId = tab.getAttribute('data-tab');
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.error-msg').forEach(error => {
+                error.style.display = 'none';
+            });
         });
     });
     
-    // Login form handlers
+    // Login handlers
     document.getElementById('loginFormID').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -456,21 +705,19 @@
         
         idError.style.display = 'none';
         
-        // Show loading state
         const submitBtn = e.target.querySelector('.login-btn');
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Verifying...';
         submitBtn.disabled = true;
         
-        const user = await validateUser({ id: idNumber }, 'id');
+        const isValid = await validateUser({ id: idNumber }, 'id');
         
-        if (user) {
-            // Successful login - hide popup and show main page
+        if (isValid) {
             document.getElementById('popup').style.display = 'none';
             document.getElementById('mainPage').classList.add('active');
-            displayAllRecords();
+            displayUserDetails();
         } else {
-            idError.textContent = 'Invalid ID. Please try again.';
+            idError.textContent = `Invalid ID: "${idNumber}". Please check and try again.`;
             idError.style.display = 'block';
         }
         
@@ -492,6 +739,10 @@
             mobileError.textContent = 'Please enter mobile number';
             mobileError.style.display = 'block';
             hasError = true;
+        } else if (!/^\d{10}$/.test(mobileNumber.replace(/\D/g, ''))) {
+            mobileError.textContent = 'Please enter a valid 10-digit mobile number';
+            mobileError.style.display = 'block';
+            hasError = true;
         } else {
             mobileError.style.display = 'none';
         }
@@ -506,21 +757,19 @@
         
         if (hasError) return;
         
-        // Show loading state
         const submitBtn = e.target.querySelector('.login-btn');
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Verifying...';
         submitBtn.disabled = true;
         
-        const user = await validateUser({ mobile: mobileNumber, dob: dob }, 'mobile');
+        const isValid = await validateUser({ mobile: mobileNumber, dob: dob }, 'mobile');
         
-        if (user) {
-            // Successful login - hide popup and show main page
+        if (isValid) {
             document.getElementById('popup').style.display = 'none';
             document.getElementById('mainPage').classList.add('active');
-            displayAllRecords();
+            displayUserDetails();
         } else {
-            mobileError.textContent = 'Invalid credentials. Mobile number and DOB do not match.';
+            mobileError.textContent = 'Invalid credentials. Mobile number and DOB do not match any record.';
             mobileError.style.display = 'block';
         }
         
@@ -528,33 +777,41 @@
         submitBtn.disabled = false;
     });
     
-    // Logout function
     function logout() {
+        currentUser = null;
         document.getElementById('popup').style.display = 'flex';
         document.getElementById('mainPage').classList.remove('active');
         
-        // Clear form fields
         document.getElementById('idNumber').value = '';
         document.getElementById('mobileNumber').value = '';
         document.getElementById('dob').value = '';
         
-        // Clear any error messages
         document.querySelectorAll('.error-msg').forEach(error => {
             error.style.display = 'none';
         });
         
-        // Reset to first tab
         document.querySelector('.tab[data-tab="tab1"]').click();
+        
+        document.getElementById('memberDetails').innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading your details...</p>
+            </div>
+        `;
     }
     
-    // Pre-fetch data when page loads
+    // Initialize
     (async function init() {
         try {
             sheetData = await fetchSheetData();
-            console.log('Data loaded:', sheetData.length, 'records');
+            updateDebugInfo(`✓ Data loaded: ${sheetData.length} records`);
+            if (sheetData.length > 0) {
+                updateDebugInfo(`Sample record: ID=${sheetData[0]['id']}, Mobile=${sheetData[0]['mobile']}, DOB=${sheetData[0]['dob']}`);
+            }
         } catch (error) {
             console.error('Failed to load data:', error);
             sheetData = getMockData();
+            updateDebugInfo(`Using mock data: ${sheetData.length} records`);
         }
     })();
 </script>
