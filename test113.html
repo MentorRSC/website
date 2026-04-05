@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>State Dashboard | Smart Cards from Linked Sheets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --accent: #f43f5e;
+            --success: #10b981;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --text: #334155;
+            --border: #e2e8f0;
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            --gradient-start: #f0f9ff;
+            --gradient-end: #e6f0fa;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(125deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            color: var(--text);
+        }
+
+        .explorer-widget {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(0px);
+            border-radius: 2.5rem;
+            box-shadow: 0 30px 55px -20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.25s ease;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .widget-hero {
+            background: linear-gradient(110deg, var(--primary), var(--primary-dark));
+            padding: 2rem 2rem;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .widget-hero::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 220px;
+            height: 220px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .widget-hero i {
+            font-size: 2.6rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .widget-hero h2 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .widget-hero p {
+            opacity: 0.9;
+            margin-top: 0.4rem;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .dropdown-panel {
+            padding: 1.8rem 2rem 2rem;
+        }
+
+        .stats-mini {
+            background: #ffffffdd;
+            backdrop-filter: blur(2px);
+            border-radius: 1.5rem;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            border: 1px solid rgba(203, 213, 225, 0.5);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .stat-badge {
+            background: white;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            color: var(--dark);
+        }
+
+        .stat-badge i {
+            margin-right: 0.5rem;
+            color: var(--primary);
+        }
+
+        .state-selector {
+            margin-bottom: 1.8rem;
+        }
+
+        .dropdown-label {
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--dark);
+            letter-spacing: -0.2px;
+        }
+
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-trigger {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 1rem 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .select-trigger:hover {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 6px 12px -8px rgba(59,130,246,0.2);
+        }
+
+        .select-trigger span {
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+
+        .select-trigger i {
+            color: #94a3b8;
+            transition: transform 0.2s;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.4rem;
+            max-height: 310px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 18px 32px -12px rgba(0, 0, 0, 0.2);
+            display: none;
+            list-style: none;
+            padding: 0.4rem 0;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 0.8rem 1.3rem;
+            cursor: pointer;
+            transition: background 0.12s;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #eef2ff;
+        }
+
+        .option-title {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .option-badge {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            color: #1e293b;
+        }
+
+        /* Cards grid */
+        .cards-container {
+            margin-top: 0.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .section-header h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            background: #eef2ff;
+            padding: 0.3rem 1.2rem;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.4rem;
+            margin-top: 0.8rem;
+        }
+
+        .dynamic-card {
+            background: white;
+            border-radius: 1.4rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .dynamic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+            border-color: #cbd5e1;
+        }
+
+        .card-header-custom {
+            background: linear-gradient(98deg, #fefefe, #fafcff);
+            padding: 1rem 1.2rem;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .card-header-custom i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .card-header-custom h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        .card-body-custom {
+            padding: 1.1rem 1.2rem 1.2rem;
+            flex: 1;
+            background: #ffffff;
+        }
+
+        .data-row {
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            border-left: 2px solid #e2e8f0;
+            padding-left: 0.8rem;
+            transition: border 0.1s;
+        }
+
+        .data-label {
+            font-weight: 700;
+            color: #475569;
+            display: inline-block;
+            min-width: 80px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background: #f1f5f9;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            margin-right: 0.5rem;
+        }
+
+        .data-value {
+            color: var(--text);
+            word-break: break-word;
+            line-height: 1.45;
+            font-size: 0.85rem;
+        }
+
+        .card-footer-note {
+            background: #fafcff;
+            padding: 0.7rem 1rem;
+            font-size: 0.7rem;
+            border-top: 1px solid #edf2f7;
+            color: #5b6e8c;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: monospace;
+        }
+
+        .empty-state-card {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .loading-spinner-small {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-msg {
+            background: #f2f6fc;
+            border-radius: 1.3rem;
+            padding: 0.9rem 1.2rem;
+            font-size: 0.85rem;
+            color: #1e4880;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #dce7f5;
+        }
+
+        .error-text {
+            color: #b91c1c;
+            background: #fff5f2;
+            border-color: #ffd9ce;
+        }
+
+        .success-text {
+            background: #eaf9ef;
+            border-color: #b9e6c9;
+            color: #166534;
+        }
+
+        .badge-count {
+            background: #eef2ff;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 680px) {
+            .dropdown-panel { padding: 1.2rem; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .widget-hero h2 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="explorer-widget">
+    <div class="widget-hero">
+        <i class="fas fa-link"></i>
+        <h2>State Explorer</h2>
+        <p>linked spreadsheets · dynamic insight cards</p>
+    </div>
+    <div class="dropdown-panel">
+        <div class="stats-mini" id="statsBar">
+            <span class="stat-badge"><i class="fas fa-database"></i> Total entries: <span id="statTotal">—</span></span>
+            <span class="stat-badge"><i class="fas fa-flag-checkered"></i> Unique states: <span id="statUnique">—</span></span>
+            <span class="stat-badge"><i class="fas fa-sync-alt"></i> Live from Sheets</span>
+        </div>
+
+        <div class="state-selector">
+            <div class="dropdown-label">
+                <i class="fas fa-chevron-circle-down"></i> Select a state
+            </div>
+            <div class="custom-select" id="customSelect">
+                <div class="select-trigger" id="selectTrigger">
+                    <span id="selectedStateName">— Pick a state —</span>
+                    <i class="fas fa-angle-down"></i>
+                </div>
+                <ul class="dropdown-options" id="dropdownOptions"></ul>
+            </div>
+        </div>
+
+        <!-- dynamic message area -->
+        <div id="infoMessage" class="status-msg" style="display: none;"></div>
+
+        <!-- cards container -->
+        <div id="cardsSection" class="cards-container">
+            <div class="empty-state-card" style="background:#fef9e3; border-radius:1.5rem; margin-top:0.5rem;">
+                <i class="fas fa-folder-open" style="font-size:2rem; opacity:0.6; margin-bottom:0.5rem; display:block;"></i>
+                <p style="font-weight:500;">✨ Select a state to load cards from its linked spreadsheet (Column 3 = Sheet ID). Each row in child sheet becomes a beautiful card.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // MASTER SHEET CONFIGURATION
+    const MASTER_SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
+    const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+
+    let masterRows = [];          // { state, linkedSheetId }
+    let uniqueStates = [];
+    let selectedState = '';
+    
+    // Cache for child sheets
+    const childSheetCache = new Map(); // key = sheetId -> { rows: [], error, errorMsg, loading }
+    
+    // DOM elements
+    const dropdown = document.getElementById('dropdownOptions');
+    const selectTrigger = document.getElementById('selectTrigger');
+    const selectedStateSpan = document.getElementById('selectedStateName');
+    const cardsSection = document.getElementById('cardsSection');
+    const infoDiv = document.getElementById('infoMessage');
+    const statTotalSpan = document.getElementById('statTotal');
+    const statUniqueSpan = document.getElementById('statUnique');
+
+    // ---------- Robust CSV parser (handles quotes, escaped commas, line breaks)
+    function parseCSV(csvText) {
+        const rows = [];
+        let currentRow = [];
+        let currentField = '';
+        let insideQuotes = false;
+        let i = 0;
+        const len = csvText.length;
+        
+        while (i < len) {
+            const ch = csvText[i];
+            const nextCh = csvText[i+1];
+            
+            if (ch === '"') {
+                if (insideQuotes && nextCh === '"') {
+                    currentField += '"';
+                    i++;
+                } else {
+                    insideQuotes = !insideQuotes;
+                }
+            }
+            else if (ch === ',' && !insideQuotes) {
+                currentRow.push(currentField);
+                currentField = '';
+            }
+            else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+                currentRow.push(currentField);
+                if (currentRow.length > 0 || (currentRow.length === 1 && currentRow[0] !== '')) {
+                    rows.push(currentRow);
+                }
+                currentRow = [];
+                currentField = '';
+                if (ch === '\r') i++;
+            }
+            else if (ch === '\r' && !insideQuotes) {
+                currentRow.push(currentField);
+                if (currentRow.length > 0) rows.push(currentRow);
+                currentRow = [];
+                currentField = '';
+            }
+            else {
+                currentField += ch;
+            }
+            i++;
+        }
+        if (currentField !== '' || currentRow.length > 0) {
+            currentRow.push(currentField);
+            if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '' && rows.length === 0)) {
+                rows.push(currentRow);
+            }
+        }
+        
+        // Trim each cell and remove surrounding quotes if any
+        return rows.map(row => row.map(cell => {
+            let cleaned = String(cell).trim();
+            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+            }
+            return cleaned;
+        }));
+    }
+    
+    // Fetch master sheet: Column B (index1) = state, Column C (index2) = linked sheet ID
+    async function fetchMasterSheet() {
+        showInfoMessage('Loading master index from Google Sheets...', 'loading');
+        try {
+            const response = await fetch(MASTER_DATA_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status} - check CORS or sharing`);
+            const csvText = await response.text();
+            if (!csvText.trim()) throw new Error('Master sheet is empty');
+            
+            const parsed = parseCSV(csvText);
+            if (parsed.length < 2) throw new Error('Insufficient rows in master sheet');
+            
+            const tempRows = [];
+            const stateSet = new Set();
+            
+            for (let idx = 0; idx < parsed.length; idx++) {
+                const row = parsed[idx];
+                let state = (row.length >= 2) ? row[1] : '';
+                let linkedId = (row.length >= 3) ? row[2] : '';
+                
+                if (!state || state === '' || state.toLowerCase() === 'null' || state === 'STATE') continue;
+                linkedId = linkedId.trim();
+                if (linkedId === '' || linkedId.toLowerCase() === 'null' || linkedId === '#N/A') linkedId = null;
+                
+                tempRows.push({ state: state, linkedSheetId: linkedId });
+                stateSet.add(state);
+            }
+            
+            if (tempRows.length === 0) throw new Error('No valid state entries found (need state names in column B)');
+            
+            masterRows = tempRows;
+            uniqueStates = Array.from(stateSet).sort((a,b) => a.localeCompare(b));
+            
+            statTotalSpan.innerText = masterRows.length;
+            statUniqueSpan.innerText = uniqueStates.length;
+            
+            renderDropdown();
+            showInfoMessage(`✅ Master loaded: ${masterRows.length} entries, ${uniqueStates.length} unique states. Select a state to see linked cards.`, 'success');
+            
+            selectedState = '';
+            selectedStateSpan.innerText = '— Choose a state —';
+            showEmptyCardsMessage();
+            
+        } catch (err) {
+            console.error(err);
+            showInfoMessage(`⚠️ Failed to load master sheet: ${err.message}. Ensure sheet is published (Anyone with link can view).`, 'error');
+            statTotalSpan.innerText = '0';
+            statUniqueSpan.innerText = '0';
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">⚠️ Cannot load states</li>`;
+            showEmptyCardsMessage(true);
+        }
+    }
+    
+    function renderDropdown() {
+        if (!dropdown) return;
+        if (uniqueStates.length === 0) {
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">✨ No states found</li>`;
+            return;
+        }
+        dropdown.innerHTML = uniqueStates.map(state => `
+            <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
+                <span class="option-title">${escapeHtml(state)}</span>
+                <span class="option-badge"><i class="fas fa-external-link-alt"></i> linked data</span>
+            </li>
+        `).join('');
+        
+        document.querySelectorAll('.dropdown-option[data-state-value]').forEach(opt => {
+            opt.removeEventListener('click', handleOptionClick);
+            opt.addEventListener('click', handleOptionClick);
+        });
+    }
+    
+    function handleOptionClick(e) {
+        const stateVal = e.currentTarget.getAttribute('data-state-value');
+        if (stateVal) selectState(stateVal);
+        closeDropdown();
+    }
+    
+    async function selectState(state) {
+        selectedState = state;
+        selectedStateSpan.innerText = state;
+        // loading skeleton
+        cardsSection.innerHTML = `
+            <div style="display:flex; justify-content:center; align-items:center; flex-direction:column; padding:2.5rem; gap:0.8rem;">
+                <div class="loading-spinner-small" style="width:36px; height:36px; border-width:3px;"></div>
+                <p style="font-weight:500;">Fetching linked spreadsheets for ${escapeHtml(state)}...</p>
+                <small style="color:#6c757d;">Reading column 3 (Sheet ID) from master entries</small>
+            </div>
+        `;
+        
+        const entriesForState = masterRows.filter(row => row.state === state);
+        if (entriesForState.length === 0) {
+            showEmptyCardsMessage(false, `No linked sheet ID found for "${escapeHtml(state)}".`);
+            return;
+        }
+        
+        // fetch each unique sheet ID (multiple per state possible)
+        const fetchTasks = entriesForState.map(async (entry) => {
+            const sheetId = entry.linkedSheetId;
+            if (!sheetId) {
+                return { sheetId: null, error: true, errorMsg: 'Missing spreadsheet ID (column 3 empty)', rows: [] };
+            }
+            if (childSheetCache.has(sheetId)) {
+                const cached = childSheetCache.get(sheetId);
+                return { sheetId, ...cached };
+            }
+            childSheetCache.set(sheetId, { rows: [], loading: true, error: false });
+            try {
+                const childUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+                const resp = await fetch(childUrl);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status} - check sharing`);
+                const csvTextRaw = await resp.text();
+                const parsedRows = parseCSV(csvTextRaw);
+                // transform each row into a map of column keys -> values
+                const rowsOfData = [];
+                for (let r = 0; r < parsedRows.length; r++) {
+                    const rowCells = parsedRows[r];
+                    if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
+                    const rowObj = {};
+                    rowCells.forEach((cell, colIndex) => {
+                        const colLabel = `field_${colIndex+1}`;
+                        rowObj[colLabel] = cell !== undefined && cell !== '' ? cell : '—';
+                    });
+                    rowsOfData.push(rowObj);
+                }
+                const result = { rows: rowsOfData, loading: false, error: false, sheetId };
+                childSheetCache.set(sheetId, result);
+                return result;
+            } catch (err) {
+                const errResult = { rows: [], loading: false, error: true, errorMsg: err.message, sheetId };
+                childSheetCache.set(sheetId, errResult);
+                return errResult;
+            }
+        });
+        
+        const results = await Promise.all(fetchTasks);
+        renderCardsForState(state, entriesForState, results);
+    }
+    
+    function renderCardsForState(state, masterEntries, childResults) {
+        if (!cardsSection) return;
+        let html = `<div class="cards-container">`;
+        html += `<div class="section-header"><h4><i class="fas fa-map-marker-alt"></i> ${escapeHtml(state)}</h4><span class="badge-count">${masterEntries.length} linked source(s)</span></div>`;
+        html += `<div class="cards-grid">`;
+        
+        let totalCards = 0;
+        
+        for (let i = 0; i < masterEntries.length; i++) {
+            const entry = masterEntries[i];
+            const sheetId = entry.linkedSheetId;
+            const childInfo = childResults[i];
+            
+            if (!sheetId) {
+                html += `
+                    <div class="dynamic-card" style="border-left:3px solid #f97316;">
+                        <div class="card-header-custom"><i class="fas fa-link-slash"></i><h3>⚠️ Missing Sheet ID</h3></div>
+                        <div class="card-body-custom"><p class="data-value">No spreadsheet ID provided in column 3 for this state entry.</p></div>
+                    </div>`;
+                continue;
+            }
+            
+            if (childInfo.error) {
+                html += `
+                    <div class="dynamic-card" style="border-left:3px solid #ef4444;">
+                        <div class="card-header-custom"><i class="fas fa-exclamation-triangle"></i><h3>Unable to load sheet</h3></div>
+                        <div class="card-body-custom"><p class="data-value"><strong>Sheet ID:</strong> ${escapeHtml(sheetId.slice(0,18))}...<br>Error: ${escapeHtml(childInfo.errorMsg || 'Access denied / invalid ID. Make sure sheet is shared publicly.')}</p></div>
+                    </div>`;
+                continue;
+            }
+            
+            const rows = childInfo.rows || [];
+            if (rows.length === 0) {
+                html += `
+                    <div class="dynamic-card">
+                        <div class="card-header-custom"><i class="fas fa-table"></i><h3>📄 Empty sheet</h3></div>
+                        <div class="card-body-custom"><div class="empty-state-card" style="padding:1rem;">✨ No data rows found in this spreadsheet.</div></div>
+                    </div>`;
+                continue;
+            }
+            
+            // generate one card per data row (true dynamic)
+            for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+                const row = rows[rowIdx];
+                totalCards++;
+                const entriesDisplay = Object.entries(row).map(([key, val]) => {
+                    let prettyKey = key.replace('field_', 'Column ');
+                    let displayVal = (val && val !== '—') ? val : '—';
+                    return `<div class="data-row"><span class="data-label">${escapeHtml(prettyKey)}</span> <span class="data-value">${escapeHtml(displayVal)}</span></div>`;
+                }).join('');
+                
+                const shortId = sheetId.length > 18 ? sheetId.slice(0,14)+'…' : sheetId;
+                html += `
+                    <div class="dynamic-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-id-card"></i>
+                            <h3>📌 Record #${rowIdx+1} · ${escapeHtml(state)}</h3>
+                        </div>
+                        <div class="card-body-custom">
+                            ${entriesDisplay || '<div class="data-value">— no structured fields —</div>'}
+                        </div>
+                        <div class="card-footer-note">
+                            <i class="fas fa-cloud-upload-alt"></i> source: ${escapeHtml(shortId)}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        if (totalCards === 0 && masterEntries.every(e => e.linkedSheetId)) {
+            html += `<div class="empty-state-card" style="grid-column:1/-1; background:#fef2e8;">⚠️ No cards generated. Linked sheets exist but contain zero data rows (or only empty rows).</div>`;
+        }
+        html += `</div></div>`;
+        cardsSection.innerHTML = html;
+    }
+    
+    function showEmptyCardsMessage(isError = false, customMsg = null) {
+        if (!cardsSection) return;
+        if (customMsg) {
+            cardsSection.innerHTML = `<div class="empty-state-card" style="background:#fef9e3;"><i class="fas fa-info-circle"></i><p>${escapeHtml(customMsg)}</p></div>`;
+        } else {
+            cardsSection.innerHTML = `<div class="empty-state-card" style="background:#f1f5f9;"><i class="fas fa-hand-pointer" style="font-size:1.8rem;"></i><p style="margin-top:0.5rem;">⬅️ Select a state above to explore cards built from linked spreadsheets (column 3 = Google Sheet ID). Each row becomes a card.</p></div>`;
+        }
+    }
+    
+    function showInfoMessage(msg, type = 'info') {
+        if (!infoDiv) return;
+        infoDiv.style.display = 'flex';
+        infoDiv.innerHTML = `<i class="fas ${type === 'loading' ? 'fa-spinner fa-pulse' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle')}"></i> <span>${escapeHtml(msg)}</span>`;
+        infoDiv.className = `status-msg ${type === 'error' ? 'error-text' : (type === 'success' ? 'success-text' : '')}`;
+        if (type !== 'error') {
+            setTimeout(() => {
+                if (infoDiv) infoDiv.style.opacity = '0.8';
+            }, 2800);
+        }
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    function closeDropdown() { document.getElementById('dropdownOptions')?.classList.remove('show'); }
+    function toggleDropdown() { document.getElementById('dropdownOptions')?.classList.toggle('show'); }
+    
+    selectTrigger?.addEventListener('click', (e) => { e.stopPropagation(); toggleDropdown(); });
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('customSelect');
+        if (container && !container.contains(e.target)) closeDropdown();
+    });
+    
+    fetchMasterSheet();
+</script>
+</body>
+</html>
