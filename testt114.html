@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>State Explorer | Dynamic Cards with Popup Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --accent: #f43f5e;
+            --success: #10b981;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --text: #334155;
+            --border: #e2e8f0;
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(125deg, #f0f9ff 0%, #e6f0fa 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            color: var(--text);
+        }
+
+        .explorer-widget {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .widget-hero {
+            background: linear-gradient(110deg, var(--primary), var(--primary-dark));
+            padding: 1.8rem 2rem;
+            color: white;
+            text-align: center;
+        }
+
+        .widget-hero i {
+            font-size: 2.3rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .widget-hero h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .widget-hero p {
+            opacity: 0.9;
+            font-size: 0.85rem;
+            margin-top: 0.2rem;
+        }
+
+        .dropdown-panel {
+            padding: 1.8rem 2rem 2rem;
+        }
+
+        .state-selector {
+            margin-bottom: 0;
+        }
+
+        .dropdown-label {
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--dark);
+        }
+
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-trigger {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 1rem 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .select-trigger:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(59,130,246,0.15);
+        }
+
+        .select-trigger span {
+            color: var(--dark);
+        }
+
+        .select-trigger i {
+            color: #94a3b8;
+            transition: transform 0.2s;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            max-height: 320px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+            display: none;
+            list-style: none;
+            padding: 0.4rem 0;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 0.75rem 1.2rem;
+            cursor: pointer;
+            transition: background 0.12s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #eef2ff;
+        }
+
+        .option-title {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .option-badge {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+        }
+
+        /* Cards Grid */
+        .cards-container {
+            margin-top: 2rem;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.3rem;
+        }
+
+        .dynamic-card {
+            background: white;
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.25s ease;
+            box-shadow: var(--card-shadow);
+            cursor: pointer;
+        }
+
+        .dynamic-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -12px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary);
+        }
+
+        .card-header-custom {
+            background: linear-gradient(98deg, #fefefe, #fafcff);
+            padding: 0.9rem 1.2rem;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .card-header-custom i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .card-header-custom h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .card-body-custom {
+            padding: 1rem 1.2rem;
+        }
+
+        .data-row {
+            margin-bottom: 0.7rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .data-label {
+            font-weight: 700;
+            color: #475569;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            background: #f1f5f9;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .data-value {
+            color: var(--text);
+            word-break: break-word;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .card-footer-state {
+            background: #f8fafc;
+            padding: 0.6rem 1rem;
+            font-size: 0.7rem;
+            border-top: 1px solid #edf2f7;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .empty-state-card {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #94a3b8;
+            background: #fefce8;
+            border-radius: 1.5rem;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 3rem;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* MODAL STYLES */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+ backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-container {
+            background: white;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.25s ease;
+        }
+
+        .modal-header {
+            background: linear-gradient(110deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(85vh - 80px);
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+        }
+
+        .detail-label {
+            font-weight: 700;
+            min-width: 110px;
+            color: var(--primary-dark);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            color: var(--text);
+            flex: 1;
+            word-break: break-word;
+            font-size: 0.9rem;
+        }
+
+        .modal-state-badge {
+            background: #eef2ff;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 640px) {
+            .dropdown-panel { padding: 1.2rem; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .detail-label { min-width: 85px; }
+        }
+    </style>
+</head>
+<body>
+<div class="explorer-widget">
+    <div class="widget-hero">
+        <i class="fas fa-globe-americas"></i>
+        <h2>State Data Explorer</h2>
+        <p>linked spreadsheets · cards sorted by date</p>
+    </div>
+    <div class="dropdown-panel">
+        <div class="state-selector">
+            <div class="dropdown-label">
+                <i class="fas fa-chevron-circle-down"></i> Select State (or "All States")
+            </div>
+            <div class="custom-select" id="customSelect">
+                <div class="select-trigger" id="selectTrigger">
+                    <span id="selectedStateName">▼ Choose a state ▼</span>
+                    <i class="fas fa-angle-down"></i>
+                </div>
+                <ul class="dropdown-options" id="dropdownOptions"></ul>
+            </div>
+        </div>
+
+        <!-- Cards container - hidden until selection -->
+        <div id="cardsSection" class="cards-container" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    // Master spreadsheet
+    const MASTER_SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
+    const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+
+    let masterRows = [];          // { state, linkedSheetId }
+    let uniqueStates = [];
+    let selectedOption = '';      // 'all' or specific state
+    let allCardsData = [];        // aggregated cards { id, state, date, col2, col3, fullRowData (col1-col10) }
+    
+    const childSheetCache = new Map(); // sheetId -> { rowsData: [], error }
+    const dropdown = document.getElementById('dropdownOptions');
+    const selectTrigger = document.getElementById('selectTrigger');
+    const selectedStateSpan = document.getElementById('selectedStateName');
+    const cardsSection = document.getElementById('cardsSection');
+
+    // CSV Parser
+    function parseCSV(csvText) {
+        const rows = [];
+        let currentRow = [];
+        let currentField = '';
+        let insideQuotes = false;
+        let i = 0;
+        const len = csvText.length;
+        
+        while (i < len) {
+            const ch = csvText[i];
+            const nextCh = csvText[i+1];
+            if (ch === '"') {
+                if (insideQuotes && nextCh === '"') {
+                    currentField += '"';
+                    i++;
+                } else {
+                    insideQuotes = !insideQuotes;
+                }
+            } else if (ch === ',' && !insideQuotes) {
+                currentRow.push(currentField);
+                currentField = '';
+            } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+                currentRow.push(currentField);
+                if (currentRow.length > 0) rows.push(currentRow);
+                currentRow = [];
+                currentField = '';
+                if (ch === '\r') i++;
+            } else if (ch === '\r' && !insideQuotes) {
+                currentRow.push(currentField);
+                if (currentRow.length > 0) rows.push(currentRow);
+                currentRow = [];
+                currentField = '';
+            } else {
+                currentField += ch;
+            }
+            i++;
+        }
+        if (currentField !== '' || currentRow.length > 0) {
+            currentRow.push(currentField);
+            if (currentRow.length > 0) rows.push(currentRow);
+        }
+        return rows.map(row => row.map(cell => {
+            let cleaned = String(cell).trim();
+            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+            }
+            return cleaned;
+        }));
+    }
+
+    // Fetch master sheet
+    async function fetchMasterSheet() {
+        try {
+            const response = await fetch(MASTER_DATA_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const csvText = await response.text();
+            const parsed = parseCSV(csvText);
+            if (parsed.length < 2) throw new Error('Master sheet insufficient data');
+            
+            const tempRows = [];
+            const stateSet = new Set();
+            for (let idx = 0; idx < parsed.length; idx++) {
+                const row = parsed[idx];
+                let state = (row.length >= 2) ? row[1] : '';
+                let linkedId = (row.length >= 3) ? row[2] : '';
+                if (!state || state === '' || state.toLowerCase() === 'null' || state === 'STATE') continue;
+                linkedId = linkedId ? linkedId.trim() : null;
+                if (linkedId === '' || linkedId.toLowerCase() === 'null') linkedId = null;
+                tempRows.push({ state: state, linkedSheetId: linkedId });
+                stateSet.add(state);
+            }
+            if (tempRows.length === 0) throw new Error('No valid states');
+            masterRows = tempRows;
+            uniqueStates = Array.from(stateSet).sort((a,b) => a.localeCompare(b));
+            renderDropdown();
+            // No status bars - just dropdown ready
+        } catch (err) {
+            console.error(err);
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">⚠️ Failed to load states</li>`;
+        }
+    }
+
+    function renderDropdown() {
+        if (!dropdown) return;
+        let optionsHtml = `<li class="dropdown-option" data-state-value="__ALL__">
+                            <span class="option-title"><i class="fas fa-star"></i> 🌎 ALL STATES (combined)</span>
+                            <span class="option-badge">full dataset</span>
+                           </li>`;
+        optionsHtml += uniqueStates.map(state => `
+            <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
+                <span class="option-title">${escapeHtml(state)}</span>
+                <span class="option-badge"><i class="fas fa-map-pin"></i> state</span>
+            </li>
+        `).join('');
+        dropdown.innerHTML = optionsHtml;
+        
+        document.querySelectorAll('.dropdown-option[data-state-value]').forEach(opt => {
+            opt.removeEventListener('click', handleOptionClick);
+            opt.addEventListener('click', handleOptionClick);
+        });
+    }
+
+    function handleOptionClick(e) {
+        const val = e.currentTarget.getAttribute('data-state-value');
+        closeDropdown();
+        if (val === '__ALL__') {
+            selectedOption = 'all';
+            selectedStateSpan.innerHTML = '🌎 ALL STATES (combined)';
+            loadAllStatesData();
+        } else {
+            selectedOption = val;
+            selectedStateSpan.innerHTML = escapeHtml(val);
+            loadDataForState(val);
+        }
+    }
+
+    // Load single state data
+    async function loadDataForState(state) {
+        cardsSection.style.display = 'block';
+        cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading data for ${escapeHtml(state)}...</p></div>`;
+        
+        const entries = masterRows.filter(row => row.state === state);
+        if (entries.length === 0) {
+            cardsSection.innerHTML = `<div class="empty-state-card"><i class="fas fa-folder-open"></i><p>No linked sheets for ${escapeHtml(state)}</p></div>`;
+            return;
+        }
+        
+        const sheetIds = [...new Set(entries.map(e => e.linkedSheetId).filter(id => id))];
+        const allCardItems = [];
+        
+        for (const sheetId of sheetIds) {
+            const sheetData = await fetchChildSheet(sheetId, state);
+            if (sheetData && sheetData.rows && sheetData.rows.length) {
+                for (const rowData of sheetData.rows) {
+                    // rowData is an object with col1..col10, date is col1
+                    const dateRaw = rowData.col1 || '';
+                    const parsedDate = parseDate(dateRaw);
+                    allCardItems.push({
+                        id: `${sheetId}_${Date.now()}_${Math.random()}`,
+                        state: state,
+                        date: parsedDate,
+                        dateRaw: dateRaw,
+                        col2: rowData.col2 || '—',
+                        col3: rowData.col3 || '—',
+                        fullRow: rowData   // includes col1 to col10
+                    });
+                }
+            }
+        }
+        
+        // sort by date (newest first / descending)
+        allCardItems.sort((a,b) => {
+            if (!a.date && !b.date) return 0;
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return b.date.getTime() - a.date.getTime();
+        });
+        
+        renderCards(allCardItems);
+    }
+    
+    // Load ALL states aggregated data
+    async function loadAllStatesData() {
+        cardsSection.style.display = 'block';
+        cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading data from ALL states ...</p></div>`;
+        
+        const uniqueSheetEntries = [];
+        const seenSheets = new Set();
+        for (const entry of masterRows) {
+            if (entry.linkedSheetId && !seenSheets.has(entry.linkedSheetId)) {
+                seenSheets.add(entry.linkedSheetId);
+                uniqueSheetEntries.push({ sheetId: entry.linkedSheetId, state: entry.state });
+            }
+        }
+        
+        const allCardItems = [];
+        for (const { sheetId, state } of uniqueSheetEntries) {
+            const sheetData = await fetchChildSheet(sheetId, state);
+            if (sheetData && sheetData.rows && sheetData.rows.length) {
+                for (const rowData of sheetData.rows) {
+                    const dateRaw = rowData.col1 || '';
+                    const parsedDate = parseDate(dateRaw);
+                    allCardItems.push({
+                        id: `${sheetId}_${Math.random()}`,
+                        state: state,
+                        date: parsedDate,
+                        dateRaw: dateRaw,
+                        col2: rowData.col2 || '—',
+                        col3: rowData.col3 || '—',
+                        fullRow: rowData
+                    });
+                }
+            }
+        }
+        
+        allCardItems.sort((a,b) => {
+            if (!a.date && !b.date) return 0;
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return b.date.getTime() - a.date.getTime();
+        });
+        
+        renderCards(allCardItems);
+    }
+    
+    // Helper: parse date from various formats (col1 = date published)
+    function parseDate(dateStr) {
+        if (!dateStr || dateStr === '—') return null;
+        // try standard date formats
+        let cleaned = dateStr.trim();
+        let d = new Date(cleaned);
+        if (!isNaN(d.getTime())) return d;
+        // try DD/MM/YYYY or MM/DD/YYYY
+        const parts = cleaned.split(/[-/]/);
+        if (parts.length === 3) {
+            let year = parseInt(parts[2]);
+            let month = parseInt(parts[0]) - 1;
+            let day = parseInt(parts[1]);
+            if (year < 100) year += 2000;
+            let d2 = new Date(year, month, day);
+            if (!isNaN(d2.getTime())) return d2;
+            let d3 = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+            if (!isNaN(d3.getTime())) return d3;
+        }
+        return null;
+    }
+    
+    // Fetch child sheet with columns col1...col10
+    async function fetchChildSheet(sheetId, stateName) {
+        if (childSheetCache.has(sheetId)) {
+            return childSheetCache.get(sheetId);
+        }
+        try {
+            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const csvText = await resp.text();
+            const parsedRows = parseCSV(csvText);
+            const dataRows = [];
+            for (let r = 0; r < parsedRows.length; r++) {
+                const rowCells = parsedRows[r];
+                if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
+                // Build object with col1, col2, ..., col10
+                const rowObj = {};
+                for (let colIdx = 0; colIdx < 10; colIdx++) {
+                    const colKey = `col${colIdx+1}`;
+                    rowObj[colKey] = (colIdx < rowCells.length && rowCells[colIdx] !== undefined) ? rowCells[colIdx] : '—';
+                }
+                dataRows.push(rowObj);
+            }
+            const result = { rows: dataRows, error: false };
+            childSheetCache.set(sheetId, result);
+            return result;
+        } catch (err) {
+            console.warn(`Error loading sheet ${sheetId}:`, err);
+            const errorResult = { rows: [], error: true };
+            childSheetCache.set(sheetId, errorResult);
+            return errorResult;
+        }
+    }
+    
+    // Render cards: show only column2 and column3 in card, plus date (col1) optionally as label
+    function renderCards(cardsArray) {
+        if (!cardsSection) return;
+        if (cardsArray.length === 0) {
+            cardsSection.innerHTML = `<div class="empty-state-card"><i class="fas fa-info-circle"></i><p>No data records found for selected option.</p></div>`;
+            return;
+        }
+        
+        let html = `<div class="cards-grid">`;
+        for (let card of cardsArray) {
+            // Format date for display
+            let displayDate = card.dateRaw && card.dateRaw !== '—' ? card.dateRaw : 'No date';
+            if (card.date) {
+                try { displayDate = card.date.toLocaleDateString(); } catch(e) {}
+            }
+            html += `
+                <div class="dynamic-card" data-card-id="${escapeHtml(card.id)}">
+                    <div class="card-header-custom">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3>📅 ${escapeHtml(displayDate)}</h3>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="data-row"><span class="data-label">Column 2</span><span class="data-value">${escapeHtml(card.col2)}</span></div>
+                        <div class="data-row"><span class="data-label">Column 3</span><span class="data-value">${escapeHtml(card.col3)}</span></div>
+                    </div>
+                    <div class="card-footer-state">
+                        <i class="fas fa-flag"></i> ${escapeHtml(card.state)}
+                    </div>
+                </div>
+            `;
+        }
+        html += `</div>`;
+        cardsSection.innerHTML = html;
+        
+        // attach click event listeners for each card to open modal with full details (col1 to col10)
+        document.querySelectorAll('.dynamic-card').forEach(cardDiv => {
+            cardDiv.addEventListener('click', (e) => {
+                // find card id from data attribute
+                const cardId = cardDiv.getAttribute('data-card-id');
+                const selectedCard = cardsArray.find(c => c.id === cardId);
+                if (selectedCard) {
+                    openModal(selectedCard);
+                }
+            });
+        });
+    }
+    
+    // Modal with full details col1 to col10
+    function openModal(card) {
+        const fullRow = card.fullRow || {};
+        // Prepare fields col1 through col10
+        const fields = [];
+        for (let i = 1; i <= 10; i++) {
+            let value = fullRow[`col${i}`] || '—';
+            let label = '';
+            if (i === 1) label = 'Date Published';
+            else if (i === 2) label = 'Field 2';
+            else if (i === 3) label = 'Field 3';
+            else label = `Column ${i}`;
+            fields.push({ label, value });
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3><i class="fas fa-info-circle"></i> Full Record · ${escapeHtml(card.state)}</h3>
+                    <button class="modal-close"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    ${fields.map(f => `
+                        <div class="detail-row">
+                            <div class="detail-label">${escapeHtml(f.label)}</div>
+                            <div class="detail-value">${escapeHtml(f.value)}</div>
+                        </div>
+                    `).join('')}
+                    <div class="detail-row" style="background:#f8fafc; margin-top:0.5rem; border-radius:0.8rem;">
+                        <div class="detail-label">State</div>
+                        <div class="detail-value"><span class="modal-state-badge">${escapeHtml(card.state)}</span></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function closeDropdown() { document.getElementById('dropdownOptions')?.classList.remove('show'); }
+    function toggleDropdown() { document.getElementById('dropdownOptions')?.classList.toggle('show'); }
+    
+    selectTrigger?.addEventListener('click', (e) => { e.stopPropagation(); toggleDropdown(); });
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('customSelect');
+        if (container && !container.contains(e.target)) closeDropdown();
+    });
+    
+    // initial load master, hide cards until selection
+    cardsSection.style.display = 'none';
+    fetchMasterSheet();
+</script>
+</body>
+</html>
