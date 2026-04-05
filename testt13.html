@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>State Selector | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="styles/common.css">
+    <script src="header-loader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --text: #334155;
+            --border: #e2e8f0;
+            --completed: #10b981;
+            --ongoing: #f59e0b;
+            --planning: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e6edf5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text);
+        }
+
+        .explorer-widget {
+            max-width: 680px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .widget-hero {
+            background: linear-gradient(115deg, var(--primary), var(--primary-dark));
+            padding: 1.8rem 2rem;
+            color: white;
+            text-align: center;
+        }
+
+        .widget-hero i {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .widget-hero h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .widget-hero p {
+            opacity: 0.9;
+            margin-top: 0.4rem;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-panel {
+            padding: 1.8rem 2rem 2rem;
+        }
+
+        .stats-mini {
+            background: #f8fafc;
+            border-radius: 1.2rem;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            border: 1px solid var(--border);
+        }
+
+        .stat-badge {
+            background: white;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .stat-badge i {
+            margin-right: 0.4rem;
+            color: var(--primary);
+        }
+
+        .state-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .dropdown-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--dark);
+        }
+
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-trigger {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            padding: 0.9rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .select-trigger:hover {
+            border-color: var(--primary);
+            background: #fefefe;
+        }
+
+        .select-trigger span {
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .select-trigger i {
+            color: #94a3b8;
+            transition: transform 0.2s;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+            display: none;
+            list-style: none;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 0.75rem 1.2rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #eef2ff;
+        }
+
+        .option-title {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .option-badge {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            color: #1e293b;
+        }
+
+        .selected-value-card {
+            background: var(--light);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .card-header {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h3 {
+            font-size: 1.1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .selected-display {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .selected-value-large {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: white;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-top: 0.5rem;
+            border: 2px dashed var(--border);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #64748b;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .status-msg {
+            background: #f2f6fc;
+            border-radius: 1.2rem;
+            padding: 0.9rem 1rem;
+            font-size: 0.85rem;
+            color: #2c5f8a;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e2edf7;
+        }
+
+        .status-msg i {
+            font-size: 1.1rem;
+            color: #2c7da0;
+        }
+
+        .error-text {
+            color: #c23b22;
+            background: #fff5f2;
+            border-color: #ffd9ce;
+        }
+
+        .success-text {
+            background: #e8f3ed;
+            border-color: #c2e0d0;
+        }
+
+        @media (max-width: 550px) {
+            body {
+                padding: 1rem;
+            }
+            .dropdown-panel {
+                padding: 1.2rem;
+            }
+            .widget-hero {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="explorer-widget">
+    <div class="widget-hero">
+        <i class="fas fa-map-marker-alt"></i>
+        <h2>State Selector</h2>
+        <p>Fetch column 2 from spreadsheet — live data</p>
+    </div>
+    <div class="dropdown-panel">
+        <!-- stats mini bar -->
+        <div class="stats-mini" id="statsMini">
+            <span class="stat-badge"><i class="fas fa-database"></i> <span id="statTotal">0</span> total entries</span>
+            <span class="stat-badge"><i class="fas fa-check-circle"></i> <span id="statUnique">0</span> unique states</span>
+        </div>
+
+        <!-- status message -->
+        <div id="infoMessage" class="status-msg">
+            <i class="fas fa-cloud-download-alt"></i>
+            <span>Fetching data from Google Sheet ...</span>
+        </div>
+
+        <!-- Custom Dropdown for State Selection -->
+        <div class="state-selector">
+            <div class="dropdown-label">
+                <i class="fas fa-chevron-circle-down"></i> Select a state from column 2
+            </div>
+            <div class="custom-select" id="customSelect">
+                <div class="select-trigger" id="selectTrigger">
+                    <span id="selectedStateName">— Choose a state —</span>
+                    <i class="fas fa-angle-down"></i>
+                </div>
+                <ul class="dropdown-options" id="dropdownOptions"></ul>
+            </div>
+        </div>
+
+        <!-- display selected value -->
+        <div id="selectedCard" class="selected-value-card">
+            <div class="card-header">
+                <h3><i class="fas fa-info-circle"></i> Selected State</h3>
+            </div>
+            <div class="card-body" id="selectedBody">
+                <div class="empty-state">
+                    <i class="fas fa-hand-pointer" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p style="margin-top: 0.6rem;">No state selected. Use the dropdown above.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
+    const DATA_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+
+    let allStates = [];
+    let uniqueStates = [];
+    let selectedState = '';
+
+    const dropdown = document.getElementById('dropdownOptions');
+    const selectTrigger = document.getElementById('selectTrigger');
+    const selectedStateSpan = document.getElementById('selectedStateName');
+    const selectedBody = document.getElementById('selectedBody');
+    const infoDiv = document.getElementById('infoMessage');
+
+    async function fetchColumn2() {
+        try {
+            infoDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> <span>Loading spreadsheet data ...</span>`;
+            infoDiv.classList.remove('error-text', 'success-text');
+            
+            const response = await fetch(DATA_URL);
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+            }
+
+            const csvText = await response.text();
+            
+            // Parse CSV manually to get column 2
+            const lines = csvText.split(/\r?\n/);
+            if (lines.length === 0) {
+                throw new Error('No data found in spreadsheet');
+            }
+
+            const column2Values = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '') continue;
+                
+                // Parse CSV line (handles quoted values)
+                let cells = [];
+                let inQuotes = false;
+                let currentCell = '';
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        cells.push(currentCell.trim());
+                        currentCell = '';
+                    } else {
+                        currentCell += char;
+                    }
+                }
+                cells.push(currentCell.trim());
+                
+                // Remove quotes from cells if present
+                cells = cells.map(cell => {
+                    if (cell.startsWith('"') && cell.endsWith('"')) {
+                        return cell.slice(1, -1);
+                    }
+                    return cell;
+                });
+                
+                // Get column 2 (index 1, second column)
+                if (cells.length >= 2) {
+                    let value = cells[1];
+                    if (value && value !== '' && value !== 'NULL' && value !== 'null') {
+                        column2Values.push(value);
+                    }
+                }
+            }
+
+            if (column2Values.length === 0) {
+                throw new Error('Column 2 appears to be empty. No valid entries found.');
+            }
+
+            allStates = column2Values;
+            
+            // Get unique values
+            const seen = new Set();
+            uniqueStates = [];
+            for (const val of allStates) {
+                if (!seen.has(val)) {
+                    seen.add(val);
+                    uniqueStates.push(val);
+                }
+            }
+            
+            // Update stats
+            document.getElementById('statTotal').innerText = allStates.length;
+            document.getElementById('statUnique').innerText = uniqueStates.length;
+            
+            // Render dropdown
+            renderDropdown();
+            
+            infoDiv.innerHTML = `<i class="fas fa-check-circle"></i> <span>✅ Loaded ${allStates.length} entries (${uniqueStates.length} unique states) from column 2. Ready.</span>`;
+            infoDiv.classList.add('success-text');
+            
+        } catch (error) {
+            console.error('Error fetching spreadsheet:', error);
+            infoDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Error: ${escapeHtml(error.message)}. Make sure the spreadsheet is shared publicly (File → Share → "Anyone with the link can view").</span>`;
+            infoDiv.classList.add('error-text');
+            
+            document.getElementById('statTotal').innerText = '0';
+            document.getElementById('statUnique').innerText = '0';
+            
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center; color:#94a3b8;">⚠️ Failed to load data</li>`;
+        }
+    }
+    
+    function renderDropdown() {
+        if (!dropdown) return;
+        
+        if (uniqueStates.length === 0) {
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center; color:#94a3b8;">✨ No states available</li>`;
+            return;
+        }
+        
+        dropdown.innerHTML = uniqueStates.map(state => `
+            <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
+                <span class="option-title">${escapeHtml(state)}</span>
+                <span class="option-badge"><i class="fas fa-map-marker-alt"></i> state</span>
+            </li>
+        `).join('');
+        
+        // attach click event to each option
+        document.querySelectorAll('.dropdown-option[data-state-value]').forEach(option => {
+            option.removeEventListener('click', handleOptionClick);
+            option.addEventListener('click', handleOptionClick);
+        });
+    }
+    
+    function handleOptionClick(e) {
+        const li = e.currentTarget;
+        const stateValue = li.getAttribute('data-state-value');
+        if (stateValue) {
+            updateSelectedState(stateValue);
+        }
+        closeDropdown();
+    }
+    
+    function updateSelectedState(state) {
+        selectedState = state;
+        selectedStateSpan.innerText = state;
+        displaySelectedState(state);
+    }
+    
+    function displaySelectedState(state) {
+        if (!selectedBody) return;
+        
+        // Count how many times this state appears
+        const count = allStates.filter(s => s === state).length;
+        
+        selectedBody.innerHTML = `
+            <div class="selected-display">
+                <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--success);"></i>
+                <div class="selected-value-large">
+                    <i class="fas fa-map-marker-alt"></i> ${escapeHtml(state)}
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #64748b;">
+                    <i class="fas fa-chart-bar"></i> Appears ${count} time${count !== 1 ? 's' : ''} in column 2
+                </p>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // Dropdown open/close logic
+    function closeDropdown() {
+        const optionsDiv = document.getElementById('dropdownOptions');
+        if (optionsDiv) optionsDiv.classList.remove('show');
+    }
+    
+    function toggleDropdown() {
+        const optionsDiv = document.getElementById('dropdownOptions');
+        if (optionsDiv) {
+            optionsDiv.classList.toggle('show');
+        }
+    }
+    
+    // Event listeners
+    document.getElementById('selectTrigger')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+    });
+    
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('customSelect');
+        if (container && !container.contains(e.target)) {
+            closeDropdown();
+        }
+    });
+    
+    // Initialize
+    fetchColumn2();
+</script>
+</body>
+</html>
