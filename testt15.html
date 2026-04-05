@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>State Selector | Innovation Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --text: #334155;
+            --border: #e2e8f0;
+            --completed: #10b981;
+            --ongoing: #f59e0b;
+            --planning: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e6edf5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text);
+        }
+
+        .explorer-widget {
+            max-width: 760px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .widget-hero {
+            background: linear-gradient(115deg, var(--primary), var(--primary-dark));
+            padding: 1.8rem 2rem;
+            color: white;
+            text-align: center;
+        }
+
+        .widget-hero i {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .widget-hero h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .widget-hero p {
+            opacity: 0.9;
+            margin-top: 0.4rem;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-panel {
+            padding: 1.8rem 2rem 2rem;
+        }
+
+        .stats-mini {
+            background: #f8fafc;
+            border-radius: 1.2rem;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            border: 1px solid var(--border);
+        }
+
+        .stat-badge {
+            background: white;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .stat-badge i {
+            margin-right: 0.4rem;
+            color: var(--primary);
+        }
+
+        .state-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .dropdown-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--dark);
+        }
+
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-trigger {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            padding: 0.9rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .select-trigger:hover {
+            border-color: var(--primary);
+            background: #fefefe;
+        }
+
+        .select-trigger span {
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .select-trigger i {
+            color: #94a3b8;
+            transition: transform 0.2s;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+            display: none;
+            list-style: none;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 0.75rem 1.2rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #eef2ff;
+        }
+
+        .option-title {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .option-badge {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            color: #1e293b;
+        }
+
+        .selected-value-card {
+            background: var(--light);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .card-header {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h3 {
+            font-size: 1.1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .selected-display {
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .selected-value-large {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: white;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-top: 0.5rem;
+            border: 2px dashed var(--border);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #64748b;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .status-msg {
+            background: #f2f6fc;
+            border-radius: 1.2rem;
+            padding: 0.9rem 1rem;
+            font-size: 0.85rem;
+            color: #2c5f8a;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e2edf7;
+        }
+
+        .status-msg i {
+            font-size: 1.1rem;
+            color: #2c7da0;
+        }
+
+        .error-text {
+            color: #c23b22;
+            background: #fff5f2;
+            border-color: #ffd9ce;
+        }
+
+        .success-text {
+            background: #e8f3ed;
+            border-color: #c2e0d0;
+        }
+
+        /* new style for 3rd column content rows */
+        .notice-list {
+            margin-top: 0.75rem;
+            text-align: left;
+            background: white;
+            border-radius: 1.2rem;
+            padding: 0.25rem;
+            max-height: 320px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .notice-item {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid #edf2f7;
+            transition: background 0.1s ease;
+        }
+
+        .notice-item:last-child {
+            border-bottom: none;
+        }
+
+        .notice-item:hover {
+            background: #fafcff;
+        }
+
+        .notice-content {
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: var(--dark);
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .notice-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.4rem;
+            font-size: 0.7rem;
+            color: #6c86a3;
+        }
+
+        .badge-count {
+            background: #eef2ff;
+            padding: 0.2rem 0.65rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1e293b;
+            border-left: 3px solid var(--primary);
+            padding-left: 0.75rem;
+        }
+
+        .notice-footer-note {
+            background: #f1f4f9;
+            margin-top: 1rem;
+            padding: 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            text-align: center;
+            color: #4b5563;
+        }
+
+        @media (max-width: 550px) {
+            body {
+                padding: 1rem;
+            }
+            .dropdown-panel {
+                padding: 1.2rem;
+            }
+            .widget-hero {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="explorer-widget">
+    <div class="widget-hero">
+        <i class="fas fa-map-marker-alt"></i>
+        <h2>Notice Board</h2>
+        <p>live data · column 3 insights</p>
+    </div>
+    <div class="dropdown-panel">
+        <!-- stats mini bar -->
+        <div class="stats-mini" id="statsMini">
+            <span class="stat-badge"><i class="fas fa-database"></i> <span id="statTotal">0</span> total entries</span>
+            <span class="stat-badge"><i class="fas fa-check-circle"></i> <span id="statUnique">0</span> unique states</span>
+        </div>
+
+        <!-- status message -->
+        <div id="infoMessage" class="status-msg">
+            <i class="fas fa-cloud-download-alt"></i>
+            <span>Fetching data from Google Sheet ...</span>
+        </div>
+
+        <!-- Custom Dropdown for State Selection -->
+        <div class="state-selector">
+            <div class="dropdown-label">
+                <i class="fas fa-chevron-circle-down"></i> Select a state
+            </div>
+            <div class="custom-select" id="customSelect">
+                <div class="select-trigger" id="selectTrigger">
+                    <span id="selectedStateName">— Choose a state —</span>
+                    <i class="fas fa-angle-down"></i>
+                </div>
+                <ul class="dropdown-options" id="dropdownOptions"></ul>
+            </div>
+        </div>
+
+        <!-- display selected state & corresponding 3rd column content -->
+        <div id="selectedCard" class="selected-value-card">
+            <div class="card-header">
+                <h3><i class="fas fa-bullhorn"></i> Notices & Column 3 Content</h3>
+            </div>
+            <div class="card-body" id="selectedBody">
+                <div class="empty-state">
+                    <i class="fas fa-hand-pointer" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p style="margin-top: 0.6rem;">Pick a state to see all corresponding column 3 entries.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Google Sheet configuration
+    const SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
+    const DATA_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+
+    // Data structures
+    let rawRows = [];          // store each row as object { state: string, content: string }
+    let allStatesList = [];    // flat list of states (col2) for stats
+    let uniqueStates = [];
+    let selectedState = '';
+    
+    // DOM elements
+    const dropdown = document.getElementById('dropdownOptions');
+    const selectTrigger = document.getElementById('selectTrigger');
+    const selectedStateSpan = document.getElementById('selectedStateName');
+    const selectedBody = document.getElementById('selectedBody');
+    const infoDiv = document.getElementById('infoMessage');
+    
+    // Helper: robust CSV parsing (handles quotes, newlines inside fields)
+    function parseCSV(csvText) {
+        const rows = [];
+        const regex = /(?:,|\n|^)(?:"([^"]*(?:""[^"]*)*)"|([^",\n]*))/g;
+        let match;
+        let currentRow = [];
+        let fieldIndex = 0;
+        let lastIndex = 0;
+        let inQuoted = false;
+        let lineStart = 0;
+        
+        // Simpler robust approach: iterate char by char
+        let i = 0;
+        let row = [];
+        let field = '';
+        let insideQuotes = false;
+        const lines = [];
+        
+        while (i < csvText.length) {
+            const ch = csvText[i];
+            const nextCh = csvText[i+1];
+            
+            if (ch === '"') {
+                if (insideQuotes && nextCh === '"') {
+                    field += '"';
+                    i++;
+                } else {
+                    insideQuotes = !insideQuotes;
+                }
+            } else if (ch === ',' && !insideQuotes) {
+                row.push(field);
+                field = '';
+            } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+                row.push(field);
+                if (row.length > 0) lines.push(row);
+                row = [];
+                field = '';
+                if (ch === '\r') i++; // skip \r in \r\n
+            } else if (ch === '\r' && !insideQuotes) {
+                // standalone \r line break
+                row.push(field);
+                if (row.length > 0) lines.push(row);
+                row = [];
+                field = '';
+            } else {
+                field += ch;
+            }
+            i++;
+        }
+        // push last field and row
+        if (field !== '' || row.length > 0) {
+            row.push(field);
+            if (row.length > 0 && !(row.length === 1 && row[0] === '' && lines.length === 0 && csvText.trim() === '')) {
+                lines.push(row);
+            }
+        }
+        
+        // trim whitespace and clean quotes from fields
+        return lines.map(row => row.map(cell => {
+            let cleaned = cell.trim();
+            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                cleaned = cleaned.slice(1, -1);
+                cleaned = cleaned.replace(/""/g, '"');
+            }
+            return cleaned;
+        }));
+    }
+    
+    async function fetchColumns() {
+        try {
+            infoDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> <span>Loading spreadsheet data ...</span>`;
+            infoDiv.classList.remove('error-text', 'success-text');
+            
+            const response = await fetch(DATA_URL);
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+            }
+            
+            const csvText = await response.text();
+            if (!csvText || csvText.trim() === '') {
+                throw new Error('Spreadsheet appears empty');
+            }
+            
+            const parsedRows = parseCSV(csvText);
+            if (parsedRows.length === 0) {
+                throw new Error('No rows found after parsing');
+            }
+            
+            // Build row objects: we need column2 (index 1) as STATE, column3 (index 2) as NOTICE/CONTENT
+            // Also we skip header row if first row contains typical headers (optional)
+            // For flexibility: we keep all rows that have at least 2 columns (col2 exists), col3 may be empty but we include
+            const rowsData = [];
+            const statesFlat = [];
+            
+            for (let idx = 0; idx < parsedRows.length; idx++) {
+                const row = parsedRows[idx];
+                // col2 = state (index 1), col3 = content (index 2)
+                let state = (row.length >= 2) ? row[1] : '';
+                let content = (row.length >= 3) ? row[2] : '';
+                
+                // Clean values: treat empty, "NULL", "null" as empty state? but we filter valid states
+                if (state === '' || state === null || state === 'NULL' || state === 'null') {
+                    // skip rows with no state identifier (they can't be selected)
+                    continue;
+                }
+                
+                // if content is literally empty string we preserve as empty, but we still show "— no content —"
+                if (content === 'NULL' || content === 'null') content = '';
+                
+                rowsData.push({
+                    state: state,
+                    content: content
+                });
+                statesFlat.push(state);
+            }
+            
+            if (rowsData.length === 0) {
+                throw new Error('No valid rows with state (column 2) found. Ensure column B contains state names.');
+            }
+            
+            rawRows = rowsData;
+            allStatesList = statesFlat;
+            
+            // unique states sorted alphabetically
+            const seenSet = new Set();
+            uniqueStates = [];
+            for (const val of allStatesList) {
+                if (!seenSet.has(val)) {
+                    seenSet.add(val);
+                    uniqueStates.push(val);
+                }
+            }
+            uniqueStates.sort((a,b) => a.localeCompare(b));
+            
+            // update stats
+            document.getElementById('statTotal').innerText = allStatesList.length;
+            document.getElementById('statUnique').innerText = uniqueStates.length;
+            
+            // render dropdown
+            renderDropdown();
+            
+            infoDiv.innerHTML = `<i class="fas fa-check-circle"></i> <span>✅ Loaded ${allStatesList.length} entries, ${uniqueStates.length} unique states. Select a state to see column 3 content.</span>`;
+            infoDiv.classList.add('success-text');
+            
+            // if previously selected state still valid? reset selection for clarity
+            if (selectedState && uniqueStates.includes(selectedState)) {
+                updateSelectedState(selectedState);
+            } else {
+                // clear selection UI
+                selectedState = '';
+                selectedStateSpan.innerText = '— Choose a state —';
+                showEmptyNoticeCard();
+            }
+            
+        } catch (error) {
+            console.error('Fetch error:', error);
+            infoDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Error: ${escapeHtml(error.message)}. Verify sheet sharing (File → Share → "Anyone with the link can view").</span>`;
+            infoDiv.classList.add('error-text');
+            document.getElementById('statTotal').innerText = '0';
+            document.getElementById('statUnique').innerText = '0';
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center; color:#94a3b8;">⚠️ Failed to load data</li>`;
+            showEmptyNoticeCard(true);
+        }
+    }
+    
+    function renderDropdown() {
+        if (!dropdown) return;
+        if (uniqueStates.length === 0) {
+            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center; color:#94a3b8;">✨ No states available</li>`;
+            return;
+        }
+        
+        dropdown.innerHTML = uniqueStates.map(state => `
+            <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
+                <span class="option-title">${escapeHtml(state)}</span>
+                <span class="option-badge"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(state)}</span>
+            </li>
+        `).join('');
+        
+        // attach fresh click listeners
+        document.querySelectorAll('.dropdown-option[data-state-value]').forEach(option => {
+            option.removeEventListener('click', handleOptionClick);
+            option.addEventListener('click', handleOptionClick);
+        });
+    }
+    
+    function handleOptionClick(e) {
+        const li = e.currentTarget;
+        const stateValue = li.getAttribute('data-state-value');
+        if (stateValue) {
+            updateSelectedState(stateValue);
+        }
+        closeDropdown();
+    }
+    
+    function updateSelectedState(state) {
+        selectedState = state;
+        selectedStateSpan.innerText = state;
+        displayColumn3Content(state);
+    }
+    
+    // Show column 3 entries for given state
+    function displayColumn3Content(state) {
+        if (!selectedBody) return;
+        
+        // filter all rows matching the state
+        const matchedRows = rawRows.filter(row => row.state === state);
+        const totalMatches = matchedRows.length;
+        
+        if (totalMatches === 0) {
+            selectedBody.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-info-circle" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p style="margin-top: 0.6rem;">No entries found for state <strong>${escapeHtml(state)}</strong> in column 2.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build a list of column 3 contents
+        const contentsList = matchedRows.map((row, idx) => ({
+            index: idx,
+            text: row.content && row.content.trim() !== '' ? row.content : '(empty notice / no content provided)'
+        }));
+        
+        // also count non-empty meaningful content (optional)
+        const nonEmptyCount = matchedRows.filter(r => r.content && r.content.trim() !== '').length;
+        
+        let contentHtml = `
+            <div class="selected-display">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <div><i class="fas fa-map-marked-alt" style="color: var(--primary);"></i> <strong style="font-size: 1rem;">${escapeHtml(state)}</strong></div>
+                    <div class="badge-count"><i class="fas fa-newspaper"></i> ${totalMatches} notice${totalMatches !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="selected-value-large" style="background: #fefefe; margin-top: 0.8rem; border: 1px solid var(--border);">
+                    <i class="fas fa-align-left"></i> Column 3 Contents
+                </div>
+        `;
+        
+        if (nonEmptyCount > 0 && nonEmptyCount !== totalMatches) {
+            contentHtml += `<div class="notice-footer-note" style="margin: 0.5rem 0 0.2rem 0;"><i class="fas fa-file-alt"></i> ${nonEmptyCount} of ${totalMatches} entries have non-empty text.</div>`;
+        }
+        
+        // render list of column3 content items
+        contentHtml += `<div class="notice-list">`;
+        if (contentsList.length === 0) {
+            contentHtml += `<div class="notice-item"><div class="notice-content" style="color:#94a3b8;">✨ No column 3 data available</div></div>`;
+        } else {
+            contentsList.forEach((item, idx) => {
+                const displayText = item.text;
+                // simple truncate for very long lines (but keep readable)
+                const truncated = displayText.length > 380 ? displayText.substring(0, 380) + '...' : displayText;
+                contentHtml += `
+                    <div class="notice-item">
+                        <div class="notice-content">
+                            <i class="fas fa-caret-right" style="color:var(--primary); font-size:0.75rem; margin-right:0.5rem;"></i>
+                            ${escapeHtml(truncated)}
+                        </div>
+                        <div class="notice-meta">
+                            <span><i class="far fa-clock"></i> entry #${idx+1}</span>
+                            <span><i class="fas fa-database"></i> column 3</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        contentHtml += `</div>`;
+        
+        // additional footnote about data source
+        contentHtml += `
+            <div class="notice-footer-note" style="margin-top: 1rem;">
+                <i class="fas fa-table"></i> Showing all values from column 3 (third column) that correspond to selected state "${escapeHtml(state)}".
+            </div>
+        `;
+        contentHtml += `</div>`; // close selected-display
+        
+        selectedBody.innerHTML = contentHtml;
+    }
+    
+    function showEmptyNoticeCard(errorFlag = false) {
+        if (!selectedBody) return;
+        selectedBody.innerHTML = `
+            <div class="empty-state">
+                <i class="fas ${errorFlag ? 'fa-exclamation-triangle' : 'fa-hand-pointer'}" style="font-size: 2rem; opacity: 0.5;"></i>
+                <p style="margin-top: 0.6rem;">${errorFlag ? 'Data could not be loaded. Check console or sheet permissions.' : 'Select a state from dropdown to see column 3 content (notices).'}</p>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    // Dropdown helpers
+    function closeDropdown() {
+        const optionsDiv = document.getElementById('dropdownOptions');
+        if (optionsDiv) optionsDiv.classList.remove('show');
+    }
+    
+    function toggleDropdown() {
+        const optionsDiv = document.getElementById('dropdownOptions');
+        if (optionsDiv) {
+            optionsDiv.classList.toggle('show');
+        }
+    }
+    
+    // attach global listeners
+    document.getElementById('selectTrigger')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+    });
+    
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('customSelect');
+        if (container && !container.contains(e.target)) {
+            closeDropdown();
+        }
+    });
+    
+    // initial load
+    fetchColumns();
+</script>
+</body>
+</html>
