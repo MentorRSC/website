@@ -21,7 +21,6 @@
             padding: 1.5rem;
         }
 
-        /* minimalist card */
         .widget {
             background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(2px);
@@ -29,7 +28,7 @@
             box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.02);
             width: 100%;
             max-width: 520px;
-            padding: 2rem 2rem 2rem 2rem;
+            padding: 2rem;
             transition: all 0.2s ease;
             border: 1px solid rgba(255,255,255,0.5);
         }
@@ -62,7 +61,6 @@
             font-weight: normal;
         }
 
-        /* dropdown container */
         .field {
             margin-bottom: 1.5rem;
         }
@@ -112,7 +110,6 @@
             box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.2);
         }
 
-        /* loading & info area */
         .status-msg {
             background: #f2f6fc;
             border-radius: 1.2rem;
@@ -131,24 +128,15 @@
             color: #2c7da0;
         }
 
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #cbdde9;
-            border-radius: 50%;
-            border-top-color: #2c7da0;
-            animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         .error-text {
             color: #c23b22;
             background: #fff5f2;
             border-color: #ffd9ce;
+        }
+
+        .success-text {
+            background: #e8f3ed;
+            border-color: #c2e0d0;
         }
 
         .footer-note {
@@ -174,7 +162,6 @@
             .title h2 { font-size: 1.3rem; }
         }
     </style>
-    <!-- Font Awesome for minimal icons (optional but light) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -204,24 +191,14 @@
 </div>
 
 <script>
-    // ============================================================
-    // CONFIGURATION: only column 2 (index B) is required
-    // Spreadsheet ID from the provided link
-    // ============================================================
-  //  https://docs.google.com/spreadsheets/d/15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc/edit?usp=sharing
     const SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
-    // Using the public /gviz/tq endpoint (Google Visualization API) which returns JSONP-like data.
-    // This works for publicly shared sheets (anyone with link can view).
-    const SHEET_NAME = 'Sheet1';      // default sheet name; most likely 'Sheet1'
-    const DATA_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+    const DATA_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 
     const dropdown = document.getElementById('dynamicDropdown');
     const infoDiv = document.getElementById('infoMessage');
 
-    // Helper to clean and extract column 2 values (second column, index 1 in zero-based array)
     async function fetchColumn2() {
         try {
-            // Show loading state
             infoDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> <span>Loading spreadsheet data ...</span>`;
             dropdown.disabled = true;
             dropdown.innerHTML = '<option value="" disabled>— refreshing —</option>';
@@ -231,54 +208,60 @@
                 throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
             }
 
-            const responseText = await response.text();
-            // The API returns: google.visualization.Query.setResponse({...});
-            // We need to extract the JSON object. Usually the format is: )]}'\n{...}
-            let jsonString = responseText;
-            // Remove the Google Visualization security prefix if present
-            const prefixMatch = responseText.match(/^\)\]\}\'\n/);
-            if (prefixMatch) {
-                jsonString = responseText.substring(prefixMatch[0].length);
-            }
+            const csvText = await response.text();
             
-            const parsed = JSON.parse(jsonString);
-            const table = parsed.table;
-            if (!table || !table.rows || table.rows.length === 0) {
-                throw new Error('No data rows found in the spreadsheet.');
+            // Parse CSV manually to get column 2
+            const lines = csvText.split(/\r?\n/);
+            if (lines.length === 0) {
+                throw new Error('No data found in spreadsheet');
             }
 
-            // Extract column index 1 (second column, 0-based)
-            // Rows are arrays under 'c' property: each cell has 'v' value.
             const column2Values = [];
             
-            for (let i = 0; i < table.rows.length; i++) {
-                const row = table.rows[i];
-                const cells = row.c;
-                if (cells && cells.length >= 2) {
-                    // cell at index 1 represents column B (second column)
-                    let cellValue = cells[1]?.v;
-                    // Ensure value is not null/undefined and not empty string
-                    if (cellValue !== undefined && cellValue !== null && cellValue.toString().trim() !== '') {
-                        column2Values.push(cellValue.toString().trim());
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '') continue;
+                
+                // Parse CSV line (handles quoted values)
+                let cells = [];
+                let inQuotes = false;
+                let currentCell = '';
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        cells.push(currentCell.trim());
+                        currentCell = '';
+                    } else {
+                        currentCell += char;
+                    }
+                }
+                cells.push(currentCell.trim());
+                
+                // Remove quotes from cells if present
+                cells = cells.map(cell => {
+                    if (cell.startsWith('"') && cell.endsWith('"')) {
+                        return cell.slice(1, -1);
+                    }
+                    return cell;
+                });
+                
+                // Get column 2 (index 1, second column)
+                if (cells.length >= 2) {
+                    let value = cells[1];
+                    if (value && value !== '' && value !== 'NULL' && value !== 'null') {
+                        column2Values.push(value);
                     }
                 }
             }
 
             if (column2Values.length === 0) {
-                throw new Error('Column 2 (second column) appears to be empty. No valid entries found.');
+                throw new Error('Column 2 appears to be empty. No valid entries found.');
             }
 
-            // Populate dropdown with unique values? Keep as raw order from sheet (respects original sequence)
-            // But to avoid duplicate entries, we can optionally keep duplicates? 
-            // The requirement: "fetch colum 2 from this spreadsheet and update the drop down".
-            // No special unique constraint, but typical dropdown shows each row entry.
-            // However showing duplicates might be confusing; but I'll preserve exactly what's in column B (including duplicates)
-            // to be faithful. But often you want distinct states. I'll add an option: show as-is OR distinct? 
-            // Simplicity: show each row value (if duplicates appear multiple times, user sees them multiple times).
-            // To make it clean, we can use a Set to show unique values, because a "state selector" normally lists unique states.
-            // The description: "select the state: fetch colum 2 ... update the drop down" — it's cleaner to show unique items.
-            // I'll use unique values to avoid repeated identical entries in dropdown. But I'll also keep original order.
-            
+            // Get unique values
             const uniqueValues = [];
             const seen = new Set();
             for (const val of column2Values) {
@@ -290,12 +273,7 @@
             
             // Build dropdown options
             dropdown.innerHTML = '';
-            if (uniqueValues.length === 0) {
-                dropdown.innerHTML = '<option value="" disabled>— No data —</option>';
-                throw new Error('No distinct values found in column 2.');
-            }
             
-            // Add a default placeholder option
             const placeholderOption = document.createElement('option');
             placeholderOption.value = '';
             placeholderOption.disabled = true;
@@ -303,7 +281,6 @@
             placeholderOption.textContent = '— Select a state —';
             dropdown.appendChild(placeholderOption);
             
-            // Append each unique value
             uniqueValues.forEach(value => {
                 const option = document.createElement('option');
                 option.value = value;
@@ -313,24 +290,21 @@
             
             dropdown.disabled = false;
             
-            // Update success message with count
             infoDiv.innerHTML = `<i class="fas fa-check-circle"></i> <span>✅ Loaded ${uniqueValues.length} unique entries from column 2. Ready.</span>`;
-            infoDiv.style.background = "#e8f3ed";
-            infoDiv.style.borderColor = "#c2e0d0";
+            infoDiv.classList.remove('error-text');
+            infoDiv.classList.add('success-text');
             
-            // optional: show selected value when user picks
+            // Show selected value when user picks
             dropdown.addEventListener('change', (e) => {
                 const selected = e.target.value;
                 if (selected) {
-                    // just for user feedback (lightweight)
                     const existingSelectedDiv = document.querySelector('.selected-value');
                     if(existingSelectedDiv) existingSelectedDiv.remove();
                     const selectedDiv = document.createElement('div');
                     selectedDiv.className = 'selected-value';
                     selectedDiv.innerHTML = `<i class="fas fa-map-marker-alt"></i> Currently selected: <strong>${escapeHtml(selected)}</strong>`;
                     document.querySelector('.widget').appendChild(selectedDiv);
-                    // auto remove after 3 seconds? but keep it, better ux, but keep minimal.
-                    // Remove any older duplicate but keep one.
+                    
                     const allSelected = document.querySelectorAll('.selected-value');
                     if(allSelected.length > 1) {
                         allSelected[0].remove();
@@ -342,13 +316,12 @@
             console.error('Error fetching spreadsheet:', error);
             dropdown.disabled = true;
             dropdown.innerHTML = '<option value="" disabled>⚠️ Failed to load</option>';
-            infoDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Error: ${escapeHtml(error.message)}. Make sure the spreadsheet is shared publicly (Anyone with link can view).</span>`;
+            infoDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Error: ${escapeHtml(error.message)}. Make sure the spreadsheet is shared publicly (File → Share → "Anyone with the link can view").</span>`;
             infoDiv.classList.add('error-text');
-            infoDiv.style.background = "#fff1ef";
+            infoDiv.classList.remove('success-text');
         }
     }
     
-    // simple escape utility
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -359,7 +332,6 @@
         });
     }
     
-    // Init: fetch column 2 data
     fetchColumn2();
 </script>
 </body>
