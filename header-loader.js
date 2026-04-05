@@ -6,36 +6,35 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.text())
             .then(data => {
                 header.innerHTML = data;
-                
-                // ✅ ADD MOBILE MENU FUNCTIONALITY AFTER HTML IS LOADED
-                setupMobileMenu();
+                setupMobileMenu(); // Add this line
             })
             .catch(error => console.error("Error loading header:", error));
     }
 });
 
 function setupMobileMenu() {
-    const menuBtn = document.querySelector(".mobile-menu-btn");
-    const nav = document.querySelector(".main-nav");
+    const menuBtn = document.querySelector(".mobile-menu");
+    const navMenu = document.querySelector(".nav-menu");
     
-    if (menuBtn && nav) {
-        // Remove any existing listeners to avoid duplicates
+    if (menuBtn && navMenu) {
         menuBtn.removeEventListener("click", toggleMenu);
         menuBtn.addEventListener("click", toggleMenu);
+        console.log("Mobile menu initialized"); // Check if this logs
+    } else {
+        console.error("Mobile menu elements not found");
     }
 }
 
 function toggleMenu() {
-    const nav = document.querySelector(".main-nav");
-    const menuBtn = document.querySelector(".mobile-menu-btn");
+    const navMenu = document.querySelector(".nav-menu");
+    const menuBtn = document.querySelector(".mobile-menu");
     
-    nav.classList.toggle("active");
-    menuBtn.classList.toggle("active");
+    navMenu.classList.toggle("active");
     
-    // Optional: Change icon when menu opens/closes
+    // Optional: Change icon
     const icon = menuBtn.querySelector("i");
     if (icon) {
-        if (nav.classList.contains("active")) {
+        if (navMenu.classList.contains("active")) {
             icon.classList.remove("fa-bars");
             icon.classList.add("fa-times");
         } else {
