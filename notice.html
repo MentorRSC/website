@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>State Explorer | Overlap Dropdown + Date-Sorted Cards</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <link rel="stylesheet" href="styles/common.css">
+    <link rel="stylesheet" href="styles/common.css">
     <script src="header-loader.js"></script>
     <style>
         * {
@@ -13,15 +13,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-/* Add to your existing <style> section */
-body {
-    padding-top: 0; /* will be set by JS */
-}
 
-/* Optional: Add a smooth transition */
-.explorer-widget {
-    transition: margin-top 0.3s ease;
-}
         :root {
             --primary: #3b82f6;
             --primary-dark: #1e3a8a;
@@ -38,6 +30,7 @@ body {
             min-height: 100vh;
             padding: 2rem 1rem;
             color: var(--text);
+            transition: padding-top 0.3s ease;
         }
 
         .explorer-widget {
@@ -425,456 +418,455 @@ body {
             .cards-grid { grid-template-columns: 1fr; }
             .detail-label { min-width: 90px; }
         }
-        
     </style>
 </head>
 <body>
-        <site-header></site-header>
-<div class="explorer-widget">
-    <div class="widget-hero">
-        <i class="fas fa-globe-americas"></i>
-        <h2>Notice  Boardr</h2>
-        <p>INNOVATION HUB</p>
-    </div>
-    <div class="dropdown-panel">
-        <div class="state-selector">
-            <div class="dropdown-label">
-                <i class="fas fa-chevron-circle-down"></i> Select State 
-            </div>
-            <div class="custom-select" id="customSelect">
-                <div class="select-trigger" id="selectTrigger">
-                    <span id="selectedStateName"> Choose a state </span>
-                    <i class="fas fa-angle-down"></i>
-                </div>
-                <ul class="dropdown-options" id="dropdownOptions"></ul>
-            </div>
+    <site-header></site-header>
+    <div class="explorer-widget">
+        <div class="widget-hero">
+            <i class="fas fa-globe-americas"></i>
+            <h2>Notice Board</h2>
+            <p>INNOVATION HUB</p>
         </div>
+        <div class="dropdown-panel">
+            <div class="state-selector">
+                <div class="dropdown-label">
+                    <i class="fas fa-chevron-circle-down"></i> Select State 
+                </div>
+                <div class="custom-select" id="customSelect">
+                    <div class="select-trigger" id="selectTrigger">
+                        <span id="selectedStateName"> Choose a state </span>
+                        <i class="fas fa-angle-down"></i>
+                    </div>
+                    <ul class="dropdown-options" id="dropdownOptions"></ul>
+                </div>
+            </div>
 
-        <!-- Cards container: hidden until selection, but dropdown will overlap it -->
-        <div id="cardsSection" class="cards-container" style="display: none;"></div>
+            <!-- Cards container: hidden until selection, but dropdown will overlap it -->
+            <div id="cardsSection" class="cards-container" style="display: none;"></div>
+        </div>
     </div>
-</div>
 
-<script>
-    // Master spreadsheet config
-    const MASTER_SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
-    const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+    <script>
+        // Master spreadsheet config
+        const MASTER_SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
+        const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 
-    let masterRows = [];          // { state, linkedSheetId }
-    let uniqueStates = [];
-    let selectedOption = '';      // 'all' or specific state
-    let allCardsDataCache = [];   // cached for current selection
-    
-    const childSheetCache = new Map(); // sheetId -> { rows: [], error }
-    const dropdown = document.getElementById('dropdownOptions');
-    const selectTrigger = document.getElementById('selectTrigger');
-    const selectedStateSpan = document.getElementById('selectedStateName');
-    const cardsSection = document.getElementById('cardsSection');
-
-    // Robust CSV parser
-    function parseCSV(csvText) {
-        const rows = [];
-        let currentRow = [];
-        let currentField = '';
-        let insideQuotes = false;
-        let i = 0;
-        const len = csvText.length;
+        let masterRows = [];          // { state, linkedSheetId }
+        let uniqueStates = [];
+        let selectedOption = '';      // 'all' or specific state
+        let allCardsDataCache = [];   // cached for current selection
         
-        while (i < len) {
-            const ch = csvText[i];
-            const nextCh = csvText[i+1];
-            if (ch === '"') {
-                if (insideQuotes && nextCh === '"') {
-                    currentField += '"';
-                    i++;
-                } else {
-                    insideQuotes = !insideQuotes;
-                }
-            } else if (ch === ',' && !insideQuotes) {
-                currentRow.push(currentField);
-                currentField = '';
-            } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
-                currentRow.push(currentField);
-                if (currentRow.length > 0) rows.push(currentRow);
-                currentRow = [];
-                currentField = '';
-                if (ch === '\r') i++;
-            } else if (ch === '\r' && !insideQuotes) {
-                currentRow.push(currentField);
-                if (currentRow.length > 0) rows.push(currentRow);
-                currentRow = [];
-                currentField = '';
-            } else {
-                currentField += ch;
-            }
-            i++;
-        }
-        if (currentField !== '' || currentRow.length > 0) {
-            currentRow.push(currentField);
-            if (currentRow.length > 0) rows.push(currentRow);
-        }
-        return rows.map(row => row.map(cell => {
-            let cleaned = String(cell).trim();
-            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-                cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
-            }
-            return cleaned;
-        }));
-    }
+        const childSheetCache = new Map(); // sheetId -> { rows: [], error }
+        const dropdown = document.getElementById('dropdownOptions');
+        const selectTrigger = document.getElementById('selectTrigger');
+        const selectedStateSpan = document.getElementById('selectedStateName');
+        const cardsSection = document.getElementById('cardsSection');
 
-    // Fetch master sheet
-    async function fetchMasterSheet() {
-        try {
-            const response = await fetch(MASTER_DATA_URL);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const csvText = await response.text();
-            const parsed = parseCSV(csvText);
-            if (parsed.length < 2) throw new Error('Master sheet insufficient data');
+        // Robust CSV parser
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let insideQuotes = false;
+            let i = 0;
+            const len = csvText.length;
             
-            const tempRows = [];
-            const stateSet = new Set();
-            for (let idx = 0; idx < parsed.length; idx++) {
-                const row = parsed[idx];
-                let state = (row.length >= 2) ? row[1] : '';
-                let linkedId = (row.length >= 3) ? row[2] : '';
-                if (!state || state === '' || state.toLowerCase() === 'null' || state === 'STATE') continue;
-                linkedId = linkedId ? linkedId.trim() : null;
-                if (linkedId === '' || linkedId.toLowerCase() === 'null') linkedId = null;
-                tempRows.push({ state: state, linkedSheetId: linkedId });
-                stateSet.add(state);
-            }
-            if (tempRows.length === 0) throw new Error('No valid states');
-            masterRows = tempRows;
-            uniqueStates = Array.from(stateSet).sort((a,b) => a.localeCompare(b));
-            renderDropdown();
-        } catch (err) {
-            console.error(err);
-            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">⚠️ Failed to load states</li>`;
-        }
-    }
-
-    function renderDropdown() {
-        if (!dropdown) return;
-        let optionsHtml = `<li class="dropdown-option" data-state-value="__ALL__">
-                            <span class="option-title"><i class="fas fa-star"></i> ALL</span>
-                            <span class="option-badge">full dataset</span>
-                           </li>`;
-        optionsHtml += uniqueStates.map(state => `
-            <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
-                <span class="option-title">${escapeHtml(state)}</span>
-                <span class="option-badge"><i class="fas fa-map-pin"></i> state</span>
-            </li>
-        `).join('');
-        dropdown.innerHTML = optionsHtml;
-        
-        document.querySelectorAll('.dropdown-option[data-state-value]').forEach(opt => {
-            opt.removeEventListener('click', handleOptionClick);
-            opt.addEventListener('click', handleOptionClick);
-        });
-    }
-
-    function handleOptionClick(e) {
-        const val = e.currentTarget.getAttribute('data-state-value');
-        closeDropdown();
-        if (val === '__ALL__') {
-            selectedOption = 'all';
-            selectedStateSpan.innerHTML = 'ALL ';
-            loadAllStatesData();
-        } else {
-            selectedOption = val;
-            selectedStateSpan.innerHTML = escapeHtml(val);
-            loadDataForState(val);
-        }
-    }
-
-    // Parse date from Column 1 (Date Published)
-    function parseDate(dateStr) {
-        if (!dateStr || dateStr === '—' || dateStr === '') return null;
-        let cleaned = String(dateStr).trim();
-        let d = new Date(cleaned);
-        if (!isNaN(d.getTime())) return d;
-        const parts = cleaned.split(/[-/]/);
-        if (parts.length === 3) {
-            let year = parseInt(parts[2]);
-            let month = parseInt(parts[0]) - 1;
-            let day = parseInt(parts[1]);
-            if (year < 100) year += 2000;
-            let d2 = new Date(year, month, day);
-            if (!isNaN(d2.getTime())) return d2;
-            let d3 = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
-            if (!isNaN(d3.getTime())) return d3;
-        }
-        return null;
-    }
-
-    // Fetch child sheet (col1 to col10)
-    async function fetchChildSheet(sheetId) {
-        if (childSheetCache.has(sheetId)) {
-            return childSheetCache.get(sheetId);
-        }
-        try {
-            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const csvText = await resp.text();
-            const parsedRows = parseCSV(csvText);
-            const dataRows = [];
-            for (let r = 0; r < parsedRows.length; r++) {
-                const rowCells = parsedRows[r];
-                if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
-                const rowObj = {};
-                // Ensure col1..col10 exist
-                for (let colIdx = 0; colIdx < 10; colIdx++) {
-                    const colKey = `col${colIdx+1}`;
-                    rowObj[colKey] = (colIdx < rowCells.length && rowCells[colIdx] !== undefined && rowCells[colIdx] !== '') ? rowCells[colIdx] : '—';
+            while (i < len) {
+                const ch = csvText[i];
+                const nextCh = csvText[i+1];
+                if (ch === '"') {
+                    if (insideQuotes && nextCh === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if (ch === ',' && !insideQuotes) {
+                    currentRow.push(currentField);
+                    currentField = '';
+                } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+                    currentRow.push(currentField);
+                    if (currentRow.length > 0) rows.push(currentRow);
+                    currentRow = [];
+                    currentField = '';
+                    if (ch === '\r') i++;
+                } else if (ch === '\r' && !insideQuotes) {
+                    currentRow.push(currentField);
+                    if (currentRow.length > 0) rows.push(currentRow);
+                    currentRow = [];
+                    currentField = '';
+                } else {
+                    currentField += ch;
                 }
-                dataRows.push(rowObj);
+                i++;
             }
-            const result = { rows: dataRows, error: false };
-            childSheetCache.set(sheetId, result);
-            return result;
-        } catch (err) {
-            console.warn(`Error sheet ${sheetId}:`, err);
-            const errorResult = { rows: [], error: true };
-            childSheetCache.set(sheetId, errorResult);
-            return errorResult;
+            if (currentField !== '' || currentRow.length > 0) {
+                currentRow.push(currentField);
+                if (currentRow.length > 0) rows.push(currentRow);
+            }
+            return rows.map(row => row.map(cell => {
+                let cleaned = String(cell).trim();
+                if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                    cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+                }
+                return cleaned;
+            }));
         }
-    }
 
-    // Load specific state
-    async function loadDataForState(state) {
-        cardsSection.style.display = 'block';
-        cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading data for ${escapeHtml(state)}...</p></div>`;
-        
-        const entries = masterRows.filter(row => row.state === state);
-        const sheetIds = [...new Set(entries.map(e => e.linkedSheetId).filter(id => id))];
-        const cardItems = [];
-        
-        for (const sheetId of sheetIds) {
-            const sheetData = await fetchChildSheet(sheetId);
-            if (sheetData && sheetData.rows && sheetData.rows.length) {
-                for (const rowData of sheetData.rows) {
-                    const dateRaw = rowData.col1 || '—';
-                    const parsedDate = parseDate(dateRaw);
-                    cardItems.push({
-                        id: `${sheetId}_${Math.random()}_${Date.now()}`,
-                        state: state,
-                        date: parsedDate,
-                        dateRaw: dateRaw,
-                        col2: rowData.col2 || '—',
-                        col3: rowData.col3 || '—',
-                        fullRow: rowData
-                    });
+        // Fetch master sheet
+        async function fetchMasterSheet() {
+            try {
+                const response = await fetch(MASTER_DATA_URL);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const csvText = await response.text();
+                const parsed = parseCSV(csvText);
+                if (parsed.length < 2) throw new Error('Master sheet insufficient data');
+                
+                const tempRows = [];
+                const stateSet = new Set();
+                for (let idx = 0; idx < parsed.length; idx++) {
+                    const row = parsed[idx];
+                    let state = (row.length >= 2) ? row[1] : '';
+                    let linkedId = (row.length >= 3) ? row[2] : '';
+                    if (!state || state === '' || state.toLowerCase() === 'null' || state === 'STATE') continue;
+                    linkedId = linkedId ? linkedId.trim() : null;
+                    if (linkedId === '' || linkedId.toLowerCase() === 'null') linkedId = null;
+                    tempRows.push({ state: state, linkedSheetId: linkedId });
+                    stateSet.add(state);
+                }
+                if (tempRows.length === 0) throw new Error('No valid states');
+                masterRows = tempRows;
+                uniqueStates = Array.from(stateSet).sort((a,b) => a.localeCompare(b));
+                renderDropdown();
+            } catch (err) {
+                console.error(err);
+                dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">⚠️ Failed to load states</li>`;
+            }
+        }
+
+        function renderDropdown() {
+            if (!dropdown) return;
+            let optionsHtml = `<li class="dropdown-option" data-state-value="__ALL__">
+                                    <span class="option-title"><i class="fas fa-star"></i> ALL</span>
+                                    <span class="option-badge">full dataset</span>
+                                </li>`;
+            optionsHtml += uniqueStates.map(state => `
+                <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
+                    <span class="option-title">${escapeHtml(state)}</span>
+                    <span class="option-badge"><i class="fas fa-map-pin"></i> state</span>
+                </li>
+            `).join('');
+            dropdown.innerHTML = optionsHtml;
+            
+            document.querySelectorAll('.dropdown-option[data-state-value]').forEach(opt => {
+                opt.removeEventListener('click', handleOptionClick);
+                opt.addEventListener('click', handleOptionClick);
+            });
+        }
+
+        function handleOptionClick(e) {
+            const val = e.currentTarget.getAttribute('data-state-value');
+            closeDropdown();
+            if (val === '__ALL__') {
+                selectedOption = 'all';
+                selectedStateSpan.innerHTML = 'ALL ';
+                loadAllStatesData();
+            } else {
+                selectedOption = val;
+                selectedStateSpan.innerHTML = escapeHtml(val);
+                loadDataForState(val);
+            }
+        }
+
+        // Parse date from Column 1 (Date Published)
+        function parseDate(dateStr) {
+            if (!dateStr || dateStr === '—' || dateStr === '') return null;
+            let cleaned = String(dateStr).trim();
+            let d = new Date(cleaned);
+            if (!isNaN(d.getTime())) return d;
+            const parts = cleaned.split(/[-/]/);
+            if (parts.length === 3) {
+                let year = parseInt(parts[2]);
+                let month = parseInt(parts[0]) - 1;
+                let day = parseInt(parts[1]);
+                if (year < 100) year += 2000;
+                let d2 = new Date(year, month, day);
+                if (!isNaN(d2.getTime())) return d2;
+                let d3 = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+                if (!isNaN(d3.getTime())) return d3;
+            }
+            return null;
+        }
+
+        // Fetch child sheet (col1 to col10)
+        async function fetchChildSheet(sheetId) {
+            if (childSheetCache.has(sheetId)) {
+                return childSheetCache.get(sheetId);
+            }
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const csvText = await resp.text();
+                const parsedRows = parseCSV(csvText);
+                const dataRows = [];
+                for (let r = 0; r < parsedRows.length; r++) {
+                    const rowCells = parsedRows[r];
+                    if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
+                    const rowObj = {};
+                    // Ensure col1..col10 exist
+                    for (let colIdx = 0; colIdx < 10; colIdx++) {
+                        const colKey = `col${colIdx+1}`;
+                        rowObj[colKey] = (colIdx < rowCells.length && rowCells[colIdx] !== undefined && rowCells[colIdx] !== '') ? rowCells[colIdx] : '—';
+                    }
+                    dataRows.push(rowObj);
+                }
+                const result = { rows: dataRows, error: false };
+                childSheetCache.set(sheetId, result);
+                return result;
+            } catch (err) {
+                console.warn(`Error sheet ${sheetId}:`, err);
+                const errorResult = { rows: [], error: true };
+                childSheetCache.set(sheetId, errorResult);
+                return errorResult;
+            }
+        }
+
+        // Load specific state
+        async function loadDataForState(state) {
+            cardsSection.style.display = 'block';
+            cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading data for ${escapeHtml(state)}...</p></div>`;
+            
+            const entries = masterRows.filter(row => row.state === state);
+            const sheetIds = [...new Set(entries.map(e => e.linkedSheetId).filter(id => id))];
+            const cardItems = [];
+            
+            for (const sheetId of sheetIds) {
+                const sheetData = await fetchChildSheet(sheetId);
+                if (sheetData && sheetData.rows && sheetData.rows.length) {
+                    for (const rowData of sheetData.rows) {
+                        const dateRaw = rowData.col1 || '—';
+                        const parsedDate = parseDate(dateRaw);
+                        cardItems.push({
+                            id: `${sheetId}_${Math.random()}_${Date.now()}`,
+                            state: state,
+                            date: parsedDate,
+                            dateRaw: dateRaw,
+                            col2: rowData.col2 || '—',
+                            col3: rowData.col3 || '—',
+                            fullRow: rowData
+                        });
+                    }
                 }
             }
+            
+            cardItems.sort((a,b) => {
+                if (!a.date && !b.date) return 0;
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return b.date.getTime() - a.date.getTime();
+            });
+            
+            renderCards(cardItems);
         }
         
-        cardItems.sort((a,b) => {
-            if (!a.date && !b.date) return 0;
-            if (!a.date) return 1;
-            if (!b.date) return -1;
-            return b.date.getTime() - a.date.getTime();
-        });
-        
-        renderCards(cardItems);
-    }
-    
-    // Load all states combined
-    async function loadAllStatesData() {
-        cardsSection.style.display = 'block';
-        cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading data from ALL states ...</p></div>`;
-        
-        const uniqueSheets = new Map(); // sheetId -> state
-        for (const entry of masterRows) {
-            if (entry.linkedSheetId && !uniqueSheets.has(entry.linkedSheetId)) {
-                uniqueSheets.set(entry.linkedSheetId, entry.state);
-            }
-        }
-        
-        const cardItems = [];
-        for (const [sheetId, state] of uniqueSheets.entries()) {
-            const sheetData = await fetchChildSheet(sheetId);
-            if (sheetData && sheetData.rows && sheetData.rows.length) {
-                for (const rowData of sheetData.rows) {
-                    const dateRaw = rowData.col1 || '—';
-                    const parsedDate = parseDate(dateRaw);
-                    cardItems.push({
-                        id: `${sheetId}_${Math.random()}`,
-                        state: state,
-                        date: parsedDate,
-                        dateRaw: dateRaw,
-                        col2: rowData.col2 || '—',
-                        col3: rowData.col3 || '—',
-                        fullRow: rowData
-                    });
+        // Load all states combined
+        async function loadAllStatesData() {
+            cardsSection.style.display = 'block';
+            cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading data from ALL states ...</p></div>`;
+            
+            const uniqueSheets = new Map(); // sheetId -> state
+            for (const entry of masterRows) {
+                if (entry.linkedSheetId && !uniqueSheets.has(entry.linkedSheetId)) {
+                    uniqueSheets.set(entry.linkedSheetId, entry.state);
                 }
             }
-        }
-        
-        cardItems.sort((a,b) => {
-            if (!a.date && !b.date) return 0;
-            if (!a.date) return 1;
-            if (!b.date) return -1;
-            return b.date.getTime() - a.date.getTime();
-        });
-        
-        renderCards(cardItems);
-    }
-    
-    // Render cards: show Column 2, Column 3 and Date Published in header
-    function renderCards(cardsArray) {
-        if (!cardsSection) return;
-        if (cardsArray.length === 0) {
-            cardsSection.innerHTML = `<div class="empty-state-card"><i class="fas fa-info-circle"></i><p>No records found for selected option.</p></div>`;
-            return;
-        }
-        
-        let html = `<div class="cards-grid">`;
-        for (let card of cardsArray) {
-            let displayDate = card.dateRaw && card.dateRaw !== '—' ? card.dateRaw : 'No date';
-            if (card.date) {
-                try { displayDate = card.date.toLocaleDateString(); } catch(e) {}
+            
+            const cardItems = [];
+            for (const [sheetId, state] of uniqueSheets.entries()) {
+                const sheetData = await fetchChildSheet(sheetId);
+                if (sheetData && sheetData.rows && sheetData.rows.length) {
+                    for (const rowData of sheetData.rows) {
+                        const dateRaw = rowData.col1 || '—';
+                        const parsedDate = parseDate(dateRaw);
+                        cardItems.push({
+                            id: `${sheetId}_${Math.random()}`,
+                            state: state,
+                            date: parsedDate,
+                            dateRaw: dateRaw,
+                            col2: rowData.col2 || '—',
+                            col3: rowData.col3 || '—',
+                            fullRow: rowData
+                        });
+                    }
+                }
             }
-            html += `
-                <div class="dynamic-card" data-card-id="${escapeHtml(card.id)}">
-                    <div class="card-header-custom">
-                        <i class="fas fa-calendar-alt"></i>
-                        <h3>📅 ${escapeHtml(displayDate)}</h3>
+            
+            cardItems.sort((a,b) => {
+                if (!a.date && !b.date) return 0;
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return b.date.getTime() - a.date.getTime();
+            });
+            
+            renderCards(cardItems);
+        }
+        
+        // Render cards: show Column 2, Column 3 and Date Published in header
+        function renderCards(cardsArray) {
+            if (!cardsSection) return;
+            if (cardsArray.length === 0) {
+                cardsSection.innerHTML = `<div class="empty-state-card"><i class="fas fa-info-circle"></i><p>No records found for selected option.</p></div>`;
+                return;
+            }
+            
+            let html = `<div class="cards-grid">`;
+            for (let card of cardsArray) {
+                let displayDate = card.dateRaw && card.dateRaw !== '—' ? card.dateRaw : 'No date';
+                if (card.date) {
+                    try { displayDate = card.date.toLocaleDateString(); } catch(e) {}
+                }
+                html += `
+                    <div class="dynamic-card" data-card-id="${escapeHtml(card.id)}">
+                        <div class="card-header-custom">
+                            <i class="fas fa-calendar-alt"></i>
+                            <h3>📅 ${escapeHtml(displayDate)}</h3>
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="data-row"><span class="data-label">Column 2</span><span class="data-value">${escapeHtml(card.col2)}</span></div>
+                            <div class="data-row"><span class="data-label">Column 3</span><span class="data-value">${escapeHtml(card.col3)}</span></div>
+                        </div>
+                        <div class="card-footer-state">
+                            <i class="fas fa-flag"></i> ${escapeHtml(card.state)}
+                        </div>
                     </div>
-                    <div class="card-body-custom">
-                        <div class="data-row"><span class="data-label">Column 2</span><span class="data-value">${escapeHtml(card.col2)}</span></div>
-                        <div class="data-row"><span class="data-label">Column 3</span><span class="data-value">${escapeHtml(card.col3)}</span></div>
+                `;
+            }
+            html += `</div>`;
+            cardsSection.innerHTML = html;
+            
+            // attach click handlers for modal
+            document.querySelectorAll('.dynamic-card').forEach(cardDiv => {
+                cardDiv.addEventListener('click', (e) => {
+                    const cardId = cardDiv.getAttribute('data-card-id');
+                    const selectedCard = cardsArray.find(c => c.id === cardId);
+                    if (selectedCard) openModal(selectedCard);
+                });
+            });
+        }
+        
+        // Modal with full details (col1 to col10)
+        function openModal(card) {
+            const fullRow = card.fullRow || {};
+            const fields = [];
+            const labels = {
+                col1: 'Date Published',
+                col2: 'Column 2',
+                col3: 'Column 3',
+                col4: 'Column 4',
+                col5: 'Column 5',
+                col6: 'Column 6',
+                col7: 'Column 7',
+                col8: 'Column 8',
+                col9: 'Column 9',
+                col10: 'Column 10'
+            };
+            for (let i = 1; i <= 10; i++) {
+                const key = `col${i}`;
+                let value = fullRow[key] || '—';
+                const label = labels[key] || `Column ${i}`;
+                fields.push({ label, value });
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-info-circle"></i> Full Record · ${escapeHtml(card.state)}</h3>
+                        <button class="modal-close"><i class="fas fa-times"></i></button>
                     </div>
-                    <div class="card-footer-state">
-                        <i class="fas fa-flag"></i> ${escapeHtml(card.state)}
+                    <div class="modal-body">
+                        ${fields.map(f => `
+                            <div class="detail-row">
+                                <div class="detail-label">${escapeHtml(f.label)}</div>
+                                <div class="detail-value">${escapeHtml(f.value)}</div>
+                            </div>
+                        `).join('')}
+                        <div class="detail-row" style="background:#f8fafc; margin-top:0.5rem; border-radius:0.8rem;">
+                            <div class="detail-label">State</div>
+                            <div class="detail-value"><span class="modal-state-badge">${escapeHtml(card.state)}</span></div>
+                        </div>
                     </div>
                 </div>
             `;
+            document.body.appendChild(modal);
+            modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
         }
-        html += `</div>`;
-        cardsSection.innerHTML = html;
         
-        // attach click handlers for modal
-        document.querySelectorAll('.dynamic-card').forEach(cardDiv => {
-            cardDiv.addEventListener('click', (e) => {
-                const cardId = cardDiv.getAttribute('data-card-id');
-                const selectedCard = cardsArray.find(c => c.id === cardId);
-                if (selectedCard) openModal(selectedCard);
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
-        });
-    }
-    
-    // Modal with full details (col1 to col10)
-    function openModal(card) {
-        const fullRow = card.fullRow || {};
-        const fields = [];
-        const labels = {
-            col1: 'Date Published',
-            col2: 'Column 2',
-            col3: 'Column 3',
-            col4: 'Column 4',
-            col5: 'Column 5',
-            col6: 'Column 6',
-            col7: 'Column 7',
-            col8: 'Column 8',
-            col9: 'Column 9',
-            col10: 'Column 10'
-        };
-        for (let i = 1; i <= 10; i++) {
-            const key = `col${i}`;
-            let value = fullRow[key] || '—';
-            const label = labels[key] || `Column ${i}`;
-            fields.push({ label, value });
         }
         
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h3><i class="fas fa-info-circle"></i> Full Record · ${escapeHtml(card.state)}</h3>
-                    <button class="modal-close"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="modal-body">
-                    ${fields.map(f => `
-                        <div class="detail-row">
-                            <div class="detail-label">${escapeHtml(f.label)}</div>
-                            <div class="detail-value">${escapeHtml(f.value)}</div>
-                        </div>
-                    `).join('')}
-                    <div class="detail-row" style="background:#f8fafc; margin-top:0.5rem; border-radius:0.8rem;">
-                        <div class="detail-label">State</div>
-                        <div class="detail-value"><span class="modal-state-badge">${escapeHtml(card.state)}</span></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    function closeDropdown() { 
-        const dd = document.getElementById('dropdownOptions');
-        if (dd) dd.classList.remove('show');
-    }
-    function toggleDropdown() { 
-        const dd = document.getElementById('dropdownOptions');
-        if (dd) dd.classList.toggle('show');
-    }
-    
-    selectTrigger?.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        toggleDropdown(); 
-    });
-    document.addEventListener('click', function(e) {
-        const container = document.getElementById('customSelect');
-        if (container && !container.contains(e.target)) closeDropdown();
-    });
-    
-    // init: hide cards until selection
-    cardsSection.style.display = 'none';
-    fetchMasterSheet();
-
-    // Fix header overlap - ensure content starts below header
-function adjustForHeader() {
-    const header = document.querySelector('site-header');
-    if (header) {
-        // Get the actual height of the header
-        const headerHeight = header.offsetHeight;
-        // Apply padding to body or margin to the widget
-        document.body.style.paddingTop = headerHeight + 'px';
+        function closeDropdown() { 
+            const dd = document.getElementById('dropdownOptions');
+            if (dd) dd.classList.remove('show');
+        }
+        function toggleDropdown() { 
+            const dd = document.getElementById('dropdownOptions');
+            if (dd) dd.classList.toggle('show');
+        }
         
-        // Alternative: apply margin to the first container instead
-        // const widget = document.querySelector('.explorer-widget');
-        // if (widget) widget.style.marginTop = headerHeight + 'px';
-    }
-}
+        selectTrigger?.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            toggleDropdown(); 
+        });
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('customSelect');
+            if (container && !container.contains(e.target)) closeDropdown();
+        });
+        
+        // Fix header overlap - ensure content starts below header
+        function adjustForHeader() {
+            const header = document.querySelector('site-header');
+            if (header) {
+                // Get the actual height of the header
+                const headerHeight = header.offsetHeight;
+                // Add to existing padding (2rem = 32px) instead of replacing it
+                // This preserves your vertical spacing
+                document.body.style.paddingTop = `calc(${headerHeight}px + 2rem)`;
+                
+                // Debug: log the applied padding
+                console.log(`Header height: ${headerHeight}px, Body padding-top: ${document.body.style.paddingTop}`);
+            }
+        }
 
-// Run after header loads and on window resize
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', adjustForHeader);
-} else {
-    adjustForHeader();
-}
+        // Run after header loads and on window resize
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', adjustForHeader);
+        } else {
+            adjustForHeader();
+        }
 
-window.addEventListener('resize', () => {
-    setTimeout(adjustForHeader, 100); // slight delay for smooth resize
-});
+        window.addEventListener('resize', () => {
+            setTimeout(adjustForHeader, 100); // slight delay for smooth resize
+        });
 
-// Also observe for header changes (if header-loader.js adds content dynamically)
-const observer = new MutationObserver(adjustForHeader);
-observer.observe(document.body, { childList: true, subtree: true });
-</script>
+        // Also observe for header changes (if header-loader.js adds content dynamically)
+        const observer = new MutationObserver(adjustForHeader);
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // init: hide cards until selection
+        cardsSection.style.display = 'none';
+        fetchMasterSheet();
+    </script>
 </body>
 </html>
