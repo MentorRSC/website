@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Innovation Hub | Dynamic State Notice Board</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Your existing CSS (same as before, with fixed header styles) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            line-height: 1.5;
+            padding-top: 80px;
+        }
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --dark: #0f172a;
+            --border-light: #e2e8f0;
+            --card-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
+            --transition: all 0.2s ease;
+        }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .logo i { font-size: 28px; color: var(--primary); }
+        .logo h1 { font-size: 1.6rem; font-weight: 800; color: var(--dark); }
+        .logo span { color: var(--primary); }
+        .nav-menu ul { display: flex; gap: 28px; list-style: none; align-items: center; }
+        .nav-menu ul li a { text-decoration: none; font-weight: 500; color: #334155; transition: var(--transition); }
+        .nav-menu ul li a:hover, .nav-menu ul li a.active { color: var(--primary); }
+        .cta-button { background: var(--primary); padding: 8px 20px; border-radius: 40px; color: white !important; font-weight: 600; }
+        .mobile-menu { display: none; font-size: 24px; cursor: pointer; }
+        .state-hero { background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%); padding: 28px 0 24px; border-bottom: 1px solid var(--border-light); }
+        .state-selector-card {
+            background: white; border-radius: 40px; padding: 12px 24px; display: inline-flex; align-items: center;
+            gap: 20px; flex-wrap: wrap; box-shadow: var(--card-shadow); border: 1px solid rgba(59,130,246,0.2);
+        }
+        .state-dropdown { padding: 12px 20px; border-radius: 60px; border: 1.5px solid var(--border-light); font-weight: 600; min-width: 220px; cursor: pointer; }
+        .hub-badge { background: #eef2ff; padding: 8px 20px; border-radius: 40px; font-weight: 600; color: var(--primary-dark); }
+        .notice-board-section { margin: 40px 0 60px; }
+        .notice-header-main { display: flex; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+        .notice-header-main h2 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--dark), var(--primary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .notice-stats { background: #eef2ff; padding: 6px 16px; border-radius: 40px; font-weight: 600; }
+        .notice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 28px; }
+        .notice-card { background: white; border-radius: 28px; overflow: hidden; box-shadow: var(--card-shadow); transition: var(--transition); cursor: pointer; border: 1px solid rgba(59,130,246,0.1); }
+        .notice-card:hover { transform: translateY(-6px); box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15); }
+        .card-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 20px 24px; color: white; }
+        .card-header .notice-category-icon { font-size: 32px; margin-bottom: 8px; }
+        .card-header h3 { font-size: 1.3rem; font-weight: 700; margin: 8px 0 4px; }
+        .card-date { font-size: 0.75rem; opacity: 0.85; display: flex; align-items: center; gap: 6px; }
+        .card-body { padding: 20px 24px; flex: 1; }
+        .card-body p { color: #334155; line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .state-tag { display: inline-block; background: #eef2ff; padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: 600; color: var(--primary-dark); margin-top: 8px; }
+        .read-more-btn { background: transparent; border: none; color: var(--primary); font-weight: 600; font-size: 0.85rem; margin-top: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 32px; color: #64748b; }
+        /* Modal styles (same as before) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .notice-modal { background: white; border-radius: 40px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 28px 32px; color: white; }
+        .modal-body { padding: 28px 32px; }
+        .detail-section { background: #f8fafc; border-radius: 24px; padding: 18px; margin: 20px 0; }
+        .modal-footer { padding: 20px 32px 32px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border-light); }
+        .close-modal-btn { background: var(--primary); color: white; border: none; padding: 12px 28px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+        footer { background: #0f172a; color: #e2e8f0; padding: 48px 0 24px; margin-top: 20px; }
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 40px; margin-bottom: 40px; }
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .mobile-menu { display: block; }
+            .notice-grid { grid-template-columns: 1fr; }
+            body { padding-top: 72px; }
+        }
+    </style>
+</head>
+<body>
+<div class="fixed-header">
+    <header>
+        <div class="header-container">
+            <a href="#" class="logo"><i class="fas fa-microchip"></i><h1>Innovation <span>Hub</span></h1></a>
+            <div class="nav-menu"><ul><li><a href="#" class="active">Notice Board</a></li><li><a href="#">Challenges</a></li><li><a href="#" class="cta-button">Submit Idea</a></li></ul></div>
+            <div class="mobile-menu"><i class="fas fa-bars"></i></div>
+        </div>
+    </header>
+</div>
+
+<div class="state-hero">
+    <div class="container">
+        <div class="state-selector-card">
+            <i class="fas fa-map-marked-alt"></i>
+            <span style="font-weight:600;">Select your State / UT :</span>
+            <select id="stateSelect" class="state-dropdown">
+                <option value="">Loading states...</option>
+            </select>
+            <div id="hubLocationDisplay" class="hub-badge"><i class="fas fa-building"></i> Innovation Hub</div>
+        </div>
+        <p style="margin-top:12px; color:#334155;"><i class="fas fa-globe"></i> State-wise innovation announcements — click on any notice card for full details.</p>
+    </div>
+</div>
+
+<div class="container notice-board-section">
+    <div class="notice-header-main">
+        <h2><i class="fas fa-bullhorn" style="color: var(--primary);"></i> 📢 Student Notice Board</h2>
+        <div class="notice-stats" id="noticeStats">Select a state</div>
+    </div>
+    <div id="noticeGridContainer" class="notice-grid">
+        <div class="empty-state"><i class="fas fa-info-circle"></i> Please choose a state from the dropdown.</div>
+    </div>
+</div>
+
+<footer>...</footer>
+
+<script>
+    // ----------------------------- CONFIGURATION ---------------------------------
+    // PUBLISHED CSV LINK OF YOUR MASTER SHEET (slno, state, sheet_link)
+    const MASTER_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZ-g_0ISZ_7j_tWPS2dWXL6Q1frJ5TdFcYQLqPZuHw-fLvS5kVz6szFySDFv9Amfa8bMhAKDULRQAb/pub?output=csv";
+    // (Replace the above with your actual published master sheet CSV link)
+
+    let statesList = []; // will store { stateName, sheetCsvUrl }
+
+    // Helper: fetch CSV and parse to JSON
+    async function fetchCSV(url) {
+        const response = await fetch(url);
+        const text = await response.text();
+        const rows = text.split("\n").filter(row => row.trim() !== "");
+        const headers = rows[0].split(",").map(h => h.trim());
+        const data = [];
+        for (let i = 1; i < rows.length; i++) {
+            const values = rows[i].split(",");
+            let obj = {};
+            headers.forEach((h, idx) => { obj[h] = values[idx] ? values[idx].trim() : ""; });
+            data.push(obj);
+        }
+        return data;
+    }
+
+    // Load master sheet to populate dropdown
+    async function loadStates() {
+        try {
+            const masterData = await fetchCSV(MASTER_SHEET_CSV);
+            // Expected columns: slno, state, sheet_link (the published CSV link of that state's notice sheet)
+            statesList = masterData.map(row => ({
+                stateName: row.state,
+                sheetCsvUrl: row.sheet_link   // IMPORTANT: This must be the PUBLISHED CSV link of the state's notice sheet
+            })).filter(item => item.stateName && item.sheetCsvUrl);
+            
+            const select = document.getElementById("stateSelect");
+            select.innerHTML = '<option value="">-- Select State --</option>';
+            statesList.forEach((state, index) => {
+                const option = document.createElement("option");
+                option.value = index;  // store index to retrieve URL
+                option.textContent = state.stateName;
+                select.appendChild(option);
+            });
+            
+            // Check localStorage for previously selected state
+            const savedIndex = localStorage.getItem("selectedStateIndex");
+            if (savedIndex && statesList[savedIndex]) {
+                select.value = savedIndex;
+                loadNoticesForState(statesList[savedIndex].sheetCsvUrl, statesList[savedIndex].stateName);
+            } else {
+                document.getElementById("noticeStats").innerText = "Select a state";
+                document.getElementById("noticeGridContainer").innerHTML = `<div class="empty-state"><i class="fas fa-hand-point-up"></i> Choose a state from above.</div>`;
+            }
+        } catch (error) {
+            console.error("Error loading master sheet:", error);
+            document.getElementById("stateSelect").innerHTML = '<option>Error loading states</option>';
+        }
+    }
+
+    // Fetch and display notices from a state's published CSV
+    async function loadNoticesForState(csvUrl, stateName) {
+        if (!csvUrl) {
+            document.getElementById("noticeGridContainer").innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> Invalid sheet link for ${stateName}.</div>`;
+            document.getElementById("noticeStats").innerText = "No link available";
+            return;
+        }
+        
+        document.getElementById("noticeGridContainer").innerHTML = `<div class="empty-state"><i class="fas fa-spinner fa-pulse"></i> Loading notices for ${stateName}...</div>`;
+        
+        try {
+            const notices = await fetchCSV(csvUrl);
+            if (!notices.length) {
+                document.getElementById("noticeGridContainer").innerHTML = `<div class="empty-state"><i class="fas fa-newspaper"></i> No announcements for ${stateName} yet.</div>`;
+                document.getElementById("noticeStats").innerText = "0 notices";
+                return;
+            }
+            
+            // Map CSV columns to your card structure (adjust column names as needed)
+            // Expected columns: title, description, fullDescription, date, deadline, venue, category, icon, state
+            const formattedNotices = notices.map(notice => ({
+                id: notice.slno || Math.random(),
+                title: notice.title || "Untitled",
+                description: notice.description || "No description",
+                fullDescription: notice.fullDescription || notice.description || "Check official website for details.",
+                state: notice.state || stateName.toLowerCase(),
+                date: notice.date || "Date TBA",
+                deadline: notice.deadline || "Not specified",
+                venue: notice.venue || "To be announced",
+                category: notice.category || "Announcement",
+                icon: notice.icon || "fa-solid fa-bullhorn"
+            }));
+            
+            renderNotices(formattedNotices, stateName);
+            document.getElementById("noticeStats").innerText = `${formattedNotices.length} notice${formattedNotices.length !== 1 ? 's' : ''}`;
+            document.getElementById("hubLocationDisplay").innerHTML = `<i class="fas fa-building"></i> Innovation Hub: ${stateName}`;
+        } catch (error) {
+            console.error("Error loading state notices:", error);
+            document.getElementById("noticeGridContainer").innerHTML = `<div class="empty-state"><i class="fas fa-database"></i> Could not load data for ${stateName}. Please check the sheet link.</div>`;
+        }
+    }
+
+    function renderNotices(notices, stateName) {
+        let html = '';
+        notices.forEach(notice => {
+            html += `
+                <div class="notice-card" data-notice='${JSON.stringify(notice).replace(/'/g, "&#39;")}'>
+                    <div class="card-header">
+                        <div class="notice-category-icon"><i class="${notice.icon}"></i></div>
+                        <h3>${escapeHtml(notice.title)}</h3>
+                        <div class="card-date"><i class="far fa-calendar-alt"></i> ${escapeHtml(notice.date)}</div>
+                    </div>
+                    <div class="card-body">
+                        <p>${escapeHtml(notice.description)}</p>
+                        <div class="state-tag"><i class="fas fa-map-pin"></i> ${escapeHtml(stateName)}</div>
+                        <div class="read-more-btn" onclick="event.stopPropagation(); openNoticeModal(${notice.id}, '${escapeHtml(notice.title)}', '${escapeHtml(notice.fullDescription)}', '${escapeHtml(notice.date)}', '${escapeHtml(notice.deadline)}', '${escapeHtml(notice.venue)}', '${escapeHtml(notice.category)}', '${notice.icon}')">
+                            Read full details <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById("noticeGridContainer").innerHTML = html;
+        
+        // Attach card click listeners
+        document.querySelectorAll('.notice-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if(e.target.classList.contains('read-more-btn') || e.target.closest('.read-more-btn')) return;
+                const noticeData = JSON.parse(card.getAttribute('data-notice'));
+                openNoticeModal(noticeData.id, noticeData.title, noticeData.fullDescription, noticeData.date, noticeData.deadline, noticeData.venue, noticeData.category, noticeData.icon);
+            });
+        });
+    }
+
+    window.openNoticeModal = function(id, title, fullDesc, date, deadline, venue, category, icon) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="notice-modal">
+                <div class="modal-header">
+                    <div class="modal-icon"><i class="${icon}"></i></div>
+                    <h2>${escapeHtml(title)}</h2>
+                    <div class="modal-date"><i class="far fa-calendar-alt"></i> Published: ${escapeHtml(date)}</div>
+                </div>
+                <div class="modal-body">
+                    <p>${escapeHtml(fullDesc)}</p>
+                    <div class="detail-section">
+                        <h4><i class="fas fa-info-circle"></i> Event Details</h4>
+                        <p><strong>📅 Deadline:</strong> ${escapeHtml(deadline)}<br>
+                        <strong>📍 Venue:</strong> ${escapeHtml(venue)}<br>
+                        <strong>🏷️ Category:</strong> ${escapeHtml(category)}</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="close-modal-btn" id="closeModalBtn"><i class="fas fa-check-circle"></i> Got it</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('closeModalBtn').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => { if(e.target === modal) modal.remove(); });
+    };
+
+    function escapeHtml(str) { 
+        if(!str) return ''; 
+        return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); 
+    }
+
+    // Event listener for state dropdown
+    document.getElementById("stateSelect").addEventListener("change", (e) => {
+        const idx = e.target.value;
+        if (idx === "" || !statesList[idx]) return;
+        const selected = statesList[idx];
+        localStorage.setItem("selectedStateIndex", idx);
+        loadNoticesForState(selected.sheetCsvUrl, selected.stateName);
+    });
+
+    // Initialize
+    loadStates();
+</script>
+</body>
+</html>
