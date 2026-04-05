@@ -1,0 +1,30 @@
+name: Generate Sitemap
+on:
+  push:
+    branches: [ main ] # Change this if your branch is named 'master'
+
+jobs:
+  sitemap_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to scan your HTML files properly
+
+      - name: Generate the sitemap
+        uses: cicirello/generate-sitemap@v1
+        with:
+          base-url-path: https://innovationhub.pages.dev/
+          # This forces the sitemap to use the current time for all links
+          # ensuring Google sees them as "just updated"
+          include-pdf: false
+          
+      - name: Commit and push sitemap
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add sitemap.xml
+          # '|| exit 0' prevents the workflow from failing if there are no changes
+          git commit -m "Automated sitemap update" || exit 0
+          git push
