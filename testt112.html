@@ -1,766 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>State Selector | Dynamic Cards from Linked Sheets</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>State Dashboard</title>
 
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a0ca3;
-            --accent: #f72585;
-            --success: #4cc9f0;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --text: #334155;
-            --border: #e2e8f0;
-            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f1f5f9 0%, #e6edf5 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            color: var(--text);
-        }
+<style>
+body {
+    font-family: system-ui;
+    background: #f1f5f9;
+    padding: 20px;
+}
 
-        .explorer-widget {
-            max-width: 900px;
-            width: 100%;
-            background: white;
-            border-radius: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden;
-            transition: all 0.2s ease;
-        }
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+}
 
-        .widget-hero {
-            background: linear-gradient(115deg, var(--primary), var(--primary-dark));
-            padding: 1.8rem 2rem;
-            color: white;
-            text-align: center;
-        }
+.status-msg {
+    padding: 10px;
+    border-radius: 10px;
+    background: #eef2ff;
+    margin-bottom: 15px;
+}
 
-        .widget-hero i {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-        }
+.error-text { background: #ffe4e4; }
+.success-text { background: #e6f7ee; }
 
-        .widget-hero h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(260px,1fr));
+    gap: 15px;
+}
 
-        .widget-hero p {
-            opacity: 0.9;
-            margin-top: 0.4rem;
-            font-size: 0.9rem;
-        }
+.card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 10px;
+    background: white;
+}
 
-        .dropdown-panel {
-            padding: 1.8rem 2rem 2rem;
-        }
-
-        .stats-mini {
-            background: #f8fafc;
-            border-radius: 1.2rem;
-            padding: 0.9rem 1rem;
-            margin-bottom: 1.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            border: 1px solid var(--border);
-        }
-
-        .stat-badge {
-            background: white;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        }
-
-        .stat-badge i {
-            margin-right: 0.4rem;
-            color: var(--primary);
-        }
-
-        .state-selector {
-            margin-bottom: 1.5rem;
-        }
-
-        .dropdown-label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: var(--dark);
-        }
-
-        .custom-select {
-            position: relative;
-            width: 100%;
-        }
-
-        .select-trigger {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 1.2rem;
-            padding: 0.9rem 1.2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-
-        .select-trigger:hover {
-            border-color: var(--primary);
-            background: #fefefe;
-        }
-
-        .select-trigger span {
-            color: var(--dark);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .select-trigger i {
-            color: #94a3b8;
-            transition: transform 0.2s;
-        }
-
-        .dropdown-options {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 1.2rem;
-            max-height: 280px;
-            overflow-y: auto;
-            z-index: 100;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
-            display: none;
-            list-style: none;
-            padding: 0.5rem 0;
-        }
-
-        .dropdown-options.show {
-            display: block;
-        }
-
-        .dropdown-option {
-            padding: 0.75rem 1.2rem;
-            cursor: pointer;
-            transition: background 0.15s;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .dropdown-option:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-option:hover {
-            background: #eef2ff;
-        }
-
-        .option-title {
-            font-weight: 500;
-            color: var(--dark);
-        }
-
-        .option-badge {
-            font-size: 0.7rem;
-            background: #e2e8f0;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            color: #1e293b;
-        }
-
-        /* Cards Grid Layout */
-        .cards-container {
-            margin-top: 1rem;
-        }
-
-        .section-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .section-header h4 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--dark);
-            background: #eef2ff;
-            padding: 0.25rem 0.9rem;
-            border-radius: 30px;
-            display: inline-block;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.2rem;
-            margin-top: 0.5rem;
-        }
-
-        .dynamic-card {
-            background: white;
-            border-radius: 1.2rem;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .dynamic-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-header-custom {
-            background: linear-gradient(98deg, #f9fbfe, white);
-            padding: 0.9rem 1.2rem;
-            border-bottom: 2px solid var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .card-header-custom i {
-            color: var(--primary);
-            font-size: 1.2rem;
-        }
-
-        .card-header-custom h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--dark);
-            margin: 0;
-        }
-
-        .card-body-custom {
-            padding: 1rem 1.2rem 1.2rem;
-            flex: 1;
-        }
-
-        .data-row {
-            margin-bottom: 0.8rem;
-            font-size: 0.85rem;
-            border-left: 2px solid #e2e8f0;
-            padding-left: 0.7rem;
-        }
-
-        .data-label {
-            font-weight: 700;
-            color: #4b5563;
-            display: inline-block;
-            min-width: 70px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .data-value {
-            color: var(--text);
-            word-break: break-word;
-            line-height: 1.4;
-        }
-
-        .card-footer-note {
-            background: #fafcff;
-            padding: 0.6rem 1rem;
-            font-size: 0.7rem;
-            border-top: 1px solid #edf2f7;
-            color: #5b6e8c;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .empty-state-card {
-            text-align: center;
-            padding: 2rem;
-            color: #94a3b8;
-        }
-
-        .loading-spinner-small {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #e2e8f0;
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .status-msg {
-            background: #f2f6fc;
-            border-radius: 1.2rem;
-            padding: 0.9rem 1rem;
-            font-size: 0.85rem;
-            color: #2c5f8a;
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #e2edf7;
-        }
-
-        .error-text {
-            color: #c23b22;
-            background: #fff5f2;
-            border-color: #ffd9ce;
-        }
-
-        .success-text {
-            background: #e8f3ed;
-            border-color: #c2e0d0;
-        }
-
-        .badge-count {
-            background: #eef2ff;
-            padding: 0.2rem 0.7rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 500;
-        }
-
-        @media (max-width: 620px) {
-            body { padding: 1rem; }
-            .dropdown-panel { padding: 1.2rem; }
-            .cards-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+.select {
+    padding: 10px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+</style>
 </head>
-<body>
-<div class="explorer-widget">
-    <div class="widget-hero">
-        <i class="fas fa-layer-group"></i>
-        <h2>State Dashboard</h2>
-        <p>linked spreadsheets · dynamic cards</p>
-    </div>
-    <div class="dropdown-panel">
-        <div class="state-selector">
-            <div class="dropdown-label">
-                <i class="fas fa-chevron-circle-down"></i> Select a state
-            </div>
-            <div class="custom-select" id="customSelect">
-                <div class="select-trigger" id="selectTrigger">
-                    <span id="selectedStateName">— Choose a state —</span>
-                    <i class="fas fa-angle-down"></i>
-                </div>
-                <ul class="dropdown-options" id="dropdownOptions"></ul>
-            </div>
-        </div>
 
-        <!-- Dynamic cards container (replaces old notice box) -->
-        <div id="cardsSection" class="cards-container">
-            <div class="empty-state" style="text-align:center; padding:2rem;">
-                <i class="fas fa-folder-open" style="font-size:2rem; opacity:0.5;"></i>
-                <p style="margin-top:0.6rem;">Pick a state to load cards from its linked spreadsheet (column 3 = Sheet ID).</p>
-            </div>
-        </div>
+<body>
+
+<div class="container">
+
+    <div id="infoMessage" class="status-msg">Loading...</div>
+
+    <div>
+        Total Rows: <b id="statTotal">0</b> |
+        States: <b id="statUnique">0</b>
     </div>
+
+    <select id="stateSelect" class="select"></select>
+
+    <div id="cardsSection"></div>
+
 </div>
 
 <script>
-    // Master Spreadsheet ID (provided)
-    const MASTER_SPREADSHEET_ID = '15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc';
-    const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+const MASTER_ID = "15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc";
+const MASTER_URL = `https://docs.google.com/spreadsheets/d/${MASTER_ID}/gviz/tq?tqx=out:csv`;
 
-    // Data structures
-    let masterRows = [];       // each: { state, linkedSheetId }
-    let allStatesList = [];
-    let uniqueStates = [];
-    let selectedState = '';
-    
-    // Cache for fetched child sheet data: key = sheetId, value = { rows: [], error: false, loading: false }
-    const childSheetCache = new Map();
-    
-    // DOM elements
-    const dropdown = document.getElementById('dropdownOptions');
-    const selectTrigger = document.getElementById('selectTrigger');
-    const selectedStateSpan = document.getElementById('selectedStateName');
-    const cardsSection = document.getElementById('cardsSection');
-    const infoDiv = document.getElementById('infoMessage');
-    
-    // Helper: robust CSV parsing (handles quotes, newlines)
-    function parseCSV(csvText) {
-        let i = 0;
-        let row = [];
-        let field = '';
-        let insideQuotes = false;
-        const lines = [];
-        
-        while (i < csvText.length) {
-            const ch = csvText[i];
-            const nextCh = csvText[i+1];
-            
-            if (ch === '"') {
-                if (insideQuotes && nextCh === '"') {
-                    field += '"';
-                    i++;
-                } else {
-                    insideQuotes = !insideQuotes;
-                }
-            } else if (ch === ',' && !insideQuotes) {
-                row.push(field);
-                field = '';
-            } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
-                row.push(field);
-                if (row.length > 0) lines.push(row);
-                row = [];
-                field = '';
-                if (ch === '\r') i++;
-            } else if (ch === '\r' && !insideQuotes) {
-                row.push(field);
-                if (row.length > 0) lines.push(row);
-                row = [];
-                field = '';
-            } else {
-                field += ch;
-            }
-            i++;
-        }
-        if (field !== '' || row.length > 0) {
-            row.push(field);
-            if (row.length > 0 && !(row.length === 1 && row[0] === '' && lines.length === 0)) {
-                lines.push(row);
-            }
-        }
-        
-        return lines.map(row => row.map(cell => {
-            let cleaned = cell.trim();
-            if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-                cleaned = cleaned.slice(1, -1);
-                cleaned = cleaned.replace(/""/g, '"');
-            }
-            return cleaned;
-        }));
+let masterRows = [];
+let cache = new Map();
+
+const info = document.getElementById("infoMessage");
+const select = document.getElementById("stateSelect");
+const cards = document.getElementById("cardsSection");
+
+function updateStatus(msg,type="info"){
+    info.className = "status-msg";
+    if(type==="error") info.classList.add("error-text");
+    if(type==="success") info.classList.add("success-text");
+    info.innerHTML = msg;
+}
+
+function parseCSV(text){
+    return text.split("\n").map(r=>r.split(","));
+}
+
+async function loadMaster(){
+    try{
+        updateStatus("Loading master...");
+        const res = await fetch(MASTER_URL);
+        const txt = await res.text();
+
+        const rows = parseCSV(txt);
+
+        masterRows = rows.map(r=>({
+            state:r[1],
+            sheet:r[2]
+        })).filter(r=>r.state);
+
+        const states=[...new Set(masterRows.map(r=>r.state))].sort();
+
+        document.getElementById("statTotal").innerText = masterRows.length;
+        document.getElementById("statUnique").innerText = states.length;
+
+        select.innerHTML = `<option>Select state</option>` +
+            states.map(s=>`<option>${s}</option>`).join("");
+
+        updateStatus("Loaded successfully","success");
+
+    }catch(e){
+        updateStatus(e.message,"error");
     }
-    
-    // Fetch master sheet: column2 = state name, column3 = linked sheet ID (spreadsheet id)
-    async function fetchMasterSheet() {
-        try {
-            infoDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> <span>Loading master spreadsheet ...</span>`;
-            infoDiv.classList.remove('error-text', 'success-text');
-            
-            const response = await fetch(MASTER_DATA_URL);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const csvText = await response.text();
-            if (!csvText.trim()) throw new Error('Master sheet empty');
-            
-            const parsed = parseCSV(csvText);
-            if (parsed.length === 0) throw new Error('No rows');
-            
-            const rowsData = [];
-            const statesFlat = [];
-            
-            for (let idx = 0; idx < parsed.length; idx++) {
-                const row = parsed[idx];
-                // Column B (index 1) = state, Column C (index 2) = linked sheet ID
-                let state = (row.length >= 2) ? row[1] : '';
-                let linkedId = (row.length >= 3) ? row[2] : '';
-                
-                if (!state || state === '' || state === 'NULL' || state === 'null') continue;
-                // Clean linkedId: remove spaces, keep valid ID
-                linkedId = linkedId.trim();
-                if (linkedId === '' || linkedId === 'NULL' || linkedId === 'null') linkedId = null;
-                
-                rowsData.push({
-                    state: state,
-                    linkedSheetId: linkedId
-                });
-                statesFlat.push(state);
-            }
-            
-            if (rowsData.length === 0) throw new Error('No valid state rows found');
-            
-            masterRows = rowsData;
-            allStatesList = statesFlat;
-            
-            // Unique states sorted
-            const seen = new Set();
-            uniqueStates = [];
-            for (const s of allStatesList) {
-                if (!seen.has(s)) {
-                    seen.add(s);
-                    uniqueStates.push(s);
-                }
-            }
-            uniqueStates.sort((a,b) => a.localeCompare(b));
-            
-            document.getElementById('statTotal').innerText = allStatesList.length;
-            document.getElementById('statUnique').innerText = uniqueStates.length;
-            
-            renderDropdown();
-            infoDiv.innerHTML = `<i class="fas fa-check-circle"></i> <span>✅ Master loaded: ${allStatesList.length} entries, ${uniqueStates.length} states. Select a state → cards from linked sheet ID (col3).</span>`;
-            infoDiv.classList.add('success-text');
-            
-            // reset selected state UI
-            selectedState = '';
-            selectedStateSpan.innerText = '— Choose a state —';
-            showEmptyCardsMessage();
-            
-        } catch (err) {
-            console.error(err);
-            infoDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Error: ${escapeHtml(err.message)}. Verify master sheet sharing (Anyone with link can view).</span>`;
-            infoDiv.classList.add('error-text');
-            document.getElementById('statTotal').innerText = '0';
-            document.getElementById('statUnique').innerText = '0';
-            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">⚠️ Failed to load</li>`;
-            showEmptyCardsMessage(true);
+}
+
+select.addEventListener("change", async ()=>{
+    const state = select.value;
+
+    cards.innerHTML = "Loading...";
+
+    const entries = masterRows.filter(r=>r.state===state);
+
+    let html = `<div class="cards-grid">`;
+
+    for(const entry of entries){
+
+        if(!entry.sheet){
+            html+=`<div class="card">Missing Sheet ID</div>`;
+            continue;
         }
-    }
-    
-    // Render state dropdown
-    function renderDropdown() {
-        if (!dropdown) return;
-        if (uniqueStates.length === 0) {
-            dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">✨ No states</li>`;
-            return;
+
+        if(!cache.has(entry.sheet)){
+            try{
+                const res = await fetch(`https://docs.google.com/spreadsheets/d/${entry.sheet}/gviz/tq?tqx=out:csv`);
+                const txt = await res.text();
+                const data = parseCSV(txt);
+                cache.set(entry.sheet,data);
+            }catch(e){
+                cache.set(entry.sheet,null);
+            }
         }
-        dropdown.innerHTML = uniqueStates.map(state => `
-            <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
-                <span class="option-title">${escapeHtml(state)}</span>
-                <span class="option-badge"><i class="fas fa-external-link-alt"></i> linked sheet</span>
-            </li>
-        `).join('');
-        
-        document.querySelectorAll('.dropdown-option[data-state-value]').forEach(opt => {
-            opt.removeEventListener('click', handleOptionClick);
-            opt.addEventListener('click', handleOptionClick);
+
+        const data = cache.get(entry.sheet);
+
+        if(!data){
+            html+=`<div class="card">Error loading sheet</div>`;
+            continue;
+        }
+
+        data.forEach((row,i)=>{
+            if(!row.length) return;
+
+            html+=`<div class="card"><b>Card ${i+1}</b><br>`;
+            row.forEach((cell,idx)=>{
+                html+=`<div><b>Col ${idx+1}:</b> ${cell || "-"}</div>`;
+            });
+            html+=`</div>`;
         });
     }
-    
-    function handleOptionClick(e) {
-        const stateVal = e.currentTarget.getAttribute('data-state-value');
-        if (stateVal) {
-            selectState(stateVal);
-        }
-        closeDropdown();
-    }
-    
-    async function selectState(state) {
-        selectedState = state;
-        selectedStateSpan.innerText = state;
-        // Show loading state in cards section
-        cardsSection.innerHTML = `
-            <div style="text-align:center; padding:2rem;">
-                <div class="loading-spinner-small" style="width:28px; height:28px; border-width:3px;"></div>
-                <p style="margin-top:0.8rem;">Fetching linked spreadsheet for ${escapeHtml(state)}...</p>
-            </div>
-        `;
-        
-        // Find master entry for this state (there might be multiple rows? group by state, but each state can have multiple linked sheet IDs)
-        const entriesForState = masterRows.filter(row => row.state === state);
-        if (entriesForState.length === 0) {
-            showEmptyCardsMessage(false, `No linked sheet ID found for ${escapeHtml(state)}.`);
-            return;
-        }
-        
-        // For each linked sheet ID, fetch data and display cards
-        // Some states may have multiple rows with different sheet IDs -> show multiple cards (one per sheet ID)
-        const fetchPromises = entriesForState.map(async (entry, idx) => {
-            const sheetId = entry.linkedSheetId;
-            if (!sheetId) {
-                return { sheetId: null, error: true, rows: [], message: 'Missing spreadsheet ID in column 3' };
-            }
-            // Check cache
-            if (childSheetCache.has(sheetId)) {
-                const cached = childSheetCache.get(sheetId);
-                return { sheetId, ...cached };
-            }
-            // Mark as loading
-            childSheetCache.set(sheetId, { rows: [], loading: true, error: false });
-            try {
-                const childUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
-                const resp = await fetch(childUrl);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const csvData = await resp.text();
-                const parsedRows = parseCSV(csvData);
-                // Convert to array of objects: treat first row as optional headers? we'll show all columns as key-value pairs
-                let dataRows = [];
-                if (parsedRows.length > 0) {
-                    // Assume first row may be header, but to be safe show each row as card content
-                    // For better UX: we'll extract each row as a separate item, but we'll group all rows inside one card? 
-                    // Requirement: "number of cards depend on data inside the new spreadsheet" -> each row in child sheet becomes a card? 
-                    // Usually: each row = one card. That's elegant. So we'll create multiple cards, one per data row (skip empty)
-                    for (let rIdx = 0; rIdx < parsedRows.length; rIdx++) {
-                        const rowCells = parsedRows[rIdx];
-                        if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
-                        const rowData = {};
-                        rowCells.forEach((cell, colIdx) => {
-                            rowData[`col_${colIdx+1}`] = cell;
-                        });
-                        dataRows.push(rowData);
-                    }
-                }
-                const result = { rows: dataRows, loading: false, error: false, sheetId };
-                childSheetCache.set(sheetId, result);
-                return result;
-            } catch (err) {
-                console.error(`Failed to fetch sheet ${sheetId}:`, err);
-                const errorResult = { rows: [], loading: false, error: true, errorMsg: err.message, sheetId };
-                childSheetCache.set(sheetId, errorResult);
-                return errorResult;
-            }
-        });
-        
-        const results = await Promise.all(fetchPromises);
-        renderCardsForState(state, entriesForState, results);
-    }
-    
-    function renderCardsForState(state, masterEntries, childResults) {
-        if (!cardsSection) return;
-        
-        // Build HTML: each master entry (each linked sheet ID) can generate multiple cards based on rows.
-        let html = `<div class="cards-container">`;
-        html += `<div class="section-header"><h4><i class="fas fa-map-pin"></i> State: ${escapeHtml(state)}</h4><span class="badge-count">${masterEntries.length} linked sheet(s)</span></div>`;
-        
-        let totalCardsDisplayed = 0;
-        
-        for (let i = 0; i < masterEntries.length; i++) {
-            const entry = masterEntries[i];
-            const sheetId = entry.linkedSheetId;
-            const childInfo = childResults[i];
-            
-            if (!sheetId) {
-                html += `<div class="dynamic-card" style="background:#fff9f0; border-left:4px solid #f97316;">
-                            <div class="card-header-custom"><i class="fas fa-link-slash"></i><h3>⚠️ Missing Sheet ID</h3></div>
-                            <div class="card-body-custom"><p class="data-value">Column 3 is empty or invalid for this state entry. Please provide a valid Google Sheet ID.</p></div>
-                         </div>`;
-                continue;
-            }
-            
-            if (childInfo.error) {
-                html += `<div class="dynamic-card" style="border-left:4px solid #ef4444;">
-                            <div class="card-header-custom"><i class="fas fa-exclamation-triangle"></i><h3>Failed to load spreadsheet</h3></div>
-                            <div class="card-body-custom"><p class="data-value"><strong>Sheet ID:</strong> ${escapeHtml(sheetId)}<br>Error: ${escapeHtml(childInfo.errorMsg || 'Check sharing permissions (public view)')}</p></div>
-                         </div>`;
-                continue;
-            }
-            
-            const rows = childInfo.rows || [];
-            if (rows.length === 0) {
-                html += `<div class="dynamic-card">
-                            <div class="card-header-custom"><i class="fas fa-table"></i><h3>📄 Linked Sheet: ${escapeHtml(sheetId.slice(0,12))}...</h3></div>
-                            <div class="card-body-custom"><div class="empty-state-card" style="padding:1rem;">✨ No data rows found in this spreadsheet.</div></div>
-                         </div>`;
-                continue;
-            }
-            
-            // For each row inside child sheet, generate a card
-            for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-                const row = rows[rowIdx];
-                totalCardsDisplayed++;
-                // Convert row object to nice display fields
-                const entriesDisplay = Object.entries(row).map(([key, val]) => {
-                    let displayKey = key.replace('col_', 'Column ');
-                    let displayVal = (val && val !== '') ? val : '—';
-                    return `<div class="data-row"><span class="data-label">${escapeHtml(displayKey)}:</span> <span class="data-value">${escapeHtml(displayVal)}</span></div>`;
-                }).join('');
-                
-                html += `
-                    <div class="dynamic-card">
-                        <div class="card-header-custom">
-                            <i class="fas fa-id-card"></i>
-                            <h3>📌 Card #${rowIdx+1} · ${escapeHtml(state)}</h3>
-                        </div>
-                        <div class="card-body-custom">
-                            ${entriesDisplay || '<div class="data-value">— No structured columns —</div>'}
-                        </div>
-                        <div class="card-footer-note">
-                            <i class="fas fa-database"></i> Source sheet: ${escapeHtml(sheetId.slice(0,16))}...
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        if (totalCardsDisplayed === 0 && masterEntries.every(e => e.linkedSheetId)) {
-            html += `<div class="empty-state-card" style="grid-column:1/-1;">⚠️ No cards generated. Check linked sheets have valid data rows.</div>`;
-        }
-        html += `</div>`;
-        cardsSection.innerHTML = html;
-    }
-    
-    function showEmptyCardsMessage(isError = false, customMsg = null) {
-        if (!cardsSection) return;
-        if (customMsg) {
-            cardsSection.innerHTML = `<div class="empty-state" style="text-align:center;padding:2rem;"><i class="fas fa-info-circle"></i><p>${escapeHtml(customMsg)}</p></div>`;
-        } else {
-            cardsSection.innerHTML = `<div class="empty-state" style="text-align:center;padding:2rem;"><i class="fas fa-hand-pointer" style="font-size:2rem; opacity:0.5;"></i><p style="margin-top:0.6rem;">Select a state to load dynamic cards from its linked spreadsheet (column 3 = Sheet ID).</p></div>`;
-        }
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    // Dropdown helpers
-    function closeDropdown() {
-        document.getElementById('dropdownOptions')?.classList.remove('show');
-    }
-    function toggleDropdown() {
-        document.getElementById('dropdownOptions')?.classList.toggle('show');
-    }
-    
-    document.getElementById('selectTrigger')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleDropdown();
-    });
-    document.addEventListener('click', function(e) {
-        const container = document.getElementById('customSelect');
-        if (container && !container.contains(e.target)) closeDropdown();
-    });
-    
-    // Initialize
-    fetchMasterSheet();
+
+    html += `</div>`;
+    cards.innerHTML = html;
+});
+
+loadMaster();
 </script>
+
 </body>
 </html>
