@@ -13,7 +13,15 @@
             padding: 0;
             box-sizing: border-box;
         }
+/* Add to your existing <style> section */
+body {
+    padding-top: 0; /* will be set by JS */
+}
 
+/* Optional: Add a smooth transition */
+.explorer-widget {
+    transition: margin-top 0.3s ease;
+}
         :root {
             --primary: #3b82f6;
             --primary-dark: #1e3a8a;
@@ -417,6 +425,7 @@
             .cards-grid { grid-template-columns: 1fr; }
             .detail-label { min-width: 90px; }
         }
+        
     </style>
 </head>
 <body>
@@ -836,6 +845,36 @@
     // init: hide cards until selection
     cardsSection.style.display = 'none';
     fetchMasterSheet();
+
+    // Fix header overlap - ensure content starts below header
+function adjustForHeader() {
+    const header = document.querySelector('site-header');
+    if (header) {
+        // Get the actual height of the header
+        const headerHeight = header.offsetHeight;
+        // Apply padding to body or margin to the widget
+        document.body.style.paddingTop = headerHeight + 'px';
+        
+        // Alternative: apply margin to the first container instead
+        // const widget = document.querySelector('.explorer-widget');
+        // if (widget) widget.style.marginTop = headerHeight + 'px';
+    }
+}
+
+// Run after header loads and on window resize
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustForHeader);
+} else {
+    adjustForHeader();
+}
+
+window.addEventListener('resize', () => {
+    setTimeout(adjustForHeader, 100); // slight delay for smooth resize
+});
+
+// Also observe for header changes (if header-loader.js adds content dynamically)
+const observer = new MutationObserver(adjustForHeader);
+observer.observe(document.body, { childList: true, subtree: true });
 </script>
 </body>
 </html>
