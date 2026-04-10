@@ -18,10 +18,10 @@ const APP_CONFIG = {
         SHEET3_ID: "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA",
         
         // Card styles sheet  
-        SHEET4_ID: "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA",
+        SHEET4_ID: "1lOtB6gISk6K7A8-t5LjcCRh-SswE7RBxa9HdIXPpv_0",
         
         // Headings sheet
-        SHEET5_ID: "1lOtB6gISk6K7A8-t5LjcCRh-SswE7RBxa9HdIXPpv_0"
+        SHEET5_ID: "1UxPn-YcBpJmWzABP5t8WBoNvCm752QVFJWqQKjLRVaQ"
     },
     
     // ===== OPTIONAL: Appearance =====
