@@ -1,10 +1,9 @@
 // ========== CONFIGURATION ==========
 // REPLACE THESE WITH YOUR ACTUAL GOOGLE SHEETS IDs
 const SHEET1_ID = "1QP_vL_AbyNcI6GX3Ki_kQHKKJ9Lht3_MUFyMWslkNKU"; // Router sheet
-const SHEET2_ID = "1cPH-nLX5-8TSX29qKr7FE17nHvIl0RF9tv7GTWUCwNE"; // Color themes
-const SHEET3_ID = "1cPH-nLX5-8TSX29qKr7FE17nHvIl0RF9tv7GTWUCwNE"; // Color themes
-const SHEET4_ID = "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA"; // Card styles
-const SHEET5_ID = "1lOtB6gISk6K7A8-t5LjcCRh-SswE7RBxa9HdIXPpv_0"; // Headings
+const SHEET3_ID = "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA"; // Color themes
+const SHEET4_ID = "1lOtB6gISk6K7A8-t5LjcCRh-SswE7RBxa9HdIXPpv_0"; // Card styles
+const SHEET5_ID = "1UxPn-YcBpJmWzABP5t8WBoNvCm752QVFJWqQKjLRVaQ"; // Headings
 
 // Global data storage
 let appData = {
