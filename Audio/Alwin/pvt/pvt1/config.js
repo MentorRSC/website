@@ -15,7 +15,7 @@ const APP_CONFIG = {
         SHEET1_ID: "1QP_vL_AbyNcI6GX3Ki_kQHKKJ9Lht3_MUFyMWslkNKU",
         
         // Color themes sheet
-        SHEET3_ID: "1cPH-nLX5-8TSX29qKr7FE17nHvIl0RF9tv7GTWUCwNE",
+        SHEET3_ID: "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA",
         
         // Card styles sheet  
         SHEET4_ID: "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA",
