@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <title>MobileHub | Slideshow Homepage</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+      background: #f5f9ff;
+      color: #1a2c3e;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* main wrapper ensures footer stays at bottom */
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ========= HEADER ========= */
+    .main-header {
+      background: linear-gradient(135deg, #0b2b3b 0%, #1a4d6b 100%);
+      color: white;
+      padding: 1.2rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo span {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .badge {
+      background: #ffb347;
+      color: #2c2c2c;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ========= MAIN CONTENT ========= */
+    .main-content {
+      flex: 1;
+      max-width: 600px;
+      margin: 1.5rem auto;
+      padding: 0 1rem 2rem;
+      width: 100%;
+    }
+
+    /* Slideshow Container */
+    .slideshow-container {
+      position: relative;
+      background: white;
+      border-radius: 32px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+    }
+
+    /* Slides wrapper */
+    .slides-wrapper {
+      position: relative;
+      overflow: hidden;
+      border-radius: 32px;
+    }
+
+    .slides {
+      display: flex;
+      transition: transform 0.4s ease-in-out;
+    }
+
+    .slide {
+      min-width: 100%;
+      flex-shrink: 0;
+      padding: 1.6rem;
+    }
+
+    /* Navigation Buttons */
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(26, 77, 107, 0.9);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      z-index: 10;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-btn:hover {
+      background: #1a4d6b;
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .nav-btn:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .nav-prev {
+      left: 10px;
+    }
+
+    .nav-next {
+      right: 10px;
+    }
+
+    /* Dots indicators */
+    .dots-container {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 0 16px 0;
+      background: white;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cbdde6;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot.active {
+      background: #1e4a6b;
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    /* Card styles inside slides */
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #1e4a6b;
+    }
+
+    .card-sub {
+      font-size: 0.85rem;
+      color: #5e7e97;
+      margin-bottom: 1.2rem;
+      border-left: 3px solid #ffb347;
+      padding-left: 12px;
+    }
+
+    .info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .info-row {
+      background: #f8fafc;
+      border-radius: 24px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .info-row:active {
+      background: #eef2f7;
+      transform: scale(0.99);
+    }
+
+    .info-icon {
+      font-size: 1.8rem;
+    }
+
+    .info-text {
+      flex: 1;
+    }
+
+    .info-text h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e3a4d;
+    }
+
+    .info-text p {
+      font-size: 0.8rem;
+      color: #6c8ba3;
+    }
+
+    .static-btn {
+      background: #1e4a6b;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .static-btn:active {
+      transform: scale(0.97);
+      background: #0f3b56;
+    }
+
+    .static-btn-outline {
+      background: transparent;
+      border: 1.5px solid #cbdde6;
+      color: #1e4a6b;
+      box-shadow: none;
+    }
+
+    .static-btn-outline:active {
+      background: #eef3f7;
+      transform: scale(0.97);
+    }
+
+    .two-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 4px;
+      border-bottom: 1px solid #eef2f8;
+    }
+
+    .feature-item span:first-child {
+      font-size: 1.4rem;
+    }
+
+    .feature-item p {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #2c5368;
+    }
+
+    .demo-toast {
+      background: #eef3fa;
+      border-radius: 60px;
+      text-align: center;
+      padding: 10px;
+      font-size: 0.75rem;
+      color: #1e4a6b;
+      margin-top: 16px;
+      border: 1px solid #d9e4ec;
+    }
+
+    /* footer */
+    .main-footer {
+      background: #0e2a38;
+      color: #cbdbe6;
+      text-align: center;
+      padding: 1.4rem 1rem;
+      font-size: 0.75rem;
+      border-top: 1px solid #2a556b;
+      margin-top: auto;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: #ffcd94;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.8rem;
+    }
+
+    .footer-links a:active {
+      opacity: 0.7;
+    }
+
+    /* mobile optimizations */
+    @media (max-width: 480px) {
+      .main-header {
+        padding: 1rem;
+      }
+      .logo h1 {
+        font-size: 1.4rem;
+      }
+      .card-title {
+        font-size: 1.3rem;
+      }
+      .slide {
+        padding: 1.3rem;
+      }
+      .two-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .two-buttons .static-btn {
+        width: 100%;
+      }
+      .nav-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
+      }
+    }
+
+    /* Touch swipe support */
+    .slides-wrapper {
+      touch-action: pan-y pinch-zoom;
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+  <!-- HEADER SECTION -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="logo">
+        <h1>📱 MobileHub <span>slideshow</span></h1>
+        <div style="font-size: 0.7rem; opacity: 0.85; margin-top: 4px;">swipe or tap arrows · APK ready</div>
+      </div>
+      <div class="badge">
+        <span>📲</span> APK VIEW
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT WITH SLIDESHOWS -->
+  <main class="main-content">
+    
+    <!-- Slideshow 1: Welcome Section -->
+    <div class="slideshow-container" data-slideshow="1">
+      <div class="slides-wrapper">
+        <div class="slides" id="slideshow1">
+          <div class="slide">
+            <div class="card-title">👋 Welcome back</div>
+            <div class="card-sub">Your mobile gateway — spreadsheet backend ready, pure frontend demo.</div>
+            <div class="info-grid">
+              <div class="info-row">
+                <div class="info-icon">🗂️</div>
+                <div class="info-text">
+                  <h4>Google Sheets backend</h4>
+                  <p>Connect your spreadsheet as database (configurable)</p>
+                </div>
+              </div>
+              <div class="info-row">
+                <div class="info-icon">📱</div>
+                <div class="info-text">
+                  <h4>Optimized for APK WebView</h4>
+                  <p>Smooth touch interactions & responsive layout</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">🚀 Quick Start Guide</div>
+            <div class="card-sub">Get up and running in minutes</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>1️⃣</span>
+                <p>Clone this template to your GitHub</p>
+              </div>
+              <div class="feature-item">
+                <span>2️⃣</span>
+                <p>Enable GitHub Pages in repository settings</p>
+              </div>
+              <div class="feature-item">
+                <span>3️⃣</span>
+                <p>Wrap in Android WebView for APK</p>
+              </div>
+              <div class="feature-item">
+                <span>4️⃣</span>
+                <p>Connect to Google Sheets API</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">✨ Features Overview</div>
+            <div class="card-sub">What makes this template special</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>📱</span>
+                <p>Mobile-first responsive design</p>
+              </div>
+              <div class="feature-item">
+                <span>🎨</span>
+                <p>Modern card-based UI</p>
+              </div>
+              <div class="feature-item">
+                <span>🔄</span>
+                <p>Swipe-enabled slideshows</p>
+              </div>
+              <div class="feature-item">
+                <span>⚡</span>
+                <p>Zero external dependencies</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="nav-btn nav-prev" onclick="changeSlide(1, -1)">‹</button>
+      <button class="nav-btn nav-next" onclick="changeSlide(1, 1)">›</button>
+      <div class="dots-container" id="dots1"></div>
+    </div>
+
+    <!-- Slideshow 2: Interactive Zone -->
+    <div class="slideshow-container" data-slideshow="2">
+      <div class="slides-wrapper">
+        <div class="slides" id="slideshow2">
+          <div class="slide">
+            <div class="card-title">✨ Interactive Zone</div>
+            <div class="card-sub">Tap any button — feel the mobile response</div>
+            <div class="two-buttons">
+              <button class="static-btn" data-demo="getStarted">📢 Get Started</button>
+              <button class="static-btn static-btn-outline" data-demo="learnMore">📖 Learn More</button>
+            </div>
+            <div class="demo-toast" id="messageArea1">
+              💡 Tap any button to see interactive message
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">🎮 Quick Actions</div>
+            <div class="card-sub">Useful shortcuts for daily tasks</div>
+            <div class="two-buttons">
+              <button class="static-btn" data-demo="refresh">🔄 Refresh Data</button>
+              <button class="static-btn static-btn-outline" data-demo="settings">⚙️ Settings</button>
+            </div>
+            <div class="demo-toast" id="messageArea2">
+              💡 Try these quick action buttons
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">🎯 Pro Tips</div>
+            <div class="card-sub">Make the most of your experience</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>💡</span>
+                <p>Long press for more options</p>
+              </div>
+              <div class="feature-item">
+                <span>👆</span>
+                <p>Swipe left/right to navigate</p>
+              </div>
+              <div class="feature-item">
+                <span>⭐</span>
+                <p>Bookmark your favorite sections</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="nav-btn nav-prev" onclick="changeSlide(2, -1)">‹</button>
+      <button class="nav-btn nav-next" onclick="changeSlide(2, 1)">›</button>
+      <div class="dots-container" id="dots2"></div>
+    </div>
+
+    <!-- Slideshow 3: Spreadsheet Backend -->
+    <div class="slideshow-container" data-slideshow="3">
+      <div class="slides-wrapper">
+        <div class="slides" id="slideshow3">
+          <div class="slide">
+            <div class="card-title">📊 Spreadsheet Backend</div>
+            <div class="card-sub">Your data layer — fully compatible</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>✅</span>
+                <p>Google Sheets as real-time database</p>
+              </div>
+              <div class="feature-item">
+                <span>🔄</span>
+                <p>Easy setup with Apps Script</p>
+              </div>
+              <div class="feature-item">
+                <span>📲</span>
+                <p>Works inside APK WebView</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">🔧 Setup Guide</div>
+            <div class="card-sub">Step-by-step configuration</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>1️⃣</span>
+                <p>Create Google Sheet with data</p>
+              </div>
+              <div class="feature-item">
+                <span>2️⃣</span>
+                <p>Deploy Apps Script as Web App</p>
+              </div>
+              <div class="feature-item">
+                <span>3️⃣</span>
+                <p>Get your API endpoint URL</p>
+              </div>
+              <div class="feature-item">
+                <span>4️⃣</span>
+                <p>Integrate with this template</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">💡 Example Queries</div>
+            <div class="card-sub">Sample code for data operations</div>
+            <div class="demo-toast" style="background: #fff0e0; border-color: #ffe0b5; text-align: left;">
+              <code style="font-size: 0.7rem;">fetch(scriptURL)<br>  .then(res => res.json())<br>  .then(data => displayData(data))</code>
+            </div>
+            <div class="demo-toast" style="margin-top: 12px;">
+              🔧 Replace script URL in your project to enable live read/write.
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="nav-btn nav-prev" onclick="changeSlide(3, -1)">‹</button>
+      <button class="nav-btn nav-next" onclick="changeSlide(3, 1)">›</button>
+      <div class="dots-container" id="dots3"></div>
+    </div>
+
+    <!-- Slideshow 4: APK & Mobile Features -->
+    <div class="slideshow-container" data-slideshow="4">
+      <div class="slides-wrapper">
+        <div class="slides" id="slideshow4">
+          <div class="slide">
+            <div class="card-title">📲 APK User Experience</div>
+            <div class="card-sub">Designed for mobile-first experience</div>
+            <div class="info-grid">
+              <div class="info-row" data-apk="tap">
+                <div class="info-icon">🤙</div>
+                <div class="info-text">
+                  <h4>Tap anywhere feedback</h4>
+                  <p>Haptic simulation & card scaling</p>
+                </div>
+              </div>
+              <div class="info-row" data-apk="info">
+                <div class="info-icon">ℹ️</div>
+                <div class="info-text">
+                  <h4>Device info placeholder</h4>
+                  <p>Ready for APK integration</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">⚙️ APK Configuration</div>
+            <div class="card-sub">Optimize your Android WebView</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>🔧</span>
+                <p>Enable JavaScript for interactions</p>
+              </div>
+              <div class="feature-item">
+                <span>📱</span>
+                <p>Set viewport for proper scaling</p>
+              </div>
+              <div class="feature-item">
+                <span>🌐</span>
+                <p>Handle deep links and intents</p>
+              </div>
+            </div>
+            <button class="static-btn static-btn-outline" data-copy="info" style="margin-top: 8px;">
+              📋 Copy device info
+            </button>
+          </div>
+          <div class="slide">
+            <div class="card-title">🎨 Customization Tips</div>
+            <div class="card-sub">Make it your own</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>🎨</span>
+                <p>Modify colors in CSS variables</p>
+              </div>
+              <div class="feature-item">
+                <span>📝</span>
+                <p>Edit slide content in HTML</p>
+              </div>
+              <div class="feature-item">
+                <span>🖼️</span>
+                <p>Add images and icons easily</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="nav-btn nav-prev" onclick="changeSlide(4, -1)">‹</button>
+      <button class="nav-btn nav-next" onclick="changeSlide(4, 1)">›</button>
+      <div class="dots-container" id="dots4"></div>
+    </div>
+
+    <!-- Slideshow 5: GitHub Pages Ready -->
+    <div class="slideshow-container" data-slideshow="5">
+      <div class="slides-wrapper">
+        <div class="slides" id="slideshow5">
+          <div class="slide">
+            <div class="card-title">🚀 GitHub Pages Ready</div>
+            <div class="card-sub">Host your homepage instantly</div>
+            <div style="display: flex; align-items: center; gap: 12px; background: #f0f6fa; border-radius: 28px; padding: 12px 16px;">
+              <span style="font-size: 2rem;">🐙</span>
+              <div>
+                <strong style="color: #1e4a6b;">Deploy in 2 minutes</strong>
+                <p style="font-size: 0.75rem; margin-top: 4px;">Push to GitHub → enable Pages → live</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">📦 Deployment Steps</div>
+            <div class="card-sub">Complete guide to go live</div>
+            <div class="feature-list">
+              <div class="feature-item">
+                <span>1️⃣</span>
+                <p>Create GitHub repository</p>
+              </div>
+              <div class="feature-item">
+                <span>2️⃣</span>
+                <p>Upload these files</p>
+              </div>
+              <div class="feature-item">
+                <span>3️⃣</span>
+                <p>Go to Settings → Pages</p>
+              </div>
+              <div class="feature-item">
+                <span>4️⃣</span>
+                <p>Select main branch and save</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide">
+            <div class="card-title">🔗 Resources</div>
+            <div class="card-sub">Helpful links and documentation</div>
+            <div class="two-buttons" style="margin-top: 8px;">
+              <button class="static-btn static-btn-outline" data-docs="docs">📘 Documentation</button>
+              <button class="static-btn static-btn-outline" data-support="support">💬 Support</button>
+            </div>
+            <div class="demo-toast" id="resourceMsg">
+              Click buttons for more information
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="nav-btn nav-prev" onclick="changeSlide(5, -1)">‹</button>
+      <button class="nav-btn nav-next" onclick="changeSlide(5, 1)">›</button>
+      <div class="dots-container" id="dots5"></div>
+    </div>
+  </main>
+
+  <!-- FOOTER SECTION -->
+  <footer class="main-footer">
+    <div class="footer-links">
+      <a href="#" data-footer="privacy">🔒 Privacy</a>
+      <a href="#" data-footer="terms">📄 Terms</a>
+      <a href="#" data-footer="apk">📲 APK Guide</a>
+      <a href="#" data-footer="contact">✉️ Contact</a>
+    </div>
+    <div>© 2025 MobileHub — Slideshow homepage • Designed for GitHub Pages + APK integration</div>
+    <div style="margin-top: 8px; font-size: 0.7rem; opacity: 0.8;">✨ Swipe or use arrows to navigate slides | Mobile-first interactive UI</div>
+  </footer>
+</div>
+
+<script>
+  // Slideshow management system
+  let slideshowStates = {
+    1: { currentSlide: 0, totalSlides: 0 },
+    2: { currentSlide: 0, totalSlides: 0 },
+    3: { currentSlide: 0, totalSlides: 0 },
+    4: { currentSlide: 0, totalSlides: 0 },
+    5: { currentSlide: 0, totalSlides: 0 }
+  };
+
+  // Initialize all slideshows
+  function initSlideshow(slideshowId) {
+    const slidesContainer = document.getElementById(`slideshow${slideshowId}`);
+    if (!slidesContainer) return;
+    
+    const slides = slidesContainer.children;
+    const totalSlides = slides.length;
+    slideshowStates[slideshowId].totalSlides = totalSlides;
+    slideshowStates[slideshowId].currentSlide = 0;
+    
+    // Create dots
+    const dotsContainer = document.getElementById(`dots${slideshowId}`);
+    if (dotsContainer) {
+      dotsContainer.innerHTML = '';
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.onclick = () => goToSlide(slideshowId, i);
+        dotsContainer.appendChild(dot);
+      }
+    }
+    
+    updateSlideshow(slideshowId);
+    addSwipeSupport(slideshowId);
+  }
+
+  // Update slideshow display
+  function updateSlideshow(slideshowId) {
+    const slidesContainer = document.getElementById(`slideshow${slideshowId}`);
+    if (!slidesContainer) return;
+    
+    const currentIndex = slideshowStates[slideshowId].currentSlide;
+    const translateX = -currentIndex * 100;
+    slidesContainer.style.transform = `translateX(${translateX}%)`;
+    
+    // Update dots
+    const dotsContainer = document.getElementById(`dots${slideshowId}`);
+    if (dotsContainer) {
+      const dots = dotsContainer.children;
+      for (let i = 0; i < dots.length; i++) {
+        if (i === currentIndex) {
+          dots[i].classList.add('active');
+        } else {
+          dots[i].classList.remove('active');
+        }
+      }
+    }
+  }
+
+  // Change slide function (global)
+  window.changeSlide = function(slideshowId, direction) {
+    const state = slideshowStates[slideshowId];
+    let newIndex = state.currentSlide + direction;
+    
+    if (newIndex < 0) newIndex = state.totalSlides - 1;
+    if (newIndex >= state.totalSlides) newIndex = 0;
+    
+    state.currentSlide = newIndex;
+    updateSlideshow(slideshowId);
+    showSlideChangeFeedback(slideshowId);
+  };
+
+  // Go to specific slide
+  function goToSlide(slideshowId, slideIndex) {
+    const state = slideshowStates[slideshowId];
+    if (slideIndex >= 0 && slideIndex < state.totalSlides) {
+      state.currentSlide = slideIndex;
+      updateSlideshow(slideshowId);
+      showSlideChangeFeedback(slideshowId);
+    }
+  }
+
+  // Add swipe support
+  function addSwipeSupport(slideshowId) {
+    const container = document.querySelector(`.slideshow-container[data-slideshow="${slideshowId}"] .slides-wrapper`);
+    if (!container) return;
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    container.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    container.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeThreshold = 50;
+      const diff = touchEndX - touchStartX;
+      
+      if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+          // Swipe right - previous slide
+          changeSlide(slideshowId, -1);
+        } else {
+          // Swipe left - next slide
+          changeSlide(slideshowId, 1);
+        }
+      }
+    });
+  }
+
+  // Visual feedback when slide changes
+  function showSlideChangeFeedback(slideshowId) {
+    const container = document.querySelector(`.slideshow-container[data-slideshow="${slideshowId}"]`);
+    if (container) {
+      container.style.transform = 'scale(0.99)';
+      setTimeout(() => {
+        container.style.transform = '';
+      }, 150);
+    }
+  }
+
+  // Helper function to show messages
+  function showMessage(elementId, message, isError = false) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const originalText = element.innerText;
+    element.innerText = message;
+    element.style.background = isError ? "#ffe6e5" : "#e0f0fa";
+    element.style.borderColor = isError ? "#ffb3b0" : "#c0dfef";
+    element.style.color = isError ? "#b13e2e" : "#1e4a6b";
+    
+    setTimeout(() => {
+      if (element) {
+        element.innerText = originalText;
+        element.style.background = "#eef3fa";
+        element.style.borderColor = "#d9e4ec";
+        element.style.color = "#1e4a6b";
+      }
+    }, 2000);
+  }
+
+  // Initialize all slideshows
+  for (let i = 1; i <= 5; i++) {
+    initSlideshow(i);
+  }
+
+  // Interactive button handlers
+  document.querySelectorAll('[data-demo]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = btn.getAttribute('data-demo');
+      let message = '';
+      switch(action) {
+        case 'getStarted':
+          message = '🚀 Getting started! This is a static demo ready for spreadsheet integration.';
+          break;
+        case 'learnMore':
+          message = '📚 Learn more: Build forms, data views, connect to Google Sheets.';
+          break;
+        case 'refresh':
+          message = '🔄 Refresh simulation - In production, this would fetch live data.';
+          break;
+        case 'settings':
+          message = '⚙️ Settings panel would appear here in production.';
+          break;
+      }
+      const messageArea = btn.closest('.slide').querySelector('[id^="messageArea"]');
+      if (messageArea) {
+        showMessage(messageArea.id, message);
+      }
+      btn.style.transform = 'scale(0.97)';
+      setTimeout(() => { btn.style.transform = ''; }, 120);
+    });
+  });
+
+  // Copy button handlers
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const dummyText = `MobileHub APK | Screen: ${window.innerWidth}x${window.innerHeight} | User Agent: ${navigator.userAgent.substring(0, 50)}...`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(dummyText).then(() => {
+          showMessage('apkMessage', '✅ Copied device info!');
+        }).catch(() => {
+          showMessage('apkMessage', 'ℹ️ Demo copy: ' + dummyText);
+        });
+      } else {
+        showMessage('apkMessage', 'ℹ️ Demo copy simulation: ' + dummyText);
+      }
+      btn.style.transform = 'scale(0.97)';
+      setTimeout(() => { btn.style.transform = ''; }, 120);
+    });
+  });
+
+  // Info row handlers
+  document.querySelectorAll('[data-apk]').forEach(row => {
+    row.addEventListener('click', () => {
+      const type = row.getAttribute('data-apk');
+      if (type === 'tap') {
+        showMessage('apkMessage', '👆 Tap feedback active — perfect for APK gestures!');
+      } else if (type === 'info') {
+        showMessage('apkMessage', `📱 Device: ${navigator.userAgent.substring(0, 60)}...`);
+      }
+      row.style.background = '#eef3fc';
+      setTimeout(() => { row.style.background = ''; }, 150);
+    });
+  });
+
+  // Documentation and support buttons
+  document.querySelectorAll('[data-docs], [data-support]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const type = btn.getAttribute('data-docs') ? 'docs' : 'support';
+      const message = type === 'docs' 
+        ? '📘 Documentation: Connect Google Sheets → Replace API URL → Deploy'
+        : '💬 For APK & GitHub Pages support, refer to documentation.';
+      showMessage('resourceMsg', message);
+      btn.style.transform = 'scale(0.97)';
+      setTimeout(() => { btn.style.transform = ''; }, 120);
+    });
+  });
+
+  // Footer links
+  document.querySelectorAll('[data-footer]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const type = link.getAttribute('data-footer');
+      let msg = '';
+      switch(type) {
+        case 'privacy': msg = '🔒 Privacy policy: No data collected in static demo.'; break;
+        case 'terms': msg = '📜 Terms of use: Free to use for APK projects.'; break;
+        case 'apk': msg = '📲 APK Guide: Wrap this page in WebView, connect to Google Sheets API.'; break;
+        case 'contact': msg = '✉️ Contact: support@mobilehub.example (demo)'; break;
+      }
+      showMessage('apkMessage', msg);
+    });
+  });
+
+  // Welcome message on load
+  window.addEventListener('load', () => {
+    console.log('Slideshow homepage loaded - 5 slideshows with navigation');
+  });
+</script>
+</body>
+</html>
