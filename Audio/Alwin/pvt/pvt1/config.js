@@ -12,16 +12,16 @@ const APP_CONFIG = {
     
     SHEETS: {
         // Router sheet (contains URL to Sheet2)
-        SHEET1_ID: "1ABC123xyz_YourSheet1IdHere",
+        SHEET1_ID: "1QP_vL_AbyNcI6GX3Ki_kQHKKJ9Lht3_MUFyMWslkNKU",
         
         // Color themes sheet
-        SHEET3_ID: "1DEF456xyz_YourSheet3IdHere",
+        SHEET3_ID: "1cPH-nLX5-8TSX29qKr7FE17nHvIl0RF9tv7GTWUCwNE",
         
         // Card styles sheet  
-        SHEET4_ID: "1GHI789xyz_YourSheet4IdHere",
+        SHEET4_ID: "12y7yvyP9geaEzjH4Qo5tgA9HEqihpMp2ULp8n_QEYhA",
         
         // Headings sheet
-        SHEET5_ID: "1JKL012xyz_YourSheet5IdHere"
+        SHEET5_ID: "1lOtB6gISk6K7A8-t5LjcCRh-SswE7RBxa9HdIXPpv_0"
     },
     
     // ===== OPTIONAL: Appearance =====
