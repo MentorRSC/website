@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Sheet Loader | Smart Redirect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Smart Launch</title>
     <style>
         * {
             margin: 0;
@@ -12,329 +12,220 @@
         }
 
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f1f5f9;
-            color: #0f172a;
-            transition: background 0.25s ease, color 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            transition: background 0.2s;
         }
 
-        /* dark theme variables */
+        /* Dark theme support (optional toggle at corner) */
         body.dark {
             background: #0f172a;
-            color: #e2e8f0;
         }
 
-        .card {
-            background: white;
-            border-radius: 2rem;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
-            padding: 2rem 1.8rem;
-            max-width: 500px;
+        /* Main container - clean, only title visible initially */
+        .launch-container {
             width: 100%;
+            max-width: 600px;
+            padding: 2rem;
             text-align: center;
-            transition: background 0.2s ease, box-shadow 0.2s;
         }
 
-        body.dark .card {
-            background: #1e293b;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.4);
-        }
-
-        /* theme toggle button (top right corner) */
-        .theme-toggle {
-            position: fixed;
-            top: 1.2rem;
-            right: 1.2rem;
-            z-index: 1000;
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(12px);
-            border: none;
-            border-radius: 3rem;
-            padding: 0.6rem 1rem;
-            font-size: 1.2rem;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: inherit;
-            transition: all 0.2s ease;
-            color: #1e293b;
-        }
-
-        body.dark .theme-toggle {
-            background: rgba(30,41,59,0.8);
-            backdrop-filter: blur(12px);
-            color: #facc15;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .theme-toggle span:first-child {
-            font-size: 1.3rem;
-        }
-
-        /* title styling */
-        h1 {
-            font-size: 2.2rem;
+        /* Title styling - only visible element from sheet */
+        .app-title {
+            font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin-bottom: 2rem;
             word-break: break-word;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.3s ease;
         }
 
-        .status-badge {
-            display: inline-block;
-            background: #e2e8f0;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            margin-top: 1rem;
-            color: #334155;
+        body.dark .app-title {
+            color: #f1f5f9;
         }
 
-        body.dark .status-badge {
-            background: #334155;
-            color: #cbd5e1;
+        .app-title.reveal {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        .loader {
+        /* Loader UI - 3 second visual, modern spinner */
+        .loader-wrapper {
+            margin-top: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.8rem;
-            margin: 1.5rem 0;
+            gap: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #cbd5e1;
-            border-top-color: #3b82f6;
+        .loader-wrapper.visible {
+            opacity: 1;
+        }
+
+        .spinner-ring {
+            width: 56px;
+            height: 56px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .info-text {
+        .loader-text {
+            font-size: 0.95rem;
+            font-weight: 500;
             color: #475569;
-            font-size: 0.85rem;
+            background: rgba(255,255,255,0.7);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
         }
 
-        body.dark .info-text {
-            color: #94a3b8;
+        body.dark .loader-text {
+            color: #cbd5e1;
+            background: rgba(30,41,59,0.6);
         }
 
-        .redirect-message {
-            margin-top: 1.2rem;
-            padding: 0.8rem;
-            background: #fef9c3;
-            color: #854d0e;
-            border-radius: 1.5rem;
+        /* Hidden state for redirect phase */
+        .hidden {
+            display: none;
+        }
+
+        /* Toast / Popup message (server error or redirect info) */
+        .toast-popup {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 60px;
             font-size: 0.9rem;
             font-weight: 500;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.95);
+            max-width: 85vw;
+            text-align: center;
+            white-space: nowrap;
+            pointer-events: none;
         }
 
-        body.dark .redirect-message {
-            background: #422006;
-            color: #fde047;
+        .toast-popup.error {
+            background: rgba(185, 28, 28, 0.95);
+            color: #fff;
+            border-left: 4px solid #facc15;
         }
 
-        button {
-            background: none;
+        .toast-popup.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Dark mode toggle - subtle, top corner but does not disturb minimal UI */
+        .theme-toggle-mini {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
             border: none;
+            border-radius: 2rem;
+            padding: 0.5rem 0.9rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            z-index: 1100;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            font-weight: 500;
+            color: #1e293b;
         }
 
-        a {
-            color: #3b82f6;
+        body.dark .theme-toggle-mini {
+            background: rgba(30,41,59,0.8);
+            color: #facc15;
         }
 
-        /* simple responsive */
+        /* responsive */
         @media (max-width: 500px) {
-            .card {
-                padding: 1.5rem;
-            }
-            h1 {
+            .app-title {
                 font-size: 1.8rem;
             }
-            .theme-toggle {
-                padding: 0.4rem 0.8rem;
-                font-size: 1rem;
-                top: 0.9rem;
-                right: 0.9rem;
+            .toast-popup {
+                font-size: 0.8rem;
+                padding: 0.6rem 1.2rem;
+                white-space: normal;
+                max-width: 90vw;
+                text-align: center;
+            }
+            .launch-container {
+                padding: 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Dark/Light toggle at top right corner -->
-    <button class="theme-toggle" id="themeToggleBtn" aria-label="Switch theme">
-        <span>🌙</span> <span>Dark</span>
-    </button>
+    <!-- minimal theme toggle (optional, but user requested theme toggle at corner previously) -->
+    <button class="theme-toggle-mini" id="themeToggleBtn" aria-label="Dark/Light mode">🌙 Dark</button>
 
-    <div class="card" id="mainCard">
-        <div id="contentArea">
-            <!-- dynamic content will be injected here -->
-            <div class="loader">
-                <div class="spinner"></div>
-                <div class="info-text">Fetching data from sheet...</div>
-            </div>
+    <div class="launch-container">
+        <!-- Title from sheet cell1 (only visible text from data) -->
+        <h1 id="dynamicTitle" class="app-title">—</h1>
+        
+        <!-- Loader UI: shown for 3 seconds then redirect or error popup -->
+        <div id="loaderUI" class="loader-wrapper">
+            <div class="spinner-ring"></div>
+            <div class="loader-text">Connecting to server...</div>
         </div>
     </div>
 
+    <div id="toastMsg" class="toast-popup">Message</div>
+
     <script>
-        // ---------- CONFIGURATION ----------
-        // Google Sheet ID (provided)
+        // ---------- CONFIG ----------
         const SHEET_ID = "1iRgmm2a-1o0VtGwk_p10pFiKdj9ewQ2hmQfZh0LCDuY";
-        // We target the first sheet (default "Sheet1") — Google Sheets API v4 public access
-        // Using Google Sheets as JSON: https://docs.google.com/spreadsheets/d/{ID}/gviz/tq?tqx=out:json&sheet=Sheet1
-        // This returns a JSONP-like response, but we can parse using text + regex or use fetch with proxy? 
-        // To avoid CORS and complexity, we use the 'sheets.googleapis.com' v4 with API key? No, public sheets can be accessed via `export?format=csv` or `gviz/tq`.
-        // Simplest reliable method without API key: Use Google Sheets CSV export or the `gviz/tq?out=json` endpoint.
-        // We'll use the google visualization query which returns a JSON that we can parse safely.
-        // Endpoint returns: /*O_o*/ google.visualization.Query.setResponse(...);
-        // We'll extract the table rows.
         
-        // Function to fetch sheet data (first sheet, first few columns)
-        async function fetchSheetData() {
-            // Using the public google sheets visualization API (no API key required for published sheets? But sheet is shared? 
-            // Note: The sheet must be published to the web or at least accessible via "Anyone with the link can view".
-            // Since user gave ID, we assume it's viewable by anyone with link. We'll use the gviz endpoint.
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
-            
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const text = await response.text();
-                // The response format: /*O_o*/ google.visualization.Query.setResponse({...});
-                // Extract JSON part between the parentheses
-                const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\((.+)\);/);
-                if (!jsonMatch || !jsonMatch[1]) {
-                    throw new Error("Invalid response format from sheet");
-                }
-                const jsonStr = jsonMatch[1];
-                const data = JSON.parse(jsonStr);
-                // data.table.rows contains array of { c: [{v: value}, ...] }
-                // data.table.cols gives column labels
-                const rows = data.table?.rows || [];
-                // Extract values: we only need first 3 columns (A,B,C)
-                // row1 (index 0) = cell A1 (title) and B1 (flag 1/0), C1 (redirect URL if flag=1)
-                // According to spec: cell1 = title, cell2 (row1,col2?) Actually spec: "title which loaded from one spread sheet... cell1, cell2 contain 1 or 0.. if its 0 dont do anything ..if its 1...redirect to the url in cell 3 in first column"
-                // Wait: careful reading: "now only title should be visible cell1,,cell2m contain 1 or 0..if its 0 dont do anythjing ..if its 1...redirect to the url in cell 3 in first column"
-                // Means: Row1, Column A = Title string. Row1, Column B = control flag (0 or 1). Row1, Column C = redirect URL (if flag=1). So we read first row's three cells.
-                if (rows.length === 0) {
-                    throw new Error("Sheet contains no data rows");
-                }
-                const firstRow = rows[0].c || [];
-                // Helper: get cell value (plain text)
-                const getCellValue = (colIndex) => {
-                    const cell = firstRow[colIndex];
-                    if (!cell) return "";
-                    // v can be string, number, null
-                    return cell.v !== undefined && cell.v !== null ? String(cell.v) : "";
-                };
-                
-                const title = getCellValue(0);        // Column A (index 0)
-                const flagRaw = getCellValue(1);      // Column B (index 1) -> "0" or "1"
-                const redirectUrl = getCellValue(2);  // Column C (index 2)
-                
-                const flag = (flagRaw === "1" || flagRaw === 1) ? 1 : 0;
-                
-                return { title, flag, redirectUrl, rawFlag: flagRaw };
-            } catch (err) {
-                console.error("Fetch error:", err);
-                throw new Error(`Failed to load sheet: ${err.message}`);
+        // DOM elements
+        const titleEl = document.getElementById('dynamicTitle');
+        const loaderWrapper = document.getElementById('loaderUI');
+        const toastEl = document.getElementById('toastMsg');
+        
+        // Helper: show popup message (auto-hide after 3 sec)
+        let toastTimeout = null;
+        function showPopupMessage(message, isError = false) {
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastEl.textContent = message;
+            toastEl.classList.remove('show');
+            // force reflow
+            void toastEl.offsetWidth;
+            if (isError) {
+                toastEl.classList.add('error');
+            } else {
+                toastEl.classList.remove('error');
             }
+            toastEl.classList.add('show');
+            
+            toastTimeout = setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, 3500);
         }
         
-        // Main app logic
-        async function initApp() {
-            const contentArea = document.getElementById("contentArea");
-            if (!contentArea) return;
-            
-            try {
-                const { title, flag, redirectUrl, rawFlag } = await fetchSheetData();
-                
-                // If flag === 0 => "dont do anything" -> just show the title on screen (nothing else, no redirect)
-                if (flag === 0) {
-                    // Show the title only (as per spec: only title should be visible)
-                    contentArea.innerHTML = `
-                        <h1>${escapeHtml(title || "Untitled")}</h1>
-                        <div class="status-badge">⚡ Mode: Static View</div>
-                        <div class="info-text" style="margin-top: 1rem;">Flag = 0 → No redirect. Content loaded from sheet.</div>
-                    `;
-                } 
-                else if (flag === 1) {
-                    // flag is 1: redirect to the URL present in cell 3 (column C, redirectUrl)
-                    // Important: redirect immediately, but show a small message before redirect? Better to redirect.
-                    // According to spec: "if its 1...redirect to the url in cell 3 in first column"
-                    // So we must redirect the webpage to that link. Also title may be visible? spec says only title visible in case 0, but case 1 redirect.
-                    // For better UX, we show a message and then redirect (almost instantly)
-                    if (!redirectUrl || redirectUrl.trim() === "") {
-                        // fallback: if no URL provided, show error but still do nothing extra
-                        contentArea.innerHTML = `
-                            <h1>${escapeHtml(title || "No Title")}</h1>
-                            <div class="status-badge" style="background:#fee2e2;">⚠️ Redirect Flag = 1 but URL missing</div>
-                            <div class="info-text">No valid URL in column C. Cannot redirect.</div>
-                        `;
-                        return;
-                    }
-                    
-                    // Show a brief "Redirecting..." screen (while keeping theme)
-                    contentArea.innerHTML = `
-                        <div class="loader">
-                            <div class="spinner"></div>
-                            <div class="info-text">✅ Flag = 1 → Redirecting to:<br><strong style="font-size:0.9rem; word-break:break-all;">${escapeHtml(redirectUrl)}</strong></div>
-                        </div>
-                    `;
-                    // Perform redirect after a tiny delay to ensure rendering (and allow any tracking)
-                    // Also ensure URL is absolute if needed: if relative? but we treat as is.
-                    let finalUrl = redirectUrl.trim();
-                    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-                        // If it doesn't have protocol, assume https for safety (or just relative)
-                        // but most likely full URL. To be safe: prepend https?
-                        // We'll use https as default for external.
-                        if (!finalUrl.startsWith('//')) {
-                            finalUrl = 'https://' + finalUrl;
-                        } else {
-                            finalUrl = 'https:' + finalUrl;
-                        }
-                    }
-                    setTimeout(() => {
-                        window.location.href = finalUrl;
-                    }, 600);
-                }
-                else {
-                    // unexpected flag (not 0 or 1)
-                    contentArea.innerHTML = `
-                        <h1>${escapeHtml(title || "Sheet Data")}</h1>
-                        <div class="status-badge">⚠️ Invalid flag value: ${escapeHtml(rawFlag)}</div>
-                        <div class="info-text">Flag must be 0 or 1. No action taken.</div>
-                    `;
-                }
-            } catch (err) {
-                // Error display: show error but still retain minimal blank? According to spec no blank screen, show error message gracefully.
-                contentArea.innerHTML = `
-                    <div style="color:#b91c1c; background:#fee2e2; padding:1rem; border-radius:1.5rem;">
-                        <strong>⚠️ Error loading sheet</strong><br>
-                        ${escapeHtml(err.message)}<br>
-                        <span class="info-text" style="display:block; margin-top:0.8rem;">Please verify sheet ID is correct and sheet is publicly accessible (anyone with link can view).<br>Expected columns: A=Title, B=Flag(0/1), C=URL (for redirect).</span>
-                    </div>
-                `;
-                console.error(err);
-            }
-        }
-        
-        // Helper: escape HTML to avoid injection
+        // Helper: escape HTML for title only (avoid injection but keep clean)
         function escapeHtml(str) {
             if (!str) return "";
             return str.replace(/[&<>]/g, function(m) {
@@ -342,51 +233,166 @@
                 if (m === '<') return '&lt;';
                 if (m === '>') return '&gt;';
                 return m;
-            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-                return c;
             });
         }
         
-        // ---------- DARK / LIGHT MODE TOGGLE (Top corner) ----------
-        function initTheme() {
-            const btn = document.getElementById("themeToggleBtn");
-            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            let currentTheme = localStorage.getItem("app_theme") || (prefersDark ? "dark" : "light");
-            
-            const applyTheme = (theme) => {
-                if (theme === "dark") {
-                    document.body.classList.add("dark");
-                    if (btn) {
-                        btn.innerHTML = `<span>☀️</span> <span>Light</span>`;
-                    }
-                } else {
-                    document.body.classList.remove("dark");
-                    if (btn) {
-                        btn.innerHTML = `<span>🌙</span> <span>Dark</span>`;
-                    }
-                }
-                localStorage.setItem("app_theme", theme);
+        // Fetch sheet data (first row, columns: A=title, B=flag, C=url)
+        async function fetchSheetMetadata() {
+            // Using public Google Sheets visualization API (no API key needed if sheet shared "Anyone with link can view")
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch sheet`);
+            const text = await response.text();
+            // parse JSONP response: google.visualization.Query.setResponse({...})
+            const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\((.+)\);/);
+            if (!jsonMatch || !jsonMatch[1]) throw new Error("Invalid sheet response format");
+            const data = JSON.parse(jsonMatch[1]);
+            const rows = data.table?.rows || [];
+            if (rows.length === 0) throw new Error("Sheet is empty");
+            const firstRow = rows[0].c || [];
+            const getVal = (idx) => {
+                const cell = firstRow[idx];
+                if (!cell) return "";
+                return (cell.v !== undefined && cell.v !== null) ? String(cell.v) : "";
             };
+            const titleRaw = getVal(0);    // cell1 : title
+            const flagRaw = getVal(1);     // cell2 : "0" or "1"
+            const urlRaw = getVal(2);      // cell3 : redirect URL
+            const flag = (flagRaw === "1" || flagRaw === 1) ? 1 : 0;
+            return { title: titleRaw || "Untitled", flag, redirectUrl: urlRaw.trim() };
+        }
+        
+        // Main flow: 
+        // Step 1: Show title immediately after fetch (but before loader UI fully visible?)
+        // Actually requirement: first screen just show a title only from cell1, then show 3sec loader UI, then redirect OR server error popup.
+        // So we: fetch data in background, BUT keep UI clean (only title appears after fetch). 
+        // While fetching we might show minimal "..." but better: show placeholder? We'll fetch first, then reveal title, then start 3 sec loader.
+        // However user expects: "first screen just show a title only.. from cell1.. then show a 3second loader ui visible good for everyone then redirect or server error popup."
+        // So we must: 1) Fetch title & flag & url (with loading state but title hidden until data arrives) -> once we have title, display it.
+        // 2) After title is displayed, start a 3-second loader animation (visible).
+        // 3) After 3 seconds, evaluate flag: if flag=1 -> redirect to url; if flag=0 -> stay (no redirect) but also no error? but spec says if 0 don't do anything. However also show popup? Not required but we can just stay idle.
+        // Also if any server error during fetch -> show popup error message and no further redirect.
+        
+        let redirectExecuted = false;
+        
+        async function startApp() {
+            // Initially loader is hidden? We want title first. But we need to fetch data first.
+            // We'll make loader wrapper hidden initially until title appears.
+            loaderWrapper.classList.remove('visible');
+            titleEl.classList.remove('reveal');
+            titleEl.textContent = "✨";
             
-            applyTheme(currentTheme);
+            let sheetTitle = "";
+            let sheetFlag = 0;
+            let sheetUrl = "";
+            let fetchError = null;
             
-            if (btn) {
-                btn.addEventListener("click", () => {
-                    const newTheme = document.body.classList.contains("dark") ? "light" : "dark";
-                    applyTheme(newTheme);
-                });
+            // Fetch data from sheet
+            try {
+                const meta = await fetchSheetMetadata();
+                sheetTitle = meta.title;
+                sheetFlag = meta.flag;
+                sheetUrl = meta.redirectUrl;
+            } catch (err) {
+                fetchError = err.message || "Network or permission error. Make sure sheet is public (Anyone with link can view).";
+                console.error(err);
+            }
+            
+            // If fetch error: show error popup and stop. No redirect, no title from sheet.
+            if (fetchError) {
+                // Show error popup with server error message
+                showPopupMessage(`⚠️ Server Error: ${fetchError}`, true);
+                // Display fallback title? But requirement: if error, we still show something? But we want clean - just show "Error" but not misleading.
+                titleEl.textContent = "⚠️";
+                titleEl.classList.add('reveal');
+                // Keep loader hidden, because we don't proceed.
+                loaderWrapper.classList.remove('visible');
+                return;
+            }
+            
+            // SUCCESS: Display title from cell1 (beautiful reveal)
+            titleEl.textContent = escapeHtml(sheetTitle) || "Untitled";
+            titleEl.classList.add('reveal');
+            
+            // After title shown, now show loader UI for exactly 3 seconds (visible)
+            loaderWrapper.classList.add('visible');
+            
+            // Wait 3 seconds while loader spins
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // After 3 seconds: evaluate flag
+            if (sheetFlag === 1) {
+                // REDIRECT case
+                if (!sheetUrl) {
+                    // URL is empty or missing -> show server error popup, no redirect
+                    showPopupMessage("❌ Redirect flag = 1 but no URL found in cell3. Cannot redirect.", true);
+                    // keep loader visible? hide loader gracefully, but show error.
+                    loaderWrapper.classList.remove('visible');
+                    return;
+                }
+                // Build valid URL
+                let finalUrl = sheetUrl;
+                if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                    finalUrl = 'https://' + finalUrl;
+                }
+                // Show a small info popup: "Redirecting..." (optional but friendly)
+                showPopupMessage(`Redirecting to ${finalUrl} ...`, false);
+                // Perform redirect after short micro delay to ensure popup shows
+                redirectExecuted = true;
+                setTimeout(() => {
+                    window.location.href = finalUrl;
+                }, 200);
+            } 
+            else if (sheetFlag === 0) {
+                // Flag = 0: Do nothing (just stay on page, no redirect). According to spec: if 0 don't do anything.
+                // But we might show a subtle success popup? Not required but to inform user: "Ready. No redirect."
+                // However the requirement says "just show a title only.. then loader .. redirect or server error popup" – for flag 0 we just remain idle.
+                // No redirect, no error popup. But we can hide loader gracefully.
+                loaderWrapper.classList.remove('visible');
+                // Optional minimal info? But spec says "dont do anything", so we keep silent and just title visible.
+                // For better UX, not showing any intrusive popup for flag 0. The user only sees title.
+            }
+            else {
+                // invalid flag (not 0 or 1)
+                loaderWrapper.classList.remove('visible');
+                showPopupMessage(`Invalid flag value (${sheetFlag}) in cell2. Expected 0 or 1.`, true);
             }
         }
         
-        // Initialize everything after DOM ready
-        document.addEventListener("DOMContentLoaded", () => {
-            initTheme();
-            initApp().catch(err => {
-                // In case top-level async error, already caught inside, but safe fallback
-                const content = document.getElementById("contentArea");
-                if (content && !content.innerHTML.includes("Error")) {
-                    content.innerHTML = `<div style="color:red;">Unexpected error: ${escapeHtml(err.message)}</div>`;
+        // ---------- DARK / LIGHT MODE (preserve toggle at corner, minimal) ----------
+        function initThemeToggle() {
+            const btn = document.getElementById('themeToggleBtn');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let stored = localStorage.getItem('app_theme');
+            let theme = stored || (prefersDark ? 'dark' : 'light');
+            
+            const applyTheme = (newTheme) => {
+                if (newTheme === 'dark') {
+                    document.body.classList.add('dark');
+                    btn.innerHTML = '☀️ Light';
+                } else {
+                    document.body.classList.remove('dark');
+                    btn.innerHTML = '🌙 Dark';
                 }
+                localStorage.setItem('app_theme', newTheme);
+            };
+            applyTheme(theme);
+            btn.addEventListener('click', () => {
+                const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+                applyTheme(next);
+            });
+        }
+        
+        // Additional: handle case if sheet fetch takes too long? But user sees title only after fetch.
+        // To ensure no flashing: run startApp after DOM ready.
+        document.addEventListener('DOMContentLoaded', () => {
+            initThemeToggle();
+            startApp().catch(err => {
+                // catastrophic error: show popup
+                showPopupMessage(`Unexpected error: ${err.message}`, true);
+                titleEl.textContent = "Error";
+                titleEl.classList.add('reveal');
+                loaderWrapper.classList.remove('visible');
             });
         });
     </script>
