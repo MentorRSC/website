@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Multi-Sheet App Framework | Single Master Sheet</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app-shell {
+      max-width: 450px;
+      width: 100%;
+      background: #ffffff;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .app-shell::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-shell::-webkit-scrollbar-track {
+      background: #eaeaea;
+    }
+    .app-shell::-webkit-scrollbar-thumb {
+      background: var(--primary-color, #ff6e2e);
+      border-radius: 10px;
+    }
+
+    :root {
+      --primary-color: #ff6e2e;
+      --primary-dark: #e55a1e;
+      --secondary-color: #2e7d32;
+      --bg-gray: #f8f8f8;
+      --text-dark: #1a1a1a;
+      --text-light: #6e6e6e;
+      --border-light: #f0f0f0;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.04);
+      --radius-card: 20px;
+      --radius-btn: 40px;
+    }
+
+    .hidden { display: none !important; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-center { display: flex; justify-content: center; align-items: center; }
+
+    .app-header {
+      background: #ffffff;
+      padding: 18px 16px 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+    }
+    .location-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+    .location-icon { color: var(--primary-color); font-size: 20px; }
+    .profile-icon {
+      background: var(--bg-gray);
+      border-radius: 50%;
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .profile-icon:active { transform: scale(0.95); }
+
+    .search-box {
+      margin-top: 14px;
+      background: var(--bg-gray);
+      border-radius: 30px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-box i { color: var(--primary-color); font-size: 18px; }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Advertisement Carousel - Centered Content */
+    .banner-area { 
+      padding: 16px 16px 8px 16px;
+      position: relative;
+    }
+    
+    .ad-carousel-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-card);
+    }
+    
+    .ad-slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+    }
+    
+    .ad-slide {
+      min-width: 100%;
+      background: linear-gradient(135deg, var(--primary-color), #ff8c42);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+    }
+    
+    .ad-slide:active { transform: scale(0.98); }
+    .ad-slide h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .ad-slide p { font-size: 13px; opacity: 0.9; margin: 4px 0; }
+    .ad-slide .offer-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    
+    /* Carousel Navigation Dots */
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .dot.active {
+      width: 20px;
+      border-radius: 10px;
+      background: var(--primary-color);
+    }
+    
+    /* Carousel Arrows - Positioned better */
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.4);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+    
+    .carousel-arrow:hover {
+      background: rgba(0,0,0,0.6);
+    }
+    
+    .carousel-arrow.left {
+      left: 8px;
+    }
+    
+    .carousel-arrow.right {
+      right: 8px;
+    }
+
+    /* Items Grid */
+    .items-grid {
+      padding: 8px 12px 80px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .item-card {
+      background: white;
+      border-radius: var(--radius-card);
+      display: flex;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .item-card:active { transform: scale(0.98); }
+    .item-icon {
+      width: 85px;
+      height: 85px;
+      background: linear-gradient(135deg, #ff6e2e20, #ff8c4220);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: var(--primary-color);
+    }
+    .item-details { flex: 1; }
+    .item-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+    .item-subtitle {
+      font-size: 12px;
+      color: var(--text-light);
+      margin: 4px 0;
+    }
+    .item-badge {
+      background: var(--primary-color);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    /* Bottom Navigation - Permanent Icons */
+    .bottom-nav-fixed {
+      background: rgba(255,255,255,0.98);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 20px 18px;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 450px;
+      backdrop-filter: blur(2px);
+      z-index: 20;
+    }
+    .nav-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #8e8e8e;
+      cursor: pointer;
+      transition: color 0.2s;
+      flex: 1;
+      text-align: center;
+    }
+    .nav-icon i { font-size: 22px; }
+    .nav-icon.active { color: var(--primary-color); font-weight: 500; }
+    .nav-icon:hover { color: var(--primary-color); }
+
+    /* Modal Popup */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-container {
+      background: white;
+      max-width: 400px;
+      width: 100%;
+      max-height: 85vh;
+      border-radius: 1.8rem;
+      overflow: hidden;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .modal-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      max-height: calc(85vh - 80px);
+    }
+
+    .detail-row {
+      display: flex;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border-light);
+      gap: 1rem;
+      flex-direction: column;
+    }
+
+    .detail-label {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      color: var(--text-dark);
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .sheet-link {
+      background: #e8f5e9;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .sheet-link:hover {
+      background: #c8e6c9;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .toast-message {
+      visibility: hidden;
+      min-width: 180px;
+      background-color: #323232;
+      color: #fff;
+      text-align: center;
+      border-radius: 50px;
+      padding: 10px 18px;
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    .toast-message.show { visibility: visible; opacity: 1; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-light);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <div id="homePageContainer"></div>
+  <div id="profilePageContainer" class="hidden"></div>
+
+  <!-- Fixed Bottom Navigation - Permanent Icons -->
+  <div class="bottom-nav-fixed" id="bottomNav">
+    <div class="nav-icon" data-nav="home"><i class="fas fa-home"></i><span>Home</span></div>
+    <div class="nav-icon" data-nav="explore"><i class="fas fa-compass"></i><span>Explore</span></div>
+    <div class="nav-icon" data-nav="products"><i class="fas fa-box"></i><span>Products</span></div>
+    <div class="nav-icon" data-nav="offers"><i class="fas fa-tag"></i><span>Offers</span></div>
+    <div class="nav-icon" data-nav="account"><i class="fas fa-user"></i><span>Account</span></div>
+  </div>
+  <div id="globalToast" class="toast-message"></div>
+</div>
+
+<script>
+  /********************************************************************
+   * ==================== SINGLE MASTER SHEET CONFIG ====================
+   * Only ONE Sheet ID needed - All other sheet IDs are stored inside this master sheet
+   * 
+   * Master Sheet Structure (Columns):
+   * Column A: Type (categories, ads, user, navigation, products)
+   * Column B: Name/Key
+   * Column C: Sheet ID / Data
+   * Column D: Additional Info
+   * Column E: Active Status
+   ********************************************************************/
+  const MASTER_SHEET_ID = '1vfSO8NP0p1um-ueMspk4ekPtsEZKSfKwrvgh54SK70c';
+  
+  // App Settings
+  const APP_NAME = "Multi-Sheet Explorer";
+  const PRIMARY_COLOR = "#ff6e2e";
+  
+  // Global state variables
+  let masterConfig = {};        // Stores all sheet IDs from master sheet
+  let categoriesData = [];      // Categories with their child sheet IDs
+  let advertisements = [];
+  let userData = null;
+  let navItems = [];
+  let productsData = [];
+  let currentPage = "home";
+  let currentAdIndex = 0;
+  let autoSlideInterval = null;
+  
+  // Helper Functions
+  function showToast(msg) {
+    const toastEl = document.getElementById("globalToast");
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
+
+  // Parse CSV properly
+  function parseCSV(csvText) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let insideQuotes = false;
+    let i = 0;
+    const len = csvText.length;
+    
+    while (i < len) {
+      const ch = csvText[i];
+      const nextCh = csvText[i+1];
+      if (ch === '"') {
+        if (insideQuotes && nextCh === '"') {
+          currentField += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (ch === ',' && !insideQuotes) {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+        if (ch === '\r') i++;
+      } else if (ch === '\r' && !insideQuotes) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += ch;
+      }
+      i++;
+    }
+    if (currentField !== '' || currentRow.length > 0) {
+      currentRow.push(currentField);
+      if (currentRow.length > 0) rows.push(currentRow);
+    }
+    return rows.map(row => row.map(cell => {
+      let cleaned = String(cell).trim();
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+      }
+      return cleaned;
+    }));
+  }
+
+  // Fetch any sheet data
+  async function fetchSheetData(sheetId) {
+    if (!sheetId) return null;
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const csvText = await response.text();
+      return parseCSV(csvText);
+    } catch (err) {
+      console.error(`Error fetching sheet ${sheetId}:`, err);
+      return null;
+    }
+  }
+
+  // ==================== LOAD MASTER CONFIGURATION ====================
+  async function loadMasterConfig() {
+    try {
+      const parsed = await fetchSheetData(MASTER_SHEET_ID);
+      if (!parsed || parsed.length < 2) throw new Error('Master sheet insufficient data');
+      
+      // Parse master sheet rows
+      // Expected structure: Type, Name/Key, Sheet ID/Data, Additional Info, Active
+      for (let idx = 1; idx < parsed.length; idx++) {  // Skip header row
+        const row = parsed[idx];
+        const type = (row[0] || '').toLowerCase().trim();
+        const name = row[1] || '';
+        const data = row[2] || '';
+        const extra = row[3] || '';
+        const active = (row[4] || 'yes').toLowerCase() === 'yes';
+        
+        if (!active) continue;
+        
+        switch(type) {
+          case 'categories':
+          case 'category':
+            if (data) {
+              categoriesData.push({
+                name: name,
+                sheetId: data,
+                description: extra
+              });
+            }
+            break;
+            
+          case 'ads':
+          case 'advertisement':
+            masterConfig.adSheetId = data;
+            break;
+            
+          case 'user':
+          case 'userdata':
+            masterConfig.userSheetId = data;
+            break;
+            
+          case 'navigation':
+          case 'nav':
+            masterConfig.navSheetId = data;
+            break;
+            
+          case 'products':
+          case 'product':
+            masterConfig.productsSheetId = data;
+            break;
+            
+          default:
+            console.log(`Unknown type: ${type}`);
+        }
+      }
+      
+      console.log('Master config loaded:', { categoriesData, masterConfig });
+      return true;
+      
+    } catch (err) {
+      console.error('Error loading master config:', err);
+      showToast('Failed to load configuration');
+      return false;
+    }
+  }
+
+  // ==================== LOAD DATA FROM CONFIGURED SHEETS ====================
+  
+  // Load categories/child sheets data
+  async function loadCategoriesData() {
+    const allItems = [];
+    for (const category of categoriesData) {
+      if (category.sheetId) {
+        const sheetData = await fetchSheetData(category.sheetId);
+        if (sheetData && sheetData.length > 1) {
+          const items = [];
+          for (let i = 1; i < sheetData.length; i++) {
+            const row = sheetData[i];
+            if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+              const rowObj = {};
+              for (let colIdx = 0; colIdx < 10; colIdx++) {
+                rowObj[`col${colIdx+1}`] = (colIdx < row.length && row[colIdx] !== undefined && row[colIdx] !== '') ? row[colIdx] : '—';
+              }
+              items.push({
+                id: `${category.sheetId}_${Math.random()}`,
+                category: category.name,
+                title: rowObj.col1 || '—',
+                fullRow: rowObj
+              });
+            }
+          }
+          allItems.push({ category: category.name, items: items, sheetId: category.sheetId });
+        }
+      }
+    }
+    return allItems;
+  }
+
+  // Load advertisements
+  async function loadAdvertisements() {
+    if (!masterConfig.adSheetId) {
+      advertisements = getDefaultAds();
+      return;
+    }
+    
+    const parsed = await fetchSheetData(masterConfig.adSheetId);
+    if (parsed && parsed.length > 1) {
+      const ads = [];
+      for (let i = 1; i < parsed.length; i++) {
+        const row = parsed[i];
+        if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+          ads.push({
+            title: row[0] || 'Special Offer',
+            description: row[1] || 'Limited time deal',
+            offer: row[2] || 'Grab it now',
+            link: row[3] || '',
+            icon: row[4] || 'fa-tag'
+          });
+        }
+      }
+      advertisements = ads.length > 0 ? ads : getDefaultAds();
+    } else {
+      advertisements = getDefaultAds();
+    }
+  }
+
+  // Load user data
+  async function loadUserData() {
+    if (!masterConfig.userSheetId) {
+      userData = getDefaultUser();
+      return;
+    }
+    
+    const parsed = await fetchSheetData(masterConfig.userSheetId);
+    if (parsed && parsed.length > 1) {
+      const row = parsed[1];
+      userData = {
+        name: row[0] || 'Explorer User',
+        email: row[1] || 'user@example.com',
+        phone: row[2] || '+91 9876543210',
+        address: row[3] || 'Your City, State',
+        avatar: row[4] || 'fa-user-circle',
+        joinDate: row[5] || '2024'
+      };
+    } else {
+      userData = getDefaultUser();
+    }
+  }
+
+  // Load navigation items
+  async function loadNavigationItems() {
+    if (!masterConfig.navSheetId) {
+      navItems = getDefaultNav();
+      return;
+    }
+    
+    const parsed = await fetchSheetData(masterConfig.navSheetId);
+    if (parsed && parsed.length > 1) {
+      const navs = [];
+      for (let i = 1; i < parsed.length && i < 6; i++) {
+        const row = parsed[i];
+        if (row.length >= 2 && row[0] && row[0].trim() !== '') {
+          navs.push({
+            icon: row[0] || 'fa-circle',
+            label: row[1] || 'Item',
+            link: row[2] || '',
+            order: parseInt(row[3]) || i,
+            active: (row[4] || 'yes').toLowerCase() === 'yes'
+          });
+        }
+      }
+      if (navs.length > 0) navItems = navs;
+    } else {
+      navItems = getDefaultNav();
+    }
+  }
+
+  // Load products data
+  async function loadProductsData() {
+    if (!masterConfig.productsSheetId) {
+      productsData = getDefaultProducts();
+      return;
+    }
+    
+    const parsed = await fetchSheetData(masterConfig.productsSheetId);
+    if (parsed && parsed.length > 1) {
+      const products = [];
+      for (let i = 1; i < parsed.length; i++) {
+        const row = parsed[i];
+        if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+          products.push({
+            name: row[0] || 'Product',
+            category: row[1] || 'General',
+            price: row[2] || '₹299',
+            description: row[3] || 'Premium quality',
+            icon: row[4] || 'fa-box',
+            rating: row[5] || '4.0',
+            offer: row[6] || 'Best Deal'
+          });
+        }
+      }
+      productsData = products.length > 0 ? products : getDefaultProducts();
+    } else {
+      productsData = getDefaultProducts();
+    }
+  }
+
+  // Default fallback data
+  function getDefaultAds() {
+    return [
+      { title: "🔥 Special Offer!", description: "Check out our latest deals", offer: "Limited Time", link: "", icon: "fa-tag" },
+      { title: "✨ New Updates", description: "Explore new features", offer: "Click to learn more", link: "", icon: "fa-star" },
+      { title: "🎉 Weekend Sale", description: "Up to 50% off", offer: "Use Code: WEEKEND", link: "", icon: "fa-gift" }
+    ];
+  }
+
+  function getDefaultUser() {
+    return {
+      name: 'Explorer User',
+      email: 'explorer@example.com',
+      phone: '+91 9876543210',
+      address: 'Your City, State',
+      avatar: 'fa-user-circle',
+      joinDate: '2024'
+    };
+  }
+
+  function getDefaultNav() {
+    return [
+      { icon: "fa-home", label: "Home", link: "home", order: 1, active: true },
+      { icon: "fa-compass", label: "Explore", link: "explore", order: 2, active: true },
+      { icon: "fa-box", label: "Products", link: "products", order: 3, active: true },
+      { icon: "fa-tag", label: "Offers", link: "offers", order: 4, active: true },
+      { icon: "fa-user", label: "Account", link: "account", order: 5, active: true }
+    ];
+  }
+
+  function getDefaultProducts() {
+    return [
+      { name: "Wireless Headphones", category: "Electronics", price: "₹2499", description: "Noise Cancellation", icon: "fa-headphones", rating: "4.5", offer: "10% OFF" },
+      { name: "Cotton T-Shirt", category: "Fashion", price: "₹599", description: "Premium Quality", icon: "fa-tshirt", rating: "4.3", offer: "Buy 2 Get 10%" },
+      { name: "Fresh Apples", category: "Groceries", price: "₹180", description: "Organic", icon: "fa-apple-alt", rating: "4.6", offer: "Free Delivery" }
+    ];
+  }
+
+  // ==================== UI RENDERING ====================
+  
+  // Setup Carousel
+  function setupCarousel() {
+    const bannerArea = document.getElementById("dynamicBannerArea");
+    if (!bannerArea || advertisements.length === 0) return;
+    
+    let slidesHtml = '';
+    advertisements.forEach((ad, idx) => {
+      slidesHtml += `
+        <div class="ad-slide" data-ad-index="${idx}" data-ad-link="${ad.link}">
+          <i class="fas ${ad.icon}" style="font-size: 32px; margin-bottom: 8px;"></i>
+          <h3>${escapeHtml(ad.title)}</h3>
+          <p>${escapeHtml(ad.description)}</p>
+          <div class="offer-badge">${escapeHtml(ad.offer)}</div>
+        </div>
+      `;
+    });
+    
+    let dotsHtml = '';
+    advertisements.forEach((_, idx) => {
+      dotsHtml += `<div class="dot ${idx === 0 ? 'active' : ''}" data-dot-index="${idx}"></div>`;
+    });
+    
+    bannerArea.innerHTML = `
+      <div class="ad-carousel-container">
+        <div class="carousel-arrow left" id="carouselLeft"><i class="fas fa-chevron-left"></i></div>
+        <div class="ad-slides" id="adSlides">
+          ${slidesHtml}
+        </div>
+        <div class="carousel-arrow right" id="carouselRight"><i class="fas fa-chevron-right"></i></div>
+      </div>
+      <div class="carousel-dots" id="carouselDots">
+        ${dotsHtml}
+      </div>
+    `;
+    
+    const slidesContainer = document.getElementById('adSlides');
+    const dots = document.querySelectorAll('.dot');
+    
+    function updateCarousel(index) {
+      if (!slidesContainer) return;
+      currentAdIndex = index;
+      const slideWidth = slidesContainer.parentElement.offsetWidth;
+      slidesContainer.style.transform = `translateX(-${currentAdIndex * slideWidth}px)`;
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === currentAdIndex));
+    }
+    
+    function nextSlide() {
+      currentAdIndex = (currentAdIndex + 1) % advertisements.length;
+      updateCarousel(currentAdIndex);
+      resetAutoSlide();
+    }
+    
+    function prevSlide() {
+      currentAdIndex = (currentAdIndex - 1 + advertisements.length) % advertisements.length;
+      updateCarousel(currentAdIndex);
+      resetAutoSlide();
+    }
+    
+    function resetAutoSlide() {
+      if (autoSlideInterval) clearInterval(autoSlideInterval);
+      autoSlideInterval = setInterval(nextSlide, 5000);
+    }
+    
+    document.getElementById('carouselLeft')?.addEventListener('click', prevSlide);
+    document.getElementById('carouselRight')?.addEventListener('click', nextSlide);
+    dots.forEach(dot => dot.addEventListener('click', () => { updateCarousel(parseInt(dot.dataset.dotIndex)); resetAutoSlide(); }));
+    document.querySelectorAll('.ad-slide').forEach(slide => {
+      slide.addEventListener('click', () => {
+        const link = slide.dataset.adLink;
+        if (link && link !== '') window.open(link, '_blank');
+        else showToast(advertisements[parseInt(slide.dataset.adIndex)].offer);
+      });
+    });
+    resetAutoSlide();
+  }
+
+  // Render Home Page
+  async function renderHomePage() {
+    const homeHtml = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row"><i class="fas fa-map-marker-alt location-icon"></i><span>${APP_NAME}</span></div>
+          <div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div>
+        </div>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInputGlobal" placeholder="Search categories..."></div>
+      </div>
+      <div class="banner-area" id="dynamicBannerArea">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading offers...</p></div>
+      </div>
+      <div class="items-grid" id="categoriesGrid">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading categories...</p></div>
+      </div>
+    `;
+    
+    document.getElementById("homePageContainer").innerHTML = homeHtml;
+    setupCarousel();
+    await displayCategoriesGrid();
+    
+    document.getElementById("searchInputGlobal")?.addEventListener("input", (e) => filterCategories(e.target.value));
+    document.getElementById("profileIconBtn")?.addEventListener("click", () => navigateTo("account"));
+  }
+  
+  async function displayCategoriesGrid(filterText = '') {
+    const gridContainer = document.getElementById("categoriesGrid");
+    if (!gridContainer) return;
+    
+    let filtered = categoriesData;
+    if (filterText) {
+      filtered = categoriesData.filter(cat => cat.name.toLowerCase().includes(filterText.toLowerCase()));
+    }
+    
+    if (filtered.length === 0) {
+      gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">🔍 No categories found</div>`;
+      return;
+    }
+    
+    let gridHtml = '';
+    for (const category of filtered) {
+      gridHtml += `
+        <div class="item-card" data-category="${category.name}">
+          <div class="item-icon"><i class="fas fa-folder"></i></div>
+          <div class="item-details">
+            <div class="item-title">${escapeHtml(category.name)}</div>
+            <div class="item-subtitle"><i class="fas fa-file-alt"></i> ${category.description || 'Items available'}</div>
+            <span class="item-badge"><i class="fas fa-eye"></i> Click to view</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.item-card[data-category]').forEach(card => {
+      card.addEventListener('click', async () => {
+        const categoryName = card.dataset.category;
+        await showCategoryItems(categoryName);
+      });
+    });
+  }
+  
+  function filterCategories(searchText) {
+    displayCategoriesGrid(searchText);
+  }
+  
+  async function showCategoryItems(categoryName) {
+    showToast(`Loading ${categoryName} data...`);
+    
+    // Find the category and load its data
+    const category = categoriesData.find(c => c.name === categoryName);
+    if (!category || !category.sheetId) {
+      showToast('No data found for this category');
+      return;
+    }
+    
+    const sheetData = await fetchSheetData(category.sheetId);
+    const items = [];
+    
+    if (sheetData && sheetData.length > 1) {
+      for (let i = 1; i < sheetData.length; i++) {
+        const row = sheetData[i];
+        if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+          const rowObj = {};
+          for (let colIdx = 0; colIdx < 10; colIdx++) {
+            rowObj[`col${colIdx+1}`] = (colIdx < row.length && row[colIdx] !== undefined && row[colIdx] !== '') ? row[colIdx] : '—';
+          }
+          items.push({
+            id: `${category.sheetId}_${Math.random()}`,
+            category: category.name,
+            title: rowObj.col1 || '—',
+            fullRow: rowObj
+          });
+        }
+      }
+    }
+    
+    const homeContainer = document.getElementById("homePageContainer");
+    homeContainer.innerHTML = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row">
+            <i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer; margin-right:10px;"></i>
+            <i class="fas fa-folder location-icon"></i>
+            <span>${escapeHtml(categoryName)}</span>
+          </div>
+          <div class="profile-icon"><i class="far fa-user"></i></div>
+        </div>
+      </div>
+      <div class="items-grid" id="itemsGrid">
+        ${items.length === 0 ? '<div style="text-align:center; padding:40px;">📭 No items found</div>' : ''}
+      </div>
+    `;
+    
+    document.getElementById("backBtn")?.addEventListener("click", () => renderHomePage());
+    
+    if (items.length > 0) {
+      displayItems(items);
+    }
+  }
+  
+  function displayItems(items) {
+    const gridContainer = document.getElementById("itemsGrid");
+    if (!gridContainer) return;
+    
+    let gridHtml = '';
+    items.forEach((item, idx) => {
+      gridHtml += `
+        <div class="item-card" data-item-idx="${idx}">
+          <div class="item-icon"><i class="fas fa-file-alt"></i></div>
+          <div class="item-details">
+            <div class="item-title">📄 ${escapeHtml(String(item.title).substring(0, 50))}</div>
+            <div class="item-subtitle"><i class="fas fa-calendar"></i> Item ${idx + 1}</div>
+            <span class="item-badge"><i class="fas fa-info-circle"></i> Click for details</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.item-card[data-item-idx]').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.itemIdx);
+        openModal(items[idx]);
+      });
+    });
+  }
+  
+  function openModal(item) {
+    const fullRow = item.fullRow || {};
+    const fields = [
+      { label: 'Column 1', value: fullRow.col1 || '—' },
+      { label: 'Column 2', value: fullRow.col2 || '—' },
+      { label: 'Column 3', value: fullRow.col3 || '—' },
+      { label: 'Column 4', value: fullRow.col4 || '—' },
+      { label: 'Column 5', value: fullRow.col5 || '—' },
+      { label: 'Column 6', value: fullRow.col6 || '—' },
+      { label: 'Column 7', value: fullRow.col7 || '—' },
+      { label: 'Column 8', value: fullRow.col8 || '—' },
+      { label: 'Column 9', value: fullRow.col9 || '—' },
+      { label: 'Column 10', value: fullRow.col10 || '—' }
+    ];
+    
+    const sheetIdPattern = /[a-zA-Z0-9_-]{30,}/;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    
+    let bodyHtml = '';
+    fields.forEach(field => {
+      const isSheetId = sheetIdPattern.test(field.value) && field.value.length > 30;
+      if (isSheetId) {
+        bodyHtml += `
+          <div class="detail-row sheet-link" onclick="window.open('https://docs.google.com/spreadsheets/d/${field.value}', '_blank')">
+            <div class="detail-label">🔗 ${field.label} (Click to open)</div>
+            <div class="detail-value">📊 ${escapeHtml(field.value)}</div>
+          </div>
+        `;
+      } else {
+        bodyHtml += `
+          <div class="detail-row">
+            <div class="detail-label">📌 ${field.label}</div>
+            <div class="detail-value">${escapeHtml(field.value)}</div>
+          </div>
+        `;
+      }
+    });
+    
+    modal.innerHTML = `
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3><i class="fas fa-info-circle"></i> Full Record · ${escapeHtml(item.category)}</h3>
+          <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          ${bodyHtml}
+          <div class="detail-row" style="background:#f8fafc; border-radius:0.8rem; margin-top:10px;">
+            <div class="detail-label">📍 Category</div>
+            <div class="detail-value"><strong>${escapeHtml(item.category)}</strong></div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  }
+  
+  // Products View
+  async function showProductsView() {
+    const homeContainer = document.getElementById("homePageContainer");
+    homeContainer.innerHTML = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row">
+            <i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer; margin-right:10px;"></i>
+            <i class="fas fa-box location-icon"></i>
+            <span>All Products</span>
+          </div>
+          <div class="profile-icon"><i class="far fa-user"></i></div>
+        </div>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchProducts" placeholder="Search products..."></div>
+      </div>
+      <div class="items-grid" id="productsGrid">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading products...</p></div>
+      </div>
+    `;
+    
+    document.getElementById("backBtn")?.addEventListener("click", () => renderHomePage());
+    displayProducts(productsData);
+    
+    document.getElementById("searchProducts")?.addEventListener("input", (e) => {
+      const filtered = productsData.filter(p => p.name.toLowerCase().includes(e.target.value.toLowerCase()));
+      displayProducts(filtered);
+    });
+  }
+  
+  function displayProducts(products) {
+    const gridContainer = document.getElementById("productsGrid");
+    if (!gridContainer) return;
+    
+    if (products.length === 0) {
+      gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">📭 No products found</div>`;
+      return;
+    }
+    
+    let gridHtml = '';
+    products.forEach((product, idx) => {
+      gridHtml += `
+        <div class="item-card" data-product-idx="${idx}">
+          <div class="item-icon"><i class="fas ${product.icon}"></i></div>
+          <div class="item-details">
+            <div class="item-title">${escapeHtml(product.name)} <span style="font-size:12px; color:var(--primary-color);">${escapeHtml(product.price)}</span></div>
+            <div class="item-subtitle">${escapeHtml(product.description)}</div>
+            <div><span class="item-badge">⭐ ${product.rating}</span> <span class="item-badge" style="background:#ff9800;">${escapeHtml(product.offer)}</span></div>
+          </div>
+        </div>
+      `;
+    });
+    
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.item-card[data-product-idx]').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.productIdx);
+        const product = products[idx];
+        showToast(`${product.name} - ${product.price}`);
+      });
+    });
+  }
+  
+  // Profile Page
+  function renderProfilePage() {
+    const profileHtml = `
+      <div class="profile-container" style="padding: 24px 20px;">
+        <div style="text-align:center;">
+          <div style="background: #ff6e2e20; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 50px; color: var(--primary-color);">
+            <i class="fas ${userData.avatar}"></i>
+          </div>
+          <h2>${escapeHtml(userData.name)}</h2>
+          <p style="color:gray;">${escapeHtml(userData.email)}</p>
+        </div>
+        <div style="background: var(--bg-gray); border-radius: 24px; padding: 20px; margin: 20px 0;">
+          <div><i class="fas fa-phone"></i> ${escapeHtml(userData.phone)}</div>
+          <div style="margin-top:12px;"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(userData.address)}</div>
+          <div style="margin-top:12px;"><i class="fas fa-calendar"></i> Joined: ${escapeHtml(userData.joinDate)}</div>
+        </div>
+        <div class="stats-row" style="background: var(--bg-gray); border-radius: 24px; padding: 20px; display: flex; justify-content: space-around;">
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">${categoriesData.length}</div><div>Categories</div></div>
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">${productsData.length}</div><div>Products</div></div>
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">-</div><div>Orders</div></div>
+        </div>
+        <button class="back-home-btn" id="backHomeBtn" style="background: none; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 12px; border-radius: 40px; width: 100%; font-weight: 600; margin-top: 30px; cursor: pointer;">
+          <i class="fas fa-arrow-left"></i> Back to Home
+        </button>
+      </div>
+    `;
+    document.getElementById("profilePageContainer").innerHTML = profileHtml;
+    document.getElementById("backHomeBtn")?.addEventListener("click", () => navigateTo("home"));
+  }
+  
+  // Navigation
+  function navigateTo(page) {
+    currentPage = page;
+    const homeDiv = document.getElementById("homePageContainer");
+    const profileDiv = document.getElementById("profilePageContainer");
+    
+    if (page === "home") {
+      homeDiv.classList.remove("hidden");
+      profileDiv.classList.add("hidden");
+      renderHomePage();
+    } else if (page === "account") {
+      renderProfilePage();
+      homeDiv.classList.add("hidden");
+      profileDiv.classList.remove("hidden");
+    } else if (page === "products") {
+      showProductsView();
+      profileDiv.classList.add("hidden");
+    } else if (page === "offers") {
+      showToast("🎉 Check the banner for special offers!");
+    } else if (page === "explore") {
+      showToast("✨ Explore new categories and products!");
+    }
+    
+    document.querySelectorAll(".nav-icon").forEach(nav => nav.classList.remove("active"));
+    const activeNav = document.querySelector(`.nav-icon[data-nav="${page}"]`);
+    if (activeNav) activeNav.classList.add("active");
+  }
+  
+  function setupBottomNavEvents() {
+    document.querySelectorAll(".nav-icon").forEach(nav => {
+      nav.addEventListener("click", () => {
+        const navType = nav.dataset.nav;
+        if (navType === "home") navigateTo("home");
+        else if (navType === "account") navigateTo("account");
+        else if (navType === "products") navigateTo("products");
+        else if (navType === "offers") navigateTo("offers");
+        else if (navType === "explore") navigateTo("explore");
+        else navigateTo(navType);
+      });
+    });
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
+  // Initialize App - Load master config then all other sheets
+  async function initApp() {
+    setupBottomNavEvents();
+    
+    // Step 1: Load master configuration
+    const configLoaded = await loadMasterConfig();
+    
+    if (configLoaded) {
+      // Step 2: Load all data from configured sheets
+      await Promise.all([
+        loadAdvertisements(),
+        loadUserData(),
+        loadNavigationItems(),
+        loadProductsData()
+      ]);
+      
+      await renderHomePage();
+    } else {
+      document.getElementById("homePageContainer").innerHTML = `
+        <div style="text-align:center; padding:50px;">
+          <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6e2e;"></i>
+          <p style="margin-top:20px;">Failed to load configuration.</p>
+          <p style="font-size:12px; color:gray;">Make sure your master sheet is published to web</p>
+        </div>
+      `;
+    }
+  }
+  
+  initApp();
+</script>
+</body>
+</html>
