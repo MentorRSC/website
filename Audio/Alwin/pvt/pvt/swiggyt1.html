@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheet Data Display - All Rows</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card:nth-child(even) {
+            background: #fafafa;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .counter {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 Google Sheet Data</h1>
+    <div id="data"></div>
+
+    <script>
+        const SHEET_ID = '1G8nLMbRB7bU25ReXbPgNuGaL3jEiN9rvsG4LKGiJkz4';
+        const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+        async function loadData() {
+            const div = document.getElementById('data');
+            div.innerHTML = '<div class="loading">Loading...</div>';
+            
+            try {
+                const response = await fetch(URL);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47).slice(0, -2));
+                
+                const rows = json.table.rows;
+                if (!rows || rows.length === 0) {
+                    div.innerHTML = '<div class="error">No data found</div>';
+                    return;
+                }
+                
+                // Get column labels
+                const cols = json.table.cols.map(col => col.label || `Column ${col.id}`);
+                
+                let html = `<div class="counter">📊 Total Rows: ${rows.length}</div>`;
+                
+                // Start from row 0 to show ALL rows
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].c || [];
+                    html += '<div class="card">';
+                    html += `<div style="font-size:12px; color:#999; margin-bottom:10px;">Row ${i + 1}</div>`;
+                    
+                    cells.forEach((cell, idx) => {
+                        if (cell && cell.v !== null && cell.v !== undefined && cell.v !== '') {
+                            const colName = cols[idx] || `Column ${idx + 1}`;
+                            html += `<strong>${colName}:</strong> ${cell.v}<br>`;
+                        }
+                    });
+                    
+                    // If no cells with data, show empty row message
+                    if (cells.filter(c => c && c.v).length === 0) {
+                        html += '<em>Empty row</em>';
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                div.innerHTML = html || '<div class="error">No data to display</div>';
+                
+            } catch (error) {
+                div.innerHTML = `<div class="error">❌ Error: ${error.message}<br><br>
+                💡 Make sure your sheet is published:<br>
+                File → Share → Publish to web → Publish</div>`;
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>
