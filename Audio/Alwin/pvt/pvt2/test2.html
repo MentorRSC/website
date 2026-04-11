@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Multi-Sheet App Framework | Full Features</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app-shell {
+      max-width: 450px;
+      width: 100%;
+      background: #ffffff;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .app-shell::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-shell::-webkit-scrollbar-track {
+      background: #eaeaea;
+    }
+    .app-shell::-webkit-scrollbar-thumb {
+      background: var(--primary-color, #ff6e2e);
+      border-radius: 10px;
+    }
+
+    :root {
+      --primary-color: #ff6e2e;
+      --primary-dark: #e55a1e;
+      --secondary-color: #2e7d32;
+      --bg-gray: #f8f8f8;
+      --text-dark: #1a1a1a;
+      --text-light: #6e6e6e;
+      --border-light: #f0f0f0;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.04);
+      --radius-card: 20px;
+      --radius-btn: 40px;
+    }
+
+    .hidden { display: none !important; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-center { display: flex; justify-content: center; align-items: center; }
+
+    .app-header {
+      background: #ffffff;
+      padding: 18px 16px 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+    }
+    .location-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+    .location-icon { color: var(--primary-color); font-size: 20px; }
+    .profile-icon {
+      background: var(--bg-gray);
+      border-radius: 50%;
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .profile-icon:active { transform: scale(0.95); }
+
+    .search-box {
+      margin-top: 14px;
+      background: var(--bg-gray);
+      border-radius: 30px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-box i { color: var(--primary-color); font-size: 18px; }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Advertisement Carousel */
+    .banner-area { 
+      padding: 16px 16px 8px 16px;
+      position: relative;
+    }
+    
+    .ad-carousel-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-card);
+    }
+    
+    .ad-slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+    }
+    
+    .ad-slide {
+      min-width: 100%;
+      background: linear-gradient(135deg, var(--primary-color), #ff8c42);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+    }
+    
+    .ad-slide:active { transform: scale(0.98); }
+    .ad-slide h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .ad-slide p { font-size: 13px; opacity: 0.9; margin: 4px 0; }
+    .ad-slide .offer-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .dot.active {
+      width: 20px;
+      border-radius: 10px;
+      background: var(--primary-color);
+    }
+    
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.4);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+    
+    .carousel-arrow:hover { background: rgba(0,0,0,0.6); }
+    .carousel-arrow.left { left: 8px; }
+    .carousel-arrow.right { right: 8px; }
+
+    /* Items Grid */
+    .items-grid {
+      padding: 8px 12px 80px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .item-card {
+      background: white;
+      border-radius: var(--radius-card);
+      display: flex;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .item-card:active { transform: scale(0.98); }
+    .item-icon {
+      width: 85px;
+      height: 85px;
+      background: linear-gradient(135deg, #ff6e2e20, #ff8c4220);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: var(--primary-color);
+    }
+    .item-details { flex: 1; }
+    .item-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+    .item-subtitle {
+      font-size: 12px;
+      color: var(--text-light);
+      margin: 4px 0;
+    }
+    .item-badge {
+      background: var(--primary-color);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    /* Bottom Navigation - Fixed HTML */
+    .bottom-nav-fixed {
+      background: rgba(255,255,255,0.98);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 20px 18px;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 450px;
+      backdrop-filter: blur(2px);
+      z-index: 20;
+    }
+    .nav-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #8e8e8e;
+      cursor: pointer;
+      transition: color 0.2s;
+      flex: 1;
+      text-align: center;
+    }
+    .nav-icon i { font-size: 22px; }
+    .nav-icon.active { color: var(--primary-color); font-weight: 500; }
+    .nav-icon:hover { color: var(--primary-color); }
+
+    /* Login Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-container {
+      background: white;
+      max-width: 400px;
+      width: 100%;
+      max-height: 85vh;
+      border-radius: 1.8rem;
+      overflow: hidden;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .modal-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      max-height: calc(85vh - 80px);
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    .login-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 40px;
+      width: 100%;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .error-msg {
+      color: #e53935;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    /* User Profile Details */
+    .profile-container {
+      padding: 24px 20px;
+    }
+    .profile-cover {
+      background: linear-gradient(135deg, var(--primary-color), #ff8c42);
+      height: 120px;
+      border-radius: 20px;
+      position: relative;
+      margin-bottom: 60px;
+    }
+    .profile-avatar {
+      position: absolute;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      color: var(--primary-color);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border: 4px solid white;
+    }
+    .user-name {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .user-regid {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .info-card {
+      background: var(--bg-gray);
+      border-radius: 16px;
+      padding: 12px;
+      text-align: center;
+    }
+    .info-label {
+      font-size: 11px;
+      color: var(--text-light);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .info-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .level-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ffd89b, #c7e9fb);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+    .transactions-list {
+      margin-top: 20px;
+    }
+    .transaction-item {
+      background: var(--bg-gray);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logout-btn {
+      background: none;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 12px;
+      border-radius: 40px;
+      width: 100%;
+      font-weight: 600;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-text { height: 16px; margin: 8px 0; }
+    .skeleton-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; }
+    .skeleton-card { height: 60px; margin: 10px 0; }
+
+    .detail-row {
+      display: flex;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border-light);
+      gap: 1rem;
+      flex-direction: column;
+    }
+    .detail-label {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-value {
+      color: var(--text-dark);
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .sheet-link {
+      background: #e8f5e9;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+    .toast-message {
+      visibility: hidden;
+      min-width: 180px;
+      background-color: #323232;
+      color: #fff;
+      text-align: center;
+      border-radius: 50px;
+      padding: 10px 18px;
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    .toast-message.show { visibility: visible; opacity: 1; }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-light);
+    }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <div id="homePageContainer"></div>
+  <div id="profilePageContainer" class="hidden"></div>
+  <div id="offersPageContainer" class="hidden"></div>
+
+  <!-- Fixed Bottom Navigation - HTML only -->
+  <div class="bottom-nav-fixed" id="bottomNav">
+    <div class="nav-icon" data-nav="home"><i class="fas fa-home"></i><span>Home</span></div>
+    <div class="nav-icon" data-nav="explore"><i class="fas fa-compass"></i><span>Explore</span></div>
+    <div class="nav-icon" data-nav="products"><i class="fas fa-box"></i><span>Products</span></div>
+    <div class="nav-icon" data-nav="offers"><i class="fas fa-tag"></i><span>Offers</span></div>
+    <div class="nav-icon" data-nav="account"><i class="fas fa-user"></i><span>Account</span></div>
+  </div>
+  <div id="globalToast" class="toast-message"></div>
+</div>
+
+<script>
+  /********************************************************************
+   * ==================== SINGLE MASTER SHEET CONFIG ====================
+   ********************************************************************/
+  const MASTER_SHEET_ID = '1vfSO8NP0p1um-ueMspk4ekPtsEZKSfKwrvgh54SK70c';
+  const APP_NAME = "Multi-Sheet Explorer";
+  
+  // Global state
+  let masterConfig = {};
+  let categoriesData = [];
+  let advertisements = [];
+  let productsData = [];
+  let currentPage = "home";
+  let currentAdIndex = 0;
+  let autoSlideInterval = null;
+  let isLoggedIn = false;
+  let currentUser = null;
+  let userTransactions = [];
+
+  // Helper Functions
+  function showToast(msg) {
+    const toastEl = document.getElementById("globalToast");
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
+
+  function parseCSV(csvText) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let insideQuotes = false;
+    let i = 0;
+    const len = csvText.length;
+    
+    while (i < len) {
+      const ch = csvText[i];
+      const nextCh = csvText[i+1];
+      if (ch === '"') {
+        if (insideQuotes && nextCh === '"') {
+          currentField += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (ch === ',' && !insideQuotes) {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+        if (ch === '\r') i++;
+      } else if (ch === '\r' && !insideQuotes) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += ch;
+      }
+      i++;
+    }
+    if (currentField !== '' || currentRow.length > 0) {
+      currentRow.push(currentField);
+      if (currentRow.length > 0) rows.push(currentRow);
+    }
+    return rows.map(row => row.map(cell => {
+      let cleaned = String(cell).trim();
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+      }
+      return cleaned;
+    }));
+  }
+
+  async function fetchSheetData(sheetId) {
+    if (!sheetId) return null;
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const csvText = await response.text();
+      return parseCSV(csvText);
+    } catch (err) {
+      console.error(`Error fetching sheet ${sheetId}:`, err);
+      return null;
+    }
+  }
+
+  // Load Master Config
+  async function loadMasterConfig() {
+    try {
+      const parsed = await fetchSheetData(MASTER_SHEET_ID);
+      if (!parsed || parsed.length < 2) throw new Error('Master sheet insufficient data');
+      
+      for (let idx = 1; idx < parsed.length; idx++) {
+        const row = parsed[idx];
+        const type = (row[0] || '').toLowerCase().trim();
+        const name = row[1] || '';
+        const data = row[2] || '';
+        const extra = row[3] || '';
+        const active = (row[4] || 'yes').toLowerCase() === 'yes';
+        
+        if (!active) continue;
+        
+        switch(type) {
+          case 'categories':
+          case 'category':
+            if (data) categoriesData.push({ name: name, sheetId: data, description: extra });
+            break;
+          case 'ads':
+          case 'advertisement':
+            masterConfig.adSheetId = data;
+            break;
+          case 'user':
+          case 'userdata':
+            masterConfig.userSheetId = data;
+            break;
+          case 'products':
+          case 'product':
+            masterConfig.productsSheetId = data;
+            break;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to load configuration');
+      return false;
+    }
+  }
+
+  // Load Advertisements
+  async function loadAdvertisements() {
+    if (!masterConfig.adSheetId) {
+      advertisements = getDefaultAds();
+      return;
+    }
+    const parsed = await fetchSheetData(masterConfig.adSheetId);
+    if (parsed && parsed.length > 1) {
+      const ads = [];
+      for (let i = 1; i < parsed.length; i++) {
+        const row = parsed[i];
+        if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+          ads.push({
+            title: row[0] || 'Special Offer',
+            description: row[1] || 'Limited time deal',
+            offer: row[2] || 'Grab it now',
+            link: row[3] || '',
+            icon: row[4] || 'fa-tag',
+            fullDetails: row[5] || row[1] || 'Click for more details'
+          });
+        }
+      }
+      advertisements = ads.length > 0 ? ads : getDefaultAds();
+    } else {
+      advertisements = getDefaultAds();
+    }
+  }
+
+  // Load Products
+  async function loadProductsData() {
+    if (!masterConfig.productsSheetId) {
+      productsData = getDefaultProducts();
+      return;
+    }
+    const parsed = await fetchSheetData(masterConfig.productsSheetId);
+    if (parsed && parsed.length > 1) {
+      const products = [];
+      for (let i = 1; i < parsed.length; i++) {
+        const row = parsed[i];
+        if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+          products.push({
+            name: row[0] || 'Product',
+            category: row[1] || 'General',
+            price: row[2] || '₹299',
+            description: row[3] || 'Premium quality',
+            icon: row[4] || 'fa-box',
+            rating: row[5] || '4.0',
+            offer: row[6] || 'Best Deal'
+          });
+        }
+      }
+      productsData = products.length > 0 ? products : getDefaultProducts();
+    } else {
+      productsData = getDefaultProducts();
+    }
+  }
+
+  // User Login - Validate against user sheet
+  async function validateUserLogin(username, password) {
+    if (!masterConfig.userSheetId) {
+      showToast('User system not configured');
+      return false;
+    }
+    const parsed = await fetchSheetData(masterConfig.userSheetId);
+    if (parsed && parsed.length > 1) {
+      for (let i = 1; i < parsed.length; i++) {
+        const row = parsed[i];
+        const sheetUsername = row[0] || '';
+        const sheetPassword = row[1] || '';
+        const userSheetId = row[2] || '';
+        
+        if (sheetUsername === username && sheetPassword === password) {
+          // Fetch user details from their personal sheet
+          await loadUserDetails(userSheetId, username);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Load user details from their personal sheet
+  async function loadUserDetails(userSheetId, username) {
+    const parsed = await fetchSheetData(userSheetId);
+    if (parsed && parsed.length > 1) {
+      const row = parsed[1]; // First data row
+      currentUser = {
+        username: username,
+        name: row[0] || username,
+        regId: row[1] || 'REG' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        phone: row[2] || '+91 9876543210',
+        email: row[3] || username + '@example.com',
+        state: row[4] || 'Unknown',
+        joinedDate: row[5] || new Date().toLocaleDateString(),
+        level: row[6] || 'Bronze',
+        avatar: row[7] || 'fa-user-circle',
+        personalSheetId: userSheetId
+      };
+      
+      // Load transactions (rows 2 onwards)
+      userTransactions = [];
+      for (let i = 2; i < parsed.length; i++) {
+        const transRow = parsed[i];
+        if (transRow.length >= 2 && transRow[0] && transRow[0].trim() !== '') {
+          userTransactions.push({
+            date: transRow[0] || '',
+            description: transRow[1] || '',
+            amount: transRow[2] || '',
+            status: transRow[3] || 'Completed'
+          });
+        }
+      }
+    } else {
+      // Fallback user data
+      currentUser = {
+        username: username,
+        name: username,
+        regId: 'REG' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        phone: '+91 9876543210',
+        email: username + '@example.com',
+        state: 'Unknown',
+        joinedDate: new Date().toLocaleDateString(),
+        level: 'Bronze',
+        avatar: 'fa-user-circle'
+      };
+      userTransactions = [];
+    }
+  }
+
+  // Show Login Modal
+  function showLoginModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3><i class="fas fa-lock"></i> Login Required</h3>
+          <button class="modal-close" id="closeLoginBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="loginUsername" class="login-input" placeholder="Username">
+          <input type="password" id="loginPassword" class="login-input" placeholder="Password">
+          <div id="loginError" class="error-msg"></div>
+          <button id="loginSubmitBtn" class="login-btn">Login</button>
+          <div style="text-align:center; margin-top:15px; font-size:12px; color:#999;">
+            Demo: Check your user sheet for credentials
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const closeModal = () => modal.remove();
+    document.getElementById('closeLoginBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    
+    document.getElementById('loginSubmitBtn').addEventListener('click', async () => {
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      if (!username || !password) {
+        document.getElementById('loginError').innerText = 'Please enter username and password';
+        return;
+      }
+      
+      const isValid = await validateUserLogin(username, password);
+      if (isValid) {
+        isLoggedIn = true;
+        closeModal();
+        showToast(`Welcome ${currentUser.name}!`);
+        renderProfilePage();
+        navigateTo('account');
+      } else {
+        document.getElementById('loginError').innerText = 'Invalid username or password';
+      }
+    });
+  }
+
+  // Render Profile Page with Skeleton then Real Data
+  function renderProfilePage() {
+    if (!isLoggedIn) {
+      showLoginModal();
+      return;
+    }
+    
+    const profileHtml = `
+      <div class="profile-container">
+        <div class="profile-cover"></div>
+        <div class="profile-avatar">
+          <i class="fas ${currentUser.avatar}"></i>
+        </div>
+        <div class="user-name">${escapeHtml(currentUser.name)}</div>
+        <div class="user-regid">ID: ${escapeHtml(currentUser.regId)}</div>
+        
+        <div class="info-grid">
+          <div class="info-card"><div class="info-label">Phone</div><div class="info-value">${escapeHtml(currentUser.phone)}</div></div>
+          <div class="info-card"><div class="info-label">Email</div><div class="info-value">${escapeHtml(currentUser.email)}</div></div>
+          <div class="info-card"><div class="info-label">State</div><div class="info-value">${escapeHtml(currentUser.state)}</div></div>
+          <div class="info-card"><div class="info-label">Joined</div><div class="info-value">${escapeHtml(currentUser.joinedDate)}</div></div>
+        </div>
+        
+        <div style="text-align:center;">
+          <div class="level-badge">⭐ Level: ${escapeHtml(currentUser.level)} ⭐</div>
+        </div>
+        
+        <div class="transactions-list">
+          <h3 style="margin-bottom:12px;">📋 Recent Transactions</h3>
+          ${userTransactions.length > 0 ? userTransactions.map(t => `
+            <div class="transaction-item">
+              <div><strong>${escapeHtml(t.date)}</strong><br><small>${escapeHtml(t.description)}</small></div>
+              <div style="font-weight:700; color:var(--primary-color);">${escapeHtml(t.amount)}</div>
+            </div>
+          `).join('') : '<div style="text-align:center; color:#999;">No transactions found</div>'}
+        </div>
+        
+        <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    `;
+    
+    document.getElementById("profilePageContainer").innerHTML = profileHtml;
+    document.getElementById("logoutBtn")?.addEventListener("click", () => {
+      isLoggedIn = false;
+      currentUser = null;
+      userTransactions = [];
+      showToast('Logged out successfully');
+      navigateTo('home');
+    });
+  }
+
+  // Offers Page - Show all advertisements one by one
+  function renderOffersPage() {
+    const offersHtml = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row"><i class="fas fa-tag location-icon"></i><span>Special Offers</span></div>
+          <div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div>
+        </div>
+      </div>
+      <div class="items-grid" id="offersGrid">
+        ${advertisements.map((ad, idx) => `
+          <div class="item-card" data-offer-idx="${idx}">
+            <div class="item-icon"><i class="fas ${ad.icon}"></i></div>
+            <div class="item-details">
+              <div class="item-title">${escapeHtml(ad.title)}</div>
+              <div class="item-subtitle">${escapeHtml(ad.description)}</div>
+              <span class="item-badge">${escapeHtml(ad.offer)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    
+    document.getElementById("offersPageContainer").innerHTML = offersHtml;
+    document.getElementById("profileIconBtn")?.addEventListener("click", () => navigateTo("account"));
+    
+    document.querySelectorAll('.item-card[data-offer-idx]').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.offerIdx);
+        const ad = advertisements[idx];
+        showOfferPopup(ad);
+      });
+    });
+  }
+
+  function showOfferPopup(ad) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3><i class="fas ${ad.icon}"></i> ${escapeHtml(ad.title)}</h3>
+          <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-row">
+            <div class="detail-label">📝 Description</div>
+            <div class="detail-value">${escapeHtml(ad.description)}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">🎁 Offer Details</div>
+            <div class="detail-value">${escapeHtml(ad.offer)}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">ℹ️ More Info</div>
+            <div class="detail-value">${escapeHtml(ad.fullDetails || 'Limited time offer. Terms and conditions apply.')}</div>
+          </div>
+          ${ad.link ? `<div class="detail-row sheet-link" onclick="window.open('${ad.link}', '_blank')">
+            <div class="detail-label">🔗 Click to Redeem</div>
+            <div class="detail-value">Visit offer page →</div>
+          </div>` : ''}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  }
+
+  // Setup Carousel
+  function setupCarousel() {
+    const bannerArea = document.getElementById("dynamicBannerArea");
+    if (!bannerArea || advertisements.length === 0) return;
+    
+    let slidesHtml = '';
+    advertisements.forEach((ad, idx) => {
+      slidesHtml += `
+        <div class="ad-slide" data-ad-index="${idx}" data-ad-link="${ad.link}">
+          <i class="fas ${ad.icon}" style="font-size: 32px; margin-bottom: 8px;"></i>
+          <h3>${escapeHtml(ad.title)}</h3>
+          <p>${escapeHtml(ad.description)}</p>
+          <div class="offer-badge">${escapeHtml(ad.offer)}</div>
+        </div>
+      `;
+    });
+    
+    let dotsHtml = '';
+    advertisements.forEach((_, idx) => {
+      dotsHtml += `<div class="dot ${idx === 0 ? 'active' : ''}" data-dot-index="${idx}"></div>`;
+    });
+    
+    bannerArea.innerHTML = `
+      <div class="ad-carousel-container">
+        <div class="carousel-arrow left" id="carouselLeft"><i class="fas fa-chevron-left"></i></div>
+        <div class="ad-slides" id="adSlides">${slidesHtml}</div>
+        <div class="carousel-arrow right" id="carouselRight"><i class="fas fa-chevron-right"></i></div>
+      </div>
+      <div class="carousel-dots" id="carouselDots">${dotsHtml}</div>
+    `;
+    
+    const slidesContainer = document.getElementById('adSlides');
+    const dots = document.querySelectorAll('.dot');
+    
+    function updateCarousel(index) {
+      if (!slidesContainer) return;
+      currentAdIndex = index;
+      const slideWidth = slidesContainer.parentElement.offsetWidth;
+      slidesContainer.style.transform = `translateX(-${currentAdIndex * slideWidth}px)`;
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === currentAdIndex));
+    }
+    
+    function nextSlide() {
+      currentAdIndex = (currentAdIndex + 1) % advertisements.length;
+      updateCarousel(currentAdIndex);
+      resetAutoSlide();
+    }
+    
+    function prevSlide() {
+      currentAdIndex = (currentAdIndex - 1 + advertisements.length) % advertisements.length;
+      updateCarousel(currentAdIndex);
+      resetAutoSlide();
+    }
+    
+    function resetAutoSlide() {
+      if (autoSlideInterval) clearInterval(autoSlideInterval);
+      autoSlideInterval = setInterval(nextSlide, 5000);
+    }
+    
+    document.getElementById('carouselLeft')?.addEventListener('click', prevSlide);
+    document.getElementById('carouselRight')?.addEventListener('click', nextSlide);
+    dots.forEach(dot => dot.addEventListener('click', () => { updateCarousel(parseInt(dot.dataset.dotIndex)); resetAutoSlide(); }));
+    document.querySelectorAll('.ad-slide').forEach(slide => {
+      slide.addEventListener('click', () => {
+        const idx = parseInt(slide.dataset.adIndex);
+        showOfferPopup(advertisements[idx]);
+      });
+    });
+    resetAutoSlide();
+  }
+
+  // Home Page
+  async function renderHomePage() {
+    const homeHtml = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row"><i class="fas fa-map-marker-alt location-icon"></i><span>${APP_NAME}</span></div>
+          <div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div>
+        </div>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInputGlobal" placeholder="Search categories..."></div>
+      </div>
+      <div class="banner-area" id="dynamicBannerArea"><div class="loading"><div class="loading-spinner"></div><p>Loading offers...</p></div></div>
+      <div class="items-grid" id="categoriesGrid"><div class="loading"><div class="loading-spinner"></div><p>Loading categories...</p></div></div>
+    `;
+    document.getElementById("homePageContainer").innerHTML = homeHtml;
+    setupCarousel();
+    await displayCategoriesGrid();
+    document.getElementById("searchInputGlobal")?.addEventListener("input", (e) => filterCategories(e.target.value));
+    document.getElementById("profileIconBtn")?.addEventListener("click", () => navigateTo("account"));
+  }
+
+  async function displayCategoriesGrid(filterText = '') {
+    const gridContainer = document.getElementById("categoriesGrid");
+    if (!gridContainer) return;
+    let filtered = categoriesData;
+    if (filterText) filtered = categoriesData.filter(cat => cat.name.toLowerCase().includes(filterText.toLowerCase()));
+    if (filtered.length === 0) { gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">🔍 No categories found</div>`; return; }
+    let gridHtml = '';
+    for (const category of filtered) {
+      gridHtml += `<div class="item-card" data-category="${category.name}"><div class="item-icon"><i class="fas fa-folder"></i></div><div class="item-details"><div class="item-title">${escapeHtml(category.name)}</div><div class="item-subtitle"><i class="fas fa-file-alt"></i> ${category.description || 'Items available'}</div><span class="item-badge"><i class="fas fa-eye"></i> Click to view</span></div></div>`;
+    }
+    gridContainer.innerHTML = gridHtml;
+    document.querySelectorAll('.item-card[data-category]').forEach(card => {
+      card.addEventListener('click', async () => {
+        const categoryName = card.dataset.category;
+        await showCategoryItems(categoryName);
+      });
+    });
+  }
+
+  function filterCategories(searchText) { displayCategoriesGrid(searchText); }
+
+  async function showCategoryItems(categoryName) {
+    showToast(`Loading ${categoryName} data...`);
+    const category = categoriesData.find(c => c.name === categoryName);
+    if (!category || !category.sheetId) { showToast('No data found'); return; }
+    const sheetData = await fetchSheetData(category.sheetId);
+    const items = [];
+    if (sheetData && sheetData.length > 1) {
+      for (let i = 1; i < sheetData.length; i++) {
+        const row = sheetData[i];
+        if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+          const rowObj = {};
+          for (let colIdx = 0; colIdx < 10; colIdx++) rowObj[`col${colIdx+1}`] = (colIdx < row.length && row[colIdx] !== undefined && row[colIdx] !== '') ? row[colIdx] : '—';
+          items.push({ id: `${category.sheetId}_${Math.random()}`, category: category.name, title: rowObj.col1 || '—', fullRow: rowObj });
+        }
+      }
+    }
+    const homeContainer = document.getElementById("homePageContainer");
+    homeContainer.innerHTML = `<div class="app-header"><div class="flex-between"><div class="location-row"><i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer; margin-right:10px;"></i><i class="fas fa-folder location-icon"></i><span>${escapeHtml(categoryName)}</span></div><div class="profile-icon"><i class="far fa-user"></i></div></div></div><div class="items-grid" id="itemsGrid">${items.length === 0 ? '<div style="text-align:center; padding:40px;">📭 No items found</div>' : ''}</div>`;
+    document.getElementById("backBtn")?.addEventListener("click", () => renderHomePage());
+    if (items.length > 0) displayItems(items);
+  }
+
+  function displayItems(items) {
+    const gridContainer = document.getElementById("itemsGrid");
+    if (!gridContainer) return;
+    let gridHtml = '';
+    items.forEach((item, idx) => {
+      gridHtml += `<div class="item-card" data-item-idx="${idx}"><div class="item-icon"><i class="fas fa-file-alt"></i></div><div class="item-details"><div class="item-title">📄 ${escapeHtml(String(item.title).substring(0, 50))}</div><div class="item-subtitle"><i class="fas fa-calendar"></i> Item ${idx + 1}</div><span class="item-badge"><i class="fas fa-info-circle"></i> Click for details</span></div></div>`;
+    });
+    gridContainer.innerHTML = gridHtml;
+    document.querySelectorAll('.item-card[data-item-idx]').forEach(card => {
+      card.addEventListener('click', () => { const idx = parseInt(card.dataset.itemIdx); openModal(items[idx]); });
+    });
+  }
+
+  function openModal(item) {
+    const fullRow = item.fullRow || {};
+    const fields = [{ label: 'Column 1', value: fullRow.col1 || '—' },{ label: 'Column 2', value: fullRow.col2 || '—' },{ label: 'Column 3', value: fullRow.col3 || '—' },{ label: 'Column 4', value: fullRow.col4 || '—' },{ label: 'Column 5', value: fullRow.col5 || '—' },{ label: 'Column 6', value: fullRow.col6 || '—' },{ label: 'Column 7', value: fullRow.col7 || '—' },{ label: 'Column 8', value: fullRow.col8 || '—' },{ label: 'Column 9', value: fullRow.col9 || '—' },{ label: 'Column 10', value: fullRow.col10 || '—' }];
+    const sheetIdPattern = /[a-zA-Z0-9_-]{30,}/;
+    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    let bodyHtml = '';
+    fields.forEach(field => {
+      const isSheetId = sheetIdPattern.test(field.value) && field.value.length > 30;
+      if (isSheetId) bodyHtml += `<div class="detail-row sheet-link" onclick="window.open('https://docs.google.com/spreadsheets/d/${field.value}', '_blank')"><div class="detail-label">🔗 ${field.label} (Click to open)</div><div class="detail-value">📊 ${escapeHtml(field.value)}</div></div>`;
+      else bodyHtml += `<div class="detail-row"><div class="detail-label">📌 ${field.label}</div><div class="detail-value">${escapeHtml(field.value)}</div></div>`;
+    });
+    modal.innerHTML = `<div class="modal-container"><div class="modal-header"><h3><i class="fas fa-info-circle"></i> Full Record · ${escapeHtml(item.category)}</h3><button class="modal-close"><i class="fas fa-times"></i></button></div><div class="modal-body">${bodyHtml}<div class="detail-row" style="background:#f8fafc; border-radius:0.8rem; margin-top:10px;"><div class="detail-label">📍 Category</div><div class="detail-value"><strong>${escapeHtml(item.category)}</strong></div></div></div></div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  }
+
+  // Products View
+  function showProductsView() {
+    const homeContainer = document.getElementById("homePageContainer");
+    homeContainer.innerHTML = `<div class="app-header"><div class="flex-between"><div class="location-row"><i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer; margin-right:10px;"></i><i class="fas fa-box location-icon"></i><span>All Products</span></div><div class="profile-icon"><i class="far fa-user"></i></div></div><div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchProducts" placeholder="Search products..."></div></div><div class="items-grid" id="productsGrid"><div class="loading"><div class="loading-spinner"></div><p>Loading products...</p></div></div>`;
+    document.getElementById("backBtn")?.addEventListener("click", () => renderHomePage());
+    displayProducts(productsData);
+    document.getElementById("searchProducts")?.addEventListener("input", (e) => { const filtered = productsData.filter(p => p.name.toLowerCase().includes(e.target.value.toLowerCase())); displayProducts(filtered); });
+  }
+
+  function displayProducts(products) {
+    const gridContainer = document.getElementById("productsGrid");
+    if (!gridContainer) return;
+    if (products.length === 0) { gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">📭 No products found</div>`; return; }
+    let gridHtml = '';
+    products.forEach((product, idx) => {
+      gridHtml += `<div class="item-card" data-product-idx="${idx}"><div class="item-icon"><i class="fas ${product.icon}"></i></div><div class="item-details"><div class="item-title">${escapeHtml(product.name)} <span style="font-size:12px; color:var(--primary-color);">${escapeHtml(product.price)}</span></div><div class="item-subtitle">${escapeHtml(product.description)}</div><div><span class="item-badge">⭐ ${product.rating}</span> <span class="item-badge" style="background:#ff9800;">${escapeHtml(product.offer)}</span></div></div></div>`;
+    });
+    gridContainer.innerHTML = gridHtml;
+    document.querySelectorAll('.item-card[data-product-idx]').forEach(card => {
+      card.addEventListener('click', () => { const idx = parseInt(card.dataset.productIdx); const product = products[idx]; showToast(`${product.name} - ${product.price}`); });
+    });
+  }
+
+  // Navigation
+  function navigateTo(page) {
+    currentPage = page;
+    const homeDiv = document.getElementById("homePageContainer");
+    const profileDiv = document.getElementById("profilePageContainer");
+    const offersDiv = document.getElementById("offersPageContainer");
+    
+    homeDiv.classList.add("hidden");
+    profileDiv.classList.add("hidden");
+    offersDiv.classList.add("hidden");
+    
+    if (page === "home") { homeDiv.classList.remove("hidden"); renderHomePage(); }
+    else if (page === "account") { renderProfilePage(); profileDiv.classList.remove("hidden"); }
+    else if (page === "products") { homeDiv.classList.remove("hidden"); showProductsView(); }
+    else if (page === "offers") { offersDiv.classList.remove("hidden"); renderOffersPage(); }
+    else if (page === "explore") { homeDiv.classList.remove("hidden"); showToast("✨ Explore new categories!"); }
+    
+    document.querySelectorAll(".nav-icon").forEach(nav => nav.classList.remove("active"));
+    const activeNav = document.querySelector(`.nav-icon[data-nav="${page}"]`);
+    if (activeNav) activeNav.classList.add("active");
+  }
+
+  function setupBottomNav() {
+    document.querySelectorAll(".nav-icon").forEach(nav => {
+      nav.addEventListener("click", () => {
+        const navType = nav.dataset.nav;
+        if (navType === "home") navigateTo("home");
+        else if (navType === "account") navigateTo("account");
+        else if (navType === "products") navigateTo("products");
+        else if (navType === "offers") navigateTo("offers");
+        else if (navType === "explore") navigateTo("explore");
+      });
+    });
+  }
+
+  function getDefaultAds() {
+    return [
+      { title: "🔥 Special Offer!", description: "Check out our latest deals", offer: "Limited Time", link: "", icon: "fa-tag", fullDetails: "Get up to 50% off on selected items!" },
+      { title: "✨ New Updates", description: "Explore new features", offer: "Click to learn more", link: "", icon: "fa-star", fullDetails: "New features added regularly. Stay tuned!" },
+      { title: "🎉 Weekend Sale", description: "Up to 50% off", offer: "Use Code: WEEKEND", link: "", icon: "fa-gift", fullDetails: "Valid on weekends only. Minimum purchase ₹999." }
+    ];
+  }
+
+  function getDefaultProducts() {
+    return [
+      { name: "Wireless Headphones", category: "Electronics", price: "₹2499", description: "Noise Cancellation", icon: "fa-headphones", rating: "4.5", offer: "10% OFF" },
+      { name: "Cotton T-Shirt", category: "Fashion", price: "₹599", description: "Premium Quality", icon: "fa-tshirt", rating: "4.3", offer: "Buy 2 Get 10%" },
+      { name: "Fresh Apples", category: "Groceries", price: "₹180", description: "Organic", icon: "fa-apple-alt", rating: "4.6", offer: "Free Delivery" }
+    ];
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  async function initApp() {
+    setupBottomNav();
+    const configLoaded = await loadMasterConfig();
+    if (configLoaded) {
+      await Promise.all([loadAdvertisements(), loadProductsData()]);
+      await renderHomePage();
+    } else {
+      document.getElementById("homePageContainer").innerHTML = `<div style="text-align:center; padding:50px;"><i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6e2e;"></i><p style="margin-top:20px;">Failed to load configuration.</p><p style="font-size:12px; color:gray;">Make sure your master sheet is published to web</p></div>`;
+    }
+  }
+  
+  initApp();
+</script>
+</body>
+</html>
