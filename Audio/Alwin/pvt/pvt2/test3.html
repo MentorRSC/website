@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Multi-Sheet App Framework | Theme Customizer</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      transition: background 0.2s ease;
+    }
+
+    /* Theme Variables - Default Orange */
+    :root {
+      --primary-color: #ff6e2e;
+      --primary-dark: #e55a1e;
+      --primary-light: #ff8c42;
+      --secondary-color: #2e7d32;
+      --bg-gray: #f8f8f8;
+      --text-dark: #1a1a1a;
+      --text-light: #6e6e6e;
+      --border-light: #f0f0f0;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.04);
+      --radius-card: 20px;
+      --radius-btn: 40px;
+      --card-bg: #ffffff;
+      --header-bg: #ffffff;
+      --nav-bg: rgba(255,255,255,0.98);
+      --body-bg: #ffffff;
+    }
+
+    /* Dark Theme */
+    body.dark-theme {
+      --primary-color: #ff8c42;
+      --primary-dark: #e67e22;
+      --primary-light: #ffaa66;
+      --bg-gray: #2d2d2d;
+      --text-dark: #f0f0f0;
+      --text-light: #bbbbbb;
+      --border-light: #3a3a3a;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.3);
+      --card-bg: #1e1e1e;
+      --header-bg: #1e1e1e;
+      --nav-bg: rgba(30,30,30,0.98);
+      --body-bg: #121212;
+    }
+    body.dark-theme .app-shell { background: #121212; }
+    body.dark-theme .search-box { background: #2d2d2d; color: #fff; }
+    body.dark-theme .search-box input { color: #fff; }
+    body.dark-theme .item-card { background: #1e1e1e; border-color: #3a3a3a; }
+    body.dark-theme .info-card { background: #2d2d2d; }
+    body.dark-theme .transaction-item { background: #2d2d2d; }
+    body.dark-theme .level-badge { background: linear-gradient(135deg, #ffd89b, #c7e9fb); color: #333; }
+
+    /* Black Theme (Amoled) */
+    body.black-theme {
+      --primary-color: #ff6e2e;
+      --primary-dark: #e55a1e;
+      --bg-gray: #0a0a0a;
+      --text-dark: #ffffff;
+      --text-light: #aaaaaa;
+      --border-light: #2a2a2a;
+      --card-bg: #000000;
+      --header-bg: #000000;
+      --nav-bg: rgba(0,0,0,0.98);
+      --body-bg: #000000;
+    }
+    body.black-theme .app-shell { background: #000000; }
+    body.black-theme .item-card { background: #0a0a0a; border-color: #2a2a2a; }
+
+    /* Cyan Theme */
+    body.cyan-theme {
+      --primary-color: #00bcd4;
+      --primary-dark: #0097a7;
+      --primary-light: #26c6da;
+    }
+
+    /* Pista (Light Green) Theme */
+    body.pista-theme {
+      --primary-color: #8bc34a;
+      --primary-dark: #689f38;
+      --primary-light: #9ccc65;
+    }
+
+    /* Blue Theme */
+    body.blue-theme {
+      --primary-color: #2196f3;
+      --primary-dark: #1976d2;
+      --primary-light: #42a5f5;
+    }
+
+    /* Violet Theme */
+    body.violet-theme {
+      --primary-color: #9c27b0;
+      --primary-dark: #7b1fa2;
+      --primary-light: #ab47bc;
+    }
+
+    /* Red Theme */
+    body.red-theme {
+      --primary-color: #f44336;
+      --primary-dark: #d32f2f;
+      --primary-light: #ef5350;
+    }
+
+    /* Yellow Theme */
+    body.yellow-theme {
+      --primary-color: #ffc107;
+      --primary-dark: #ffa000;
+      --primary-light: #ffca28;
+      --text-dark: #1a1a1a;
+    }
+
+    /* Green Theme */
+    body.green-theme {
+      --primary-color: #4caf50;
+      --primary-dark: #388e3c;
+      --primary-light: #66bb6a;
+    }
+
+    /* Indigo Theme */
+    body.indigo-theme {
+      --primary-color: #3f51b5;
+      --primary-dark: #303f9f;
+      --primary-light: #5c6bc0;
+    }
+
+    /* White Theme */
+    body.white-theme {
+      --primary-color: #607d8b;
+      --primary-dark: #455a64;
+      --primary-light: #78909c;
+      --bg-gray: #f5f5f5;
+      --card-bg: #ffffff;
+    }
+
+    /* Card Radius Styles */
+    body.card-radius-square {
+      --radius-card: 8px;
+    }
+    body.card-radius-round {
+      --radius-card: 40px;
+    }
+    body.card-radius-default {
+      --radius-card: 20px;
+    }
+
+    /* Text Size */
+    body.text-size-small {
+      font-size: 13px;
+    }
+    body.text-size-medium {
+      font-size: 15px;
+    }
+    body.text-size-large {
+      font-size: 17px;
+    }
+
+    /* Text Color override */
+    body.text-color-light .item-title,
+    body.text-color-light .user-name,
+    body.text-color-light .detail-value,
+    body.text-color-light .info-value,
+    body.text-color-light .location-row span {
+      color: #f0f0f0 !important;
+    }
+    body.text-color-dark .item-title,
+    body.text-color-dark .user-name,
+    body.text-color-dark .detail-value,
+    body.text-color-dark .info-value,
+    body.text-color-dark .location-row span {
+      color: #1a1a1a !important;
+    }
+
+    .app-shell {
+      max-width: 450px;
+      width: 100%;
+      background: var(--body-bg);
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .app-shell::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-shell::-webkit-scrollbar-track {
+      background: #eaeaea;
+    }
+    .app-shell::-webkit-scrollbar-thumb {
+      background: var(--primary-color);
+      border-radius: 10px;
+    }
+
+    .hidden { display: none !important; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-center { display: flex; justify-content: center; align-items: center; }
+
+    .app-header {
+      background: var(--header-bg);
+      padding: 18px 16px 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .location-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+    .location-icon { color: var(--primary-color); font-size: 20px; }
+    .profile-icon {
+      background: var(--bg-gray);
+      border-radius: 50%;
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .profile-icon:active { transform: scale(0.95); }
+
+    /* Theme Icon Button */
+    .theme-icon-btn {
+      background: var(--bg-gray);
+      border-radius: 50%;
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-right: 8px;
+    }
+    .theme-icon-btn:active { transform: scale(0.95); }
+
+    /* Theme Panel */
+    .theme-panel {
+      position: fixed;
+      top: 70px;
+      right: 0;
+      max-width: 320px;
+      width: calc(100% - 20px);
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.2);
+      z-index: 1000;
+      padding: 16px;
+      border: 1px solid var(--border-light);
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    .theme-panel.hidden {
+      display: none;
+    }
+    .theme-panel h4 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .theme-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .theme-color-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.1s;
+    }
+    .theme-color-btn.active {
+      border-color: var(--primary-color);
+      transform: scale(1.1);
+      box-shadow: 0 0 0 2px white;
+    }
+    .theme-color-btn.white { background: #607d8b; }
+    .theme-color-btn.black { background: #000000; }
+    .theme-color-btn.dark { background: #2c2c2c; }
+    .theme-color-btn.cyan { background: #00bcd4; }
+    .theme-color-btn.pista { background: #8bc34a; }
+    .theme-color-btn.blue { background: #2196f3; }
+    .theme-color-btn.violet { background: #9c27b0; }
+    .theme-color-btn.red { background: #f44336; }
+    .theme-color-btn.yellow { background: #ffc107; }
+    .theme-color-btn.green { background: #4caf50; }
+    .theme-color-btn.indigo { background: #3f51b5; }
+
+    .card-style-options, .text-size-options, .text-color-options {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .style-btn {
+      background: var(--bg-gray);
+      padding: 6px 12px;
+      border-radius: 30px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-dark);
+      border: 1px solid var(--border-light);
+    }
+    .style-btn.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    /* 2-Column Cards Grid for Ads below banner */
+    .offers-grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 8px 12px 16px 12px;
+    }
+    .offer-mini-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-light);
+      padding: 12px;
+      cursor: pointer;
+      transition: transform 0.1s;
+      text-align: center;
+    }
+    .offer-mini-card:active { transform: scale(0.97); }
+    .offer-mini-card i {
+      font-size: 28px;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+    .offer-mini-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-dark);
+    }
+    .offer-mini-card p {
+      font-size: 11px;
+      color: var(--text-light);
+    }
+    .offer-mini-badge {
+      background: var(--primary-color);
+      color: white;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    .search-box {
+      margin-top: 14px;
+      background: var(--bg-gray);
+      border-radius: 30px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-box i { color: var(--primary-color); font-size: 18px; }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+    }
+
+    .items-grid {
+      padding: 8px 12px 80px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .item-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      display: flex;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .item-card:active { transform: scale(0.98); }
+    .item-icon {
+      width: 85px;
+      height: 85px;
+      background: linear-gradient(135deg, var(--primary-color)20, var(--primary-light)20);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: var(--primary-color);
+    }
+    .item-details { flex: 1; }
+    .item-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+    .item-subtitle {
+      font-size: 12px;
+      color: var(--text-light);
+      margin: 4px 0;
+    }
+    .item-badge {
+      background: var(--primary-color);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    .bottom-nav-fixed {
+      background: var(--nav-bg);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 20px 18px;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 450px;
+      backdrop-filter: blur(2px);
+      z-index: 20;
+    }
+    .nav-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #8e8e8e;
+      cursor: pointer;
+      transition: color 0.2s;
+      flex: 1;
+      text-align: center;
+    }
+    .nav-icon i { font-size: 22px; }
+    .nav-icon.active { color: var(--primary-color); font-weight: 500; }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 1rem;
+    }
+    .modal-container {
+      background: var(--card-bg);
+      max-width: 400px;
+      width: 100%;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+    }
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+    }
+    .toast-message {
+      visibility: hidden;
+      min-width: 180px;
+      background-color: #323232;
+      color: #fff;
+      text-align: center;
+      border-radius: 50px;
+      padding: 10px 18px;
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast-message.show { visibility: visible; opacity: 1; }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <div id="homePageContainer"></div>
+  <div id="profilePageContainer" class="hidden"></div>
+  <div id="offersPageContainer" class="hidden"></div>
+
+  <div class="bottom-nav-fixed" id="bottomNav">
+    <div class="nav-icon" data-nav="home"><i class="fas fa-home"></i><span>Home</span></div>
+    <div class="nav-icon" data-nav="explore"><i class="fas fa-compass"></i><span>Explore</span></div>
+    <div class="nav-icon" data-nav="products"><i class="fas fa-box"></i><span>Products</span></div>
+    <div class="nav-icon" data-nav="offers"><i class="fas fa-tag"></i><span>Offers</span></div>
+    <div class="nav-icon" data-nav="account"><i class="fas fa-user"></i><span>Account</span></div>
+  </div>
+  <div id="globalToast" class="toast-message"></div>
+  <div id="themePanel" class="theme-panel hidden"></div>
+</div>
+
+<script>
+  // ==================== BACKEND CODE (unchanged logic) ====================
+  const MASTER_SHEET_ID = '1rUZxPS_O6ul2h-xcuxHx4xUtU5Gp6429b8ogeb8gV5Q';
+  const APP_NAME = "Multi-Sheet Explorer";
+  let masterConfig = {}, categoriesData = [], advertisements = [], productsData = [];
+  let currentPage = "home", currentAdIndex = 0, autoSlideInterval = null;
+  let isLoggedIn = false, currentUser = null, userTransactions = [];
+
+  function showToast(msg) {
+    const toastEl = document.getElementById("globalToast");
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
+  function parseCSV(csvText) { /* unchanged */ 
+    const rows = []; let currentRow = [], currentField = '', insideQuotes = false, i = 0, len = csvText.length;
+    while (i < len) { const ch = csvText[i], nextCh = csvText[i+1];
+      if (ch === '"') { if (insideQuotes && nextCh === '"') { currentField += '"'; i++; } else { insideQuotes = !insideQuotes; } }
+      else if (ch === ',' && !insideQuotes) { currentRow.push(currentField); currentField = ''; }
+      else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) { currentRow.push(currentField); if (currentRow.length > 0) rows.push(currentRow); currentRow = []; currentField = ''; if (ch === '\r') i++; }
+      else if (ch === '\r' && !insideQuotes) { currentRow.push(currentField); if (currentRow.length > 0) rows.push(currentRow); currentRow = []; currentField = ''; }
+      else { currentField += ch; } i++;
+    }
+    if (currentField !== '' || currentRow.length > 0) { currentRow.push(currentField); if (currentRow.length > 0) rows.push(currentRow); }
+    return rows.map(row => row.map(cell => { let cleaned = String(cell).trim(); if (cleaned.startsWith('"') && cleaned.endsWith('"')) cleaned = cleaned.slice(1, -1).replace(/""/g, '"'); return cleaned; }));
+  }
+  async function fetchSheetData(sheetId) { if (!sheetId) return null; try { const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`; const response = await fetch(url); if (!response.ok) throw new Error(); const csvText = await response.text(); return parseCSV(csvText); } catch(err) { return null; } }
+  async function loadMasterConfig() { /* unchanged */ try { const parsed = await fetchSheetData(MASTER_SHEET_ID); if (!parsed || parsed.length < 2) throw new Error(); for (let idx = 1; idx < parsed.length; idx++) { const row = parsed[idx]; const type = (row[0] || '').toLowerCase().trim(); const name = row[1] || '', data = row[2] || '', extra = row[3] || '', active = (row[4] || 'yes').toLowerCase() === 'yes'; if (!active) continue; if (type === 'categories' || type === 'category') categoriesData.push({ name: name, sheetId: data, description: extra }); else if (type === 'ads' || type === 'advertisement') masterConfig.adSheetId = data; else if (type === 'user' || type === 'userdata') masterConfig.userSheetId = data; else if (type === 'products' || type === 'product') masterConfig.productsSheetId = data; } return true; } catch(err) { showToast('Failed to load config'); return false; } }
+  async function loadAdvertisements() { if (!masterConfig.adSheetId) { advertisements = getDefaultAds(); return; } const parsed = await fetchSheetData(masterConfig.adSheetId); if (parsed && parsed.length > 1) { const ads = []; for (let i = 1; i < parsed.length; i++) { const row = parsed[i]; if (row.length >= 1 && row[0] && row[0].trim() !== '') ads.push({ title: row[0] || 'Special Offer', description: row[1] || 'Limited time deal', offer: row[2] || 'Grab it now', link: row[3] || '', icon: row[4] || 'fa-tag', fullDetails: row[5] || row[1] || 'Click for more details' }); } advertisements = ads.length > 0 ? ads : getDefaultAds(); } else { advertisements = getDefaultAds(); } }
+  async function loadProductsData() { if (!masterConfig.productsSheetId) { productsData = getDefaultProducts(); return; } const parsed = await fetchSheetData(masterConfig.productsSheetId); if (parsed && parsed.length > 1) { const products = []; for (let i = 1; i < parsed.length; i++) { const row = parsed[i]; if (row.length >= 1 && row[0] && row[0].trim() !== '') products.push({ name: row[0] || 'Product', category: row[1] || 'General', price: row[2] || '₹299', description: row[3] || 'Premium quality', icon: row[4] || 'fa-box', rating: row[5] || '4.0', offer: row[6] || 'Best Deal' }); } productsData = products.length > 0 ? products : getDefaultProducts(); } else { productsData = getDefaultProducts(); } }
+  async function validateUserLogin(username, password) { if (!masterConfig.userSheetId) return false; const parsed = await fetchSheetData(masterConfig.userSheetId); if (parsed && parsed.length > 1) { for (let i = 1; i < parsed.length; i++) { const row = parsed[i]; if ((row[0] || '') === username && (row[1] || '') === password) { await loadUserDetails(row[2] || '', username); return true; } } } return false; }
+  async function loadUserDetails(userSheetId, username) { const parsed = await fetchSheetData(userSheetId); if (parsed && parsed.length > 1) { const row = parsed[1]; currentUser = { username, name: row[0] || username, regId: row[1] || 'REG' + Math.random().toString(36).substr(2,6).toUpperCase(), phone: row[2] || '+91 9876543210', email: row[3] || username + '@example.com', state: row[4] || 'Unknown', joinedDate: row[5] || new Date().toLocaleDateString(), level: row[6] || 'Bronze', avatar: row[7] || 'fa-user-circle', personalSheetId: userSheetId }; userTransactions = []; for (let i = 2; i < parsed.length; i++) { const t = parsed[i]; if (t.length >= 2 && t[0] && t[0].trim() !== '') userTransactions.push({ date: t[0] || '', description: t[1] || '', amount: t[2] || '', status: t[3] || 'Completed' }); } } else { currentUser = { username, name: username, regId: 'REG' + Math.random().toString(36).substr(2,6).toUpperCase(), phone: '+91 9876543210', email: username + '@example.com', state: 'Unknown', joinedDate: new Date().toLocaleDateString(), level: 'Bronze', avatar: 'fa-user-circle' }; userTransactions = []; } }
+  function showLoginModal() { /* unchanged but using theme vars */ const modal = document.createElement('div'); modal.className = 'modal-overlay'; modal.innerHTML = `<div class="modal-container"><div class="modal-header"><h3><i class="fas fa-lock"></i> Login Required</h3><button class="modal-close" id="closeLoginBtn"><i class="fas fa-times"></i></button></div><div class="modal-body"><input type="text" id="loginUsername" class="login-input" placeholder="Username" style="width:100%;padding:12px;margin:8px 0;border-radius:12px;border:1px solid var(--border-light);background:var(--bg-gray);color:var(--text-dark);"><input type="password" id="loginPassword" class="login-input" placeholder="Password" style="width:100%;padding:12px;margin:8px 0;border-radius:12px;border:1px solid var(--border-light);background:var(--bg-gray);color:var(--text-dark);"><div id="loginError" class="error-msg"></div><button id="loginSubmitBtn" class="login-btn" style="background:var(--primary-color);padding:12px;border-radius:40px;width:100%;color:white;">Login</button></div></div>`; document.body.appendChild(modal); const close = () => modal.remove(); document.getElementById('closeLoginBtn').addEventListener('click', close); modal.addEventListener('click', (e) => { if (e.target === modal) close(); }); document.getElementById('loginSubmitBtn').addEventListener('click', async () => { const username = document.getElementById('loginUsername').value, password = document.getElementById('loginPassword').value; if (!username || !password) { document.getElementById('loginError').innerText = 'Enter credentials'; return; } const valid = await validateUserLogin(username, password); if (valid) { isLoggedIn = true; close(); showToast(`Welcome ${currentUser.name}!`); renderProfilePage(); navigateTo('account'); } else { document.getElementById('loginError').innerText = 'Invalid'; } }); }
+  function renderProfilePage() { if (!isLoggedIn) { showLoginModal(); return; } const html = `<div class="profile-container" style="padding:24px 20px;"><div class="profile-cover" style="background:linear-gradient(135deg, var(--primary-color), var(--primary-light));height:120px;border-radius:20px;margin-bottom:60px;position:relative;"><div class="profile-avatar" style="position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);background:var(--card-bg);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:50px;color:var(--primary-color);box-shadow:0 4px 20px rgba(0,0,0,0.15);border:4px solid white;"><i class="fas ${currentUser.avatar}"></i></div></div><div class="user-name" style="text-align:center;font-size:24px;font-weight:700;color:var(--text-dark);">${escapeHtml(currentUser.name)}</div><div class="user-regid" style="text-align:center;color:var(--text-light);">ID: ${escapeHtml(currentUser.regId)}</div><div class="info-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0;">${[['Phone',currentUser.phone],['Email',currentUser.email],['State',currentUser.state],['Joined',currentUser.joinedDate]].map(([l,v])=>`<div class="info-card" style="background:var(--bg-gray);border-radius:16px;padding:12px;text-align:center;"><div class="info-label" style="font-size:11px;color:var(--text-light);">${l}</div><div class="info-value" style="font-weight:600;color:var(--text-dark);">${escapeHtml(v)}</div></div>`).join('')}</div><div style="text-align:center;"><div class="level-badge" style="background:linear-gradient(135deg,#ffd89b,#c7e9fb);padding:8px 16px;border-radius:30px;">⭐ Level: ${currentUser.level} ⭐</div></div><div class="transactions-list"><h3>📋 Recent Transactions</h3>${userTransactions.map(t=>`<div class="transaction-item" style="background:var(--bg-gray);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;"><div><strong>${t.date}</strong><br><small>${t.description}</small></div><div style="color:var(--primary-color);">${t.amount}</div></div>`).join('') || '<div style="text-align:center;">No transactions</div>'}</div><button class="logout-btn" id="logoutBtn" style="background:none;border:1px solid var(--primary-color);color:var(--primary-color);padding:12px;border-radius:40px;width:100%;margin-top:20px;">Logout</button></div>`; document.getElementById("profilePageContainer").innerHTML = html; document.getElementById("logoutBtn")?.addEventListener("click", () => { isLoggedIn = false; currentUser = null; showToast('Logged out'); navigateTo('home'); }); }
+  function renderOffersPage() { /* simplified but functional */ const html = `<div class="app-header"><div class="flex-between"><div class="location-row"><i class="fas fa-tag location-icon"></i><span>Special Offers</span></div><div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div></div></div><div class="offers-grid-2col" id="offersGrid2col"></div>`; document.getElementById("offersPageContainer").innerHTML = html; const grid = document.getElementById("offersGrid2col"); if(grid) grid.innerHTML = advertisements.map((ad,idx)=>`<div class="offer-mini-card" data-offer-idx="${idx}"><i class="fas ${ad.icon}"></i><h4>${escapeHtml(ad.title)}</h4><p>${escapeHtml(ad.description)}</p><div class="offer-mini-badge">${escapeHtml(ad.offer)}</div></div>`).join(''); document.querySelectorAll('.offer-mini-card').forEach(c=>c.addEventListener('click',()=>showOfferPopup(advertisements[parseInt(c.dataset.offerIdx)]))); document.getElementById("profileIconBtn")?.addEventListener("click",()=>navigateTo("account")); }
+  function showOfferPopup(ad) { const modal = document.createElement('div'); modal.className = 'modal-overlay'; modal.innerHTML = `<div class="modal-container"><div class="modal-header"><h3><i class="fas ${ad.icon}"></i> ${escapeHtml(ad.title)}</h3><button class="modal-close"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="detail-row"><div class="detail-label">📝 Description</div><div class="detail-value">${escapeHtml(ad.description)}</div></div><div class="detail-row"><div class="detail-label">🎁 Offer</div><div class="detail-value">${escapeHtml(ad.offer)}</div></div><div class="detail-row"><div class="detail-label">ℹ️ Info</div><div class="detail-value">${escapeHtml(ad.fullDetails || 'Limited time offer.')}</div></div></div></div>`; document.body.appendChild(modal); modal.querySelector('.modal-close').addEventListener('click',()=>modal.remove()); modal.addEventListener('click',(e)=>{if(e.target===modal)modal.remove();}); }
+  function getDefaultAds() { return [{ title:"🔥 Special Offer!", description:"Check out deals", offer:"50% OFF", icon:"fa-tag", fullDetails:"Great savings!"},{ title:"✨ New Updates", description:"Explore features", offer:"Learn more", icon:"fa-star", fullDetails:"Stay tuned"},{ title:"🎉 Weekend Sale", description:"Up to 50% off", offer:"Use Code", icon:"fa-gift", fullDetails:"Weekend only"},{ title:"⚡ Flash Sale", description:"Limited stock", offer:"Grab now", icon:"fa-bolt", fullDetails:"Hurry!"}]; }
+  function getDefaultProducts() { return [{ name:"Wireless Headphones", price:"₹2499", description:"Noise Cancellation", icon:"fa-headphones", rating:"4.5", offer:"10% OFF"},{ name:"Cotton T-Shirt", price:"₹599", description:"Premium", icon:"fa-tshirt", rating:"4.3", offer:"Buy 2 Get 10%"},{ name:"Fresh Apples", price:"₹180", description:"Organic", icon:"fa-apple-alt", rating:"4.6", offer:"Free Delivery"}]; }
+  function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  async function renderHomePage() { /* with 2-col offers grid below banner */ const homeHtml = `<div class="app-header"><div class="flex-between"><div class="location-row"><i class="fas fa-map-marker-alt location-icon"></i><span>${APP_NAME}</span></div><div style="display:flex;"><div class="theme-icon-btn" id="themeToggleBtn"><i class="fas fa-palette"></i></div><div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div></div></div><div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInputGlobal" placeholder="Search categories..."></div></div><div class="banner-area" id="dynamicBannerArea"><div class="loading-spinner"></div></div><div class="offers-grid-2col" id="miniOffersGrid"></div><div class="items-grid" id="categoriesGrid"><div class="loading-spinner"></div></div>`; document.getElementById("homePageContainer").innerHTML = homeHtml; setupCarousel(); await displayCategoriesGrid(); document.getElementById("searchInputGlobal")?.addEventListener("input", (e)=>filterCategories(e.target.value)); document.getElementById("profileIconBtn")?.addEventListener("click",()=>navigateTo("account")); document.getElementById("themeToggleBtn")?.addEventListener("click",()=>toggleThemePanel()); renderMiniOffersGrid(); }
+  function renderMiniOffersGrid(){ const container = document.getElementById("miniOffersGrid"); if(container && advertisements.length){ container.innerHTML = advertisements.slice(0,4).map((ad,idx)=>`<div class="offer-mini-card" data-mini-offer="${idx}"><i class="fas ${ad.icon}"></i><h4>${escapeHtml(ad.title)}</h4><p>${escapeHtml(ad.description)}</p><div class="offer-mini-badge">${escapeHtml(ad.offer)}</div></div>`).join(''); document.querySelectorAll('[data-mini-offer]').forEach(c=>c.addEventListener('click',()=>showOfferPopup(advertisements[parseInt(c.dataset.miniOffer)]))); } }
+  async function displayCategoriesGrid(filter=''){ const grid = document.getElementById("categoriesGrid"); if(!grid) return; let filtered = categoriesData.filter(c=>c.name.toLowerCase().includes(filter.toLowerCase())); if(!filtered.length){ grid.innerHTML=`<div style="text-align:center;padding:40px;">🔍 No categories</div>`; return; } grid.innerHTML = filtered.map(cat=>`<div class="item-card" data-category="${cat.name}"><div class="item-icon"><i class="fas fa-folder"></i></div><div class="item-details"><div class="item-title">${escapeHtml(cat.name)}</div><div class="item-subtitle">${escapeHtml(cat.description||'Items')}</div><span class="item-badge">Click to view</span></div></div>`).join(''); document.querySelectorAll('.item-card[data-category]').forEach(card=>card.addEventListener('click',async()=>{ const name = card.dataset.category; const cat = categoriesData.find(c=>c.name===name); if(cat?.sheetId){ const data = await fetchSheetData(cat.sheetId); showToast(`Loaded ${name}`); } else showToast('No data'); })); }
+  function filterCategories(txt){ displayCategoriesGrid(txt); }
+  function setupCarousel(){ /* minimal banner carousel */ const banner = document.getElementById("dynamicBannerArea"); if(!banner||!advertisements.length) return; let idx=0; banner.innerHTML = `<div class="ad-carousel-container" style="position:relative;"><div id="adSlideContent" class="ad-slide" style="background:linear-gradient(135deg, var(--primary-color), var(--primary-light));border-radius:var(--radius-card);padding:20px;text-align:center;color:white;cursor:pointer;"><i class="fas ${advertisements[0].icon}" style="font-size:32px;"></i><h3>${advertisements[0].title}</h3><p>${advertisements[0].description}</p><div class="offer-badge">${advertisements[0].offer}</div></div><div class="carousel-dots" style="display:flex;justify-content:center;gap:8px;margin-top:8px;"></div></div>`; const update = () => { const slideDiv = document.getElementById("adSlideContent"); if(slideDiv){ slideDiv.innerHTML = `<i class="fas ${advertisements[idx].icon}" style="font-size:32px;"></i><h3>${advertisements[idx].title}</h3><p>${advertisements[idx].description}</p><div class="offer-badge">${advertisements[idx].offer}</div>`; slideDiv.onclick = ()=>showOfferPopup(advertisements[idx]); } document.querySelectorAll('.dot').forEach((dot,i)=>{ dot.classList.toggle('active',i===idx); }); }; const dotsDiv = banner.querySelector('.carousel-dots'); dotsDiv.innerHTML = advertisements.map((_,i)=>`<div class="dot ${i===0?'active':''}" data-dot="${i}"></div>`).join(''); document.querySelectorAll('.dot').forEach(dot=>dot.addEventListener('click',()=>{ idx=parseInt(dot.dataset.dot); update(); })); setInterval(()=>{ idx = (idx+1)%advertisements.length; update(); },4000); update(); }
+  function showProductsView() { const container = document.getElementById("homePageContainer"); container.innerHTML = `<div class="app-header"><div class="flex-between"><div class="location-row"><i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer;"></i><span>Products</span></div><div class="theme-icon-btn" id="themeToggleBtn2"><i class="fas fa-palette"></i></div></div><div class="search-box"><i class="fas fa-search"></i><input id="searchProducts" placeholder="Search..."></div></div><div class="items-grid" id="productsGrid"></div>`; document.getElementById("backBtn")?.addEventListener("click",()=>renderHomePage()); document.getElementById("themeToggleBtn2")?.addEventListener("click",()=>toggleThemePanel()); const filtered = (txt) => productsData.filter(p=>p.name.toLowerCase().includes(txt)); const renderProds = (prods) => { const g = document.getElementById("productsGrid"); if(g) g.innerHTML = prods.map(p=>`<div class="item-card"><div class="item-icon"><i class="fas ${p.icon}"></i></div><div class="item-details"><div class="item-title">${p.name} <span style="color:var(--primary-color);">${p.price}</span></div><div class="item-subtitle">${p.description}</div><span class="item-badge">⭐ ${p.rating}</span></div></div>`).join(''); }; renderProds(productsData); document.getElementById("searchProducts")?.addEventListener("input",e=>renderProds(filtered(e.target.value.toLowerCase()))); }
+  function navigateTo(page){ currentPage = page; document.getElementById("homePageContainer").classList.add("hidden"); document.getElementById("profilePageContainer").classList.add("hidden"); document.getElementById("offersPageContainer").classList.add("hidden"); if(page === "home"){ document.getElementById("homePageContainer").classList.remove("hidden"); renderHomePage(); } else if(page === "account"){ renderProfilePage(); document.getElementById("profilePageContainer").classList.remove("hidden"); } else if(page === "products"){ document.getElementById("homePageContainer").classList.remove("hidden"); showProductsView(); } else if(page === "offers"){ document.getElementById("offersPageContainer").classList.remove("hidden"); renderOffersPage(); } else if(page === "explore"){ showToast("✨ Explore new categories!"); navigateTo("home"); } document.querySelectorAll(".nav-icon").forEach(nav=>nav.classList.remove("active")); const active = document.querySelector(`.nav-icon[data-nav="${page}"]`); if(active) active.classList.add("active"); }
+  function setupBottomNav(){ document.querySelectorAll(".nav-icon").forEach(nav=>nav.addEventListener("click",()=>navigateTo(nav.dataset.nav))); }
+
+  // ========== THEME CUSTOMIZER (UI ONLY) ==========
+  function toggleThemePanel() { const panel = document.getElementById("themePanel"); panel.classList.toggle("hidden"); if(!panel.classList.contains("hidden")) renderThemePanel(); }
+  function renderThemePanel() { const panel = document.getElementById("themePanel"); if(!panel) return; panel.innerHTML = `<h4><i class="fas fa-palette"></i> Theme Studio</h4><div class="theme-options">${['white','black','dark','cyan','pista','blue','violet','red','yellow','green','indigo'].map(c=>`<div class="theme-color-btn ${c}" data-theme="${c}" style="background:${c==='white'?'#607d8b':c==='black'?'#000':c==='dark'?'#2c2c2c':c==='cyan'?'#00bcd4':c==='pista'?'#8bc34a':c==='blue'?'#2196f3':c==='violet'?'#9c27b0':c==='red'?'#f44336':c==='yellow'?'#ffc107':c==='green'?'#4caf50':'#3f51b5'}"></div>`).join('')}</div><div class="card-style-options"><div class="style-btn" data-card="default">Round 20px</div><div class="style-btn" data-card="square">Square</div><div class="style-btn" data-card="round">Round 40px</div></div><div class="text-size-options"><div class="style-btn" data-size="small">Small</div><div class="style-btn" data-size="medium">Medium</div><div class="style-btn" data-size="large">Large</div></div><div class="text-color-options"><div class="style-btn" data-textcolor="dark">Dark Text</div><div class="style-btn" data-textcolor="light">Light Text</div></div>`; document.querySelectorAll('.theme-color-btn').forEach(btn=>btn.addEventListener('click',()=>{ document.body.className = document.body.className.split(' ').filter(c=>!c.endsWith('-theme')).join(' '); document.body.classList.add(`${btn.dataset.theme}-theme`); saveTheme(); })); document.querySelectorAll('[data-card]').forEach(btn=>btn.addEventListener('click',()=>{ document.body.classList.remove('card-radius-square','card-radius-round','card-radius-default'); document.body.classList.add(`card-radius-${btn.dataset.card}`); saveTheme(); })); document.querySelectorAll('[data-size]').forEach(btn=>btn.addEventListener('click',()=>{ document.body.classList.remove('text-size-small','text-size-medium','text-size-large'); document.body.classList.add(`text-size-${btn.dataset.size}`); saveTheme(); })); document.querySelectorAll('[data-textcolor]').forEach(btn=>btn.addEventListener('click',()=>{ document.body.classList.remove('text-color-dark','text-color-light'); document.body.classList.add(`text-color-${btn.dataset.textcolor}`); saveTheme(); })); }
+  function saveTheme(){ localStorage.setItem('app_theme', document.body.className); }
+  function loadTheme(){ const saved = localStorage.getItem('app_theme'); if(saved) document.body.className = saved; else document.body.classList.add('card-radius-default','text-size-medium','text-color-dark'); }
+  async function initApp(){ setupBottomNav(); loadTheme(); const configLoaded = await loadMasterConfig(); if(configLoaded){ await Promise.all([loadAdvertisements(), loadProductsData()]); await renderHomePage(); } else { document.getElementById("homePageContainer").innerHTML = `<div style="text-align:center;padding:50px;">Failed to load config</div>`; } renderThemePanel(); document.getElementById("themePanel").classList.add("hidden"); }
+  initApp();
+</script>
+</body>
+</html>
