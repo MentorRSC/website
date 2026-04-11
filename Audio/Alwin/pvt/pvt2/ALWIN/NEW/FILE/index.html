@@ -103,7 +103,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
- backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -149,38 +149,11 @@
             font-size: 1.6rem;
             font-weight: 700;
             color: #0f172a;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
 
         body.dark .modal-title {
             color: #f1f5f9;
-        }
-
-        .modal-message {
-            font-size: 0.95rem;
-            color: #475569;
-            margin-bottom: 1.8rem;
-            line-height: 1.4;
-        }
-
-        body.dark .modal-message {
-            color: #cbd5e1;
-        }
-
-        .modal-url {
-            background: #f1f5f9;
-            padding: 0.5rem;
-            border-radius: 14px;
-            font-size: 0.8rem;
-            word-break: break-all;
-            margin-bottom: 1.5rem;
-            color: #3b82f6;
-            font-family: monospace;
-        }
-
-        body.dark .modal-url {
-            background: #0f172a;
-            color: #60a5fa;
         }
 
         .proceed-btn {
@@ -200,14 +173,6 @@
         .proceed-btn:hover {
             background: #059669;
             transform: scale(1.02);
-        }
-
-        .error-modal .modal-card {
-            border-top: 5px solid #ef4444;
-        }
-
-        .error-modal .modal-icon {
-            font-size: 3rem;
         }
 
         .error-btn {
@@ -287,12 +252,11 @@
         </div>
     </div>
 
-    <!-- Modal Container (Dynamic) -->
+    <!-- Modal Container (Dynamic) - message and url divs removed -->
     <div id="actionModal" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-icon" id="modalIcon">🔒</div>
             <div class="modal-title" id="modalTitle">Secure Connection</div>
-
             <button id="modalActionBtn" class="proceed-btn">Proceed →</button>
         </div>
     </div>
@@ -310,8 +274,6 @@
             const modalOverlay = document.getElementById('actionModal');
             const modalIcon = document.getElementById('modalIcon');
             const modalTitle = document.getElementById('modalTitle');
-            const modalMessage = document.getElementById('modalMessage');
-            const modalUrlContainer = document.getElementById('modalUrlContainer');
             const modalBtn = document.getElementById('modalActionBtn');
             const toastEl = document.getElementById('toastMsg');
             
@@ -332,19 +294,10 @@
                 }, 3000);
             }
             
-            // Helper: Show modal (either success/proceed or error)
+            // Helper: Show modal (simplified - no message/url divs)
             function showModal(config) {
-                // config: { type, title, message, url, buttonText, onConfirm }
                 modalIcon.textContent = config.icon || (config.type === 'error' ? '⚠️' : '🔒');
                 modalTitle.textContent = config.title;
-                modalMessage.textContent = config.message;
-                
-                if (config.url && config.type !== 'error') {
-                    modalUrlContainer.textContent = `🌐 ${config.url}`;
-                    modalUrlContainer.style.display = 'block';
-                } else {
-                    modalUrlContainer.style.display = 'none';
-                }
                 
                 // Style button based on type
                 if (config.type === 'error') {
@@ -450,68 +403,57 @@
                 
                 // ---- CASE 1: FETCH ERROR (Server Error) ----
                 if (fetchError) {
-                    // Show title fallback
                     titleEl.textContent = "⚠️ Connection Error";
                     titleEl.classList.add('reveal');
                     loaderWrapper.classList.remove('visible');
                     
-                    // Show ERROR modal (server error popup with OK button)
                     showModal({
                         type: 'error',
                         icon: '⚠️',
                         title: 'Server Error',
-                        message: `Unable to fetch configuration.\n${fetchError}`,
                         buttonText: 'OK',
                         onConfirm: () => {
-                            // Just close modal, stay on page
                             console.log("Error acknowledged.");
                         }
                     });
                     return;
                 }
                 
-                // ---- DISPLAY TITLE FROM CELL1 (ONLY VISIBLE TEXT) ----
+                // ---- DISPLAY TITLE FROM CELL1 ----
                 titleEl.textContent = escapeHtml(sheetTitle) || "Untitled";
                 titleEl.classList.add('reveal');
                 
-                // ---- FLAG = 0 : RESTRICTED / NO ENTRY -> SHOW SERVER ERROR MODAL ----
+                // ---- FLAG = 0 : RESTRICTED ----
                 if (sheetFlag === 0) {
                     loaderWrapper.classList.remove('visible');
                     showModal({
                         type: 'error',
                         icon: '🚫',
                         title: 'Access Restricted',
-                        message: 'Server error: Entry not allowed or restricted area. You do not have permission to proceed.',
                         buttonText: 'OK',
                         onConfirm: () => {
-                            // Stay on page, no redirect
                             console.log("Restricted access confirmed.");
                         }
                     });
                     return;
                 }
                 
-                // ---- FLAG = 1 : SHOW 3 SEC LOADER, THEN PROCEED MODAL ----
+                // ---- FLAG = 1 : SHOW LOADER THEN PROCEED MODAL ----
                 if (sheetFlag === 1) {
-                    // Show loader for exactly 3 seconds
                     loaderWrapper.classList.add('visible');
                     await new Promise(resolve => setTimeout(resolve, 3000));
                     loaderWrapper.classList.remove('visible');
                     
-                    // Prepare URL for redirect
                     let finalUrl = sheetUrl.trim();
                     if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
                         finalUrl = 'https://' + finalUrl;
                     }
                     pendingRedirectUrl = finalUrl;
                     
-                    // Show Proceed Modal (Secure connection ready)
                     showModal({
                         type: 'success',
                         icon: '🔒✅',
                         title: 'Secure Connection Active',
-                        message: 'Connection has been securely established. Click Proceed to continue to the protected destination.',
-                        url: pendingRedirectUrl,
                         buttonText: 'Proceed →',
                         onConfirm: () => {
                             if (!redirectTriggered && pendingRedirectUrl) {
@@ -526,13 +468,12 @@
                     return;
                 }
                 
-                // Fallback (should never reach)
+                // Fallback
                 loaderWrapper.classList.remove('visible');
                 showModal({
                     type: 'error',
                     icon: '⚠️',
                     title: 'Unknown State',
-                    message: 'Invalid configuration state.',
                     buttonText: 'OK'
                 });
             }
@@ -568,7 +509,6 @@
                         type: 'error',
                         icon: '🔥',
                         title: 'Critical Error',
-                        message: `Unexpected system error: ${err.message}`,
                         buttonText: 'Reload',
                         onConfirm: () => window.location.reload()
                     });
