@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Smart Launch</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,-apple-system,'Segoe UI','Roboto',sans-serif;background:#f8fafc;min-height:100vh;display:flex;align-items:center;justify-content:center;transition:background .2s}body.dark{background:#0f172a}.launch-container{width:100%;max-width:600px;padding:2rem;text-align:center}.app-title{font-size:2.5rem;font-weight:700;letter-spacing:-.02em;color:#0f172a;margin-bottom:2rem;word-break:break-word;opacity:0;transform:translateY(10px);transition:opacity .4s ease,transform .3s ease}body.dark .app-title{color:#f1f5f9}.app-title.reveal{opacity:1;transform:translateY(0)}.loader-wrapper{margin-top:2rem;display:flex;flex-direction:column;align-items:center;gap:1.2rem;opacity:0;transition:opacity .3s ease}.loader-wrapper.visible{opacity:1}.spinner-ring{width:56px;height:56px;border:4px solid #e2e8f0;border-top:4px solid #3b82f6;border-radius:50%;animation:spin .9s cubic-bezier(0.4,0,0.2,1) infinite}@keyframes spin{to{transform:rotate(360deg)}}.loader-text{font-size:.95rem;font-weight:500;color:#475569;background:rgba(255,255,255,.7);padding:.3rem 1rem;border-radius:40px;backdrop-filter:blur(4px)}body.dark .loader-text{color:#cbd5e1;background:rgba(30,41,59,.6)}.hidden{display:none}.toast-popup{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;color:#fff;padding:.8rem 1.5rem;border-radius:60px;font-size:.9rem;font-weight:500;box-shadow:0 10px 25px -5px rgba(0,0,0,.2);z-index:1000;transition:transform .3s ease;backdrop-filter:blur(8px);background:rgba(15,23,42,.95);max-width:85vw;text-align:center;white-space:nowrap;pointer-events:none}.toast-popup.error{background:rgba(185,28,28,.95);color:#fff;border-left:4px solid #facc15}.toast-popup.show{transform:translateX(-50%) translateY(0)}.theme-toggle-mini{position:fixed;top:1rem;right:1rem;background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:none;border-radius:2rem;padding:.5rem .9rem;font-size:1.1rem;cursor:pointer;z-index:1100;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:all .2s;font-weight:500;color:#1e293b}body.dark .theme-toggle-mini{background:rgba(30,41,59,.8);color:#facc15}@media(max-width:500px){.app-title{font-size:1.8rem}.toast-popup{font-size:.8rem;padding:.6rem 1.2rem;white-space:normal;max-width:90vw}.launch-container{padding:1.5rem}}
+</style>
+</head>
+<body>
+<button class="theme-toggle-mini" id="themeToggleBtn">🌙 Dark</button>
+<div class="launch-container"><h1 id="dynamicTitle" class="app-title">—</h1><div id="loaderUI" class="loader-wrapper"><div class="spinner-ring"></div><div class="loader-text">Connecting to server...</div></div></div>
+<div id="toastMsg" class="toast-popup"></div>
+<script>
+(function(){
+const SHEET_ID="1iRgmm2a-1o0VtGwk_p10pFiKdj9ewQ2hmQfZh0LCDuY";
+const titleEl=document.getElementById('dynamicTitle');
+const loaderWrapper=document.getElementById('loaderUI');
+const toastEl=document.getElementById('toastMsg');
+let toastTimeout=null;
+function showPopup(msg,isErr){
+if(toastTimeout)clearTimeout(toastTimeout);
+toastEl.textContent=msg;
+toastEl.classList.remove('show');
+void toastEl.offsetWidth;
+if(isErr)toastEl.classList.add('error');
+else toastEl.classList.remove('error');
+toastEl.classList.add('show');
+toastTimeout=setTimeout(()=>toastEl.classList.remove('show'),3500);
+}
+function escapeHtml(s){
+if(!s)return"";
+return s.replace(/[&<>]/g,function(m){
+if(m==='&')return'&amp;';
+if(m==='<')return'&lt;';
+if(m==='>')return'&gt;';
+return m;
+});
+}
+async function fetchSheet(){
+const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
+const r=await fetch(url);
+if(!r.ok)throw new Error(`HTTP ${r.status}`);
+const txt=await r.text();
+const match=txt.match(/google\.visualization\.Query\.setResponse\((.+)\);/);
+if(!match||!match[1])throw new Error("Invalid sheet response");
+const data=JSON.parse(match[1]);
+const rows=data.table?.rows||[];
+if(rows.length===0)throw new Error("Sheet empty");
+const first=rows[0].c||[];
+const get=(i)=>{const c=first[i];return(c&&c.v!==undefined&&c.v!==null)?String(c.v):"";};
+const title=get(0);
+const flagRaw=get(1);
+const urlRaw=get(2);
+const flag=(flagRaw==="1"||flagRaw===1)?1:0;
+return{title:title||"Untitled",flag,redirectUrl:urlRaw.trim()};
+}
+let redirectDone=false;
+async function start(){
+loaderWrapper.classList.remove('visible');
+titleEl.classList.remove('reveal');
+titleEl.textContent="✨";
+let sheetTitle="",sheetFlag=0,sheetUrl="",fetchErr=null;
+try{
+const meta=await fetchSheet();
+sheetTitle=meta.title;
+sheetFlag=meta.flag;
+sheetUrl=meta.redirectUrl;
+}catch(e){
+fetchErr=e.message||"Network error. Sheet must be public.";
+}
+if(fetchErr){
+showPopup(`⚠️ Server Error: ${fetchErr}`,true);
+titleEl.textContent="⚠️";
+titleEl.classList.add('reveal');
+loaderWrapper.classList.remove('visible');
+return;
+}
+titleEl.textContent=escapeHtml(sheetTitle)||"Untitled";
+titleEl.classList.add('reveal');
+loaderWrapper.classList.add('visible');
+await new Promise(r=>setTimeout(r,3000));
+if(sheetFlag===1){
+if(!sheetUrl){
+showPopup("❌ Redirect flag=1 but no URL in cell3",true);
+loaderWrapper.classList.remove('visible');
+return;
+}
+let finalUrl=sheetUrl;
+if(!finalUrl.startsWith('http://')&&!finalUrl.startsWith('https://'))finalUrl='https://'+finalUrl;
+showPopup(`Redirecting to ${finalUrl}...`,false);
+setTimeout(()=>{window.location.href=finalUrl;},200);
+}else if(sheetFlag===0){
+loaderWrapper.classList.remove('visible');
+}else{
+loaderWrapper.classList.remove('visible');
+showPopup(`Invalid flag (${sheetFlag}) in cell2`,true);
+}
+}
+function initTheme(){
+const btn=document.getElementById('themeToggleBtn');
+const prefers=window.matchMedia('(prefers-color-scheme:dark)').matches;
+let stored=localStorage.getItem('app_theme');
+let theme=stored||(prefers?'dark':'light');
+const apply=(t)=>{
+if(t==='dark'){document.body.classList.add('dark');btn.innerHTML='☀️ Light';}
+else{document.body.classList.remove('dark');btn.innerHTML='🌙 Dark';}
+localStorage.setItem('app_theme',t);
+};
+apply(theme);
+btn.addEventListener('click',()=>{const next=document.body.classList.contains('dark')?'light':'dark';apply(next);});
+}
+document.addEventListener('DOMContentLoaded',()=>{initTheme();start().catch(e=>{showPopup(`Error: ${e.message}`,true);titleEl.textContent="Error";titleEl.classList.add('reveal');loaderWrapper.classList.remove('visible');});});
+})();
+</script>
+</body>
+</html>
