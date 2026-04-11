@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>State Explorer | Shopping App UI</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Mobile Container - Fixed width, app-like */
+    .app-shell {
+      max-width: 450px;
+      width: 100%;
+      background: #ffffff;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .app-shell::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-shell::-webkit-scrollbar-track {
+      background: #eaeaea;
+    }
+    .app-shell::-webkit-scrollbar-thumb {
+      background: var(--primary-color, #ff6e2e);
+      border-radius: 10px;
+    }
+
+    /* CSS Variables for Theming */
+    :root {
+      --primary-color: #ff6e2e;
+      --primary-dark: #e55a1e;
+      --secondary-color: #2e7d32;
+      --bg-gray: #f8f8f8;
+      --text-dark: #1a1a1a;
+      --text-light: #6e6e6e;
+      --border-light: #f0f0f0;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.04);
+      --radius-card: 20px;
+      --radius-btn: 40px;
+    }
+
+    /* Utility Classes */
+    .hidden { display: none !important; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-center { display: flex; justify-content: center; align-items: center; }
+
+    /* Header Component */
+    .app-header {
+      background: #ffffff;
+      padding: 18px 16px 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+    }
+    .location-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+    .location-icon { color: var(--primary-color); font-size: 20px; }
+    .profile-icon {
+      background: var(--bg-gray);
+      border-radius: 50%;
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .profile-icon:active { transform: scale(0.95); }
+
+    /* Search Component */
+    .search-box {
+      margin-top: 14px;
+      background: var(--bg-gray);
+      border-radius: 30px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-box i { color: var(--primary-color); font-size: 18px; }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Banner/Advertisement Carousel */
+    .banner-area { 
+      padding: 16px 16px 8px 16px;
+      position: relative;
+    }
+    
+    .ad-carousel-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-card);
+    }
+    
+    .ad-slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+    }
+    
+    .ad-slide {
+      min-width: 100%;
+      background: linear-gradient(135deg, var(--primary-color), #ff8c42);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    
+    .ad-slide:active { transform: scale(0.98); }
+    .ad-slide h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .ad-slide p { font-size: 13px; opacity: 0.9; }
+    .ad-slide .offer-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    
+    /* Carousel Navigation Dots */
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .dot.active {
+      width: 20px;
+      border-radius: 10px;
+      background: var(--primary-color);
+    }
+    
+    /* Carousel Arrows */
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.3);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+    }
+    
+    .carousel-arrow:hover {
+      background: rgba(0,0,0,0.5);
+    }
+    
+    .carousel-arrow.left {
+      left: 12px;
+    }
+    
+    .carousel-arrow.right {
+      right: 12px;
+    }
+
+    /* Categories Chips */
+    .categories-scroll {
+      padding: 8px 16px 16px 16px;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .categories-scroll::-webkit-scrollbar { display: none; }
+    .chip {
+      background: var(--bg-gray);
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .chip i { color: var(--primary-color); }
+    .chip.active { background: var(--primary-color); color: white; }
+    .chip.active i { color: white; }
+
+    /* State Items Grid */
+    .items-grid {
+      padding: 8px 12px 80px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .state-card {
+      background: white;
+      border-radius: var(--radius-card);
+      display: flex;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .state-card:active { transform: scale(0.98); }
+    .state-icon {
+      width: 85px;
+      height: 85px;
+      background: linear-gradient(135deg, #ff6e2e20, #ff8c4220);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: var(--primary-color);
+    }
+    .state-details { flex: 1; }
+    .state-name {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+    .state-info {
+      font-size: 12px;
+      color: var(--text-light);
+      margin: 4px 0;
+    }
+    .record-count {
+      background: var(--primary-color);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    /* Bottom Navigation (Fixed) */
+    .bottom-nav-fixed {
+      background: rgba(255,255,255,0.96);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 20px 18px;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 450px;
+      backdrop-filter: blur(2px);
+      z-index: 20;
+    }
+    .nav-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #8e8e8e;
+      cursor: pointer;
+    }
+    .nav-icon i { font-size: 22px; }
+    .nav-icon.active { color: var(--primary-color); font-weight: 500; }
+
+    /* Modal Popup */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-container {
+      background: white;
+      max-width: 400px;
+      width: 100%;
+      max-height: 85vh;
+      border-radius: 1.8rem;
+      overflow: hidden;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .modal-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      max-height: calc(85vh - 80px);
+    }
+
+    .detail-row {
+      display: flex;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border-light);
+      gap: 1rem;
+      flex-direction: column;
+    }
+
+    .detail-label {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      color: var(--text-dark);
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .sheet-link {
+      background: #e8f5e9;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .sheet-link:hover {
+      background: #c8e6c9;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .toast-message {
+      visibility: hidden;
+      min-width: 180px;
+      background-color: #323232;
+      color: #fff;
+      text-align: center;
+      border-radius: 50px;
+      padding: 10px 18px;
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast-message.show { visibility: visible; opacity: 1; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-light);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <div id="homePageContainer"></div>
+  <div id="profilePageContainer" class="hidden"></div>
+
+  <!-- Fixed Bottom Navigation -->
+  <div class="bottom-nav-fixed" id="bottomNav">
+    <div class="nav-icon active" data-nav="home"><i class="fas fa-home"></i><span>Home</span></div>
+    <div class="nav-icon" data-nav="explore"><i class="fas fa-compass"></i><span>Explore</span></div>
+    <div class="nav-icon" data-nav="states"><i class="fas fa-globe"></i><span>States</span></div>
+    <div class="nav-icon" data-nav="offers"><i class="fas fa-tag"></i><span>Offers</span></div>
+    <div class="nav-icon" data-nav="account"><i class="fas fa-user"></i><span>Account</span></div>
+  </div>
+  <div id="globalToast" class="toast-message"></div>
+</div>
+
+<script>
+  // ==================== CONFIGURATION ====================
+  const MASTER_SPREADSHEET_ID = '1vfSO8NP0p1um-ueMspk4ekPtsEZKSfKwrvgh54SK70c';
+  
+  // ==================== ADVERTISEMENT SHEET ID ====================
+  // Put your advertisement spreadsheet ID here
+  // Format: Column A = Title, Column B = Description, Column C = Offer Text, Column D = Link/URL
+  const AD_SPREADSHEET_ID = '15sRMH0zqRLa8ysitTQhOwpWEt4GxmpxmeWbvGZyGYTk'; // <-- CHANGE THIS TO YOUR AD SHEET ID
+  
+  let masterRows = [];          // { state, linkedSheetId }
+  let uniqueStates = [];
+  let selectedState = '';
+  let allRecordsData = [];      // Cache for current state records
+  let advertisements = [];      // Array to store ads from spreadsheet
+  let currentAdIndex = 0;
+  let autoSlideInterval = null;
+  
+  // Helper Functions
+  function showToast(msg) {
+    const toastEl = document.getElementById("globalToast");
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
+
+  // Parse CSV properly
+  function parseCSV(csvText) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let insideQuotes = false;
+    let i = 0;
+    const len = csvText.length;
+    
+    while (i < len) {
+      const ch = csvText[i];
+      const nextCh = csvText[i+1];
+      if (ch === '"') {
+        if (insideQuotes && nextCh === '"') {
+          currentField += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (ch === ',' && !insideQuotes) {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+        if (ch === '\r') i++;
+      } else if (ch === '\r' && !insideQuotes) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0) rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += ch;
+      }
+      i++;
+    }
+    if (currentField !== '' || currentRow.length > 0) {
+      currentRow.push(currentField);
+      if (currentRow.length > 0) rows.push(currentRow);
+    }
+    return rows.map(row => row.map(cell => {
+      let cleaned = String(cell).trim();
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+      }
+      return cleaned;
+    }));
+  }
+
+  // Fetch advertisements from separate spreadsheet
+  async function fetchAdvertisements() {
+    if (!AD_SPREADSHEET_ID || AD_SPREADSHEET_ID === 'YOUR_AD_SHEET_ID_HERE') {
+      console.log('No ad sheet configured, using default ads');
+      advertisements = [
+        { title: "🔥 Mega Sale!", description: "Up to 50% off on all items", offer: "Use Code: MEGA50", link: "" },
+        { title: "✨ New Arrivals", description: "Summer collection 2024", offer: "Free Shipping", link: "" },
+        { title: "🎉 Weekend Special", description: "Extra 20% off", offer: "Limited Time", link: "" }
+      ];
+      return;
+    }
+    
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${AD_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const csvText = await response.text();
+      const parsed = parseCSV(csvText);
+      
+      if (parsed.length > 1) {
+        const ads = [];
+        // Skip first row if it's headers
+        const startRow = parsed[0][0] && parsed[0][0].toLowerCase().includes('title') ? 1 : 0;
+        
+        for (let i = startRow; i < parsed.length; i++) {
+          const row = parsed[i];
+          if (row.length >= 1 && row[0] && row[0].trim() !== '') {
+            ads.push({
+              title: row[0] || 'Special Offer',
+              description: row[1] || 'Limited time deal',
+              offer: row[2] || 'Grab it now',
+              link: row[3] || '',
+              icon: row[4] || 'fa-tag'
+            });
+          }
+        }
+        
+        if (ads.length > 0) {
+          advertisements = ads;
+        } else {
+          throw new Error('No ads found');
+        }
+      } else {
+        throw new Error('No data in ad sheet');
+      }
+    } catch (err) {
+      console.warn('Failed to load ads from sheet, using defaults', err);
+      advertisements = [
+        { title: "🔥 Special Offer!", description: "Check out our latest deals", offer: "Limited Time", link: "" },
+        { title: "✨ New Updates", description: "Explore new features", offer: "Click to learn more", link: "" }
+      ];
+    }
+  }
+
+  // Setup carousel with fetched advertisements
+  function setupCarousel() {
+    const bannerArea = document.getElementById("dynamicBannerArea");
+    if (!bannerArea || advertisements.length === 0) return;
+    
+    let slidesHtml = '';
+    advertisements.forEach((ad, idx) => {
+      slidesHtml += `
+        <div class="ad-slide" data-ad-index="${idx}" data-ad-link="${ad.link}">
+          <h3><i class="fas ${ad.icon || 'fa-tag'}"></i> ${escapeHtml(ad.title)}</h3>
+          <p>${escapeHtml(ad.description)}</p>
+          <div class="offer-badge">${escapeHtml(ad.offer)}</div>
+        </div>
+      `;
+    });
+    
+    let dotsHtml = '';
+    advertisements.forEach((_, idx) => {
+      dotsHtml += `<div class="dot ${idx === 0 ? 'active' : ''}" data-dot-index="${idx}"></div>`;
+    });
+    
+    bannerArea.innerHTML = `
+      <div class="ad-carousel-container">
+        <div class="carousel-arrow left" id="carouselLeft"><i class="fas fa-chevron-left"></i></div>
+        <div class="ad-slides" id="adSlides">
+          ${slidesHtml}
+        </div>
+        <div class="carousel-arrow right" id="carouselRight"><i class="fas fa-chevron-right"></i></div>
+      </div>
+      <div class="carousel-dots" id="carouselDots">
+        ${dotsHtml}
+      </div>
+    `;
+    
+    const slidesContainer = document.getElementById('adSlides');
+    const dots = document.querySelectorAll('.dot');
+    
+    // Function to update carousel position
+    function updateCarousel(index) {
+      if (!slidesContainer) return;
+      currentAdIndex = index;
+      const slideWidth = slidesContainer.parentElement.offsetWidth;
+      slidesContainer.style.transform = `translateX(-${currentAdIndex * slideWidth}px)`;
+      
+      // Update dots
+      dots.forEach((dot, i) => {
+        if (i === currentAdIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+    
+    // Next slide
+    function nextSlide() {
+      currentAdIndex = (currentAdIndex + 1) % advertisements.length;
+      updateCarousel(currentAdIndex);
+      resetAutoSlide();
+    }
+    
+    // Previous slide
+    function prevSlide() {
+      currentAdIndex = (currentAdIndex - 1 + advertisements.length) % advertisements.length;
+      updateCarousel(currentAdIndex);
+      resetAutoSlide();
+    }
+    
+    // Reset auto-slide timer
+    function resetAutoSlide() {
+      if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+      }
+      autoSlideInterval = setInterval(() => {
+        nextSlide();
+      }, 5000);
+    }
+    
+    // Add event listeners
+    document.getElementById('carouselLeft')?.addEventListener('click', prevSlide);
+    document.getElementById('carouselRight')?.addEventListener('click', nextSlide);
+    
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const index = parseInt(dot.dataset.dotIndex);
+        updateCarousel(index);
+        resetAutoSlide();
+      });
+    });
+    
+    // Add click handlers for slides
+    document.querySelectorAll('.ad-slide').forEach(slide => {
+      slide.addEventListener('click', () => {
+        const link = slide.dataset.adLink;
+        if (link && link !== '') {
+          window.open(link, '_blank');
+        } else {
+          showToast(advertisements[parseInt(slide.dataset.adIndex)].offer);
+        }
+      });
+    });
+    
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        updateCarousel(currentAdIndex);
+      }, 100);
+    });
+    
+    // Start auto-slide
+    resetAutoSlide();
+  }
+
+  // Fetch master sheet to get states and their sheet IDs
+  async function fetchMasterSheet() {
+    try {
+      const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+      const response = await fetch(MASTER_DATA_URL);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const csvText = await response.text();
+      const parsed = parseCSV(csvText);
+      if (parsed.length < 2) throw new Error('Master sheet insufficient data');
+      
+      const tempRows = [];
+      const stateSet = new Set();
+      for (let idx = 0; idx < parsed.length; idx++) {
+        const row = parsed[idx];
+        let state = (row.length >= 2) ? row[1] : '';
+        let linkedId = (row.length >= 3) ? row[2] : '';
+        if (!state || state === '' || state.toLowerCase() === 'null' || state === 'STATE') continue;
+        linkedId = linkedId ? linkedId.trim() : null;
+        if (linkedId === '' || linkedId.toLowerCase() === 'null') linkedId = null;
+        tempRows.push({ state: state, linkedSheetId: linkedId });
+        stateSet.add(state);
+      }
+      if (tempRows.length === 0) throw new Error('No valid states');
+      masterRows = tempRows;
+      uniqueStates = Array.from(stateSet).sort((a,b) => a.localeCompare(b));
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to load states');
+      return false;
+    }
+  }
+
+  // Fetch child sheet data
+  async function fetchChildSheet(sheetId) {
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const csvText = await resp.text();
+      const parsedRows = parseCSV(csvText);
+      const dataRows = [];
+      for (let r = 0; r < parsedRows.length; r++) {
+        const rowCells = parsedRows[r];
+        if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
+        const rowObj = {};
+        for (let colIdx = 0; colIdx < 10; colIdx++) {
+          const colKey = `col${colIdx+1}`;
+          rowObj[colKey] = (colIdx < rowCells.length && rowCells[colIdx] !== undefined && rowCells[colIdx] !== '') ? rowCells[colIdx] : '—';
+        }
+        dataRows.push(rowObj);
+      }
+      return { rows: dataRows, error: false };
+    } catch (err) {
+      console.warn(`Error sheet ${sheetId}:`, err);
+      return { rows: [], error: true };
+    }
+  }
+
+  // Load data for a specific state
+  async function loadDataForState(state) {
+    const entries = masterRows.filter(row => row.state === state);
+    const sheetIds = [...new Set(entries.map(e => e.linkedSheetId).filter(id => id))];
+    const cardItems = [];
+    
+    for (const sheetId of sheetIds) {
+      const sheetData = await fetchChildSheet(sheetId);
+      if (sheetData && sheetData.rows && sheetData.rows.length) {
+        for (const rowData of sheetData.rows) {
+          cardItems.push({
+            id: `${sheetId}_${Math.random()}_${Date.now()}`,
+            state: state,
+            dateRaw: rowData.col1 || '—',
+            fullRow: rowData
+          });
+        }
+      }
+    }
+    
+    return cardItems;
+  }
+
+  // Load ALL states data
+  async function loadAllStatesData() {
+    const uniqueSheets = new Map();
+    for (const entry of masterRows) {
+      if (entry.linkedSheetId && !uniqueSheets.has(entry.linkedSheetId)) {
+        uniqueSheets.set(entry.linkedSheetId, entry.state);
+      }
+    }
+    
+    const cardItems = [];
+    for (const [sheetId, state] of uniqueSheets.entries()) {
+      const sheetData = await fetchChildSheet(sheetId);
+      if (sheetData && sheetData.rows && sheetData.rows.length) {
+        for (const rowData of sheetData.rows) {
+          cardItems.push({
+            id: `${sheetId}_${Math.random()}`,
+            state: state,
+            dateRaw: rowData.col1 || '—',
+            fullRow: rowData
+          });
+        }
+      }
+    }
+    
+    return cardItems;
+  }
+
+  // Render Home Page with State Cards
+  async function renderHomePage() {
+    const homeHtml = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row"><i class="fas fa-map-marker-alt location-icon"></i><span>State Explorer</span><i class="fas fa-chevron-down"></i></div>
+          <div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div>
+        </div>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInputGlobal" placeholder="Search states..."></div>
+      </div>
+      <div class="banner-area" id="dynamicBannerArea">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading offers...</p></div>
+      </div>
+      <div class="items-grid" id="statesGrid">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading states...</p></div>
+      </div>
+      <div style="height: 20px;"></div>
+    `;
+    
+    document.getElementById("homePageContainer").innerHTML = homeHtml;
+    
+    // Setup carousel with ads
+    setupCarousel();
+    
+    // Load and display states
+    await displayStatesGrid();
+    
+    // Search functionality
+    const searchInput = document.getElementById("searchInputGlobal");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        filterStates(e.target.value);
+      });
+    }
+    
+    // Profile icon
+    document.getElementById("profileIconBtn")?.addEventListener("click", () => navigateTo("account"));
+  }
+  
+  async function displayStatesGrid(filterText = '') {
+    const gridContainer = document.getElementById("statesGrid");
+    if (!gridContainer) return;
+    
+    let filteredStates = uniqueStates;
+    if (filterText) {
+      filteredStates = uniqueStates.filter(state => 
+        state.toLowerCase().includes(filterText.toLowerCase())
+      );
+    }
+    
+    if (filteredStates.length === 0) {
+      gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">🔍 No states found</div>`;
+      return;
+    }
+    
+    let gridHtml = '';
+    for (const state of filteredStates) {
+      const entries = masterRows.filter(row => row.state === state);
+      const recordCount = entries.filter(e => e.linkedSheetId).length;
+      
+      gridHtml += `
+        <div class="state-card" data-state="${state}">
+          <div class="state-icon"><i class="fas fa-flag"></i></div>
+          <div class="state-details">
+            <div class="state-name">${escapeHtml(state)}</div>
+            <div class="state-info"><i class="fas fa-file-alt"></i> ${recordCount} document(s) available</div>
+            <span class="record-count"><i class="fas fa-eye"></i> Click to view</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.state-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const stateName = card.dataset.state;
+        await showStateRecords(stateName);
+      });
+    });
+  }
+  
+  function filterStates(searchText) {
+    displayStatesGrid(searchText);
+  }
+  
+  async function showStateRecords(state) {
+    showToast(`Loading ${state} data...`);
+    
+    const homeContainer = document.getElementById("homePageContainer");
+    homeContainer.innerHTML = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row">
+            <i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer; margin-right:10px;"></i>
+            <i class="fas fa-map-marker-alt location-icon"></i>
+            <span>${escapeHtml(state)} Records</span>
+          </div>
+          <div class="profile-icon"><i class="far fa-user"></i></div>
+        </div>
+      </div>
+      <div class="items-grid" id="recordsGrid">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading records...</p></div>
+      </div>
+    `;
+    
+    document.getElementById("backBtn")?.addEventListener("click", () => {
+      renderHomePage();
+    });
+    
+    const records = await loadDataForState(state);
+    displayRecords(records, state);
+  }
+  
+  function displayRecords(records, stateName) {
+    const gridContainer = document.getElementById("recordsGrid");
+    if (!gridContainer) return;
+    
+    if (records.length === 0) {
+      gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">📭 No records found for ${escapeHtml(stateName)}</div>`;
+      return;
+    }
+    
+    let gridHtml = '';
+    records.forEach((record, idx) => {
+      const firstColumn = record.fullRow.col1 || '—';
+      gridHtml += `
+        <div class="state-card" data-record-idx="${idx}">
+          <div class="state-icon"><i class="fas fa-file-alt"></i></div>
+          <div class="state-details">
+            <div class="state-name">📄 ${escapeHtml(String(firstColumn).substring(0, 50))}</div>
+            <div class="state-info"><i class="fas fa-calendar"></i> Record ${idx + 1}</div>
+            <span class="record-count"><i class="fas fa-info-circle"></i> Click for details</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.state-card[data-record-idx]').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.recordIdx);
+        openModal(records[idx]);
+      });
+    });
+  }
+  
+  function openModal(record) {
+    const fullRow = record.fullRow || {};
+    const fields = [
+      { label: 'Column 1 (Date/Title)', value: fullRow.col1 || '—' },
+      { label: 'Column 2', value: fullRow.col2 || '—' },
+      { label: 'Column 3', value: fullRow.col3 || '—' },
+      { label: 'Column 4', value: fullRow.col4 || '—' },
+      { label: 'Column 5', value: fullRow.col5 || '—' },
+      { label: 'Column 6', value: fullRow.col6 || '—' },
+      { label: 'Column 7', value: fullRow.col7 || '—' },
+      { label: 'Column 8', value: fullRow.col8 || '—' },
+      { label: 'Column 9', value: fullRow.col9 || '—' },
+      { label: 'Column 10', value: fullRow.col10 || '—' }
+    ];
+    
+    const sheetIdPattern = /[a-zA-Z0-9_-]{30,}/;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    
+    let bodyHtml = '';
+    fields.forEach(field => {
+      const isSheetId = sheetIdPattern.test(field.value) && field.value.length > 30;
+      if (isSheetId) {
+        bodyHtml += `
+          <div class="detail-row sheet-link" onclick="window.open('https://docs.google.com/spreadsheets/d/${field.value}', '_blank')">
+            <div class="detail-label">🔗 ${field.label} (Click to open)</div>
+            <div class="detail-value">📊 ${escapeHtml(field.value)}</div>
+          </div>
+        `;
+      } else {
+        bodyHtml += `
+          <div class="detail-row">
+            <div class="detail-label">📌 ${field.label}</div>
+            <div class="detail-value">${escapeHtml(field.value)}</div>
+          </div>
+        `;
+      }
+    });
+    
+    modal.innerHTML = `
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3><i class="fas fa-info-circle"></i> Full Record · ${escapeHtml(record.state)}</h3>
+          <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          ${bodyHtml}
+          <div class="detail-row" style="background:#f8fafc; border-radius:0.8rem; margin-top:10px;">
+            <div class="detail-label">📍 State</div>
+            <div class="detail-value"><strong>${escapeHtml(record.state)}</strong></div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  }
+  
+  async function showAllStatesView() {
+    const homeContainer = document.getElementById("homePageContainer");
+    homeContainer.innerHTML = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row">
+            <i class="fas fa-arrow-left" id="backBtn" style="cursor:pointer; margin-right:10px;"></i>
+            <i class="fas fa-globe location-icon"></i>
+            <span>All Records</span>
+          </div>
+          <div class="profile-icon"><i class="far fa-user"></i></div>
+        </div>
+      </div>
+      <div class="items-grid" id="recordsGrid">
+        <div class="loading"><div class="loading-spinner"></div><p>Loading all records...</p></div>
+      </div>
+    `;
+    
+    document.getElementById("backBtn")?.addEventListener("click", () => {
+      renderHomePage();
+    });
+    
+    const allRecords = await loadAllStatesData();
+    
+    const gridContainer = document.getElementById("recordsGrid");
+    if (!gridContainer) return;
+    
+    if (allRecords.length === 0) {
+      gridContainer.innerHTML = `<div style="text-align:center; padding:40px;">📭 No records found</div>`;
+      return;
+    }
+    
+    let gridHtml = '';
+    allRecords.forEach((record, idx) => {
+      const firstColumn = record.fullRow.col1 || '—';
+      gridHtml += `
+        <div class="state-card" data-record-idx="${idx}">
+          <div class="state-icon"><i class="fas fa-file-alt"></i></div>
+          <div class="state-details">
+            <div class="state-name">📄 ${escapeHtml(String(firstColumn).substring(0, 50))}</div>
+            <div class="state-info"><i class="fas fa-flag"></i> ${escapeHtml(record.state)} • Record ${idx + 1}</div>
+            <span class="record-count"><i class="fas fa-info-circle"></i> Click for details</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.state-card[data-record-idx]').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.recordIdx);
+        openModal(allRecords[idx]);
+      });
+    });
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
+  function renderProfilePage() {
+    const profileHtml = `
+      <div class="profile-container" style="padding: 24px 20px;">
+        <div style="text-align:center;">
+          <div style="background: #ff6e2e20; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 50px; color: var(--primary-color);">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <h2>Explorer User</h2>
+          <p style="color:gray;">explorer@example.com</p>
+        </div>
+        <div style="background: var(--bg-gray); border-radius: 24px; padding: 20px; margin: 20px 0; display: flex; justify-content: space-around;">
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">${uniqueStates.length}</div><div>States</div></div>
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">-</div><div>Records</div></div>
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">-</div><div>Saved</div></div>
+        </div>
+        <div class="menu-item" style="background: white; padding: 16px; border-radius: 20px; margin-top: 12px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border-light);">
+          <i class="fas fa-heart" style="color:var(--primary-color);"></i> Wishlist <i class="fas fa-chevron-right" style="margin-left:auto;"></i>
+        </div>
+        <button class="back-home-btn" id="backHomeBtn" style="background: none; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 12px; border-radius: 40px; width: 100%; font-weight: 600; margin-top: 30px; cursor: pointer;">
+          <i class="fas fa-arrow-left"></i> Back to Home
+        </button>
+      </div>
+    `;
+    document.getElementById("profilePageContainer").innerHTML = profileHtml;
+    document.getElementById("backHomeBtn")?.addEventListener("click", () => navigateTo("home"));
+  }
+  
+  function navigateTo(page) {
+    const homeDiv = document.getElementById("homePageContainer");
+    const profileDiv = document.getElementById("profilePageContainer");
+    
+    if (page === "home") {
+      homeDiv.classList.remove("hidden");
+      profileDiv.classList.add("hidden");
+      renderHomePage();
+    } else if (page === "account") {
+      renderProfilePage();
+      homeDiv.classList.add("hidden");
+      profileDiv.classList.remove("hidden");
+    } else if (page === "states") {
+      showAllStatesView();
+      profileDiv.classList.add("hidden");
+    } else if (page === "offers") {
+      showToast("🎉 Check out the banner for special offers!");
+    } else if (page === "explore") {
+      showAllStatesView();
+      profileDiv.classList.add("hidden");
+    }
+    
+    document.querySelectorAll(".nav-icon").forEach(nav => nav.classList.remove("active"));
+    let activeNavSelector = `.nav-icon[data-nav="${page}"]`;
+    if (page === "account") activeNavSelector = `.nav-icon[data-nav="account"]`;
+    const activeNav = document.querySelector(activeNavSelector);
+    if (activeNav) activeNav.classList.add("active");
+  }
+  
+  function setupBottomNav() {
+    document.querySelectorAll(".nav-icon").forEach(nav => {
+      nav.addEventListener("click", () => {
+        const navType = nav.dataset.nav;
+        if (navType === "home") navigateTo("home");
+        else if (navType === "account") navigateTo("account");
+        else if (navType === "states") navigateTo("states");
+        else if (navType === "offers") navigateTo("offers");
+        else if (navType === "explore") navigateTo("explore");
+      });
+    });
+  }
+  
+  async function initApp() {
+    setupBottomNav();
+    
+    // First fetch advertisements
+    await fetchAdvertisements();
+    
+    // Then fetch master sheet data
+    const success = await fetchMasterSheet();
+    
+    if (success) {
+      await renderHomePage();
+    } else {
+      document.getElementById("homePageContainer").innerHTML = `
+        <div style="text-align:center; padding:50px;">
+          <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6e2e;"></i>
+          <p style="margin-top:20px;">Failed to load data. Please check sheet permissions.</p>
+          <p style="font-size:12px; color:gray;">Make sure the sheet is published to web</p>
+        </div>
+      `;
+    }
+  }
+  
+  initApp();
+</script>
+</body>
+</html>
