@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Google Sheet Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-top: 0;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        button {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .example {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .example span {
+            background: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        .example span:hover {
+            background: #e0e0e0;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        .card:nth-child(even) {
+            background: #fafafa;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .counter {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+        .sheet-info {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Google Sheet Viewer</h1>
+        
+        <div class="input-group">
+            <input type="text" id="sheetId" placeholder="Enter Google Sheet ID" value="1G8nLMbRB7bU25ReXbPgNuGaL3jEiN9rvsG4LKGiJkz4">
+            <button onclick="loadSheet()">📥 Load Sheet</button>
+        </div>
+        
+        <div class="example">
+            💡 Example Sheet IDs (click to try):<br>
+            <span onclick="setExample('1G8nLMbRB7bU25ReXbPgNuGaL3jEiN9rvsG4LKGiJkz4')">Your Sheet</span> | 
+            <span onclick="setExample('1FAIpQLScnGqRv_puvF8l8nsFW_1LBhDHyxT9ZeZz2bHuUfB8GeuVwCQ')">Sample Form Data</span> | 
+            <span onclick="setExample('1XwzRgYp6tCvB3QnLkMjIuYtReWqAsDfGhJkLzXcVbNm')">Another Sheet</span>
+        </div>
+        
+        <div id="data"></div>
+    </div>
+
+    <script>
+        async function loadSheet() {
+            const sheetId = document.getElementById('sheetId').value.trim();
+            
+            if (!sheetId) {
+                showError('Please enter a Google Sheet ID');
+                return;
+            }
+            
+            const div = document.getElementById('data');
+            div.innerHTML = '<div class="loading">🔄 Loading sheet data...</div>';
+            
+            const URL = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+            
+            try {
+                const response = await fetch(URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Sheet not accessible`);
+                }
+                
+                const text = await response.text();
+                
+                // Parse the JSONP response
+                let json;
+                try {
+                    const jsonStr = text.substring(47).slice(0, -2);
+                    json = JSON.parse(jsonStr);
+                } catch (e) {
+                    throw new Error('Invalid response format. Make sure the sheet is published.');
+                }
+                
+                const rows = json.table.rows;
+                const cols = json.table.cols;
+                
+                if (!rows || rows.length === 0) {
+                    showError('No data found in this sheet');
+                    return;
+                }
+                
+                // Get column labels (use label or fallback to Column X)
+                const columnNames = cols.map((col, idx) => {
+                    return col.label || col.id || `Column ${idx + 1}`;
+                });
+                
+                // Show sheet info
+                let html = `
+                    <div class="success">✅ Sheet loaded successfully!</div>
+                    <div class="sheet-info">
+                        📄 Sheet ID: ${sheetId}<br>
+                        📊 Total Rows: ${rows.length}<br>
+                        📋 Total Columns: ${cols.length}
+                    </div>
+                    <div class="counter">📑 Showing all ${rows.length} rows</div>
+                `;
+                
+                // Display ALL rows
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].c || [];
+                    html += '<div class="card">';
+                    html += `<div style="font-size:11px; color:#999; margin-bottom:8px;">Row ${i + 1}</div>`;
+                    
+                    let hasData = false;
+                    cells.forEach((cell, idx) => {
+                        if (cell && cell.v !== null && cell.v !== undefined && cell.v !== '') {
+                            const colName = columnNames[idx] || `Column ${idx + 1}`;
+                            let value = cell.v;
+                            // Handle different value types
+                            if (typeof value === 'object') {
+                                value = JSON.stringify(value);
+                            }
+                            html += `<strong>${escapeHtml(colName)}:</strong> ${escapeHtml(String(value))}<br>`;
+                            hasData = true;
+                        }
+                    });
+                    
+                    if (!hasData) {
+                        html += '<em style="color:#999;">(Empty row)</em>';
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                div.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`
+                    <strong>❌ Failed to load sheet</strong><br><br>
+                    Error: ${error.message}<br><br>
+                    <strong>How to fix:</strong><br>
+                    1. Make sure your Google Sheet is <strong>published to web</strong><br>
+                    2. Go to: File → Share → Publish to web → Click "Publish"<br>
+                    3. Make sure the Sheet ID is correct<br>
+                    4. Try refreshing the page<br><br>
+                    <strong>Your Sheet ID:</strong> ${sheetId}
+                `);
+            }
+        }
+        
+        function showError(message) {
+            const div = document.getElementById('data');
+            div.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        function setExample(sheetId) {
+            document.getElementById('sheetId').value = sheetId;
+            loadSheet();
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        
+        // Load default sheet on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSheet();
+        });
+    </script>
+</body>
+</html>
