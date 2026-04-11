@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Shopping App Framework | Demo</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Mobile Container - Fixed width, app-like */
+    .app-shell {
+      max-width: 450px;
+      width: 100%;
+      background: #ffffff;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .app-shell::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-shell::-webkit-scrollbar-track {
+      background: #eaeaea;
+    }
+    .app-shell::-webkit-scrollbar-thumb {
+      background: var(--primary-color, #ff6e2e);
+      border-radius: 10px;
+    }
+
+    /* CSS Variables for Theming - Easy to customize per app */
+    :root {
+      --primary-color: #ff6e2e;
+      --primary-dark: #e55a1e;
+      --secondary-color: #2e7d32;
+      --bg-gray: #f8f8f8;
+      --text-dark: #1a1a1a;
+      --text-light: #6e6e6e;
+      --border-light: #f0f0f0;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.04);
+      --radius-card: 20px;
+      --radius-btn: 40px;
+    }
+
+    /* Utility Classes */
+    .hidden { display: none !important; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-center { display: flex; justify-content: center; align-items: center; }
+
+    /* Header Component */
+    .app-header {
+      background: #ffffff;
+      padding: 18px 16px 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+    }
+    .location-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-dark);
+    }
+    .location-icon { color: var(--primary-color); font-size: 20px; }
+    .profile-icon {
+      background: var(--bg-gray);
+      border-radius: 50%;
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-color);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .profile-icon:active { transform: scale(0.95); }
+
+    /* Search Component */
+    .search-box {
+      margin-top: 14px;
+      background: var(--bg-gray);
+      border-radius: 30px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-box i { color: var(--primary-color); font-size: 18px; }
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Banner Component */
+    .banner-area { padding: 16px 16px 8px 16px; }
+    .dynamic-banner {
+      background: linear-gradient(135deg, var(--primary-color), #ff8c42);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .dynamic-banner:active { transform: scale(0.98); }
+    .dynamic-banner h3 { font-size: 20px; font-weight: 700; }
+    .dynamic-banner p { font-size: 13px; margin-top: 6px; opacity: 0.9; }
+
+    /* Categories Chips */
+    .categories-scroll {
+      padding: 8px 16px 16px 16px;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .categories-scroll::-webkit-scrollbar { display: none; }
+    .chip {
+      background: var(--bg-gray);
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .chip i { color: var(--primary-color); }
+    .chip.active { background: var(--primary-color); color: white; }
+    .chip.active i { color: white; }
+
+    /* Product / Item Card (Reusable) */
+    .items-grid {
+      padding: 8px 12px 80px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .product-card {
+      background: white;
+      border-radius: var(--radius-card);
+      display: flex;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .product-card:active { transform: scale(0.98); }
+    .product-img {
+      width: 85px;
+      height: 85px;
+      background: #f7e9e0;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    .product-details { flex: 1; }
+    .product-title {
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .badge-rating {
+      background: var(--secondary-color);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+    }
+    .product-subtitle { font-size: 12px; color: var(--text-light); margin: 4px 0; }
+    .product-meta { font-size: 12px; color: var(--primary-color); font-weight: 500; display: flex; gap: 8px; margin-top: 4px; }
+    .offer-tag {
+      background: #fef3e2;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #c96d00;
+    }
+    .add-btn {
+      background: var(--primary-color);
+      border: none;
+      padding: 5px 14px;
+      border-radius: 50px;
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Bottom Navigation (Fixed) */
+    .bottom-nav-fixed {
+      background: rgba(255,255,255,0.96);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 20px 18px;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 450px;
+      backdrop-filter: blur(2px);
+      z-index: 20;
+    }
+    .nav-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #8e8e8e;
+      cursor: pointer;
+    }
+    .nav-icon i { font-size: 22px; }
+    .nav-icon.active { color: var(--primary-color); font-weight: 500; }
+    .cart-badge {
+      background: var(--primary-color);
+      border-radius: 30px;
+      padding: 2px 6px;
+      font-size: 10px;
+      color: white;
+      margin-left: 4px;
+    }
+
+    /* Toast */
+    .toast-message {
+      visibility: hidden;
+      min-width: 180px;
+      background-color: #323232;
+      color: #fff;
+      text-align: center;
+      border-radius: 50px;
+      padding: 10px 18px;
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    .toast-message.show { visibility: visible; opacity: 1; }
+
+    /* Profile Page Template */
+    .profile-container { padding: 24px 20px; min-height: 80vh; }
+    .avatar-circle { background: #ff6e2e20; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 50px; color: var(--primary-color); }
+    .stats-row { display: flex; justify-content: space-around; background: var(--bg-gray); border-radius: 24px; padding: 20px; margin: 20px 0; }
+    .menu-item { background: white; padding: 16px; border-radius: 20px; margin-top: 12px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border-light); cursor: pointer; }
+    .back-home-btn { background: none; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 12px; border-radius: 40px; width: 100%; font-weight: 600; margin-top: 30px; cursor: pointer; }
+
+    .section-header { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px 4px 16px; }
+    .section-header h2 { font-size: 20px; font-weight: 700; }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <!-- ======================== DYNAMIC PAGES ======================== -->
+  <div id="homePageContainer"></div>
+  <div id="profilePageContainer" class="hidden"></div>
+
+  <!-- Fixed Bottom Navigation -->
+  <div class="bottom-nav-fixed" id="bottomNav">
+    <div class="nav-icon" data-nav="home"><i class="fas fa-home"></i><span>Home</span></div>
+    <div class="nav-icon" data-nav="explore"><i class="fas fa-compass"></i><span>Explore</span></div>
+    <div class="nav-icon" data-nav="cart" id="cartNavBtn"><i class="fas fa-shopping-bag"></i><span>Cart <span id="globalCartBadge" class="cart-badge" style="display:none;">0</span></span></div>
+    <div class="nav-icon" data-nav="offers"><i class="fas fa-tag"></i><span>Offers</span></div>
+    <div class="nav-icon" data-nav="account"><i class="fas fa-user"></i><span>Account</span></div>
+  </div>
+  <div id="globalToast" class="toast-message"></div>
+</div>
+
+<script>
+  /********************************************************************
+   *  SHOPPING APP FRAMEWORK v1.0
+   *  A modular, reusable structure for building any shopping app.
+   *  Features:
+   *    - Themeable CSS variables
+   *    - Dynamic data loading from Google Sheets (advertisements + product sheets)
+   *    - Cart system, search, categories, bottom navigation
+   *    - Profile page template
+   *    - Easily extendable for different verticals (grocery, fashion, electronics)
+   *
+   *  CONFIGURATION: Change these to rebrand the app
+   ********************************************************************/
+  const APP_CONFIG = {
+    appName: "ShopSwift",
+    primaryColor: "#ff6e2e",
+    defaultLocation: "Downtown, City",
+    // Google Sheets Master Config (same structure: row1=ad title, subtitle; row2=food/product sheet ID)
+    masterSheetId: "15jmoWAF-Lb-N1STfLdmkYNghmZ1jvaCZqCdTokjpqnc",
+    // For different shopping verticals, just replace the sheet ID or transform the data mapper
+    dataMapper: (row) => ({  // maps CSV row to product object
+      id: row.id || Math.random(),
+      name: row.name || row[0] || "Product",
+      description: row.description || row[1] || "Premium item",
+      price: row.price || row[2] || "₹299",
+      rating: row.rating || row[3] || "4.2",
+      category: row.category || row[4] || "All",
+      imageIcon: row.icon || "fa-box",
+      offer: row.offer || row[5] || "Hot Deal"
+    }),
+    categories: [
+      { name: "All", icon: "fa-fire" },
+      { name: "Electronics", icon: "fa-mobile-alt" },
+      { name: "Fashion", icon: "fa-tshirt" },
+      { name: "Groceries", icon: "fa-apple-alt" },
+      { name: "Home", icon: "fa-couch" }
+    ]
+  };
+
+  // ---------- GLOBAL STATE ----------
+  let cart = [];               // { id, name, price, productId }
+  let activeCategory = "All";
+  let searchQuery = "";
+  let productsData = [];       // product list from sheet or fallback
+  let currentPage = "home";
+
+  // Fallback products for demo (if sheet fails)
+  const FALLBACK_PRODUCTS = [
+    { id: 1, name: "Wireless Headphones", description: "Noise Cancellation", price: "₹2499", rating: "4.5", category: "Electronics", imageIcon: "fa-headphones", offer: "10% OFF" },
+    { id: 2, name: "Cotton T-Shirt", description: "Premium Quality", price: "₹599", rating: "4.3", category: "Fashion", imageIcon: "fa-tshirt", offer: "Buy 2 Get 10%" },
+    { id: 3, name: "Fresh Apples (1kg)", description: "Organic", price: "₹180", rating: "4.6", category: "Groceries", imageIcon: "fa-apple-alt", offer: "Free Delivery" },
+    { id: 4, name: "LED Desk Lamp", description: "Smart Touch", price: "₹1299", rating: "4.4", category: "Home", imageIcon: "fa-lamp", offer: "20% OFF" },
+    { id: 5, name: "Running Shoes", description: "Lightweight", price: "₹3499", rating: "4.7", category: "Fashion", imageIcon: "fa-shoe-prints", offer: "Sale" }
+  ];
+
+  // Helper: Show toast
+  function showToast(msg) {
+    const toastEl = document.getElementById("globalToast");
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
+
+  // Cart Helpers
+  function updateGlobalCartBadge() {
+    const badge = document.getElementById("globalCartBadge");
+    const total = cart.length;
+    if (total > 0) { badge.innerText = total; badge.style.display = "inline-block"; }
+    else { badge.style.display = "none"; }
+    localStorage.setItem("framework_cart", JSON.stringify(cart));
+  }
+
+  function addToCart(product) {
+    const existing = cart.find(item => item.productId === product.id);
+    if (!existing) {
+      cart.push({ id: Date.now(), productId: product.id, name: product.name, price: product.price, quantity: 1 });
+    } else {
+      existing.quantity += 1;
+    }
+    updateGlobalCartBadge();
+    showToast(`🛒 ${product.name} added to cart`);
+  }
+
+  function loadCartFromStorage() {
+    const saved = localStorage.getItem("framework_cart");
+    if (saved) { try { cart = JSON.parse(saved); updateGlobalCartBadge(); } catch(e) { cart = []; } }
+  }
+
+  // ---------- RENDER HOME PAGE (Dynamic Product Grid) ----------
+  function filterProducts() {
+    let filtered = productsData.length ? productsData : FALLBACK_PRODUCTS;
+    if (activeCategory !== "All") {
+      filtered = filtered.filter(p => p.category && p.category.toLowerCase() === activeCategory.toLowerCase());
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q)));
+    }
+    return filtered;
+  }
+
+  function renderHomePage() {
+    const filtered = filterProducts();
+    const gridHtml = filtered.map(prod => `
+      <div class="product-card" data-prod-id="${prod.id}">
+        <div class="product-img"><i class="fas ${prod.imageIcon || 'fa-shopping-bag'}"></i></div>
+        <div class="product-details">
+          <div class="product-title">${prod.name} <span class="badge-rating"><i class="fas fa-star"></i> ${prod.rating || 4.0}</span></div>
+          <div class="product-subtitle">${prod.description || "Best in class"}</div>
+          <div class="product-meta">${prod.price} • <i class="far fa-clock"></i> Fast delivery</div>
+          <div class="flex-between" style="margin-top: 6px;">
+            <span class="offer-tag"><i class="fas fa-tag"></i> ${prod.offer || "Extra savings"}</span>
+            <button class="add-btn" data-id="${prod.id}"><i class="fas fa-plus"></i> ADD</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    const emptyMsg = `<div style="text-align:center; padding:40px;">✨ No products found</div>`;
+    const productsHtml = filtered.length ? gridHtml : emptyMsg;
+
+    const homeHtml = `
+      <div class="app-header">
+        <div class="flex-between">
+          <div class="location-row"><i class="fas fa-map-marker-alt location-icon"></i><span>${APP_CONFIG.defaultLocation}</span><i class="fas fa-chevron-down"></i></div>
+          <div class="profile-icon" id="profileIconBtn"><i class="far fa-user"></i></div>
+        </div>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInputGlobal" placeholder="Search products..."></div>
+      </div>
+      <div class="banner-area" id="dynamicBannerArea"><div class="flex-center" style="padding:20px;"><i class="fas fa-spinner fa-pulse"></i> Loading offers...</div></div>
+      <div class="categories-scroll" id="categoriesList"></div>
+      <div class="section-header"><h2>Trending Now</h2><span style="color:var(--primary-color);">View all</span></div>
+      <div class="items-grid" id="productGrid">${productsHtml}</div>
+      <div style="height: 20px;"></div>
+    `;
+    document.getElementById("homePageContainer").innerHTML = homeHtml;
+
+    // Bind search after render
+    const searchInput = document.getElementById("searchInputGlobal");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => { searchQuery = e.target.value; renderHomePage(); });
+    }
+    // Bind add to cart buttons
+    document.querySelectorAll(".add-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const prodId = parseInt(btn.dataset.id);
+        const product = [...(productsData.length ? productsData : FALLBACK_PRODUCTS)].find(p => p.id === prodId);
+        if (product) addToCart(product);
+      });
+    });
+    // Bind category chips
+    renderCategoriesUI();
+    // Bind product card click for preview
+    document.querySelectorAll(".product-card").forEach(card => {
+      card.addEventListener("click", (e) => {
+        if (e.target.classList.contains("add-btn")) return;
+        showToast("✨ Tap 'ADD' to add to cart");
+      });
+    });
+    // Profile icon redirect
+    document.getElementById("profileIconBtn")?.addEventListener("click", () => navigateTo("account"));
+  }
+
+  function renderCategoriesUI() {
+    const container = document.getElementById("categoriesList");
+    if (!container) return;
+    container.innerHTML = APP_CONFIG.categories.map(cat => `
+      <div class="chip ${cat.name === activeCategory ? 'active' : ''}" data-cat="${cat.name}">
+        <i class="fas ${cat.icon}"></i> ${cat.name}
+      </div>
+    `).join("");
+    document.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        activeCategory = chip.dataset.cat;
+        renderHomePage();
+      });
+    });
+  }
+
+  // ---------- BANNER FROM SPREADSHEET (Master) ----------
+  async function loadMasterBannerAndData() {
+    try {
+      const url = `https://docs.google.com/spreadsheets/d/${APP_CONFIG.masterSheetId}/gviz/tq?tqx=out:csv`;
+      const resp = await fetch(url);
+      const csv = await resp.text();
+      const rows = csv.split(/\r?\n/).filter(r => r.trim());
+      if (rows.length >= 2) {
+        const parseRow = (row) => {
+          const match = row.match(/(".*?"|[^,]*)(,|$)/g);
+          if (!match) return [];
+          return match.map(m => m.replace(/,$/, '').replace(/^"|"$/g, '').trim());
+        };
+        const adRow = parseRow(rows[0]);
+        const adTitle = adRow[0] || "🔥 Mega Sale!";
+        const adSub = adRow[1] || "Up to 50% off";
+        const bannerDiv = document.getElementById("dynamicBannerArea");
+        if (bannerDiv) {
+          bannerDiv.innerHTML = `<div class="dynamic-banner" id="offerBanner"><h3>${adTitle}</h3><p>${adSub}</p></div>`;
+          document.getElementById("offerBanner")?.addEventListener("click", () => showToast(`🎁 ${adTitle} - Grab Deal`));
+        }
+        // Row2: contains product sheet ID
+        const dataRow = rows[1] ? parseRow(rows[1]) : [];
+        const productSheetId = dataRow[1] || (dataRow[0] && dataRow[0].includes("1") ? dataRow[0] : null);
+        if (productSheetId) await loadProductsFromSheet(productSheetId);
+        else { productsData = [...FALLBACK_PRODUCTS]; renderHomePage(); }
+      } else {
+        fallbackBannerAndData();
+      }
+    } catch (err) {
+      console.warn("Master sheet error, using fallback", err);
+      fallbackBannerAndData();
+    }
+  }
+
+  async function loadProductsFromSheet(sheetId) {
+    try {
+      const productUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+      const resp = await fetch(productUrl);
+      const csv = await resp.text();
+      const lines = csv.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length > 1) {
+        const products = [];
+        for (let i = 1; i < lines.length; i++) {
+          const vals = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+          if (vals.length >= 2) {
+            const mapped = APP_CONFIG.dataMapper({
+              id: i + 100,
+              name: vals[0],
+              description: vals[1] || "",
+              price: vals[2] || "₹299",
+              rating: vals[3] || "4.0",
+              category: vals[4] || "All",
+              icon: vals[5] || "fa-store",
+              offer: vals[6] || "Special"
+            });
+            products.push(mapped);
+          }
+        }
+        if (products.length) productsData = products;
+        else productsData = [...FALLBACK_PRODUCTS];
+      } else {
+        productsData = [...FALLBACK_PRODUCTS];
+      }
+      renderHomePage();
+    } catch (err) {
+      console.error("Product sheet error", err);
+      productsData = [...FALLBACK_PRODUCTS];
+      renderHomePage();
+    }
+  }
+
+  function fallbackBannerAndData() {
+    const bannerDiv = document.getElementById("dynamicBannerArea");
+    if (bannerDiv) {
+      bannerDiv.innerHTML = `<div class="dynamic-banner"><h3>🔥 Limited Time Offer</h3><p>Flat 30% off + Free Shipping</p></div>`;
+      bannerDiv.querySelector(".dynamic-banner")?.addEventListener("click", () => showToast("🎁 Use code: SHOP30"));
+    }
+    productsData = [...FALLBACK_PRODUCTS];
+    renderHomePage();
+  }
+
+  // ---------- PROFILE PAGE (Template) ----------
+  function renderProfilePage() {
+    const profileHtml = `
+      <div class="profile-container">
+        <div class="avatar-circle"><i class="fas fa-user-circle"></i></div>
+        <div style="text-align:center;"><h2>Shopper Name</h2><p style="color:gray;">shopper@example.com</p></div>
+        <div class="stats-row">
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">${cart.length}</div><div>Cart Items</div></div>
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">5</div><div>Orders</div></div>
+          <div><div style="font-weight:800; font-size:22px; color:var(--primary-color);">₹499</div><div>Saved</div></div>
+        </div>
+        <div class="menu-item"><i class="fas fa-heart" style="color:var(--primary-color);"></i> Wishlist <i class="fas fa-chevron-right" style="margin-left:auto;"></i></div>
+        <div class="menu-item"><i class="fas fa-map-marker-alt" style="color:var(--primary-color);"></i> Addresses <i class="fas fa-chevron-right" style="margin-left:auto;"></i></div>
+        <div class="menu-item"><i class="fas fa-credit-card" style="color:var(--primary-color);"></i> Payment Methods <i class="fas fa-chevron-right" style="margin-left:auto;"></i></div>
+        <button class="back-home-btn" id="backHomeBtn"><i class="fas fa-arrow-left"></i> Back to Shopping</button>
+      </div>
+    `;
+    document.getElementById("profilePageContainer").innerHTML = profileHtml;
+    document.getElementById("backHomeBtn")?.addEventListener("click", () => navigateTo("home"));
+  }
+
+  // ---------- CART MODAL (Reusable) ----------
+  function showCartModal() {
+    if (cart.length === 0) { showToast("Cart is empty"); return; }
+    let total = cart.reduce((sum, item) => sum + parseInt(item.price.replace(/[^0-9]/g, '') || 0), 0);
+    let itemsHtml = cart.map(item => `<div style="display:flex; justify-content:space-between; padding:8px 0;"><span>${item.name} x${item.quantity}</span><span>${item.price}</span></div>`).join('');
+    const modalDiv = document.createElement('div');
+    modalDiv.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-end;";
+    modalDiv.innerHTML = `<div style="background:white; width:100%; max-width:450px; margin:0 auto; border-radius:28px 28px 0 0; padding:24px;"><h3>Your Cart 🛍️</h3><div style="max-height:300px; overflow:auto;">${itemsHtml}</div><div style="font-weight:800; margin-top:16px;">Total: ₹${total}</div><button id="closeCartBtn" style="background:var(--primary-color); width:100%; padding:14px; border-radius:40px; color:white; border:none; margin-top:20px;">Checkout</button><button id="clearCartFramework" style="background:transparent; width:100%; padding:10px;">Clear Cart</button></div>`;
+    document.body.appendChild(modalDiv);
+    const closeModal = () => modalDiv.remove();
+    modalDiv.querySelector("#closeCartBtn").onclick = () => { showToast("Order placed (demo)"); closeModal(); };
+    modalDiv.querySelector("#clearCartFramework").onclick = () => { cart = []; updateGlobalCartBadge(); closeModal(); showToast("Cart cleared"); };
+    modalDiv.onclick = (e) => { if(e.target === modalDiv) closeModal(); };
+  }
+
+  // Navigation Controller
+  function navigateTo(page) {
+    currentPage = page;
+    const homeDiv = document.getElementById("homePageContainer");
+    const profileDiv = document.getElementById("profilePageContainer");
+    if (page === "home") {
+      homeDiv.classList.remove("hidden");
+      profileDiv.classList.add("hidden");
+      renderHomePage(); // refresh
+    } else if (page === "account") {
+      renderProfilePage();
+      homeDiv.classList.add("hidden");
+      profileDiv.classList.remove("hidden");
+    } else if (page === "cart") {
+      showCartModal();
+      return;
+    } else if (page === "offers") {
+      showToast("🎉 Exclusive coupons: FLAT20, SAVE50");
+      return;
+    } else if (page === "explore") {
+      showToast("✨ Explore new collections!");
+      return;
+    }
+    // Update bottom nav active style
+    document.querySelectorAll(".nav-icon").forEach(nav => nav.classList.remove("active"));
+    const activeNav = document.querySelector(`.nav-icon[data-nav="${page === "account" ? "account" : page}"]`);
+    if (activeNav) activeNav.classList.add("active");
+  }
+
+  function setupBottomNav() {
+    document.querySelectorAll(".nav-icon").forEach(nav => {
+      nav.addEventListener("click", () => {
+        const navType = nav.dataset.nav;
+        if (navType === "cart") showCartModal();
+        else if (navType === "home") navigateTo("home");
+        else if (navType === "account") navigateTo("account");
+        else if (navType === "offers") navigateTo("offers");
+        else if (navType === "explore") navigateTo("explore");
+      });
+    });
+  }
+
+  // Initialize Framework
+  async function initFramework() {
+    loadCartFromStorage();
+    setupBottomNav();
+    await loadMasterBannerAndData();
+    navigateTo("home");
+  }
+  initFramework();
+</script>
+</body>
+</html>
