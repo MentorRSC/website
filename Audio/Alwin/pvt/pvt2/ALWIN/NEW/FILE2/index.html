@@ -1,2 +1,560 @@
-<html>hey there
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Smart Launch | Secure Gateway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        body.dark {
+            background: #0f172a;
+        }
+
+        .launch-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin-bottom: 2rem;
+            word-break: break-word;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.3s ease;
+        }
+
+        body.dark .app-title {
+            color: #f1f5f9;
+        }
+
+        .app-title.reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loader-wrapper {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loader-wrapper.visible {
+            opacity: 1;
+        }
+
+        .spinner-ring {
+            width: 56px;
+            height: 56px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #475569;
+            background: rgba(255,255,255,0.7);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+
+        body.dark .loader-text {
+            color: #cbd5e1;
+            background: rgba(30,41,59,0.6);
+        }
+
+        /* MODAL POPUP STYLES */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 32px;
+            max-width: 360px;
+            width: 85%;
+            padding: 2rem 1.5rem 1.8rem;
+            text-align: center;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.4);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+            animation: modalPop 0.3s ease forwards;
+        }
+
+        body.dark .modal-card {
+            background: #1e293b;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            font-size: 3.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .modal-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+        }
+
+        body.dark .modal-title {
+            color: #f1f5f9;
+        }
+
+        .modal-message {
+            font-size: 0.95rem;
+            color: #475569;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        body.dark .modal-message {
+            color: #cbd5e6;
+        }
+
+        .proceed-btn {
+            background: #10b981;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .proceed-btn:hover {
+            background: #059669;
+            transform: scale(1.02);
+        }
+
+        .error-btn {
+            background: #ef4444;
+            box-shadow: none;
+        }
+
+        .error-btn:hover {
+            background: #dc2626;
+        }
+
+        .toast-popup {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 0.7rem 1.3rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.95);
+            max-width: 85vw;
+            text-align: center;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .toast-popup.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .theme-toggle-mini {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 2rem;
+            padding: 0.5rem 0.9rem;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 1100;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        body.dark .theme-toggle-mini {
+            background: rgba(30,41,59,0.8);
+            color: #facc15;
+        }
+
+        @media (max-width: 500px) {
+            .app-title { font-size: 1.8rem; }
+            .modal-card { padding: 1.5rem 1.2rem; }
+            .modal-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle-mini" id="themeToggleBtn" aria-label="Dark/Light mode">🌙 Dark</button>
+
+    <div class="launch-container">
+        <h1 id="dynamicTitle" class="app-title">✨</h1>
+        <div id="loaderUI" class="loader-wrapper">
+            <div class="spinner-ring"></div>
+            <div class="loader-text">🔐 Establishing secure gateway...</div>
+        </div>
+    </div>
+
+    <div id="actionModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon" id="modalIcon">🔒</div>
+            <div class="modal-title" id="modalTitle">Secure Connection</div>
+            <div class="modal-message" id="modalMessage"></div>
+            <button id="modalActionBtn" class="proceed-btn">Proceed →</button>
+        </div>
+    </div>
+
+    <div id="toastMsg" class="toast-popup"></div>
+
+    <script>
+        (function() {
+            // ---------- CONFIGURATION ----------
+            // *** REPLACE THIS URL WITH YOUR APPS SCRIPT WEB APP URL (Deploy as web app, execute as "Me", access "Anyone") ***
+            const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_YourAppsScriptId/exec";
+            
+            // DOM Elements
+            const titleEl = document.getElementById('dynamicTitle');
+            const loaderWrapper = document.getElementById('loaderUI');
+            const modalOverlay = document.getElementById('actionModal');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalBtn = document.getElementById('modalActionBtn');
+            const toastEl = document.getElementById('toastMsg');
+            
+            let pendingRedirectUrl = null;
+            let redirectTriggered = false;
+            
+            // Helper: show toast
+            let toastTimeout = null;
+            function showToast(message, isError = false) {
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toastEl.textContent = message;
+                toastEl.classList.remove('show');
+                void toastEl.offsetWidth;
+                toastEl.style.background = isError ? "rgba(185, 28, 28, 0.96)" : "rgba(15, 23, 42, 0.95)";
+                toastEl.classList.add('show');
+                toastTimeout = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 3200);
+            }
+            
+            // Modal helper
+            function showModal(config) {
+                modalIcon.textContent = config.icon || (config.type === 'error' ? '⚠️' : '🔒');
+                modalTitle.textContent = config.title || 'Notice';
+                modalMessage.textContent = config.message || '';
+                
+                if (config.type === 'error') {
+                    modalBtn.classList.add('error-btn');
+                    modalBtn.textContent = config.buttonText || 'OK';
+                } else {
+                    modalBtn.classList.remove('error-btn');
+                    modalBtn.textContent = config.buttonText || 'Proceed →';
+                }
+                
+                // Clone to remove old listeners
+                const newBtn = modalBtn.cloneNode(true);
+                modalBtn.parentNode.replaceChild(newBtn, modalBtn);
+                const finalBtn = document.getElementById('modalActionBtn');
+                
+                finalBtn.addEventListener('click', () => {
+                    closeModal();
+                    if (config.onConfirm && typeof config.onConfirm === 'function') {
+                        config.onConfirm();
+                    }
+                });
+                
+                modalOverlay.classList.add('active');
+            }
+            
+            function closeModal() {
+                modalOverlay.classList.remove('active');
+            }
+            
+            // Helper: get client IP via free API (reliable for logging)
+            async function getClientIP() {
+                try {
+                    const res = await fetch('https://api.ipify.org?format=json');
+                    const data = await res.json();
+                    return data.ip;
+                } catch (err) {
+                    console.warn("IP fetch failed, using fallback");
+                    return "unknown-ip";
+                }
+            }
+            
+            // Generate or retrieve persistent device ID (stored in localStorage)
+            function getDeviceId() {
+                let deviceId = localStorage.getItem('device_uuid');
+                if (!deviceId) {
+                    deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+                    localStorage.setItem('device_uuid', deviceId);
+                }
+                return deviceId;
+            }
+            
+            // MAIN FLOW: Call Apps Script with device data, get status + config
+            async function runSecureLaunch() {
+                loaderWrapper.classList.remove('visible');
+                titleEl.classList.remove('reveal');
+                titleEl.textContent = "✨";
+                
+                // Show loader while authenticating/logging
+                loaderWrapper.classList.add('visible');
+                document.querySelector('.loader-text').textContent = "🔐 Verifying device & secure channel...";
+                
+                let clientIp = "0.0.0.0";
+                try {
+                    clientIp = await getClientIP();
+                } catch (e) { clientIp = "unknown"; }
+                
+                const deviceId = getDeviceId();
+                const timestamp = new Date().toISOString();
+                
+                // Prepare payload
+                const payload = {
+                    action: "loginAttempt",
+                    deviceId: deviceId,
+                    ipAddress: clientIp,
+                    timestamp: timestamp,
+                    userAgent: navigator.userAgent
+                };
+                
+                try {
+                    const response = await fetch(APPS_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    
+                    // result should contain: { allowed, blockedUntil, attempts, title, flag, redirectUrl, message, firstAttempt, lastAttempt }
+                    if (!result || typeof result.allowed === 'undefined') {
+                        throw new Error("Invalid server response structure");
+                    }
+                    
+                    // Hide loader after server response
+                    loaderWrapper.classList.remove('visible');
+                    
+                    // Case: Device is BLOCKED
+                    if (!result.allowed) {
+                        let blockMsg = result.message || "Access denied due to multiple failed attempts.";
+                        if (result.blockedUntil) {
+                            const blockedDate = new Date(result.blockedUntil);
+                            blockMsg += ` Blocked until ${blockedDate.toLocaleString()}.`;
+                        }
+                        showModal({
+                            type: 'error',
+                            icon: '⛔',
+                            title: 'Device Blocked',
+                            message: blockMsg,
+                            buttonText: 'OK',
+                            onConfirm: () => { console.log("Blocked user acknowledged"); }
+                        });
+                        return;
+                    }
+                    
+                    // Allowed: read configuration (title, flag, redirectUrl) from first row (Sheet1)
+                    const titleFromSheet = result.title || "Smart Launch";
+                    const flag = result.flag; // 0 or 1
+                    const redirectUrlRaw = result.redirectUrl || "";
+                    
+                    // Display title
+                    titleEl.textContent = titleFromSheet.substring(0, 60);
+                    titleEl.classList.add('reveal');
+                    
+                    // If flag is 0 -> show restricted error (Server error style)
+                    if (flag === 0) {
+                        showModal({
+                            type: 'error',
+                            icon: '🚫',
+                            title: 'Access Restricted',
+                            message: result.restrictedMessage || "Flag is set to 0. Access denied by administrator.",
+                            buttonText: 'OK',
+                            onConfirm: () => {}
+                        });
+                        return;
+                    }
+                    
+                    // Flag must be 1 for redirection
+                    if (flag !== 1) {
+                        showModal({
+                            type: 'error',
+                            icon: '⚠️',
+                            title: 'Configuration Error',
+                            message: "Invalid flag value. Contact support.",
+                            buttonText: 'OK'
+                        });
+                        return;
+                    }
+                    
+                    // Validate URL
+                    let finalUrl = redirectUrlRaw.trim();
+                    if (!finalUrl) {
+                        showModal({
+                            type: 'error',
+                            icon: '🔗',
+                            title: 'Missing Redirect URL',
+                            message: "Redirect URL is empty. Please check sheet configuration.",
+                            buttonText: 'OK'
+                        });
+                        return;
+                    }
+                    
+                    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                        finalUrl = 'https://' + finalUrl;
+                    }
+                    
+                    pendingRedirectUrl = finalUrl;
+                    
+                    // Show 3 seconds loading screen before redirect modal
+                    loaderWrapper.classList.add('visible');
+                    document.querySelector('.loader-text').textContent = "✅ Access granted. Preparing secure gateway...";
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    loaderWrapper.classList.remove('visible');
+                    
+                    // Show proceed modal with secure connection message
+                    showModal({
+                        type: 'success',
+                        icon: '🔒✅',
+                        title: 'Secure Connection Active',
+                        message: `You are about to be redirected to the secure destination. Attempts logged: ${result.attempts || 1}.`,
+                        buttonText: 'Proceed →',
+                        onConfirm: () => {
+                            if (!redirectTriggered && pendingRedirectUrl) {
+                                redirectTriggered = true;
+                                showToast(`Redirecting to secure destination...`, false);
+                                setTimeout(() => {
+                                    window.location.href = pendingRedirectUrl;
+                                }, 200);
+                            }
+                        }
+                    });
+                    
+                } catch (err) {
+                    console.error("Launch error:", err);
+                    loaderWrapper.classList.remove('visible');
+                    showModal({
+                        type: 'error',
+                        icon: '🔥',
+                        title: 'Gateway Error',
+                        message: `Unable to reach secure server. ${err.message}`,
+                        buttonText: 'Retry',
+                        onConfirm: () => window.location.reload()
+                    });
+                }
+            }
+            
+            // Dark mode toggle
+            function initTheme() {
+                const btn = document.getElementById('themeToggleBtn');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                let stored = localStorage.getItem('app_theme');
+                let theme = stored || (prefersDark ? 'dark' : 'light');
+                const apply = (newTheme) => {
+                    if (newTheme === 'dark') {
+                        document.body.classList.add('dark');
+                        btn.innerHTML = '☀️ Light';
+                    } else {
+                        document.body.classList.remove('dark');
+                        btn.innerHTML = '🌙 Dark';
+                    }
+                    localStorage.setItem('app_theme', newTheme);
+                };
+                apply(theme);
+                btn.addEventListener('click', () => {
+                    const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+                    apply(next);
+                });
+            }
+            
+            document.addEventListener('DOMContentLoaded', () => {
+                initTheme();
+                runSecureLaunch().catch(err => {
+                    console.error("Fatal:", err);
+                    if (loaderWrapper) loaderWrapper.classList.remove('visible');
+                    showModal({
+                        type: 'error',
+                        icon: '💥',
+                        title: 'Critical Failure',
+                        message: "Application encountered unexpected error. Please refresh.",
+                        buttonText: 'Reload',
+                        onConfirm: () => window.location.reload()
+                    });
+                });
+            });
+        })();
+    </script>
+</body>
 </html>
