@@ -95,7 +95,6 @@
             background: rgba(30,41,59,0.6);
         }
 
-        /* MODAL POPUP STYLES */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -275,11 +274,11 @@
 
     <script>
         (function() {
-            // ---------- CONFIGURATION ----------
-            // *** REPLACE THIS URL WITH YOUR APPS SCRIPT WEB APP URL (Deploy as web app, execute as "Me", access "Anyone") ***
-            const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_YourAppsScriptId/exec";
+            // ============================================================
+            // IMPORTANT: REPLACE THIS URL WITH YOUR APPS SCRIPT WEB APP URL
+            // ============================================================
+            const APPS_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_APPS_SCRIPT_ID/exec";
             
-            // DOM Elements
             const titleEl = document.getElementById('dynamicTitle');
             const loaderWrapper = document.getElementById('loaderUI');
             const modalOverlay = document.getElementById('actionModal');
@@ -292,7 +291,6 @@
             let pendingRedirectUrl = null;
             let redirectTriggered = false;
             
-            // Helper: show toast
             let toastTimeout = null;
             function showToast(message, isError = false) {
                 if (toastTimeout) clearTimeout(toastTimeout);
@@ -306,7 +304,6 @@
                 }, 3200);
             }
             
-            // Modal helper
             function showModal(config) {
                 modalIcon.textContent = config.icon || (config.type === 'error' ? '⚠️' : '🔒');
                 modalTitle.textContent = config.title || 'Notice';
@@ -320,7 +317,6 @@
                     modalBtn.textContent = config.buttonText || 'Proceed →';
                 }
                 
-                // Clone to remove old listeners
                 const newBtn = modalBtn.cloneNode(true);
                 modalBtn.parentNode.replaceChild(newBtn, modalBtn);
                 const finalBtn = document.getElementById('modalActionBtn');
@@ -339,7 +335,6 @@
                 modalOverlay.classList.remove('active');
             }
             
-            // Helper: get client IP via free API (reliable for logging)
             async function getClientIP() {
                 try {
                     const res = await fetch('https://api.ipify.org?format=json');
@@ -351,7 +346,6 @@
                 }
             }
             
-            // Generate or retrieve persistent device ID (stored in localStorage)
             function getDeviceId() {
                 let deviceId = localStorage.getItem('device_uuid');
                 if (!deviceId) {
@@ -361,13 +355,11 @@
                 return deviceId;
             }
             
-            // MAIN FLOW: Call Apps Script with device data, get status + config
             async function runSecureLaunch() {
                 loaderWrapper.classList.remove('visible');
                 titleEl.classList.remove('reveal');
                 titleEl.textContent = "✨";
                 
-                // Show loader while authenticating/logging
                 loaderWrapper.classList.add('visible');
                 document.querySelector('.loader-text').textContent = "🔐 Verifying device & secure channel...";
                 
@@ -379,7 +371,6 @@
                 const deviceId = getDeviceId();
                 const timestamp = new Date().toISOString();
                 
-                // Prepare payload
                 const payload = {
                     action: "loginAttempt",
                     deviceId: deviceId,
@@ -399,15 +390,12 @@
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const result = await response.json();
                     
-                    // result should contain: { allowed, blockedUntil, attempts, title, flag, redirectUrl, message, firstAttempt, lastAttempt }
                     if (!result || typeof result.allowed === 'undefined') {
                         throw new Error("Invalid server response structure");
                     }
                     
-                    // Hide loader after server response
                     loaderWrapper.classList.remove('visible');
                     
-                    // Case: Device is BLOCKED
                     if (!result.allowed) {
                         let blockMsg = result.message || "Access denied due to multiple failed attempts.";
                         if (result.blockedUntil) {
@@ -420,21 +408,18 @@
                             title: 'Device Blocked',
                             message: blockMsg,
                             buttonText: 'OK',
-                            onConfirm: () => { console.log("Blocked user acknowledged"); }
+                            onConfirm: () => {}
                         });
                         return;
                     }
                     
-                    // Allowed: read configuration (title, flag, redirectUrl) from first row (Sheet1)
                     const titleFromSheet = result.title || "Smart Launch";
-                    const flag = result.flag; // 0 or 1
+                    const flag = result.flag;
                     const redirectUrlRaw = result.redirectUrl || "";
                     
-                    // Display title
                     titleEl.textContent = titleFromSheet.substring(0, 60);
                     titleEl.classList.add('reveal');
                     
-                    // If flag is 0 -> show restricted error (Server error style)
                     if (flag === 0) {
                         showModal({
                             type: 'error',
@@ -447,7 +432,6 @@
                         return;
                     }
                     
-                    // Flag must be 1 for redirection
                     if (flag !== 1) {
                         showModal({
                             type: 'error',
@@ -459,7 +443,6 @@
                         return;
                     }
                     
-                    // Validate URL
                     let finalUrl = redirectUrlRaw.trim();
                     if (!finalUrl) {
                         showModal({
@@ -478,13 +461,11 @@
                     
                     pendingRedirectUrl = finalUrl;
                     
-                    // Show 3 seconds loading screen before redirect modal
                     loaderWrapper.classList.add('visible');
                     document.querySelector('.loader-text').textContent = "✅ Access granted. Preparing secure gateway...";
                     await new Promise(resolve => setTimeout(resolve, 3000));
                     loaderWrapper.classList.remove('visible');
                     
-                    // Show proceed modal with secure connection message
                     showModal({
                         type: 'success',
                         icon: '🔒✅',
@@ -516,7 +497,6 @@
                 }
             }
             
-            // Dark mode toggle
             function initTheme() {
                 const btn = document.getElementById('themeToggleBtn');
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
