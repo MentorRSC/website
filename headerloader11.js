@@ -51,13 +51,15 @@ function setupAutoTitleDisplay() {
         return;
     }
 
-    // Get all navigation items (excluding the button/CTA)
-    const navItems = Array.from(nav.querySelectorAll("li:not(:has(.cta-button)) a, li > a:not(.cta-button)"));
+    // Get all navigation items that have spans (excluding the Join Now button)
+    const navItems = Array.from(nav.querySelectorAll(".hover-code-css li a:not(.cta-button)"));
     
     if (navItems.length === 0) {
         console.error("No navigation items found");
         return;
     }
+
+    console.log("Found navigation items:", navItems.length);
 
     let autoInterval = null;
     let currentIndex = 0;
@@ -66,47 +68,17 @@ function setupAutoTitleDisplay() {
 
     // Store original content for each nav item
     const originalTexts = navItems.map(item => {
-        // Try to find span first, if not, use the text nodes
-        let span = item.querySelector("span");
-        let textNode = null;
-        let originalText = "";
-        
-        if (span) {
-            originalText = span.textContent;
-        } else {
-            // Get text content excluding icon text
-            const icon = item.querySelector("i");
-            let text = item.textContent;
-            if (icon) {
-                text = text.replace(icon.textContent, "").trim();
-            }
-            originalText = text.trim();
-            
-            // Create a span if it doesn't exist
-            span = document.createElement("span");
-            span.textContent = originalText;
-            // Insert span after the icon or at the end
-            if (icon && icon.nextSibling) {
-                item.insertBefore(span, icon.nextSibling);
-            } else if (icon) {
-                item.appendChild(span);
-            } else {
-                item.appendChild(span);
-            }
-        }
-        
+        const span = item.querySelector("span");
         return {
             item: item,
             span: span,
-            originalText: originalText,
-            originalDisplay: span.style.display
+            originalText: span ? span.textContent : "",
+            originalDisplay: span ? span.style.display : "inline"
         };
     });
 
     // Function to show only the title at given index
     function showTitleAtIndex(index) {
-        console.log("Showing title at index:", index, "Text:", originalTexts[index]?.originalText);
-        
         // Hide all titles first
         originalTexts.forEach(({ span }) => {
             if (span) {
@@ -117,7 +89,8 @@ function setupAutoTitleDisplay() {
         // Show the selected title
         const selected = originalTexts[index];
         if (selected && selected.span) {
-            selected.span.style.display = "inline-block";
+            selected.span.style.display = "inline";
+            console.log("Showing:", selected.originalText);
         }
     }
 
@@ -155,7 +128,6 @@ function setupAutoTitleDisplay() {
                 if (!isHovering) {
                     currentIndex = (currentIndex + 1) % originalTexts.length;
                     showTitleAtIndex(currentIndex);
-                    console.log("Rotating to index:", currentIndex);
                 }
             }, 3000);
         }
@@ -174,7 +146,7 @@ function setupAutoTitleDisplay() {
     navItems.forEach((item, index) => {
         // Mouse enter - stop auto rotation and show only this item's title
         item.addEventListener("mouseenter", () => {
-            console.log("Hovering on item:", index);
+            console.log("Hovering on:", originalTexts[index].originalText);
             if (hoverTimeout) {
                 clearTimeout(hoverTimeout);
             }
@@ -192,7 +164,7 @@ function setupAutoTitleDisplay() {
             // Show only the hovered item's title
             const hoveredItem = originalTexts[index];
             if (hoveredItem && hoveredItem.span) {
-                hoveredItem.span.style.display = "inline-block";
+                hoveredItem.span.style.display = "inline";
             }
         });
         
@@ -206,24 +178,8 @@ function setupAutoTitleDisplay() {
         });
     });
 
-    // Also handle hover on the entire nav container
-    nav.addEventListener("mouseenter", () => {
-        if (hoverTimeout) {
-            clearTimeout(hoverTimeout);
-        }
-    });
-    
-    nav.addEventListener("mouseleave", () => {
-        hoverTimeout = setTimeout(() => {
-            isHovering = false;
-            stopAutoRotation();
-            startAutoRotation();
-        }, 300);
-    });
-
     // Start the auto rotation
     startAutoRotation();
     
-    console.log("Auto title display initialized with", originalTexts.length, "items");
-    console.log("Nav items found:", navItems.length);
+    console.log("Auto title display initialized successfully with", originalTexts.length, "items");
 }
