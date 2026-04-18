@@ -96,6 +96,20 @@ function setupAutoTitleEffect() {
         // Store original HTML
         const originalHTML = item.innerHTML;
         
+        // Apply visible styles to span
+        if (span) {
+            span.style.cssText = `
+                display: inline-block;
+                color: #007bff !important;
+                font-weight: 600 !important;
+                font-size: inherit !important;
+                font-family: inherit !important;
+                background: transparent !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            `;
+        }
+        
         return {
             item: item,
             icon: icon,
@@ -116,16 +130,45 @@ function setupAutoTitleEffect() {
                 // Re-capture the icon and span references
                 item.icon = item.item.querySelector("i");
                 item.span = item.item.querySelector("span");
+                // Re-apply styles to span
+                if (item.span) {
+                    item.span.style.cssText = `
+                        display: inline-block;
+                        color: #007bff !important;
+                        font-weight: 600 !important;
+                        font-size: inherit !important;
+                        font-family: inherit !important;
+                        background: transparent !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    `;
+                }
+                if (item.icon) {
+                    item.icon.style.display = "";
+                }
             }
         });
         
         // Now replace ONLY the selected item
         const selected = items[index];
         if (selected && selected.icon && selected.span) {
-            // Hide icon and show text
+            // Hide icon
             selected.icon.style.display = "none";
-            selected.span.style.display = "inline";
-            selected.span.style.marginLeft = "0";
+            
+            // Make span visible with primary color
+            selected.span.style.cssText = `
+                display: inline-block !important;
+                color: #007bff !important;
+                font-weight: 600 !important;
+                font-size: 14px !important;
+                font-family: inherit !important;
+                background: transparent !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                margin-left: 0 !important;
+                padding: 0 !important;
+            `;
+            
             selected.isReplaced = true;
             console.log("Showing title for:", selected.originalText);
         }
@@ -140,6 +183,19 @@ function setupAutoTitleEffect() {
                 // Re-capture references
                 item.icon = item.item.querySelector("i");
                 item.span = item.item.querySelector("span");
+                // Re-apply styles to span
+                if (item.span) {
+                    item.span.style.cssText = `
+                        display: inline-block;
+                        color: #007bff !important;
+                        font-weight: 600 !important;
+                        font-size: inherit !important;
+                        font-family: inherit !important;
+                        background: transparent !important;
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    `;
+                }
             }
             // Ensure icons are visible
             if (item.icon) {
@@ -198,6 +254,20 @@ function setupAutoTitleEffect() {
         items[index].span = newItem.querySelector("span");
         items[index].originalHTML = newItem.innerHTML;
         
+        // Apply styles to the new span
+        if (items[index].span) {
+            items[index].span.style.cssText = `
+                display: inline-block;
+                color: #007bff !important;
+                font-weight: 600 !important;
+                font-size: inherit !important;
+                font-family: inherit !important;
+                background: transparent !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            `;
+        }
+        
         // Mouse enter - show this item's title and stop auto
         newItem.addEventListener("mouseenter", () => {
             console.log("Hovering on:", items[index].originalText);
@@ -213,7 +283,18 @@ function setupAutoTitleEffect() {
                 if (idx === index) {
                     if (i.icon && i.span) {
                         i.icon.style.display = "none";
-                        i.span.style.display = "inline";
+                        i.span.style.cssText = `
+                            display: inline-block !important;
+                            color: #007bff !important;
+                            font-weight: 600 !important;
+                            font-size: 14px !important;
+                            font-family: inherit !important;
+                            background: transparent !important;
+                            opacity: 1 !important;
+                            visibility: visible !important;
+                            margin-left: 0 !important;
+                            padding: 0 !important;
+                        `;
                         i.isReplaced = true;
                     }
                 } else {
@@ -223,6 +304,18 @@ function setupAutoTitleEffect() {
                         i.isReplaced = false;
                         i.icon = i.item.querySelector("i");
                         i.span = i.item.querySelector("span");
+                        if (i.span) {
+                            i.span.style.cssText = `
+                                display: inline-block;
+                                color: #007bff !important;
+                                font-weight: 600 !important;
+                                font-size: inherit !important;
+                                font-family: inherit !important;
+                                background: transparent !important;
+                                opacity: 1 !important;
+                                visibility: visible !important;
+                            `;
+                        }
                     }
                     if (i.icon) {
                         i.icon.style.display = "";
@@ -247,17 +340,21 @@ function setupAutoTitleEffect() {
     // Start the auto rotation
     startAutoRotation();
     
-    console.log("Auto title effect initialized - icons will be replaced with titles one by one");
+    console.log("Auto title effect initialized - titles will appear in blue color (#007bff)");
     
-    // Add CSS for smooth transitions
+    // Add CSS to ensure text is visible
     const style = document.createElement('style');
     style.textContent = `
-        .nav-menu .hover-code-css li a i,
         .nav-menu .hover-code-css li a span {
-            transition: all 0.3s ease;
+            display: inline-block !important;
+            color: #007bff !important;
+            font-weight: 600 !important;
+            background: transparent !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
-        .nav-menu .hover-code-css li a span {
-            display: inline-block;
+        .nav-menu .hover-code-css li a i {
+            transition: all 0.3s ease;
         }
     `;
     document.head.appendChild(style);
