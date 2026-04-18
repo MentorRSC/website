@@ -4,22 +4,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const headerComponent = document.querySelector("site-header");
     
     if (existingHeader) {
-        // Header already exists in the page, just setup the effects
         console.log("Header already exists in page");
         setupMobileMenu();
-        setupAutoTitleDisplay();
+        setupAutoTitleEffect();
     } 
     else if (headerComponent) {
-        // Header component tag exists, fetch the header.html
         console.log("Fetching header from header.html");
         fetch("header.html")
             .then(res => res.text())
             .then(data => {
                 headerComponent.innerHTML = data;
-                // Wait a bit for the DOM to update
                 setTimeout(() => {
                     setupMobileMenu();
-                    setupAutoTitleDisplay();
+                    setupAutoTitleEffect();
                 }, 100);
             })
             .catch(error => console.error("Error loading header:", error));
@@ -34,15 +31,12 @@ function setupMobileMenu() {
     const navMenu = document.querySelector(".nav-menu");
     
     if (menuBtn && navMenu) {
-        // Remove existing event listeners to avoid duplicates
         const newMenuBtn = menuBtn.cloneNode(true);
         menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
         
         newMenuBtn.removeEventListener("click", toggleMenu);
         newMenuBtn.addEventListener("click", toggleMenu);
         console.log("Mobile menu initialized");
-    } else {
-        console.error("Mobile menu elements not found");
     }
 }
 
@@ -66,14 +60,14 @@ function toggleMenu() {
     }
 }
 
-function setupAutoTitleDisplay() {
+function setupAutoTitleEffect() {
     const nav = document.querySelector(".nav-menu");
     if (!nav) {
         console.error("Navigation menu not found");
         return;
     }
 
-    // Get all navigation items that have spans (excluding the Join Now button)
+    // Get all navigation items (excluding the Join Now button)
     const navItems = Array.from(nav.querySelectorAll(".hover-code-css li a:not(.cta-button)"));
     
     if (navItems.length === 0) {
@@ -94,73 +88,94 @@ function setupAutoTitleDisplay() {
     let hoverTimeout = null;
 
     // Store original content for each nav item
-    const originalTexts = navItems.map(item => {
+    const items = navItems.map(item => {
+        const icon = item.querySelector("i");
         const span = item.querySelector("span");
+        const originalText = span ? span.textContent : "";
         
-        // Add CSS to ensure spans are visible when needed
-        if (span) {
-            // Store original styles
-            const originalDisplay = span.style.display || getComputedStyle(span).display;
-            const originalVisibility = span.style.visibility || getComputedStyle(span).visibility;
-            
-            // Force spans to have proper styling
-            span.style.transition = "all 0.3s ease";
-            
-            return {
-                item: item,
-                span: span,
-                originalText: span.textContent,
-                originalDisplay: originalDisplay,
-                originalVisibility: originalVisibility
-            };
+        // Create a tooltip-like element for better visibility
+        const tooltip = document.createElement("span");
+        tooltip.textContent = originalText;
+        tooltip.className = "nav-tooltip";
+        tooltip.style.cssText = `
+            position: absolute;
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 5px;
+        `;
+        
+        // Make parent li position relative for tooltip positioning
+        const parentLi = item.closest("li");
+        if (parentLi) {
+            parentLi.style.position = "relative";
+            parentLi.appendChild(tooltip);
         }
-        return null;
-    }).filter(item => item !== null); // Remove any null entries
+        
+        return {
+            item: item,
+            icon: icon,
+            span: span,
+            tooltip: tooltip,
+            originalText: originalText,
+            originalSpanDisplay: span ? span.style.display : "inline"
+        };
+    });
 
-    if (originalTexts.length === 0) {
-        console.error("No spans found in navigation items");
-        return;
-    }
-
-    // Function to show only the title at given index
-    function showTitleAtIndex(index) {
-        // Hide all titles first
-        originalTexts.forEach(({ span }) => {
-            if (span) {
-                span.style.display = "none";
-                span.style.visibility = "hidden";
+    // Function to show tooltip for given index
+    function showTooltipAtIndex(index) {
+        // Hide all tooltips first
+        items.forEach(item => {
+            if (item.tooltip) {
+                item.tooltip.style.opacity = "0";
+            }
+            // Also add a pulsing effect to the icon
+            if (item.icon) {
+                item.icon.style.transform = "scale(1)";
+                item.icon.style.transition = "transform 0.3s ease";
             }
         });
         
-        // Show the selected title
-        const selected = originalTexts[index];
-        if (selected && selected.span) {
-            selected.span.style.display = "inline-block";
-            selected.span.style.visibility = "visible";
-            // Add a temporary highlight effect
-            selected.span.style.backgroundColor = "rgba(0, 123, 255, 0.1)";
-            selected.span.style.padding = "2px 4px";
-            selected.span.style.borderRadius = "4px";
-            setTimeout(() => {
-                if (selected.span) {
-                    selected.span.style.backgroundColor = "";
-                    selected.span.style.padding = "";
-                    selected.span.style.borderRadius = "";
-                }
-            }, 300);
-            console.log("Showing:", selected.originalText);
+        // Show the selected tooltip
+        const selected = items[index];
+        if (selected && selected.tooltip) {
+            selected.tooltip.style.opacity = "1";
+            
+            // Add pulsing effect to icon
+            if (selected.icon) {
+                selected.icon.style.transform = "scale(1.2)";
+                setTimeout(() => {
+                    if (selected.icon) {
+                        selected.icon.style.transform = "scale(1)";
+                    }
+                }, 300);
+            }
+            
+            console.log("Showing tooltip for:", selected.originalText);
         }
     }
 
-    // Function to reset all titles (show all normally)
-    function resetAllTitles() {
-        originalTexts.forEach(({ span, originalDisplay, originalVisibility }) => {
-            if (span) {
-                span.style.display = originalDisplay || "inline";
-                span.style.visibility = originalVisibility || "visible";
-                span.style.backgroundColor = "";
-                span.style.padding = "";
-                span.style.borderRadius = "";
+    // Function to reset all tooltips
+    function resetAllTooltips() {
+        items.forEach(item => {
+            if (item.tooltip) {
+                item.tooltip.style.opacity = "0";
+            }
+            if (item.icon) {
+                item.icon.style.transform = "scale(1)";
+            }
+            if (item.span && item.originalSpanDisplay) {
+                item.span.style.display = item.originalSpanDisplay;
             }
         });
     }
@@ -173,25 +188,17 @@ function setupAutoTitleDisplay() {
         }
         
         if (!isHovering) {
-            console.log("Starting auto rotation");
-            
-            // Initially hide all titles
-            originalTexts.forEach(({ span }) => {
-                if (span) {
-                    span.style.display = "none";
-                    span.style.visibility = "hidden";
-                }
-            });
+            console.log("Starting auto rotation with tooltips");
             
             // Start with first item
             currentIndex = 0;
-            showTitleAtIndex(currentIndex);
+            showTooltipAtIndex(currentIndex);
             
             // Rotate every 3 seconds
             window.autoTitleInterval = setInterval(() => {
                 if (!isHovering) {
-                    currentIndex = (currentIndex + 1) % originalTexts.length;
-                    showTitleAtIndex(currentIndex);
+                    currentIndex = (currentIndex + 1) % items.length;
+                    showTooltipAtIndex(currentIndex);
                 }
             }, 3000);
         }
@@ -203,26 +210,25 @@ function setupAutoTitleDisplay() {
             clearInterval(window.autoTitleInterval);
             window.autoTitleInterval = null;
         }
-        resetAllTitles();
+        resetAllTooltips();
     }
 
-    // Remove existing event listeners by cloning and replacing
-    originalTexts.forEach((item, index) => {
+    // Add hover event listeners
+    items.forEach((item, index) => {
         if (!item.item) return;
         
         // Clone and replace to remove old event listeners
         const newItem = item.item.cloneNode(true);
         item.item.parentNode.replaceChild(newItem, item.item);
         
-        // Update the references
-        originalTexts[index].item = newItem;
-        originalTexts[index].span = newItem.querySelector("span");
+        // Update references
+        items[index].item = newItem;
+        items[index].icon = newItem.querySelector("i");
+        items[index].span = newItem.querySelector("span");
         
-        if (!originalTexts[index].span) return;
-        
-        // Mouse enter - stop auto rotation and show only this item's title
+        // Mouse enter
         newItem.addEventListener("mouseenter", () => {
-            console.log("Hovering on:", originalTexts[index].originalText);
+            console.log("Hovering on:", items[index].originalText);
             if (hoverTimeout) {
                 clearTimeout(hoverTimeout);
             }
@@ -230,23 +236,21 @@ function setupAutoTitleDisplay() {
             isHovering = true;
             stopAutoRotation();
             
-            // Hide all titles
-            originalTexts.forEach(({ span }) => {
-                if (span) {
-                    span.style.display = "none";
-                    span.style.visibility = "hidden";
+            // Hide all tooltips
+            items.forEach(item => {
+                if (item.tooltip) {
+                    item.tooltip.style.opacity = "0";
                 }
             });
             
-            // Show only the hovered item's title
-            const hoveredItem = originalTexts[index];
-            if (hoveredItem && hoveredItem.span) {
-                hoveredItem.span.style.display = "inline-block";
-                hoveredItem.span.style.visibility = "visible";
+            // Show only the hovered item's tooltip
+            const hoveredItem = items[index];
+            if (hoveredItem && hoveredItem.tooltip) {
+                hoveredItem.tooltip.style.opacity = "1";
             }
         });
         
-        // Mouse leave - restart auto rotation after a short delay
+        // Mouse leave
         newItem.addEventListener("mouseleave", () => {
             hoverTimeout = setTimeout(() => {
                 isHovering = false;
@@ -259,22 +263,50 @@ function setupAutoTitleDisplay() {
     // Start the auto rotation
     startAutoRotation();
     
-    console.log("Auto title display initialized successfully with", originalTexts.length, "items");
+    console.log("Auto title effect initialized successfully with", items.length, "items");
     
-    // Add some CSS to ensure proper display
+    // Add CSS for better visual feedback
     const style = document.createElement('style');
     style.textContent = `
-        .nav-menu .hover-code-css li a span {
-            transition: all 0.3s ease;
-            display: inline-block;
+        .nav-menu .hover-code-css li {
+            position: relative;
         }
         .nav-menu .hover-code-css li a {
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            transition: all 0.3s ease;
         }
         .nav-menu .hover-code-css li a i {
-            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        .nav-tooltip {
+            position: absolute;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        .nav-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px;
+            border-style: solid;
+            border-color: transparent transparent #667eea transparent;
         }
     `;
     document.head.appendChild(style);
