@@ -1,98 +1,608 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Safar World</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Safar World | Futuristic Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            background: linear-gradient(to right, black, #0f0f2e);
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 20% 30%, #050510, #000000);
             overflow: hidden;
+            color: #ffffff;
+            cursor: none;
+            height: 100vh;
+            width: 100vw;
         }
 
-        h1 {
-            margin-top: 100px;
-            font-size: 50px;
-            animation: glow 2s infinite alternate;
+        /* ========== GLOBAL CURSOR SYSTEM ========== */
+        #cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: #00f2ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background 0.2s;
+            box-shadow: 0 0 12px #00f2ff, 0 0 24px rgba(0, 242, 255, 0.6);
         }
 
-        p {
-            font-size: 20px;
+        #cursor-ring {
+            position: fixed;
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(0, 242, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.25s ease, height 0.25s ease, opacity 0.2s;
+            opacity: 0.7;
+            box-shadow: 0 0 6px cyan;
         }
 
-        button {
-            margin-top: 30px;
-            padding: 15px 30px;
-            font-size: 18px;
+        /* ========== INTRO SECTION (CYBER SPLASH) ========== */
+        .intro-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #0a0f2a, #02020c);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            backdrop-filter: blur(0px);
+            transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .intro-card {
+            text-align: center;
+            max-width: 700px;
+            padding: 3rem 2rem;
+            background: rgba(10, 20, 40, 0.55);
+            backdrop-filter: blur(14px);
+            border-radius: 48px;
+            border: 1px solid rgba(0, 255, 255, 0.35);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 255, 255, 0.2);
+            animation: floatGlow 4s infinite alternate;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translateY(0px); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+            100% { transform: translateY(-12px); box-shadow: 0 0 40px rgba(0, 242, 255, 0.5); }
+        }
+
+        .intro-card h1 {
+            font-size: 5.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #00f2ff, #ff44cc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 4px;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+        }
+
+        .intro-card p {
+            font-size: 1.2rem;
+            color: #ccddf8;
+            margin-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .glow-button {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
             border: none;
-            border-radius: 10px;
-            background: purple;
+            padding: 14px 42px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 60px;
             color: white;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0, 114, 255, 0.4);
+            letter-spacing: 1px;
         }
 
-        button:hover {
+        .glow-button:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 28px rgba(0, 198, 255, 0.7);
+            background: linear-gradient(90deg, #00e0ff, #0055ff);
+        }
+
+        /* ========== MAIN WORLD (PORTFOLIO) ========== */
+        .world-wrapper {
+            display: none;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 10%, #030318, #000000);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* custom scroll */
+        .world-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+        .world-wrapper::-webkit-scrollbar-track {
+            background: #0a0a1a;
+        }
+        .world-wrapper::-webkit-scrollbar-thumb {
             background: cyan;
-            transform: scale(1.1);
+            border-radius: 8px;
         }
 
-        @keyframes glow {
-            from {
-                text-shadow: 0 0 10px purple;
-            }
-            to {
-                text-shadow: 0 0 30px cyan;
-            }
+        /* pages container */
+        .pages-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
         }
 
-        /* Black hole animation */
-        #blackhole {
-            position: absolute;
-            width: 0;
-            height: 0;
-            background: black;
+        .page-card {
+            display: none;
+            max-width: 900px;
+            width: 100%;
+            background: rgba(8, 12, 28, 0.65);
+            backdrop-filter: blur(18px);
+            border-radius: 48px;
+            padding: 2.8rem 2rem;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.1);
+            transition: all 0.4s ease;
+            animation: fadeSlideUp 0.7s ease;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-card.active-page {
+            display: block;
+        }
+
+        .page-card h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #f0f9ff, #00f2fe, #ff79c6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .page-card p {
+            font-size: 1.2rem;
+            line-height: 1.7;
+            color: #e0eaff;
+            margin-bottom: 1.8rem;
+            text-align: center;
+        }
+
+        .highlight {
+            color: #00f2ff;
+            font-weight: 600;
+            text-shadow: 0 0 4px cyan;
+        }
+
+        .dream-quote {
+            background: rgba(0, 242, 255, 0.08);
+            padding: 1.4rem;
+            border-radius: 32px;
+            border-left: 4px solid cyan;
+            margin: 1.5rem 0;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2rem;
+            margin-top: 2rem;
+        }
+
+        .contact-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem 2rem;
+            border-radius: 60px;
+            width: 80%;
+            backdrop-filter: blur(4px);
+            transition: 0.2s;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+        }
+
+        .contact-item i {
+            margin-right: 16px;
+            color: cyan;
+            font-size: 1.4rem;
+        }
+
+        .contact-item span {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #f0f3ff;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(0, 255, 255, 0.6);
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(8px);
+            font-size: 0.95rem;
+        }
+
+        .nav-btn:hover {
+            background: cyan;
+            color: black;
+            border-color: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px cyan;
+        }
+
+        /* particle stars effect */
+        .star-particle {
+            position: fixed;
+            background: white;
             border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: 1s;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 1;
+            animation: twinkleStar 3s infinite alternate;
         }
 
-        .consume {
-            transform: scale(0);
-            opacity: 0;
-            transition: 1s;
+        @keyframes twinkleStar {
+            0% { opacity: 0.2; transform: scale(0.8);}
+            100% { opacity: 1; transform: scale(1.2);}
+        }
+
+        /* floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,242,255,0.2), transparent);
+            filter: blur(40px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* responsive */
+        @media (max-width: 650px) {
+            .page-card h1 { font-size: 2.2rem; }
+            .page-card p { font-size: 1rem; }
+            .contact-item { width: 95%; }
+            .intro-card h1 { font-size: 3.5rem; }
+        }
+
+        /* icons inside */
+        .tech-icon {
+            font-size: 2rem;
+            margin: 0 8px;
+            display: inline-block;
+            filter: drop-shadow(0 0 4px cyan);
+        }
+        footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            text-align: center;
+            opacity: 0.6;
         }
     </style>
 </head>
-
 <body>
 
-<h1 id="title">🌌 SAFAR WORLD</h1>
-<p id="text">Click below to enter a new world...</p>
+<!-- CURSOR ELEMENTS (PREMIUM) -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
 
-<button onclick="enterWorld()">ENTER MY WORLD</button>
+<!-- INTRO SECTION -->
+<div id="introSection" class="intro-container">
+    <div class="intro-card">
+        <h1>SAFAR WORLD</h1>
+        <p><i class="fas fa-code"></i>  where imagination meets engineering  <i class="fas fa-microchip"></i></p>
+        <button class="glow-button" id="enterWorldBtn">✦ ENTER MY WORLD ✦</button>
+        <div style="margin-top: 2rem; font-size: 0.8rem; letter-spacing: 1px;">
+            <i class="fas fa-arrow-down"></i> experience the future
+        </div>
+    </div>
+</div>
 
-<div id="blackhole"></div>
+<!-- MAIN WORLD (PORTFOLIO) -->
+<div id="worldMain" class="world-wrapper">
+    <div class="pages-container">
+        <!-- PAGE 1 - ABOUT -->
+        <div id="page1" class="page-card active-page">
+            <h1><i class="fas fa-user-astronaut"></i> Enter My Universe</h1>
+            <p>
+                <span class="highlight">✦ Safar ✦</span> — 13 years old, driven by technology and innovation.<br><br>
+                I breathe life into ideas, merging creativity with logic. From algorithms to design,<br>
+                every line of code reflects my passion. I'm not just a learner; I'm a <strong>creator</strong>.
+            </p>
+            <div style="text-align:center; margin: 20px 0;">
+                <i class="fab fa-python tech-icon"></i>
+                <i class="fab fa-js tech-icon"></i>
+                <i class="fas fa-robot tech-icon"></i>
+                <i class="fas fa-globe tech-icon"></i>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="switchPage(2)">Next: My Dream →</button>
+            </div>
+        </div>
+
+        <!-- PAGE 2 - DREAM & IIT -->
+        <div id="page2" class="page-card">
+            <h1><i class="fas fa-rocket"></i> My Dream</h1>
+            <div class="dream-quote">
+                <p style="margin-bottom: 0.5rem;">✨ <strong>“Intelligence is curiosity + consistency”</strong> ✨</p>
+                <p>🌟 My ultimate goal: <span class="highlight">Join IIT</span> & become a <span class="highlight">revolutionary Engineer</span>.</p>
+                <p>🔧 Building tech that transforms lives, designing intelligent systems, and pushing human potential.</p>
+                <p style="margin-top: 1rem;">🚀 The future is not something I wait for — <span style="color:cyan;">I CREATE IT.</span></p>
+            </div>
+            <div style="text-align:center; margin: 1rem 0;">
+                <i class="fas fa-chalkboard-user"></i> constant learning &nbsp;|&nbsp;
+                <i class="fas fa-lightbulb"></i> bold inventions
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="switchPage(1)">← Back</button>
+                <button class="nav-btn" onclick="switchPage(3)">Contact Me 📡 →</button>
+            </div>
+        </div>
+
+        <!-- PAGE 3 - CONTACT & CONNECT -->
+        <div id="page3" class="page-card">
+            <h1><i class="fas fa-address-card"></i> Connect</h1>
+            <p>Let’s collaborate, innovate, and shape tomorrow. Reach out anytime.</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-phone-alt"></i> <span>+91 88915 34166</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i> <span>safar.vision@icloud.com</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-github"></i> <span>/safar-dev</span>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="switchPage(2)">← Dream</button>
+                <button class="nav-btn" onclick="resetToIntro()">⟳ Exit Experience</button>
+            </div>
+            <footer>
+                <i class="fas fa-crown"></i> "Engineering the impossible"
+            </footer>
+        </div>
+    </div>
+</div>
 
 <script>
-    function enterWorld() {
-        document.getElementById("title").classList.add("consume");
-        document.getElementById("text").classList.add("consume");
+    // DOM elements
+    const introDiv = document.getElementById('introSection');
+    const worldDiv = document.getElementById('worldMain');
+    const enterBtn = document.getElementById('enterWorldBtn');
+    const cursorDot = document.getElementById('cursor-dot');
+    const cursorRing = document.getElementById('cursor-ring');
 
-        let hole = document.getElementById("blackhole");
-        hole.style.width = "2000px";
-        hole.style.height = "2000px";
+    // ========== PROFESSIONAL CURSOR TRACKING ==========
+    let mouseX = 0, mouseY = 0;
+    let ringX = 0, ringY = 0;
+    let dotX = 0, dotY = 0;
 
-        setTimeout(() => {
-            window.location.href = "world.html"; // next page
-        }, 1200);
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        // dot follows instantly
+        cursorDot.style.left = mouseX + 'px';
+        cursorDot.style.top = mouseY + 'px';
+    });
+
+    // smooth ring with lerp effect for premium feel
+    function animateRing() {
+        ringX += (mouseX - ringX) * 0.2;
+        ringY += (mouseY - ringY) * 0.2;
+        cursorRing.style.left = ringX + 'px';
+        cursorRing.style.top = ringY + 'px';
+        requestAnimationFrame(animateRing);
     }
+    animateRing();
+
+    // hover effect for buttons (all buttons)
+    const allButtons = () => document.querySelectorAll('button, .glow-button, .nav-btn');
+    function addHoverEffects() {
+        const btns = document.querySelectorAll('button, .glow-button, .nav-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                cursorDot.style.width = '16px';
+                cursorDot.style.height = '16px';
+                cursorDot.style.background = '#ff66cc';
+                cursorDot.style.boxShadow = '0 0 20px #ff44aa';
+                cursorRing.style.width = '44px';
+                cursorRing.style.height = '44px';
+                cursorRing.style.borderColor = '#ff88ff';
+                cursorRing.style.opacity = '1';
+            });
+            btn.addEventListener('mouseleave', () => {
+                cursorDot.style.width = '8px';
+                cursorDot.style.height = '8px';
+                cursorDot.style.background = '#00f2ff';
+                cursorDot.style.boxShadow = '0 0 12px #00f2ff';
+                cursorRing.style.width = '32px';
+                cursorRing.style.height = '32px';
+                cursorRing.style.borderColor = 'rgba(0, 242, 255, 0.7)';
+                cursorRing.style.opacity = '0.7';
+            });
+        });
+    }
+
+    // dynamic observer for dynamic buttons
+    const observer = new MutationObserver(() => addHoverEffects());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // ========== ENTER WORLD : TRANSITION + STARS ==========
+    function enterWorld() {
+        // fade out intro
+        introDiv.style.opacity = '0';
+        setTimeout(() => {
+            introDiv.style.display = 'none';
+            worldDiv.style.display = 'block';
+            // generate stunning starfield particles
+            generateStarfield(180);
+            generateFloatingOrbs(6);
+            addHoverEffects(); // ensure new buttons tracked
+            // play subtle entrance
+            worldDiv.style.animation = 'fadeSlideUp 0.8s ease';
+        }, 800);
+    }
+
+    // starfield generator (modern)
+    function generateStarfield(count) {
+        const existingStars = document.querySelectorAll('.star-particle');
+        existingStars.forEach(star => star.remove());
+        for (let i = 0; i < count; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star-particle');
+            const size = Math.random() * 3 + 1;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            star.style.opacity = Math.random() * 0.7 + 0.3;
+            document.body.appendChild(star);
+        }
+    }
+
+    function generateFloatingOrbs(num) {
+        for (let i = 0; i < num; i++) {
+            const orb = document.createElement('div');
+            orb.classList.add('orb');
+            const size = Math.random() * 250 + 120;
+            orb.style.width = size + 'px';
+            orb.style.height = size + 'px';
+            orb.style.left = Math.random() * 100 + '%';
+            orb.style.top = Math.random() * 100 + '%';
+            orb.style.background = `radial-gradient(circle, rgba(${Math.floor(Math.random() * 100 + 100)}, ${Math.floor(Math.random() * 200 + 55)}, 255, 0.2), transparent)`;
+            orb.style.animation = `floatGlow ${Math.random() * 12 + 8}s infinite alternate`;
+            document.body.appendChild(orb);
+        }
+    }
+
+    // Page switch with smooth transitions and URL-like feel
+    window.switchPage = function(pageNum) {
+        const page1 = document.getElementById('page1');
+        const page2 = document.getElementById('page2');
+        const page3 = document.getElementById('page3');
+        
+        // remove active class from all
+        [page1, page2, page3].forEach(p => p.classList.remove('active-page'));
+        
+        if (pageNum === 1) page1.classList.add('active-page');
+        if (pageNum === 2) page2.classList.add('active-page');
+        if (pageNum === 3) page3.classList.add('active-page');
+        
+        // scroll to top for better UX
+        worldDiv.scrollTo({ top: 0, behavior: 'smooth' });
+        // play micro effect
+        const activeCard = document.querySelector('.page-card.active-page');
+        if (activeCard) {
+            activeCard.style.animation = 'none';
+            setTimeout(() => { activeCard.style.animation = 'fadeSlideUp 0.5s ease'; }, 10);
+        }
+    };
+
+    // reset to intro (full clean exit)
+    window.resetToIntro = function() {
+        // clean custom stars/orbs to prevent duplication
+        const stars = document.querySelectorAll('.star-particle');
+        const orbs = document.querySelectorAll('.orb');
+        stars.forEach(s => s.remove());
+        orbs.forEach(o => o.remove());
+        
+        worldDiv.style.display = 'none';
+        introDiv.style.display = 'flex';
+        introDiv.style.opacity = '1';
+        // reset to page1 when returning (state)
+        const page1 = document.getElementById('page1');
+        const page2 = document.getElementById('page2');
+        const page3 = document.getElementById('page3');
+        [page1, page2, page3].forEach(p => p.classList.remove('active-page'));
+        page1.classList.add('active-page');
+        // re-enable cursor style
+        addHoverEffects();
+    };
+
+    // event listener for enter button
+    enterBtn.addEventListener('click', enterWorld);
+    
+    // Additional interactivity: prevent default cursor hiding on body
+    document.body.style.cursor = 'none';
+    
+    // initial hover detection for intro button already active
+    setTimeout(() => {
+        addHoverEffects();
+    }, 100);
+    
+    // Also when world loads after dynamic, we call star generation again if needed
+    // but already called inside enterWorld.
+    
+    // responsive stars on resize: keep consistent
+    window.addEventListener('resize', () => {
+        if (worldDiv.style.display === 'block') {
+            const existingStars = document.querySelectorAll('.star-particle');
+            if (existingStars.length < 120) {
+                generateStarfield(40);
+            }
+        }
+    });
+    
+    // Additional professional touches: keyboard navigation (optional)
+    document.addEventListener('keydown', (e) => {
+        if (worldDiv.style.display === 'block') {
+            const activePage = document.querySelector('.page-card.active-page');
+            if (activePage.id === 'page1' && e.key === 'ArrowRight') switchPage(2);
+            if (activePage.id === 'page2' && e.key === 'ArrowRight') switchPage(3);
+            if (activePage.id === 'page3' && e.key === 'ArrowLeft') switchPage(2);
+            if (activePage.id === 'page2' && e.key === 'ArrowLeft') switchPage(1);
+            if (e.key === 'Escape') resetToIntro();
+        }
+    });
+    
+    // preload background smoothness
+    console.log('Safar World — futuristic experience loaded');
 </script>
 
 </body>
