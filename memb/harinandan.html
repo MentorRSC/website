@@ -1,187 +1,604 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Personal Profile</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Harindev M. | Robotics Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-    body {
-      background: #f3f4f6;
-      color: #111827;
-      line-height: 1.6;
-      padding: 30px;
-    }
+  :root {
+    --bg-deep: #030614;
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glow-blue: rgba(59, 130, 246, 0.4);
+    --grad-primary: linear-gradient(135deg, #2563eb, #7c3aed, #ec489a);
+    --card-bg: rgba(15, 23, 42, 0.55);
+  }
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      overflow: hidden;
-    }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg-deep);
+    color: #f1f5f9;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
 
-    .header {
-      text-align: center;
-      padding: 40px 20px;
-      background: #2563eb;
-      color: white;
-    }
+  /* animated background overlay */
+  .bg-orb {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.12), transparent 60%),
+                radial-gradient(circle at 85% 70%, rgba(124, 58, 237, 0.1), transparent 70%);
+    z-index: -2;
+  }
 
-    .header img {
-      width: 130px;
-      height: 130px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid white;
-      margin-bottom: 15px;
-    }
+  .bg-orb::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cGF0aCBmaWxsPSIjMjU2M2ViIiBmaWxsLW9wYWNpdHk9IjAuMDMiIGQ9Ik0wIDBoNDB2NDBIMHoiLz48L3N2Zz4=');
+    opacity: 0.2;
+    pointer-events: none;
+  }
 
-    .header h1 {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
+  /* mouse glow */
+  .mouse-glow {
+    position: fixed;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.2), transparent 70%);
+    filter: blur(45px);
+    pointer-events: none;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+    transition: transform 0.05s linear;
+    opacity: 0.6;
+  }
 
-    .header p {
-      font-size: 16px;
-    }
+  /* main container */
+  .main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 3rem;
+    position: relative;
+    z-index: 5;
+  }
 
-    .content {
-      padding: 35px;
-    }
+  /* hero layout - responsive */
+  .hero-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
 
-    .section {
-      margin-bottom: 30px;
-    }
+  .solar-card {
+    flex: 1.2;
+    min-width: 280px;
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    border-radius: 2.5rem;
+    padding: 1.8rem;
+    transition: all 0.4s ease;
+  }
 
-    .section h2 {
-      color: #2563eb;
-      margin-bottom: 12px;
-      border-bottom: 2px solid #e5e7eb;
-      padding-bottom: 6px;
-    }
+  .solar-system {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-    ul {
-      padding-left: 20px;
-    }
+  .orbit {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    animation: spin linear infinite;
+  }
 
-    li {
-      margin-bottom: 8px;
-    }
+  .o1 { width: 28%; height: 28%; animation-duration: 7s; }
+  .o2 { width: 45%; height: 45%; animation-duration: 12s; animation-direction: reverse; }
+  .o3 { width: 62%; height: 62%; animation-duration: 18s; }
+  .o4 { width: 78%; height: 78%; animation-duration: 24s; animation-direction: reverse; }
+  .o5 { width: 94%; height: 94%; animation-duration: 32s; }
 
-    .tags span {
-      display: inline-block;
-      background: #eff6ff;
-      color: #1d4ed8;
-      padding: 8px 14px;
-      margin: 6px;
-      border-radius: 20px;
-      font-size: 14px;
-    }
+  .planet {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255,255,255,0.2);
+  }
 
-    .footer {
-      text-align: center;
-      padding: 20px;
-      background: #f9fafb;
-      font-size: 14px;
-      color: #6b7280;
-    }
-  </style>
+  .mercury { width: 10px; height: 10px; background: #b9c7d9; }
+  .mars { width: 16px; height: 16px; background: #f97316; }
+  .earth { width: 20px; height: 20px; background: #3b82f6; }
+  .jupiter { width: 32px; height: 32px; background: #eab676; }
+  .saturn-ring {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 28px;
+    background: #e2b87a;
+    border-radius: 50%;
+  }
+  .saturn-ring::before {
+    content: "";
+    position: absolute;
+    width: 48px;
+    height: 14px;
+    border: 1.5px solid rgba(236, 201, 115, 0.8);
+    border-radius: 50%;
+    top: 6px;
+    left: -10px;
+    transform: rotate(-18deg);
+  }
+
+  .name-center {
+    text-align: center;
+    z-index: 12;
+    background: rgba(5, 8, 26, 0.5);
+    backdrop-filter: blur(6px);
+    padding: 0.6rem 1rem;
+    border-radius: 60px;
+    width: 85%;
+  }
+  .name-center h1 {
+    font-size: clamp(1.6rem, 6vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff, #a5b4fc, #c084fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .name-center p {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: #cbd5e6;
+  }
+
+  /* right info panel */
+  .info-panel {
+    flex: 0.9;
+    min-width: 280px;
+    background: rgba(12, 18, 34, 0.65);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 2rem;
+    padding: 2rem 1.8rem;
+    transition: transform 0.3s;
+  }
+  .info-panel h2 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .typing-accent {
+    color: #90cdf4;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    display: inline-block;
+    border-left: 2px solid #3b82f6;
+    padding-left: 12px;
+    margin-top: 0.5rem;
+  }
+  .btn-portal {
+    margin-top: 2rem;
+    background: linear-gradient(95deg, #2563eb, #7c3aed);
+    border: none;
+    padding: 12px 26px;
+    border-radius: 60px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+  }
+  .btn-portal:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(124, 58, 237, 0.35);
+  }
+
+  /* unified cards section (3 boxes) */
+  .three-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.8rem;
+    margin-top: 3rem;
+  }
+  .glass-card {
+    background: rgba(10, 16, 32, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 2rem;
+    padding: 1.8rem;
+    transition: all 0.35s ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(59,130,246,0.4);
+    box-shadow: 0 20px 35px -12px rgba(0,0,0,0.5);
+  }
+  .card-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.2rem;
+  }
+  .skill-bar {
+    margin: 1rem 0;
+  }
+  .skill-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+  }
+  .progress-track {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #a855f7);
+    border-radius: 20px;
+    width: 0%;
+    animation: loadBar 1.2s ease forwards;
+  }
+  .project-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 1.2rem;
+    padding: 0.9rem;
+    margin-bottom: 0.9rem;
+    border-left: 3px solid #3b82f6;
+  }
+  .badge {
+    background: rgba(59,130,246,0.2);
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  hr {
+    border-color: rgba(255,255,255,0.05);
+    margin: 1rem 0;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes loadBar {
+    from { width: 0%; opacity: 0.5; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+
+  @media (max-width: 900px) {
+    .main-container { padding: 1.2rem; }
+    .hero-grid { flex-direction: column; }
+    .solar-card, .info-panel { width: 100%; }
+  }
+  @media (max-width: 550px) {
+    .three-cards { gap: 1rem; }
+    .glass-card { padding: 1.3rem; }
+    .btn-portal { width: 100%; justify-content: center; }
+  }
+</style>
 </head>
 <body>
 
-  <div class="container">
+<div class="bg-orb"></div>
+<div class="mouse-glow"></div>
 
-    <div class="header">
-
-      <h1>Harinandan.B</h1>
-      <p>Student | Developer | Dream Builder</p>
-    </div>
-
-    <div class="content">
-
-      <div class="section">
-        <h2>About Me</h2>
-        <p>
-          I am passionate about learning new technologies and building useful projects.
-          I enjoy improving my skills and working toward my future goals with dedication.
-        </p>
-      </div>
-
-      <div class="section">
-        <h2>Class</h2>
-        <p>7-C</p>
-      </div>
-
-      <div class="section">
-        <h2>Projects</h2>
-        <ul>
-          <li>Personal Mini </li>
-          <li>Student Management System</li>
-          <li>Weather App using JavaScript</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h2>Skills</h2>
-        <div class="tags">
-          <span>HTML</span>
-          <span>CSS</span>
-          <span>JavaScript</span>
-          <span>Python</span>
-          <span>Communication</span>
+<main class="main-container">
+  <!-- hero section with solar system integrated -->
+  <div class="hero-grid">
+    <div class="solar-card">
+      <div class="solar-system">
+        <div class="orbit o5"><div class="planet jupiter"></div></div>
+        <div class="orbit o4"><div class="saturn-ring"></div></div>
+        <div class="orbit o3"><div class="planet earth"></div></div>
+        <div class="orbit o2"><div class="planet mars"></div></div>
+        <div class="orbit o1"><div class="planet mercury"></div></div>
+        <div class="name-center">
+          <h1>Harindev M.</h1>
+          <p>✦ Robotics Visionary ✦</p>
         </div>
       </div>
-
-      <div class="section">
-        <h2>Ambition</h2>
-        <p>Ambition: Automobile Engineer.</p>
-      </div>
-
-      <div class="section">
-        <h2>Hobbies</h2>
-        <ul>
-          <li>Reading books</li>
-          <li>Learning coding</li>
-          <li>Watching tech videos</li>
-          <li>Traveling</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h2>Favourite Things</h2>
-        <ul>
-          <li>Favourite Food: Biryani</li>
-          <li>Favourite Color: Black</li>
-          <li>Favourite Sport: Football</li>
-          <li>Favourite Person: My Parents</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h2>Knowledge</h2>
-        <p>
-          I have knowledge in web development basics, programming logic,
-          problem-solving, and modern digital tools.
-        </p>
-      </div>
-
     </div>
-
-    <div class="footer">
-      © 2026 Harinandan.B | Personal Profile
+    <div class="info-panel">
+      <h2 id="dynamicGreet">Hello, I'm<br>Harindev M.</h2>
+      <div class="typing-accent" id="subLine">⚡ FUTURE IIT ROBOTICS ENGINEER</div>
+      <p style="margin-top: 1rem; line-height: 1.5;">Building intelligent systems with passion for automation, AI & frontend innovation. My mission: engineer next-gen robotics at IIT and craft immersive digital experiences.</p>
+      <button class="btn-portal" id="portalBtn">✨ Explore Portfolio →</button>
     </div>
-
   </div>
 
+  <!-- THREE PROFESSIONAL BOXES (About, Projects, Roadmap) - replaces old project button -->
+  <div class="three-cards">
+    <!-- Box 1: About & Bio -->
+    <div class="glass-card">
+      <div class="card-title">
+        <span>🧑‍🚀</span> <span>About Me</span>
+      </div>
+      <p>I'm a passionate tech explorer, frontend enthusiast, and aspiring roboticist. Currently diving deep into Python, robotics kinematics, and futuristic UI. Love merging hardware + software.</p>
+      <hr>
+      <div><span class="badge">📍 India</span> <span class="badge">🎓 Self-Taught</span></div>
+      <p style="margin-top: 12px;"><strong>🎯 IIT Dream:</strong> Robotics & AI • Control Systems • Intelligent automation</p>
+      <p>💡 <strong>Currently:</strong> Building AI-integrated dashboards & learning ROS basics.</p>
+    </div>
+
+    <!-- Box 2: Projects (detailed, no button popup) -->
+    <div class="glass-card">
+      <div class="card-title">
+        <span>📁</span> <span>Featured Projects</span>
+      </div>
+      <div class="project-item">
+        <strong>✨ 3D Portfolio Universe</strong>
+        <div style="font-size:0.8rem; color:#a5b4fc;">Interactive solar-system portfolio • Three.js style</div>
+        <div style="margin-top: 6px;"><span class="badge">HTML/CSS</span> <span class="badge">Animation</span></div>
+      </div>
+      <div class="project-item">
+        <strong>🤖 RoboArm Simulator (Concept)</strong>
+        <div style="font-size:0.8rem; color:#a5b4fc;">Python + Matplotlib kinematics visualizer (WIP)</div>
+        <div style="margin-top: 6px;"><span class="badge">Python</span> <span class="badge">Robotics</span></div>
+      </div>
+      <div class="project-item">
+        <strong>🌐 AI Chat Frontend</strong>
+        <div style="font-size:0.8rem; color:#a5b4fc;">Responsive chat UI with futuristic glassmorphism</div>
+        <div style="margin-top: 6px;"><span class="badge">React</span> <span class="badge">Tailwind</span></div>
+      </div>
+      <p style="margin-top: 12px; font-size:0.8rem;">🚧 More projects: Smart home dashboard, gesture-controlled bot (prototype)</p>
+    </div>
+
+    <!-- Box 3: Skills & Roadmap / Learning journey -->
+    <div class="glass-card">
+      <div class="card-title">
+        <span>📈</span> <span>Progress & Roadmap</span>
+      </div>
+      <div class="skill-bar">
+        <div class="skill-label"><span>Python</span><span>65%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:65%"></div></div>
+      </div>
+      <div class="skill-bar">
+        <div class="skill-label"><span>HTML/CSS</span><span>80%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:80%"></div></div>
+      </div>
+      <div class="skill-bar">
+        <div class="skill-label"><span>JavaScript</span><span>55%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:55%"></div></div>
+      </div>
+      <div class="skill-bar">
+        <div class="skill-label"><span>Robotics (C++/Arduino)</span><span>45%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:45%"></div></div>
+      </div>
+      <hr>
+      <div>
+        <strong>🔥 Roadmap 2025-26</strong>
+        <ul style="margin-left: 1.2rem; margin-top: 8px; font-size:0.85rem;">
+          <li>✔️ Frontend Mastery + 3D libraries</li>
+          <li>🔲 IIT JEE Advanced Preparation</li>
+          <li>🔲 ROS & Embedded systems projects</li>
+          <li>🔲 AI/ML for robotics research</li>
+        </ul>
+      </div>
+      <p style="margin-top: 12px;"><span class="badge">📅 Learning streak: daily</span> <span class="badge">🎯 IIT Robotics '27</span></p>
+    </div>
+  </div>
+</main>
+
+<script>
+  // typing effect for main greeting
+  const fullText = "Hello, I'm Harindev M.";
+  let idx = 0;
+  const greetEl = document.getElementById('dynamicGreet');
+  function typeWriter() {
+    if (greetEl && idx < fullText.length) {
+      greetEl.innerHTML = fullText.substring(0, idx + 1) + '<span style="border-right:2px solid #3b82f6; opacity:0.8;"></span>';
+      idx++;
+      setTimeout(typeWriter, 60);
+    } else if (greetEl) {
+      greetEl.innerHTML = fullText;
+    }
+  }
+  window.addEventListener('load', () => {
+    typeWriter();
+    // subline animation small effect
+    const sub = document.getElementById('subLine');
+    if(sub) {
+      const subText = "⚡ FUTURE IIT ROBOTICS ENGINEER";
+      let subIdx = 0;
+      function subType() {
+        if(subIdx < subText.length) {
+          sub.innerHTML = subText.substring(0, subIdx+1);
+          subIdx++;
+          setTimeout(subType, 40);
+        } else {
+          sub.style.borderLeft = "2px solid #3b82f6";
+        }
+      }
+      subType();
+    }
+  });
+
+  // mouse glow movement
+  const glow = document.querySelector('.mouse-glow');
+  document.addEventListener('mousemove', (e) => {
+    if(glow) {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top = e.clientY + 'px';
+    }
+  });
+
+  // open portal in a modern unified page that contains all info (professional, no separate project button)
+  // but we'll create a sleek modal / new window? but since spec says "in single page" – I will make the portal open inline details? But original had portalWindow.
+  // Better to keep interactive but also fully mobile suitable: I'll make portalBtn open an elegant overlay/modal? However original used window.open.
+  // I'll refine: open a new window but with improved design that includes third box removed? Actually requirement: "in second page add a third box with projects remove the project button...in single page"
+  // Means everything in single HTML without separate popup? So I will redesign the portal interaction: clicking "Explore Portfolio" opens a smooth, built-in modal overlay with expanded details + projects, no extra button.
+  // That way we have everything in one page without external popup, modern & professional.
+  
+  // Create modal system for expanded portfolio view (single page)
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = "expandedModal";
+  modalOverlay.style.position = "fixed";
+  modalOverlay.style.top = "0";
+  modalOverlay.style.left = "0";
+  modalOverlay.style.width = "100%";
+  modalOverlay.style.height = "100%";
+  modalOverlay.style.backgroundColor = "rgba(3, 6, 20, 0.92)";
+  modalOverlay.style.backdropFilter = "blur(20px)";
+  modalOverlay.style.zIndex = "9999";
+  modalOverlay.style.display = "none";
+  modalOverlay.style.alignItems = "center";
+  modalOverlay.style.justifyContent = "center";
+  modalOverlay.style.padding = "1.5rem";
+  modalOverlay.style.overflowY = "auto";
+  document.body.appendChild(modalOverlay);
+
+  const modalContent = document.createElement('div');
+  modalContent.style.maxWidth = "1000px";
+  modalContent.style.width = "100%";
+  modalContent.style.backgroundColor = "rgba(12, 18, 34, 0.9)";
+  modalContent.style.border = "1px solid rgba(255,255,255,0.15)";
+  modalContent.style.borderRadius = "2rem";
+  modalContent.style.padding = "2rem";
+  modalContent.style.color = "white";
+  modalContent.style.fontFamily = "Inter, sans-serif";
+  modalContent.style.position = "relative";
+  modalContent.style.backdropFilter = "blur(10px)";
+  modalContent.style.maxHeight = "85vh";
+  modalContent.style.overflowY = "auto";
+
+  // close button
+  const closeModalBtn = document.createElement('button');
+  closeModalBtn.innerHTML = "✕";
+  closeModalBtn.style.position = "absolute";
+  closeModalBtn.style.top = "1rem";
+  closeModalBtn.style.right = "1.5rem";
+  closeModalBtn.style.background = "rgba(255,255,255,0.1)";
+  closeModalBtn.style.border = "none";
+  closeModalBtn.style.fontSize = "1.5rem";
+  closeModalBtn.style.cursor = "pointer";
+  closeModalBtn.style.color = "#fff";
+  closeModalBtn.style.borderRadius = "50%";
+  closeModalBtn.style.width = "40px";
+  closeModalBtn.style.height = "40px";
+  closeModalBtn.style.backdropFilter = "blur(4px)";
+  closeModalBtn.style.transition = "0.2s";
+  closeModalBtn.onmouseover = () => closeModalBtn.style.background = "rgba(255,255,255,0.25)";
+  closeModalBtn.onmouseout = () => closeModalBtn.style.background = "rgba(255,255,255,0.1)";
+  modalContent.appendChild(closeModalBtn);
+
+  // build modal rich layout (3 boxes again but extended details + projects)
+  modalContent.innerHTML += `
+    <div style="margin-bottom:1rem;">
+      <h2 style="font-size:2rem; background:linear-gradient(135deg,#a5f3fc,#c084fc); -webkit-background-clip:text; background-clip:text; color:transparent;">✦ Harindev's Universe ✦</h2>
+      <p style="margin-top:0.5rem;">Full profile & project showcase — robotics portfolio</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1.5rem; margin:1.5rem 0;">
+      <div style="background:rgba(255,255,255,0.05); border-radius:1.5rem; padding:1.3rem;">
+        <h3>🤖 Robotics Roadmap</h3>
+        <p>IIT-JEE prep + ROS + Embedded systems. Building autonomous bot prototypes using Arduino & sensor fusion.</p>
+        <div style="margin-top:12px;"><span class="badge-m">Goal: IIT Bombay Robotics</span></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05); border-radius:1.5rem; padding:1.3rem;">
+        <h3>📁 Core Projects</h3>
+        <ul style="margin-left:1rem; margin-top:8px;">
+          <li>🧠 AI Chat Interface (Frontend + Gemini API integration demo)</li>
+          <li>🕹️ Gesture Controlled Car (Arduino + Python prototype)</li>
+          <li>🌌 Interactive Portfolio with 3D motion & CSS universe</li>
+          <li>📊 Smart Home Dashboard (real-time data mock)</li>
+        </ul>
+      </div>
+      <div style="background:rgba(255,255,255,0.05); border-radius:1.5rem; padding:1.3rem;">
+        <h3>⚡ Achievements</h3>
+        <p>🏅 Python Certified (Basic), 🧪 Hackathon Participant 2024, ✨ Open Source Contributor.</p>
+        <p>🎓 Currently strengthening DSA & Robotics kinematics.</p>
+        <button id="closeModalBtnInside" style="margin-top:1rem; background:#2563eb; border:none; padding:8px 18px; border-radius:40px; color:white; cursor:pointer;">Close &rarr;</button>
+      </div>
+    </div>
+    <div style="background:linear-gradient(120deg,#1e293b,#0f172a); border-radius:1.5rem; padding:1.2rem; text-align:center;">
+      <p><strong>📬 Let's Connect:</strong> Harindev aims to revolutionize automation & humanoid robotics.</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:10px; flex-wrap:wrap;">
+        <span class="badge-m" style="background:#3b82f6;">GitHub</span>
+        <span class="badge-m" style="background:#a855f7;">LinkedIn</span>
+        <span class="badge-m" style="background:#1e293b;">harindev@robotics.in</span>
+      </div>
+    </div>
+  `;
+  // add custom style for modal badges
+  const styleModal = document.createElement('style');
+  styleModal.textContent = `.badge-m { background: rgba(59,130,246,0.2); padding: 4px 12px; border-radius: 100px; font-size:0.75rem; font-weight:500; display:inline-block; margin:4px; }`;
+  modalContent.appendChild(styleModal);
+  modalOverlay.appendChild(modalContent);
+
+  // close modal function
+  function closeModal() {
+    modalOverlay.style.display = "none";
+  }
+  closeModalBtn.onclick = closeModal;
+  // handle inner close button after dynamic injection
+  const openPortal = () => {
+    modalOverlay.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    const innerClose = document.getElementById('closeModalBtnInside');
+    if(innerClose) innerClose.onclick = () => { closeModal(); document.body.style.overflow = ""; };
+  };
+  // attach event to portal button
+  document.getElementById('portalBtn').addEventListener('click', openPortal);
+  // also prevent body scroll when modal open
+  modalOverlay.addEventListener('click', (e) => {
+    if(e.target === modalOverlay) closeModal();
+    document.body.style.overflow = "";
+  });
+  window.closeModalGlobal = closeModal;
+
+  // ensure any residual overflow
+  window.addEventListener('load', () => {
+    // adjust progress fill animations
+    document.querySelectorAll('.progress-fill').forEach(el => {
+      const width = el.style.width;
+      if(width) el.style.width = width;
+    });
+  });
+</script>
 </body>
 </html>
-
-
