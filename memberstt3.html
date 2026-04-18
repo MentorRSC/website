@@ -1,3 +1,5 @@
+Here is the HTML document with the requested updates: the "(no profile)" text is removed from names, and members are sorted so that those with profile URLs appear first, followed by those without, all in ascending alphabetical order.
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -244,6 +246,12 @@
         .member-name-link i {
             font-size: 0.7rem;
             opacity: 0.8;
+        }
+        
+        .member-name-no-profile {
+            font-weight: 600;
+            color: var(--dark);
+            word-break: break-word;
         }
 
         .member-reg { font-family: monospace; font-size: 0.85rem; color: #2c3e66; word-break: break-word; }
@@ -942,7 +950,6 @@
         }
     }
 
-    // NEW: Warning popup for missing profile URL
     function showProfileRequiredWarning(memberName) {
         const warningPopup = document.getElementById("updateProfileWarningPopup");
         const warningNameSpan = document.getElementById("warningMemberName");
@@ -954,16 +961,12 @@
         document.getElementById("updateProfileWarningPopup").style.display = "none";
     };
 
-    // UPDATED: showIDCard now checks profileUrl before proceeding
     async function showIDCard(member, isExpired, hasProfileUrl = false) {
         if (isExpired) { alert("⚠️ Membership expired. ID card cannot be generated."); return; }
-        
-        // NEW VALIDATION: Profile URL mandatory for ID card generation
         if (!hasProfileUrl) {
             showProfileRequiredWarning(member.name);
             return;
         }
-        
         const verifyLink = `https://mentorrsc.github.io/website/qrscan.html?id=${encodeURIComponent(member.reg)}`;
         const qrCanvas = await generateQRCanvas(verifyLink, 280);
         if (!qrCanvas) { alert("QR generation error"); return; }
@@ -1016,7 +1019,6 @@
         activeCardBlob = null; 
     };
     
-    // FULL SCREEN PROFILE POPUP FUNCTIONS
     function openProfilePopup(url, memberName) {
         if (!url || url === "") {
             alert("No profile link available for this member.");
@@ -1053,7 +1055,6 @@
         iframe.style.display = "none";
     };
     
-    // Updated global handler with profileUrl flag
     window.showIDCardGlobal = (memberObj, expiredFlag, hasProfileUrl) => showIDCard(memberObj, expiredFlag, hasProfileUrl);
 
     async function loadData() {
@@ -1079,19 +1080,24 @@
                         reg: reg.toString().trim(), 
                         photo: photo, 
                         profileUrl: profileUrl,
+                        hasProfile: (profileUrl && profileUrl.startsWith('http')),
                         validityText: status.text, 
                         statusClass: status.class, 
                         status: status.status 
                     });
                 }
             }
-            membersRaw.sort((a,b) => a.name.localeCompare(b.name));
+            // NEW SORT: profile first (hasProfile true), then without profile, each group alphabetically by name
+            membersRaw.sort((a, b) => {
+                if (a.hasProfile !== b.hasProfile) return a.hasProfile ? -1 : 1;
+                return a.name.localeCompare(b.name);
+            });
             masterMembers = membersRaw.map((m, idx) => ({ ...m, sl: idx+1 }));
             document.getElementById("totalMembers").innerText = masterMembers.length;
             document.getElementById("activeMembers").innerText = masterMembers.filter(m => m.status === "active").length;
             document.getElementById("expiringSoon").innerText = masterMembers.filter(m => m.status === "expiring").length;
             renderMembers();
-            document.getElementById("debugMsg").innerHTML = `✅ ${masterMembers.length} members loaded | Profile required for ID card`;
+            document.getElementById("debugMsg").innerHTML = `✅ ${masterMembers.length} members loaded | Sorted: Profile first | Profile required for ID card`;
         } catch(e) { 
             document.getElementById("membersList").innerHTML = `<div class="no-results">⚠️ Failed to load data</div>`; 
             document.getElementById("debugMsg").innerHTML = `❌ Error: ${e.message}`;
@@ -1107,7 +1113,7 @@
         if (filtered.length === 0) { container.innerHTML = `<div class="no-results"><i class="fas fa-user-slash"></i> No members match</div>`; return; }
         container.innerHTML = filtered.map((m, idx) => {
             const expiredFlag = m.status === "expired";
-            const hasProfile = (m.profileUrl && m.profileUrl.startsWith('http'));
+            const hasProfile = m.hasProfile;
             const memberData = { name: m.name, reg: m.reg, validityText: m.validityText, status: m.status, photo: m.photo, profileUrl: m.profileUrl };
             const safeMember = JSON.stringify(memberData).replace(/"/g, '&quot;');
             
@@ -1115,10 +1121,10 @@
             if (hasProfile) {
                 nameHtml = `<a href="javascript:void(0)" onclick="openProfilePopup('${escapeHtml(m.profileUrl)}', '${escapeHtml(m.name)}')" class="member-name-link" title="View profile page in fullscreen">${escapeHtml(m.name)} <i class="fas fa-external-link-alt"></i></a>`;
             } else {
-                nameHtml = `<span class="member-name" style="font-weight:600;">${escapeHtml(m.name)} <span style="font-size:0.65rem; color:#f59e0b;">(no profile)</span></span>`;
+                // No "(no profile)" text, just plain name
+                nameHtml = `<span class="member-name-no-profile">${escapeHtml(m.name)}</span>`;
             }
             
-            // Pass hasProfile flag to the ID button handler
             return `<div class="member-row"><span style="color:#5f6c80;">${idx+1}</span><span>${nameHtml}</span><span class="member-reg">${escapeHtml(m.reg)}</span><span class="${m.statusClass}">${escapeHtml(m.validityText)}</span><span><button class="id-btn" ${expiredFlag ? 'disabled' : ''} onclick="showIDCardGlobal(${safeMember}, ${expiredFlag}, ${hasProfile})"><i class="fas fa-id-card"></i> Get ID</button></span></div>`;
         }).join('');
     }
@@ -1136,3 +1142,4 @@
 </script>
 </body>
 </html>
+```
