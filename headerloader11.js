@@ -64,19 +64,49 @@ function setupAutoTitleDisplay() {
     let isHovering = false;
     let hoverTimeout = null;
 
-    // Store original text content for each nav item
+    // Store original content for each nav item
     const originalTexts = navItems.map(item => {
-        const span = item.querySelector("span");
+        // Try to find span first, if not, use the text nodes
+        let span = item.querySelector("span");
+        let textNode = null;
+        let originalText = "";
+        
+        if (span) {
+            originalText = span.textContent;
+        } else {
+            // Get text content excluding icon text
+            const icon = item.querySelector("i");
+            let text = item.textContent;
+            if (icon) {
+                text = text.replace(icon.textContent, "").trim();
+            }
+            originalText = text.trim();
+            
+            // Create a span if it doesn't exist
+            span = document.createElement("span");
+            span.textContent = originalText;
+            // Insert span after the icon or at the end
+            if (icon && icon.nextSibling) {
+                item.insertBefore(span, icon.nextSibling);
+            } else if (icon) {
+                item.appendChild(span);
+            } else {
+                item.appendChild(span);
+            }
+        }
+        
         return {
             item: item,
             span: span,
-            originalText: span ? span.textContent : item.textContent.trim(),
-            originalDisplay: span ? span.style.display : "inline"
+            originalText: originalText,
+            originalDisplay: span.style.display
         };
     });
 
     // Function to show only the title at given index
     function showTitleAtIndex(index) {
+        console.log("Showing title at index:", index, "Text:", originalTexts[index]?.originalText);
+        
         // Hide all titles first
         originalTexts.forEach(({ span }) => {
             if (span) {
@@ -87,7 +117,7 @@ function setupAutoTitleDisplay() {
         // Show the selected title
         const selected = originalTexts[index];
         if (selected && selected.span) {
-            selected.span.style.display = "inline";
+            selected.span.style.display = "inline-block";
         }
     }
 
@@ -95,7 +125,7 @@ function setupAutoTitleDisplay() {
     function resetAllTitles() {
         originalTexts.forEach(({ span, originalDisplay }) => {
             if (span) {
-                span.style.display = originalDisplay;
+                span.style.display = originalDisplay || "inline";
             }
         });
     }
@@ -107,6 +137,8 @@ function setupAutoTitleDisplay() {
         }
         
         if (!isHovering) {
+            console.log("Starting auto rotation");
+            
             // Initially hide all titles
             originalTexts.forEach(({ span }) => {
                 if (span) {
@@ -123,6 +155,7 @@ function setupAutoTitleDisplay() {
                 if (!isHovering) {
                     currentIndex = (currentIndex + 1) % originalTexts.length;
                     showTitleAtIndex(currentIndex);
+                    console.log("Rotating to index:", currentIndex);
                 }
             }, 3000);
         }
@@ -141,6 +174,7 @@ function setupAutoTitleDisplay() {
     navItems.forEach((item, index) => {
         // Mouse enter - stop auto rotation and show only this item's title
         item.addEventListener("mouseenter", () => {
+            console.log("Hovering on item:", index);
             if (hoverTimeout) {
                 clearTimeout(hoverTimeout);
             }
@@ -158,7 +192,7 @@ function setupAutoTitleDisplay() {
             // Show only the hovered item's title
             const hoveredItem = originalTexts[index];
             if (hoveredItem && hoveredItem.span) {
-                hoveredItem.span.style.display = "inline";
+                hoveredItem.span.style.display = "inline-block";
             }
         });
         
@@ -191,4 +225,5 @@ function setupAutoTitleDisplay() {
     startAutoRotation();
     
     console.log("Auto title display initialized with", originalTexts.length, "items");
+    console.log("Nav items found:", navItems.length);
 }
