@@ -1,163 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Purple Profile</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #6a0dad, #b19cd9);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purple Portfolio</title>
 
-        /* Hollow circle effects */
-        .circle {
-            position: absolute;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #6a0dad, #b19cd9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
 
-        .circle1 {
-            width: 200px;
-            height: 200px;
-            top: 10%;
-            left: 15%;
-        }
+/* Background circles */
+.circle {
+    position: absolute;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+}
+.circle1 { width: 200px; height: 200px; top: 10%; left: 15%; }
+.circle2 { width: 300px; height: 300px; bottom: 10%; right: 10%; }
+.circle3 { width: 150px; height: 150px; bottom: 20%; left: 25%; }
 
-        .circle2 {
-            width: 300px;
-            height: 300px;
-            bottom: 10%;
-            right: 10%;
-        }
+/* Card */
+.card {
+    background: rgba(255,255,255,0.95);
+    width: 360px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    text-align: center;
+    overflow-y: auto;
+    max-height: 90vh;
+}
 
-        .circle3 {
-            width: 150px;
-            height: 150px;
-            bottom: 20%;
-            left: 25%;
-        }
+/* Header */
+.top-bg {
+    background: linear-gradient(135deg, #8e2de2, #4a00e0);
+    height: 120px;
+}
 
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            width: 350px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            text-align: center;
-            padding: 20px;
-            z-index: 1;
-        }
+.profile-img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 5px solid white;
+    margin-top: -55px;
+}
 
-        .top-bg {
-            background: linear-gradient(135deg, #8e2de2, #4a00e0);
-            height: 120px;
-            border-radius: 15px 15px 0 0;
-        }
+h2 { margin: 10px 0 5px; }
+.title { color: #777; font-size: 14px; }
 
-        .profile-img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 5px solid white;
-            margin-top: -70px;
-        }
+.info { font-size: 14px; color: #555; }
 
-        h2 {
-            margin: 10px 0 5px;
-            color: #333;
-        }
+/* Sections */
+.section {
+    padding: 0 15px;
+}
 
-        .title {
-            color: #777;
-        }
+h3 {
+    color: #4a00e0;
+    margin-top: 15px;
+}
 
-        .info {
-            margin: 15px 0;
-            color: #555;
-        }
+/* Skills */
+.skills span {
+    display: inline-block;
+    background: #8e2de2;
+    color: white;
+    padding: 5px 10px;
+    margin: 4px;
+    border-radius: 15px;
+    font-size: 12px;
+}
 
-        .skills span {
-            display: inline-block;
-            background: #8e2de2;
-            color: white;
-            padding: 6px 12px;
-            margin: 5px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
+/* Projects */
+.project-card {
+    background: #f3e8ff;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 8px 0;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.project-card:hover {
+    background: #e0ccff;
+    transform: scale(1.03);
+}
 
-        .btn {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            border-radius: 25px;
-            background: linear-gradient(135deg, #8e2de2, #4a00e0);
-            color: white;
-            text-decoration: none;
-            transition: 0.3s;
-        }
+/* Buttons */
+.btn {
+    display: inline-block;
+    margin: 10px 5px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: #8e2de2;
+    color: white;
+    text-decoration: none;
+    font-size: 13px;
+}
 
-        .btn:hover {
-            opacity: 0.8;
-        }
-    </style>
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    top: 0;
+    left: 0;
+}
+
+.modal-content {
+    background: white;
+    margin: 15% auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 320px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.close-btn {
+    float: right;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.modal img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+</style>
 </head>
+
 <body>
 
-<!-- Hollow background circles -->
 <div class="circle circle1"></div>
 <div class="circle circle2"></div>
 <div class="circle circle3"></div>
 
 <div class="card">
-    <div class="top-bg"></div>
-    <img src="profile.jpg" alt="Profile Image" class="profile-img">
 
-    <h2>G
-yan</h2>
+    <div class="top-bg"></div>
+    <img src="profile.jpg" class="profile-img">
+
+    <h2>Gyan</h2>
     <p class="title">Web Developer / Student</p>
 
     <div class="info">
         📧 gyan@email.com <br>
-        📍 calicut <br>
-        📞 9747402299
+        📍 Calicut
     </div>
 
-    <h3>About Me</h3>
-    <p>I enjoy creating beautiful purple-themed websites with modern UI.</p>
-
-    <h3>Skills</h3>
-    <div class="skills">
-        <span>HTML</span>
-        <span>CSS</span>
-        <span>JavaScript</span>
+    <div class="section">
+        <h3>About</h3>
+        <p>I build modern websites with clean UI and smooth UX.</p>
     </div>
 
-    <a href="#" class="btn">Contact Me</a>
+    <div class="section">
+        <h3>Skills</h3>
+        <div class="skills">
+            <span>HTML</span>
+            <span>CSS</span>
+            <span>JavaScript</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Projects</h3>
+
+        <div class="project-card" onclick="openModal('Portfolio Website','project1.jpg','HTML, CSS','A personal portfolio website.','#','#')">
+            <b>Portfolio Website</b>
+            <p>Modern personal portfolio</p>
+        </div>
+
+        <div class="project-card" onclick="openModal('To-Do App','project2.jpg','JavaScript','Task manager app','#','#')">
+            <b>To-Do App</b>
+            <p>Task management system</p>
+        </div>
+
+        <div class="project-card" onclick="openModal('Weather App','project3.jpg','API, JS','Weather app','#','#')">
+            <b>Weather App</b>
+            <p>Live weather data</p>
+        </div>
+
+    </div>
+
+    <div class="section">
+        <h3>Connect</h3>
+        <a href="#" class="btn">GitHub</a>
+        <a href="#" class="btn">LinkedIn</a>
+    </div>
+
 </div>
+
+<!-- Modal -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+
+        <img id="modalImg">
+        <h3 id="modalTitle"></h3>
+        <p id="modalDesc"></p>
+        <p><strong>Tech:</strong> <span id="modalTech"></span></p>
+
+        <a id="liveBtn" class="btn" target="_blank">Live</a>
+        <a id="codeBtn" class="btn" target="_blank">Code</a>
+    </div>
+</div>
+
+<script>
+function openModal(title, img, tech, desc, live, code) {
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalDesc").innerText = desc;
+    document.getElementById("modalTech").innerText = tech;
+    document.getElementById("modalImg").src = img;
+    document.getElementById("liveBtn").href = live;
+    document.getElementById("codeBtn").href = code;
+    document.getElementById("modal").style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
+}
+
+window.onclick = function(e) {
+    if (e.target == document.getElementById("modal")) {
+        closeModal();
+    }
+}
+</script>
 
 </body>
 </html>
-<h3>Projects</h3>
-<div class="projects">
-    <div class="project-card">
-        <h4>Portfolio Website</h4>
-        <p>A personal portfolio built with HTML & CSS.</p>
-    </div>
-
-    <div class="project-card">
-        <h4>To-Do App</h4>
-        <p>A simple JavaScript app to manage daily tasks.</p>
-    </div>
-
-    <div class="project-card">
-        <h4>Weather App</h4>
-        <p>Displays live weather using an API.</p>
-    </div>
-</div>
 
