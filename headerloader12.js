@@ -1,28 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Check if header already exists in the page
-    const existingHeader = document.querySelector("header");
-    const headerComponent = document.querySelector("site-header");
-    
-    if (existingHeader) {
-        console.log("Header already exists in page");
-        setupMobileMenu();
-        setupAutoTitleEffect();
-    } 
-    else if (headerComponent) {
-        console.log("Fetching header from header.html");
+    const header = document.querySelector("site-header");
+
+    if (header) {
         fetch("header.html")
             .then(res => res.text())
             .then(data => {
-                headerComponent.innerHTML = data;
-                setTimeout(() => {
-                    setupMobileMenu();
-                    setupAutoTitleEffect();
-                }, 100);
+                header.innerHTML = data;
+                setupMobileMenu();
+                setupAutoTitleDisplay();
             })
             .catch(error => console.error("Error loading header:", error));
-    }
-    else {
-        console.error("No header or site-header element found");
     }
 });
 
@@ -31,12 +18,11 @@ function setupMobileMenu() {
     const navMenu = document.querySelector(".nav-menu");
     
     if (menuBtn && navMenu) {
-        const newMenuBtn = menuBtn.cloneNode(true);
-        menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
-        
-        newMenuBtn.removeEventListener("click", toggleMenu);
-        newMenuBtn.addEventListener("click", toggleMenu);
+        menuBtn.removeEventListener("click", toggleMenu);
+        menuBtn.addEventListener("click", toggleMenu);
         console.log("Mobile menu initialized");
+    } else {
+        console.error("Mobile menu elements not found");
     }
 }
 
@@ -44,163 +30,151 @@ function toggleMenu() {
     const navMenu = document.querySelector(".nav-menu");
     const menuBtn = document.querySelector(".mobile-menu");
     
-    if (navMenu && menuBtn) {
-        navMenu.classList.toggle("active");
-        
-        const icon = menuBtn.querySelector("i");
-        if (icon) {
-            if (navMenu.classList.contains("active")) {
-                icon.classList.remove("fa-bars");
-                icon.classList.add("fa-times");
-            } else {
-                icon.classList.remove("fa-times");
-                icon.classList.add("fa-bars");
-            }
+    navMenu.classList.toggle("active");
+    
+    const icon = menuBtn.querySelector("i");
+    if (icon) {
+        if (navMenu.classList.contains("active")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times");
+        } else {
+            icon.classList.remove("fa-times");
+            icon.classList.add("fa-bars");
         }
     }
 }
 
-function setupAutoTitleEffect() {
+function setupAutoTitleDisplay() {
     const nav = document.querySelector(".nav-menu");
     if (!nav) {
         console.error("Navigation menu not found");
         return;
     }
 
-    // Get all navigation items (excluding the Join Now button)
-    const navItems = Array.from(nav.querySelectorAll(".hover-code-css li a:not(.cta-button)"));
+    // Get all navigation items (excluding the button/CTA)
+    const navItems = Array.from(nav.querySelectorAll("li:not(:has(.cta-button)) a, li > a:not(.cta-button)"));
     
     if (navItems.length === 0) {
         console.error("No navigation items found");
         return;
     }
 
-    console.log("Found navigation items:", navItems.length);
-
-    // Clear any existing intervals
-    if (window.autoTitleInterval) {
-        clearInterval(window.autoTitleInterval);
-        window.autoTitleInterval = null;
-    }
-
+    let autoInterval = null;
     let currentIndex = 0;
     let isHovering = false;
     let hoverTimeout = null;
 
-    // Store original elements for each nav item
-    const items = navItems.map(item => {
-        const icon = item.querySelector("i");
-        const span = item.querySelector("span");
-        const originalText = span ? span.textContent : "";
+    // Store original content for each nav item
+    const originalTexts = navItems.map(item => {
+        // Try to find span first, if not, use the text nodes
+        let span = item.querySelector("span");
+        let textNode = null;
+        let originalText = "";
         
-        // Store original HTML
-        const originalHTML = item.innerHTML;
+        if (span) {
+            originalText = span.textContent;
+        } else {
+            // Get text content excluding icon text
+            const icon = item.querySelector("i");
+            let text = item.textContent;
+            if (icon) {
+                text = text.replace(icon.textContent, "").trim();
+            }
+            originalText = text.trim();
+            
+            // Create a span if it doesn't exist
+            span = document.createElement("span");
+            span.textContent = originalText;
+            // Insert span after the icon or at the end
+            if (icon && icon.nextSibling) {
+                item.insertBefore(span, icon.nextSibling);
+            } else if (icon) {
+                item.appendChild(span);
+            } else {
+                item.appendChild(span);
+            }
+        }
         
         return {
             item: item,
-            icon: icon,
             span: span,
             originalText: originalText,
-            originalHTML: originalHTML,
-            isReplaced: false
+            originalDisplay: span.style.display
         };
     });
 
-    // Function to replace icon with text for a specific item
-    function replaceIconWithText(index) {
-        // First, restore ALL items to original state
-        items.forEach(item => {
-            if (item.isReplaced) {
-                item.item.innerHTML = item.originalHTML;
-                item.isReplaced = false;
-                // Re-capture the icon and span references
-                item.icon = item.item.querySelector("i");
-                item.span = item.item.querySelector("span");
+    // Function to show only the title at given index
+    function showTitleAtIndex(index) {
+        console.log("Showing title at index:", index, "Text:", originalTexts[index]?.originalText);
+        
+        // Hide all titles first
+        originalTexts.forEach(({ span }) => {
+            if (span) {
+                span.style.display = "none";
             }
         });
         
-        // Now replace ONLY the selected item
-        const selected = items[index];
-        if (selected && selected.icon && selected.span) {
-            // Hide icon and show text
-            selected.icon.style.display = "none";
-            selected.span.style.display = "inline";
-            selected.span.style.marginLeft = "0";
-            selected.isReplaced = true;
-            console.log("Showing title for:", selected.originalText);
+        // Show the selected title
+        const selected = originalTexts[index];
+        if (selected && selected.span) {
+            selected.span.style.display = "inline-block";
         }
     }
 
-    // Function to restore all items to original (icons visible)
-    function restoreAllIcons() {
-        items.forEach(item => {
-            if (item.isReplaced) {
-                item.item.innerHTML = item.originalHTML;
-                item.isReplaced = false;
-                // Re-capture references
-                item.icon = item.item.querySelector("i");
-                item.span = item.item.querySelector("span");
-            }
-            // Ensure icons are visible
-            if (item.icon) {
-                item.icon.style.display = "";
-            }
-            if (item.span) {
-                item.span.style.display = "";
+    // Function to reset all titles (show all normally)
+    function resetAllTitles() {
+        originalTexts.forEach(({ span, originalDisplay }) => {
+            if (span) {
+                span.style.display = originalDisplay || "inline";
             }
         });
     }
 
     // Function to start auto rotation
     function startAutoRotation() {
-        if (window.autoTitleInterval) {
-            clearInterval(window.autoTitleInterval);
-            window.autoTitleInterval = null;
+        if (autoInterval) {
+            clearInterval(autoInterval);
         }
         
         if (!isHovering) {
-            console.log("Starting auto rotation - replacing icons with titles");
+            console.log("Starting auto rotation");
+            
+            // Initially hide all titles
+            originalTexts.forEach(({ span }) => {
+                if (span) {
+                    span.style.display = "none";
+                }
+            });
             
             // Start with first item
             currentIndex = 0;
-            replaceIconWithText(currentIndex);
+            showTitleAtIndex(currentIndex);
             
             // Rotate every 3 seconds
-            window.autoTitleInterval = setInterval(() => {
+            autoInterval = setInterval(() => {
                 if (!isHovering) {
-                    currentIndex = (currentIndex + 1) % items.length;
-                    replaceIconWithText(currentIndex);
+                    currentIndex = (currentIndex + 1) % originalTexts.length;
+                    showTitleAtIndex(currentIndex);
+                    console.log("Rotating to index:", currentIndex);
                 }
             }, 3000);
         }
     }
 
-    // Function to stop auto rotation and restore all icons
+    // Function to stop auto rotation and reset
     function stopAutoRotation() {
-        if (window.autoTitleInterval) {
-            clearInterval(window.autoTitleInterval);
-            window.autoTitleInterval = null;
+        if (autoInterval) {
+            clearInterval(autoInterval);
+            autoInterval = null;
         }
-        restoreAllIcons();
+        resetAllTitles();
     }
 
-    // Add hover event listeners
-    items.forEach((item, index) => {
-        if (!item.item) return;
-        
-        // Clone and replace to remove old event listeners
-        const newItem = item.item.cloneNode(true);
-        item.item.parentNode.replaceChild(newItem, item.item);
-        
-        // Update references
-        items[index].item = newItem;
-        items[index].icon = newItem.querySelector("i");
-        items[index].span = newItem.querySelector("span");
-        items[index].originalHTML = newItem.innerHTML;
-        
-        // Mouse enter - show this item's title and stop auto
-        newItem.addEventListener("mouseenter", () => {
-            console.log("Hovering on:", items[index].originalText);
+    // Add hover event listeners to each nav item
+    navItems.forEach((item, index) => {
+        // Mouse enter - stop auto rotation and show only this item's title
+        item.addEventListener("mouseenter", () => {
+            console.log("Hovering on item:", index);
             if (hoverTimeout) {
                 clearTimeout(hoverTimeout);
             }
@@ -208,34 +182,22 @@ function setupAutoTitleEffect() {
             isHovering = true;
             stopAutoRotation();
             
-            // Show only the hovered item's title (replace its icon)
-            items.forEach((i, idx) => {
-                if (idx === index) {
-                    if (i.icon && i.span) {
-                        i.icon.style.display = "none";
-                        i.span.style.display = "inline";
-                        i.isReplaced = true;
-                    }
-                } else {
-                    // Restore others to original
-                    if (i.isReplaced) {
-                        i.item.innerHTML = i.originalHTML;
-                        i.isReplaced = false;
-                        i.icon = i.item.querySelector("i");
-                        i.span = i.item.querySelector("span");
-                    }
-                    if (i.icon) {
-                        i.icon.style.display = "";
-                    }
-                    if (i.span) {
-                        i.span.style.display = "";
-                    }
+            // Hide all titles
+            originalTexts.forEach(({ span }) => {
+                if (span) {
+                    span.style.display = "none";
                 }
             });
+            
+            // Show only the hovered item's title
+            const hoveredItem = originalTexts[index];
+            if (hoveredItem && hoveredItem.span) {
+                hoveredItem.span.style.display = "inline-block";
+            }
         });
         
-        // Mouse leave - restart auto rotation
-        newItem.addEventListener("mouseleave", () => {
+        // Mouse leave - restart auto rotation after a short delay
+        item.addEventListener("mouseleave", () => {
             hoverTimeout = setTimeout(() => {
                 isHovering = false;
                 stopAutoRotation();
@@ -244,21 +206,24 @@ function setupAutoTitleEffect() {
         });
     });
 
+    // Also handle hover on the entire nav container
+    nav.addEventListener("mouseenter", () => {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+        }
+    });
+    
+    nav.addEventListener("mouseleave", () => {
+        hoverTimeout = setTimeout(() => {
+            isHovering = false;
+            stopAutoRotation();
+            startAutoRotation();
+        }, 300);
+    });
+
     // Start the auto rotation
     startAutoRotation();
     
-    console.log("Auto title effect initialized - icons will be replaced with titles one by one");
-    
-    // Add CSS for smooth transitions
-    const style = document.createElement('style');
-    style.textContent = `
-        .nav-menu .hover-code-css li a i,
-        .nav-menu .hover-code-css li a span {
-            transition: all 0.3s ease;
-        }
-        .nav-menu .hover-code-css li a span {
-            display: inline-block;
-        }
-    `;
-    document.head.appendChild(style);
+    console.log("Auto title display initialized with", originalTexts.length, "items");
+    console.log("Nav items found:", navItems.length);
 }
