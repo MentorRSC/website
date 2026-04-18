@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>State Explorer | Notice Board Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --accent: #f43f5e;
+            --dark: #0f172a;
+            --text: #334155;
+            --border: #e2e8f0;
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(125deg, #f0f9ff 0%, #e6f0fa 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            color: var(--text);
+        }
+
+        /* site-header mock style if not present */
+        site-header {
+            display: block;
+            width: 100%;
+        }
+
+        .explorer-widget {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: visible;
+            position: relative;
+        }
+
+        .widget-hero {
+            background: linear-gradient(110deg, var(--primary), var(--primary-dark));
+            padding: 1.8rem 2rem;
+            color: white;
+            text-align: center;
+            border-radius: 2rem 2rem 0 0;
+        }
+
+        .widget-hero i {
+            font-size: 2.3rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .widget-hero h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .widget-hero p {
+            opacity: 0.9;
+            font-size: 0.85rem;
+            margin-top: 0.2rem;
+        }
+
+        .dropdown-panel {
+            padding: 1.8rem 2rem 2rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        .state-selector {
+            margin-bottom: 0;
+            position: relative;
+            z-index: 30;
+        }
+
+        .dropdown-label {
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--dark);
+        }
+
+        .custom-select {
+            position: relative;
+            width: 100%;
+            z-index: 100;
+        }
+
+        .select-trigger {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 1rem 1.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .select-trigger:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(59,130,246,0.2);
+        }
+
+        .select-trigger span {
+            color: var(--dark);
+            font-weight: 500;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            max-height: 340px;
+            overflow-y: auto;
+            z-index: 9999;
+            box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.35);
+            display: none;
+            list-style: none;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 0.8rem 1.2rem;
+            cursor: pointer;
+            transition: background 0.12s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option:hover {
+            background: #eef2ff;
+        }
+
+        .option-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .option-badge {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+        }
+
+        /* Cards Container */
+        .cards-container {
+            margin-top: 1.8rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        /* Single card row style: two columns on front page: left side content, optional image poster */
+        .dynamic-card {
+            background: white;
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.25s ease;
+            box-shadow: var(--card-shadow);
+            cursor: pointer;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .dynamic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 30px -12px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .card-main-content {
+            flex: 2;
+            min-width: 180px;
+            padding: 1rem 1.2rem;
+        }
+
+        .card-poster {
+            flex: 1;
+            min-width: 140px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem;
+            border-left: 1px solid var(--border);
+        }
+
+        .poster-image {
+            max-width: 100%;
+            max-height: 130px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .poster-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            gap: 0.4rem;
+        }
+
+        .poster-placeholder i {
+            font-size: 2rem;
+            opacity: 0.5;
+        }
+
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #eef2ff;
+            padding: 0.25rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            width: fit-content;
+            margin-bottom: 0.8rem;
+        }
+
+        .notice-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .notice-summary {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 0.75rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .meta-footer {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .state-chip {
+            background: #f1f5f9;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+
+        .empty-state-card {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #94a3b8;
+            background: #fefce8;
+            border-radius: 1.5rem;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 3rem;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 1rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-container {
+            background: white;
+            max-width: 720px;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 1.8rem;
+            overflow: hidden;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.25s ease;
+        }
+
+        .modal-header {
+            background: linear-gradient(110deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(85vh - 80px);
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .detail-label {
+            font-weight: 700;
+            min-width: 110px;
+            color: var(--primary-dark);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            color: var(--text);
+            flex: 1;
+            word-break: break-word;
+            font-size: 0.9rem;
+        }
+
+        .modal-image-preview {
+            margin-top: 1rem;
+            text-align: center;
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 1rem;
+        }
+
+        .modal-image-preview img {
+            max-width: 100%;
+            max-height: 240px;
+            border-radius: 12px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 640px) {
+            .dropdown-panel { padding: 1rem; }
+            .dynamic-card { flex-direction: column; }
+            .card-poster { border-left: none; border-top: 1px solid var(--border); padding: 0.8rem; }
+            .detail-label { min-width: 80px; }
+        }
+    </style>
+</head>
+<body>
+    <site-header></site-header>
+    <div class="explorer-widget">
+        <div class="widget-hero">
+            <i class="fas fa-globe-americas"></i>
+            <h2>Notice Board</h2>
+            <p>INNOVATION HUB | State-wise Updates</p>
+        </div>
+        <div class="dropdown-panel">
+            <div class="state-selector">
+                <div class="dropdown-label">
+                    <i class="fas fa-chevron-circle-down"></i> Select State / Hub 
+                </div>
+                <div class="custom-select" id="customSelect">
+                    <div class="select-trigger" id="selectTrigger">
+                        <span id="selectedStateName"> Choose a state </span>
+                        <i class="fas fa-angle-down"></i>
+                    </div>
+                    <ul class="dropdown-options" id="dropdownOptions"></ul>
+                </div>
+            </div>
+            <div id="cardsSection" class="cards-container" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // MASTER SHEET CONFIG
+        const MASTER_SPREADSHEET_ID = '1vfSO8NP0p1um-ueMspk4ekPtsEZKSfKwrvgh54SK70c';
+        const MASTER_DATA_URL = `https://docs.google.com/spreadsheets/d/${MASTER_SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+
+        let masterRows = [];          // array of { state, linkedSheetId }
+        let uniqueStatesInOrder = []; // preserve order from spreadsheet
+        let selectedState = null;     // null means no selection, but we require user to pick a state (no "ALL" option)
+        let childSheetCache = new Map();
+
+        const dropdown = document.getElementById('dropdownOptions');
+        const selectTrigger = document.getElementById('selectTrigger');
+        const selectedStateSpan = document.getElementById('selectedStateName');
+        const cardsSection = document.getElementById('cardsSection');
+
+        // Robust CSV parser
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let insideQuotes = false;
+            let i = 0;
+            const len = csvText.length;
+            while (i < len) {
+                const ch = csvText[i];
+                const nextCh = csvText[i+1];
+                if (ch === '"') {
+                    if (insideQuotes && nextCh === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        insideQuotes = !insideQuotes;
+                    }
+                } else if (ch === ',' && !insideQuotes) {
+                    currentRow.push(currentField);
+                    currentField = '';
+                } else if ((ch === '\n' || (ch === '\r' && nextCh === '\n')) && !insideQuotes) {
+                    currentRow.push(currentField);
+                    if (currentRow.length > 0) rows.push(currentRow);
+                    currentRow = [];
+                    currentField = '';
+                    if (ch === '\r') i++;
+                } else if (ch === '\r' && !insideQuotes) {
+                    currentRow.push(currentField);
+                    if (currentRow.length > 0) rows.push(currentRow);
+                    currentRow = [];
+                    currentField = '';
+                } else {
+                    currentField += ch;
+                }
+                i++;
+            }
+            if (currentField !== '' || currentRow.length > 0) {
+                currentRow.push(currentField);
+                if (currentRow.length > 0) rows.push(currentRow);
+            }
+            return rows.map(row => row.map(cell => {
+                let cleaned = String(cell).trim();
+                if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+                    cleaned = cleaned.slice(1, -1).replace(/""/g, '"');
+                }
+                return cleaned;
+            }));
+        }
+
+        // Format date to DD/MM/YYYY
+        function formatDateToDMY(dateObj) {
+            if (!dateObj || isNaN(dateObj.getTime())) return null;
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function parseDateFlexible(dateStr) {
+            if (!dateStr || dateStr === '—' || dateStr === '') return null;
+            let cleaned = String(dateStr).trim();
+            let d = new Date(cleaned);
+            if (!isNaN(d.getTime())) return d;
+            const parts = cleaned.split(/[-/]/);
+            if (parts.length === 3) {
+                let year = parseInt(parts[2]);
+                let month = parseInt(parts[1]) - 1;
+                let day = parseInt(parts[0]);
+                if (year < 100) year += 2000;
+                let d2 = new Date(year, month, day);
+                if (!isNaN(d2.getTime())) return d2;
+                let d3 = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+                if (!isNaN(d3.getTime())) return d3;
+            }
+            return null;
+        }
+
+        // Fetch master sheet and preserve order (based on spreadsheet order)
+        async function fetchMasterSheet() {
+            try {
+                const response = await fetch(MASTER_DATA_URL);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const csvText = await response.text();
+                const parsed = parseCSV(csvText);
+                if (parsed.length < 2) throw new Error('Master sheet insufficient data');
+                
+                const tempRows = [];
+                const orderMap = new Map(); // to keep first occurrence order
+                for (let idx = 0; idx < parsed.length; idx++) {
+                    const row = parsed[idx];
+                    let state = (row.length >= 2) ? row[1] : '';
+                    let linkedId = (row.length >= 3) ? row[2] : '';
+                    if (!state || state === '' || state.toLowerCase() === 'null' || state === 'STATE') continue;
+                    linkedId = linkedId ? linkedId.trim() : null;
+                    if (linkedId === '' || linkedId.toLowerCase() === 'null') linkedId = null;
+                    if (linkedId) {
+                        tempRows.push({ state: state, linkedSheetId: linkedId });
+                        if (!orderMap.has(state)) orderMap.set(state, true);
+                    }
+                }
+                // preserve insertion order exactly as they appear in master sheet
+                const seen = new Set();
+                uniqueStatesInOrder = [];
+                for (let row of tempRows) {
+                    if (!seen.has(row.state)) {
+                        seen.add(row.state);
+                        uniqueStatesInOrder.push(row.state);
+                    }
+                }
+                masterRows = tempRows;
+                renderDropdownInOrder();
+            } catch (err) {
+                console.error(err);
+                dropdown.innerHTML = `<li class="dropdown-option" style="justify-content:center;">⚠️ Failed to load hubs</li>`;
+            }
+        }
+
+        function renderDropdownInOrder() {
+            if (!dropdown) return;
+            let optionsHtml = '';
+            for (let state of uniqueStatesInOrder) {
+                optionsHtml += `
+                    <li class="dropdown-option" data-state-value="${escapeHtml(state)}">
+                        <span class="option-title">${escapeHtml(state)}</span>
+                        <span class="option-badge"><i class="fas fa-map-pin"></i> hub</span>
+                    </li>
+                `;
+            }
+            dropdown.innerHTML = optionsHtml;
+            document.querySelectorAll('.dropdown-option[data-state-value]').forEach(opt => {
+                opt.removeEventListener('click', handleOptionClick);
+                opt.addEventListener('click', handleOptionClick);
+            });
+        }
+
+        function handleOptionClick(e) {
+            const val = e.currentTarget.getAttribute('data-state-value');
+            closeDropdown();
+            selectedState = val;
+            selectedStateSpan.innerHTML = escapeHtml(val);
+            loadDataForState(val);
+        }
+
+        async function fetchChildSheet(sheetId) {
+            if (childSheetCache.has(sheetId)) return childSheetCache.get(sheetId);
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const csvText = await resp.text();
+                const parsedRows = parseCSV(csvText);
+                const dataRows = [];
+                // start from row index 0, preserve spreadsheet order exactly
+                for (let r = 0; r < parsedRows.length; r++) {
+                    const rowCells = parsedRows[r];
+                    if (rowCells.length === 0 || (rowCells.length === 1 && rowCells[0] === '')) continue;
+                    const rowObj = {};
+                    for (let colIdx = 0; colIdx < 10; colIdx++) {
+                        const colKey = `col${colIdx+1}`;
+                        rowObj[colKey] = (colIdx < rowCells.length && rowCells[colIdx] !== undefined && rowCells[colIdx] !== '') ? rowCells[colIdx] : '';
+                    }
+                    // only push if at least one meaningful column (skip completely empty)
+                    const hasContent = Object.values(rowObj).some(v => v && v !== '');
+                    if (hasContent) dataRows.push(rowObj);
+                }
+                const result = { rows: dataRows, error: false };
+                childSheetCache.set(sheetId, result);
+                return result;
+            } catch (err) {
+                console.warn(`Error sheet ${sheetId}:`, err);
+                const errorResult = { rows: [], error: true };
+                childSheetCache.set(sheetId, errorResult);
+                return errorResult;
+            }
+        }
+
+        async function loadDataForState(state) {
+            cardsSection.style.display = 'block';
+            cardsSection.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p>Loading notices for ${escapeHtml(state)}...</p></div>`;
+            
+            // get all sheet ids for this state (respect master order but no all)
+            const entries = masterRows.filter(row => row.state === state);
+            const sheetIds = [];
+            for (let entry of entries) {
+                if (entry.linkedSheetId) sheetIds.push(entry.linkedSheetId);
+            }
+            // deduplicate
+            const uniqueSheetIds = [...new Set(sheetIds)];
+            const cardItems = [];
+            
+            for (const sheetId of uniqueSheetIds) {
+                const sheetData = await fetchChildSheet(sheetId);
+                if (sheetData && sheetData.rows && sheetData.rows.length) {
+                    // preserve spreadsheet order: iterate as they appear in child sheet
+                    for (let rowData of sheetData.rows) {
+                        const dateRaw = rowData.col1 || '';
+                        const parsedDate = parseDateFlexible(dateRaw);
+                        const displayDate = parsedDate ? formatDateToDMY(parsedDate) : (dateRaw || '—');
+                        // col2 = title/content (notice title)
+                        // col3 = description / summary
+                        const titleText = rowData.col2 && rowData.col2 !== '' ? rowData.col2 : 'Untitled Notice';
+                        const summaryText = rowData.col3 && rowData.col3 !== '' ? rowData.col3 : '';
+                        // poster url: check column 4 (col4) for image URL
+                        let posterUrl = (rowData.col4 && rowData.col4.trim() !== '' && (rowData.col4.includes('http') || rowData.col4.includes('.jpg') || rowData.col4.includes('.png'))) ? rowData.col4.trim() : null;
+                        
+                        cardItems.push({
+                            id: `${sheetId}_${Math.random()}_${Date.now()}_${cardItems.length}`,
+                            state: state,
+                            dateObj: parsedDate,
+                            dateDisplay: displayDate,
+                            title: titleText,
+                            summary: summaryText,
+                            posterUrl: posterUrl,
+                            fullRow: rowData,
+                            rawOrderIndex: cardItems.length   // preserve child sheet order
+                        });
+                    }
+                }
+            }
+            
+            // Sort: no date sorting — keep exactly as they appear in spreadsheet (order of child sheets concatenated)
+            // But we want to preserve order: we collect in loop reading sheets in the order of sheetIds from master, 
+            // and rows inside each sheet in spreadsheet order. So cardItems already in that order.
+            // We will not re-sort by date. That satisfies "notice should be the same order as spreadsheet".
+            
+            renderCards(cardItems);
+        }
+
+        // Helper: detect if a string is likely an image URL
+        function isImageUrl(url) {
+            if (!url || typeof url !== 'string') return false;
+            const lower = url.toLowerCase();
+            return lower.startsWith('http') && (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp') || lower.includes('image'));
+        }
+
+        function renderCards(cardsArray) {
+            if (!cardsSection) return;
+            if (cardsArray.length === 0) {
+                cardsSection.innerHTML = `<div class="empty-state-card"><i class="fas fa-info-circle"></i><p>No notices found for this hub.</p></div>`;
+                return;
+            }
+            
+            let html = `<div class="cards-grid">`;
+            for (let card of cardsArray) {
+                const hasPoster = card.posterUrl && isImageUrl(card.posterUrl);
+                // Front page shows: date, title (col2), summary (col3), state chip. Also poster image if available.
+                html += `
+                    <div class="dynamic-card" data-card-id="${escapeHtml(card.id)}">
+                        <div class="card-main-content">
+                            <div class="date-badge"><i class="far fa-calendar-alt"></i> ${escapeHtml(card.dateDisplay)}</div>
+                            <div class="notice-title">${escapeHtml(card.title)}</div>
+                            ${card.summary ? `<div class="notice-summary">${escapeHtml(card.summary)}</div>` : ''}
+                            <div class="meta-footer">
+                                <span class="state-chip"><i class="fas fa-flag"></i> ${escapeHtml(card.state)}</span>
+                            </div>
+                        </div>
+                        <div class="card-poster">
+                            ${hasPoster ? `<img class="poster-image" src="${escapeHtml(card.posterUrl)}" alt="poster" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\'poster-placeholder\'><i class=\'fas fa-image\'></i><span>No preview</span></div>';">` : 
+                            `<div class="poster-placeholder"><i class="fas fa-newspaper"></i><span>No poster</span></div>`}
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            cardsSection.innerHTML = html;
+            
+            // attach click handlers for modal
+            document.querySelectorAll('.dynamic-card').forEach(cardDiv => {
+                cardDiv.addEventListener('click', (e) => {
+                    // avoid if clicked on poster image? fine anyway
+                    const cardId = cardDiv.getAttribute('data-card-id');
+                    const selectedCard = cardsArray.find(c => c.id === cardId);
+                    if (selectedCard) openModal(selectedCard);
+                });
+            });
+        }
+        
+        // Modal shows all columns col1..col10, and also poster if any
+        function openModal(card) {
+            const fullRow = card.fullRow || {};
+            const fields = [];
+            const labels = {
+                col1: 'Date Published',
+                col2: 'Title / Headline',
+                col3: 'Description',
+                col4: 'Poster / Image Link',
+                col5: 'Additional Info',
+                col6: 'Column 6',
+                col7: 'Column 7',
+                col8: 'Column 8',
+                col9: 'Column 9',
+                col10: 'Column 10'
+            };
+            for (let i = 1; i <= 10; i++) {
+                const key = `col${i}`;
+                let value = fullRow[key] || '—';
+                if (value === '') value = '—';
+                const label = labels[key] || `Column ${i}`;
+                fields.push({ label, value, isImage: (i===4 && value !== '—' && isImageUrl(value)) });
+            }
+            
+            // Build poster preview if col4 has image
+            const posterImg = (fullRow.col4 && isImageUrl(fullRow.col4)) ? fullRow.col4 : null;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-info-circle"></i> Complete Notice · ${escapeHtml(card.state)}</h3>
+                        <button class="modal-close"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        ${fields.map(f => `
+                            <div class="detail-row">
+                                <div class="detail-label">${escapeHtml(f.label)}</div>
+                                <div class="detail-value">${f.isImage ? `<a href="${escapeHtml(f.value)}" target="_blank">🔗 View Image</a> ${escapeHtml(f.value.substring(0,50))}` : escapeHtml(f.value)}</div>
+                            </div>
+                        `).join('')}
+                        ${posterImg ? `<div class="modal-image-preview"><img src="${escapeHtml(posterImg)}" alt="poster preview" onerror="this.src='https://placehold.co/400x200?text=Image+not+load'"></div>` : ''}
+                        <div class="detail-row" style="background:#f8fafc; margin-top:0.5rem; border-radius:0.8rem;">
+                            <div class="detail-label">Hub</div>
+                            <div class="detail-value"><span class="modal-state-badge" style="background:#eef2ff;padding:0.2rem 0.8rem;border-radius:30px;">${escapeHtml(card.state)}</span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function closeDropdown() { 
+            const dd = document.getElementById('dropdownOptions');
+            if (dd) dd.classList.remove('show');
+        }
+        function toggleDropdown() { 
+            const dd = document.getElementById('dropdownOptions');
+            if (dd) dd.classList.toggle('show');
+        }
+        
+        selectTrigger?.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            toggleDropdown(); 
+        });
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('customSelect');
+            if (container && !container.contains(e.target)) closeDropdown();
+        });
+        
+        // Adjust for site-header
+        function adjustForHeader() {
+            const header = document.querySelector('site-header');
+            if (header && header.offsetHeight) {
+                document.body.style.paddingTop = `calc(${header.offsetHeight}px + 2rem)`;
+            } else {
+                document.body.style.paddingTop = `2rem`;
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', adjustForHeader);
+        } else {
+            adjustForHeader();
+        }
+        window.addEventListener('resize', () => setTimeout(adjustForHeader, 100));
+        
+        cardsSection.style.display = 'none';
+        fetchMasterSheet();
+    </script>
+</body>
+</html>
