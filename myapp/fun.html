@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fractal Nexus | Infinite Zoom & Neon Dynamics</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* sleek professional feel, avoid accidental text select */
+        }
+
+        body {
+            background: black;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Monaco', 'Courier New', monospace;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        /* Main canvas container: fullscreen interactive fractals */
+        .canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Professional bottom bar - glassmorphic neon style */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0, 255, 255, 0.35);
+            box-shadow: 0 -8px 32px rgba(0, 255, 255, 0.1);
+            z-index: 20;
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            transition: all 0.3s ease;
+        }
+
+        .brand {
+            display: flex;
+            gap: 1.5rem;
+            align-items: baseline;
+        }
+
+        .fractal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, cyan, #ff44cc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(0,255,255,0.3);
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            background: rgba(0, 255, 255, 0.2);
+            padding: 0.2rem 0.7rem;
+            border-radius: 40px;
+            border-left: 2px solid cyan;
+            color: #ccf;
+            font-family: monospace;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1.2rem;
+        }
+
+        .ctrl-btn {
+            background: rgba(0, 20, 30, 0.7);
+            border: 1px solid cyan;
+            color: cyan;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: monospace;
+            backdrop-filter: blur(4px);
+        }
+
+        .ctrl-btn:hover {
+            background: cyan;
+            color: black;
+            box-shadow: 0 0 12px cyan;
+            border-color: white;
+        }
+
+        .status {
+            font-size: 0.75rem;
+            color: #0ff;
+            background: rgba(0,0,0,0.6);
+            padding: 0.2rem 0.9rem;
+            border-radius: 20px;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        .credit {
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            text-align: right;
+        }
+
+        @media (max-width: 700px) {
+            .bottom-bar {
+                padding: 0.6rem 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .brand, .controls {
+                width: 100%;
+                justify-content: center;
+            }
+            .fractal-title { font-size: 1rem; }
+        }
+
+        /* subtle floating glow */
+        @keyframes pulseGlow {
+            0% { border-top-color: rgba(0,255,255,0.2);}
+            100% { border-top-color: rgba(0,255,255,0.8);}
+        }
+        .bottom-bar {
+            animation: pulseGlow 3s infinite alternate;
+        }
+    </style>
+</head>
+<body>
+
+<div class="canvas-container">
+    <canvas id="fractalCanvas" width="1200" height="800"></canvas>
+</div>
+
+<div class="bottom-bar">
+    <div class="brand">
+        <span class="fractal-title">⚡ INFINITE LOOM</span>
+        <span class="badge">DRAGON CURVE | GOLDEN SPIRAL | MANDELBROT ∞ ZOOM</span>
+    </div>
+    <div class="controls">
+        <button class="ctrl-btn" id="resetViewBtn">⟳ RESET VIEW</button>
+        <div class="status" id="fractalModeLabel">🌀 MANDELBROT ZOOM</div>
+    </div>
+    <div class="credit">
+        <span>⚡ CHROMADEPTH • CYBERNEON • INFINITE ZOOM</span>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ------------------- DOM ELEMENTS --------------------
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
+        const modeLabel = document.getElementById('fractalModeLabel');
+        const resetBtn = document.getElementById('resetViewBtn');
+
+        // ------------------- FRACTAL STATE -------------------
+        let currentMode = 'mandelbrot';   // 'mandelbrot', 'dragon', 'golden'
+        
+        // Mandelbrot zoom parameters (infinite zoom simulation)
+        let mandelX = -0.7269;
+        let mandelY = 0.1889;
+        let mandelZoom = 1.0;        // base zoom factor (1 = standard view)
+        let zoomFactor = 1.2;        // per frame zoom speed
+        
+        // For infinite endless loop: continuously zoom in (no max limit)
+        let autoZoomEnabled = true;
+        let lastTimestamp = 0;
+        let animationId = null;
+        
+        // Color shift parameters (time-based RGB drift)
+        let hueShift = 0;
+        let lastFrameTime = 0;
+        
+        // Dragon Curve state: stores points for dynamic curve (level up to recursion)
+        let dragonPoints = [];
+        let dragonLevel = 12;   // high detail for smooth curve
+        
+        // Golden Spiral state: array of points for logarithmic spiral
+        let spiralPoints = [];
+        
+        // Window dimensions
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+        
+        // ------------------- HELPER FUNCTIONS: COLOR SHIFT (NEON / CYAN / MAGIC)
+        function getDynamicColor(t, intensity=1.0) {
+            // t is time in seconds, produces smooth rainbow shift but with neon bias
+            let r = Math.sin(t * 0.7) * 0.8 + 0.8;
+            let g = Math.sin(t * 0.9 + 2) * 0.8 + 0.8;
+            let b = Math.sin(t * 1.1 + 4) * 0.9 + 0.6;
+            // Enhance cyan / magenta dominance
+            return `rgb(${Math.floor(r * 180 + 75)}, ${Math.floor(g * 200 + 55)}, ${Math.floor(b * 220 + 35)})`;
+        }
+        
+        function getNeonStroke(t, alpha=0.9) {
+            let r = Math.sin(t * 0.83) * 0.7 + 0.8;
+            let g = Math.sin(t * 0.97 + 1.2) * 0.9 + 0.9;
+            let b = Math.sin(t * 1.23 + 2.4) * 1.0 + 0.5;
+            return `rgba(${Math.floor(r*255)}, ${Math.floor(g*255)}, ${Math.floor(b*255)}, ${alpha})`;
+        }
+        
+        // ------------------- DRAGON CURVE GENERATION (Heighway Dragon, iterative edge)
+        // Using classic Lindenmayer system: start "FX", rules: X -> X+YF+, Y -> -FX-Y
+        function generateDragonCurve(iterations) {
+            let sequence = "FX";
+            for (let i = 0; i < iterations; i++) {
+                let next = "";
+                for (let ch of sequence) {
+                    if (ch === 'X') next += "X+YF+";
+                    else if (ch === 'Y') next += "-FX-Y";
+                    else next += ch;
+                }
+                sequence = next;
+            }
+            // Convert sequence to points: F = forward, + = right 90°, - = left 90°
+            let x = 0, y = 0;
+            let angle = 0;  // 0 = right (east)
+            let stepSize = 4.2;
+            let points = [{x: 0, y: 0}];
+            for (let cmd of sequence) {
+                if (cmd === 'F') {
+                    let nx = x + stepSize * Math.cos(angle);
+                    let ny = y + stepSize * Math.sin(angle);
+                    points.push({x: nx, y: ny});
+                    x = nx;
+                    y = ny;
+                } else if (cmd === '+') {
+                    angle += Math.PI / 2;
+                } else if (cmd === '-') {
+                    angle -= Math.PI / 2;
+                }
+            }
+            return points;
+        }
+        
+        function updateDragonPoints() {
+            dragonPoints = generateDragonCurve(dragonLevel);
+        }
+        
+        // ---------- GOLDEN SPIRAL (Logarithmic) based on golden ratio phi = 1.618
+        function generateGoldenSpiral(angleSteps = 800, maxRadius = 12.0) {
+            let points = [];
+            const phi = (1 + Math.sqrt(5)) / 2;
+            const growthFactor = Math.pow(phi, 2 / Math.PI); // spiral growth per radian
+            for (let i = 0; i <= angleSteps; i++) {
+                let t = i * 0.08;  // angle in radians
+                let radius = 0.35 * Math.pow(growthFactor, t);
+                if (radius > maxRadius) break;
+                let x = radius * Math.cos(t);
+                let y = radius * Math.sin(t);
+                points.push({x, y});
+            }
+            return points;
+        }
+        
+        // ---------- MANDELBROT RENDERING (with infinite zoom effect)
+        function renderMandelbrot(ctx, w, h, centerX, centerY, zoom, timeHue) {
+            // Bound check for infinite zoom
+            const maxIter = 180 + Math.floor(zoom * 12); // increase depth with zoom
+            const bailout = 4.0;
+            const imageData = ctx.getImageData(0, 0, w, h);
+            const data = imageData.data;
+            
+            const halfWidth = w / 2;
+            const halfHeight = h / 2;
+            const scale = 3.5 / zoom;
+            
+            for (let px = 0; px < w; px++) {
+                for (let py = 0; py < h; py++) {
+                    let x0 = (px - halfWidth) / halfWidth * scale + centerX;
+                    let y0 = (py - halfHeight) / halfHeight * scale + centerY;
+                    let x = 0, y = 0;
+                    let iteration = 0;
+                    while (x*x + y*y < bailout && iteration < maxIter) {
+                        let xtemp = x*x - y*y + x0;
+                        y = 2*x*y + y0;
+                        x = xtemp;
+                        iteration++;
+                    }
+                    let idx = (py * w + px) * 4;
+                    if (iteration === maxIter) {
+                        // deep interior: pure black with subtle cyan ghost
+                        data[idx] = 0;
+                        data[idx+1] = 10;
+                        data[idx+2] = 20;
+                        data[idx+3] = 255;
+                    } else {
+                        // smooth coloring with time shift
+                        let t = iteration / maxIter;
+                        let hueVal = (t * 6.0 + timeHue * 2) % 1.0;
+                        let r = Math.sin(2 * Math.PI * hueVal) * 0.7 + 0.8;
+                        let g = Math.sin(2 * Math.PI * (hueVal + 0.33)) * 0.7 + 0.8;
+                        let b = Math.sin(2 * Math.PI * (hueVal + 0.67)) * 0.8 + 0.5;
+                        // neon boost
+                        data[idx] = Math.floor(r * 180 + 75);
+                        data[idx+1] = Math.floor(g * 200 + 55);
+                        data[idx+2] = Math.floor(b * 220 + 35);
+                        data[idx+3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        // Render Dragon Curve on canvas with neon dynamic color
+        function renderDragon(ctx, w, h, timeHue) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            ctx.translate(w/2, h/2);
+            // Scale and rotate to fit nicely
+            let scaleFactor = Math.min(w, h) / 320;
+            ctx.scale(scaleFactor, scaleFactor);
+            ctx.beginPath();
+            if (dragonPoints.length === 0) updateDragonPoints();
+            let pts = dragonPoints;
+            if (pts.length < 2) return;
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            let strokeCol = getNeonStroke(timeHue, 0.95);
+            ctx.strokeStyle = strokeCol;
+            ctx.lineWidth = 2.2;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = `hsl(${(timeHue * 360) % 360}, 100%, 60%)`;
+            ctx.stroke();
+            // additional outer glow
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.strokeStyle = "rgba(0,255,255,0.3)";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+        
+        // Golden Spiral render
+        function renderGoldenSpiral(ctx, w, h, timeHue) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            ctx.translate(w/2, h/2);
+            let scaleVal = Math.min(w, h) / 28;
+            ctx.scale(scaleVal, scaleVal);
+            ctx.beginPath();
+            let pts = spiralPoints;
+            if (pts.length < 2) return;
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            let grad = ctx.createLinearGradient(-5, -5, 5, 5);
+            let hue1 = (timeHue * 0.9) % 1.0;
+            let hue2 = (timeHue * 1.2 + 0.5) % 1.0;
+            ctx.strokeStyle = `hsl(${hue1 * 360}, 100%, 65%)`;
+            ctx.lineWidth = 2.8;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "cyan";
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.strokeStyle = `hsl(${hue2 * 360}, 85%, 55%)`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        // ---------- MASTER RENDER DISPATCH (Dynamic time & background)
+        let currentTime = 0;
+        function renderScene(nowSeconds) {
+            if (!canvas || !ctx) return;
+            const width = w, height = h;
+            canvas.width = width;
+            canvas.height = height;
+            
+            // background: complete black / deep cyan undertones based on time
+            let bgR = 0, bgG = 0, bgB = 0;
+            // but subtle cyan pulsation for mood (barely)
+            let pulse = Math.sin(nowSeconds * 0.4) * 0.08;
+            ctx.fillStyle = `rgb(0, ${Math.floor(5 + pulse*8)}, ${Math.floor(8 + pulse*12)})`;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Depending on mode call appropriate render
+            if (currentMode === 'mandelbrot') {
+                // INFINITE ZOOM: always increase zoom factor endlessly
+                if (autoZoomEnabled) {
+                    mandelZoom *= zoomFactor;
+                    // optional: keep zoom numeric huge, no upper bound (infinite)
+                    // to avoid floating point anomalies after extremely large zoom, but fine for demo
+                    if (mandelZoom > 1e12) mandelZoom = 1e12; // still massive infinite loop feeling
+                }
+                renderMandelbrot(ctx, width, height, mandelX, mandelY, mandelZoom, nowSeconds);
+                modeLabel.innerText = "🌀 MANDELBROT • ∞ ZOOM IN";
+            } 
+            else if (currentMode === 'dragon') {
+                renderDragon(ctx, width, height, nowSeconds);
+                modeLabel.innerText = "🐉 DRAGON CURVE • NEON CHROMATIC";
+            } 
+            else if (currentMode === 'golden') {
+                renderGoldenSpiral(ctx, width, height, nowSeconds);
+                modeLabel.innerText = "✨ GOLDEN SPIRAL • PHI INFINITY";
+            }
+            
+            // Optional: extra digital cyber effect: small overlay text for zoom info (only mandelbrot)
+            if(currentMode === 'mandelbrot') {
+                ctx.font = "12px monospace";
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "rgba(0,255,255,0.7)";
+                ctx.fillText(`ZOOM x${mandelZoom.toFixed(3)}  |  auto-infinite`, 20, 40);
+            } else if(currentMode === 'dragon') {
+                ctx.fillStyle = "rgba(0,255,210,0.7)";
+                ctx.font = "10px monospace";
+                ctx.fillText("⚡ Heighway Dragon | Level 12", 20, 40);
+            } else {
+                ctx.fillStyle = "rgba(0,255,200,0.7)";
+                ctx.font = "10px monospace";
+                ctx.fillText("φ Logarithmic Spiral | Divine proportion", 20, 40);
+            }
+        }
+        
+        // ---------- Animation Loop with time-based color & infinite zoom
+        let startTime = performance.now() / 1000;
+        function animate() {
+            const now = performance.now() / 1000;
+            const elapsed = now - startTime;
+            currentTime = elapsed;
+            renderScene(elapsed);
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // ---------- Reset for Mandelbrot view (reset zoom and center)
+        function resetMandelbrotView() {
+            mandelX = -0.7269;
+            mandelY = 0.1889;
+            mandelZoom = 1.0;
+            autoZoomEnabled = true;
+        }
+        
+        // Mode switching with proper data preloading
+        function setMode(mode) {
+            currentMode = mode;
+            if(mode === 'dragon') {
+                updateDragonPoints();
+            } else if(mode === 'golden') {
+                spiralPoints = generateGoldenSpiral(1200, 14.5);
+            } else if(mode === 'mandelbrot') {
+                // ensure infinite zoom remains exciting
+                if(mandelZoom < 0.5) resetMandelbrotView();
+            }
+        }
+        
+        // ---------- Resize handler
+        function handleResize() {
+            w = window.innerWidth;
+            h = window.innerHeight;
+            canvas.width = w;
+            canvas.height = h;
+            if (currentMode === 'dragon') {
+                // re-render dragon next frame
+            } else if (currentMode === 'golden') {
+                spiralPoints = generateGoldenSpiral(1200, 14.5);
+            }
+        }
+        
+        // ---------- EVENT LISTENERS + CYCLE THROUGH FRACTALS (nice touch)
+        let modeIndex = 0;
+        const modes = ['mandelbrot', 'dragon', 'golden'];
+        function cycleMode() {
+            modeIndex = (modeIndex + 1) % modes.length;
+            setMode(modes[modeIndex]);
+        }
+        
+        // Double click to cycle mode or reset view for mandelbrot
+        resetBtn.addEventListener('click', () => {
+            if(currentMode === 'mandelbrot') {
+                resetMandelbrotView();
+            } else {
+                // for dragon/golden just reset points to original
+                if(currentMode === 'dragon') updateDragonPoints();
+                if(currentMode === 'golden') spiralPoints = generateGoldenSpiral(1200, 14.5);
+            }
+        });
+        
+        // Add hidden cycle: click on brand to change fractal (professional extra)
+        document.querySelector('.fractal-title').addEventListener('click', () => {
+            cycleMode();
+        });
+        
+        // Touch/gesture friendly: also keyboard support (press 'c' to cycle)
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'c' || e.key === 'C') {
+                cycleMode();
+                e.preventDefault();
+            } else if(e.key === 'r' || e.key === 'R') {
+                if(currentMode === 'mandelbrot') resetMandelbrotView();
+                else {
+                    if(currentMode === 'dragon') updateDragonPoints();
+                    if(currentMode === 'golden') spiralPoints = generateGoldenSpiral(1200, 14.5);
+                }
+                e.preventDefault();
+            }
+        });
+        
+        // ---- initialization ----
+        function init() {
+            handleResize();
+            updateDragonPoints();
+            spiralPoints = generateGoldenSpiral(1200, 14.5);
+            setMode('mandelbrot');   // start with infinite zoom mandelbrot
+            autoZoomEnabled = true;
+            window.addEventListener('resize', () => {
+                handleResize();
+                // redraw immediately on resize
+                renderScene(performance.now()/1000);
+            });
+            animate();
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
