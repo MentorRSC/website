@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blank Canvas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Structure | Canvas</title>
   <style>
     * {
       margin: 0;
@@ -14,13 +14,437 @@
     body {
       background-color: #ffffff;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      color: #1a1a1a;
     }
 
-    /* absolutely nothing — pure white background */
+    /* main content area grows to push footer down */
+    .main-content {
+      flex: 1;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* ===== HEADER STYLES ===== */
+    .site-header {
+      background-color: #ffffff;
+      border-bottom: 1px solid #eaeef2;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(0px);
+      width: 100%;
+    }
+
+    .header-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      background: #000000;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .logo-text {
+      font-weight: 600;
+      font-size: 1.4rem;
+      letter-spacing: -0.3px;
+      color: #000000;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.8rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #2c3e3f;
+      font-weight: 500;
+      transition: color 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a:hover {
+      color: #000000;
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    .header-cta {
+      background: #f0f2f5;
+      padding: 0.45rem 1.1rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .header-cta:hover {
+      background: #e4e8ec;
+    }
+
+    /* ===== MAIN / BODY STYLES ===== */
+    .hero-section {
+      margin-bottom: 3rem;
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+    }
+
+    .hero-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #1e2a2a, #2c4c4c);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 1rem;
+    }
+
+    .hero-sub {
+      font-size: 1.2rem;
+      color: #4a5b5e;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0 2rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 1.8rem;
+      transition: all 0.25s ease;
+      border: 1px solid #edf2f4;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #d4e0e3;
+      box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-icon {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .card p {
+      color: #3e5a5e;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .stat-banner {
+      background: #fafcfd;
+      border-radius: 2rem;
+      border: 1px solid #eef3f5;
+      padding: 2rem 1.5rem;
+      margin: 2.5rem 0 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .stat-item {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5e7c7e;
+    }
+
+    .feature-quote {
+      background: #fefefe;
+      border-left: 4px solid #1e2a2a;
+      padding: 1.5rem 2rem;
+      margin: 2rem 0;
+      font-style: normal;
+      border-radius: 20px;
+      background: #fbfdfd;
+    }
+
+    .feature-quote p {
+      font-size: 1.1rem;
+      font-weight: 450;
+      color: #1f2f30;
+    }
+
+    /* ===== FOOTER STYLES ===== */
+    .site-footer {
+      background-color: #fafbfc;
+      border-top: 1px solid #eef2f4;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .footer-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 1.8rem;
+    }
+
+    .footer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-col {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .footer-col h4 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      color: #1e2a2a;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col li {
+      margin-bottom: 0.6rem;
+    }
+
+    .footer-col a {
+      text-decoration: none;
+      color: #54787d;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer-col a:hover {
+      color: #000000;
+      text-decoration: underline;
+    }
+
+    .copyright {
+      text-align: center;
+      padding-top: 1.8rem;
+      margin-top: 1rem;
+      border-top: 1px solid #e6edef;
+      font-size: 0.8rem;
+      color: #6d8e92;
+    }
+
+    /* responsive touches */
+    @media (max-width: 680px) {
+      .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .nav-links {
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .hero-title {
+        font-size: 2rem;
+      }
+      .card-grid {
+        gap: 1.2rem;
+      }
+      .stat-banner {
+        flex-direction: column;
+        align-items: center;
+      }
+      .footer-grid {
+        flex-direction: column;
+        gap: 1.8rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- completely blank. no content, no distractions. just white space. -->
+
+  <!-- ========== HEADER ========== -->
+  <header class="site-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <div class="logo-icon">✦</div>
+        <span class="logo-text">blank.</span>
+      </div>
+      <div class="nav-links">
+        <a href="#">Discover</a>
+        <a href="#">Studio</a>
+        <a href="#">Journal</a>
+        <a href="#">Library</a>
+        <a href="#" class="header-cta">Get started →</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== MAIN CONTENT / BODY ========== -->
+  <main class="main-content">
+    <!-- hero section -->
+    <div class="hero-section">
+      <h1 class="hero-title">Structure meets clarity</h1>
+      <p class="hero-sub">A calm, intentional layout — header, main area, and footer. Built on a pure white canvas.</p>
+    </div>
+
+    <!-- card grid – main content body -->
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">📄</div>
+        <h3>Blank slate</h3>
+        <p>Start from absolute minimalism. Every element is intentional, leaving room for your ideas to breathe.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Fluid rhythm</h3>
+        <p>Flexible grid & spacing that adapts perfectly across devices — from mobile to widescreen.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎨</div>
+        <h3>Quiet aesthetic</h3>
+        <p>Neutral tones, soft borders, and subtle shadows that elevate without distraction.</p>
+      </div>
+    </div>
+
+    <!-- statistics / engagement section -->
+    <div class="stat-banner">
+      <div class="stat-item">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Customizable</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">0.2s</div>
+        <div class="stat-label">Paint time</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Possibilities</div>
+      </div>
+    </div>
+
+    <!-- additional content block: featured quote / insight -->
+    <div class="feature-quote">
+      <p>“A well-structured page is like architecture — header, body, footer form a natural rhythm. No clutter, just purpose.”</p>
+      <div style="margin-top: 0.8rem; font-size: 0.8rem; color: #688b8f;">— design principle</div>
+    </div>
+
+    <!-- extra body: flexible text + image-like representation (no external assets) -->
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; align-items: center; margin-top: 2rem;">
+      <div style="flex: 1.5;">
+        <h2 style="font-weight: 600; font-size: 1.7rem; letter-spacing: -0.3px; margin-bottom: 0.8rem;">Every canvas deserves order</h2>
+        <p style="color: #3b5e63;">The header anchors navigation, the main body holds meaningful content, and the footer grounds the experience. This layout respects visual hierarchy while staying fresh and responsive.</p>
+        <div style="margin-top: 1.2rem;">
+          <a href="#" style="background: #1e2a2a; color: white; padding: 0.5rem 1.3rem; border-radius: 60px; text-decoration: none; font-size: 0.85rem; display: inline-block;">Explore framework →</a>
+        </div>
+      </div>
+      <div style="flex: 1; background: #f5f9fa; border-radius: 36px; padding: 2rem 1.5rem; text-align: center; border: 1px solid #eef2f5;">
+        <div style="font-size: 3rem;">🖌️</div>
+        <p style="margin-top: 0.5rem; font-weight: 500;">Header • Main • Footer</p>
+        <p style="font-size: 0.75rem; color: #658387;">pure semantic structure</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>blank.studio</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Journal</a></li>
+            <li><a href="#">Careers</a></li>
+            <li><a href="#">Press</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">Guides</a></li>
+            <li><a href="#">Showcase</a></li>
+            <li><a href="#">Support</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+            <li><a href="#">Cookies</a></li>
+            <li><a href="#">License</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <ul>
+            <li><a href="#">Twitter</a></li>
+            <li><a href="#">GitHub</a></li>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">hello@blank.studio</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="copyright">
+        © 2025 blank canvas · structured with clarity · header · body · footer
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
