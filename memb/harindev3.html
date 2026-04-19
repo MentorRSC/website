@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Click to Launch Fireworks | Powerful Blast</title>
+  <style>
+    * {
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #050510;
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      cursor: crosshair;
+    }
+
+    /* Title Animation */
+    @keyframes fadeInScale {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    @keyframes fadeOutUp {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+    }
+    
+    .title-text {
+      position: absolute;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Great Vibes', cursive;
+      font-size: 3.8rem;
+      color: #fff5e0;
+      text-shadow: 0 0 20px rgba(255, 80, 40, 0.9);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 15;
+      animation: fadeInScale 1.5s ease-out forwards, fadeOutUp 1.5s 3.5s forwards;
+      letter-spacing: 2px;
+    }
+
+    /* Color Control Panel */
+    .color-panel {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(16px);
+      border-radius: 60px;
+      padding: 12px 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      z-index: 100;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      pointer-events: auto;
+    }
+
+    .color-btn {
+      border: none;
+      background: #1e1e2f;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.2s;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-family: monospace;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid transparent;
+    }
+
+    .color-btn:hover {
+      transform: scale(1.03);
+      filter: brightness(1.1);
+    }
+
+    .color-btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-red { background: #b22234; border-bottom-color: #ffaa66; }
+    .btn-cyan { background: #0a4c6e; border-bottom-color: #66ffff; }
+    .btn-green { background: #1e5631; border-bottom-color: #ccff66; }
+    .btn-purple { background: #5e2a84; border-bottom-color: #ff99ff; }
+    .btn-rainbow { background: linear-gradient(135deg, red, orange, yellow, green, blue, indigo, violet); border-bottom-color: white; }
+    .btn-white { background: #2c2c3a; border-bottom-color: #ffdd99; }
+    .btn-reset { background: #3a2c2c; border-bottom-color: #ffaa77; }
+
+    .instruction {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      color: #ffecb3;
+      font-family: monospace;
+      z-index: 100;
+      pointer-events: none;
+      font-weight: bold;
+    }
+
+    @media (max-width: 650px) {
+      .color-panel { gap: 8px; padding: 8px 14px; bottom: 12px; }
+      .color-btn { padding: 5px 12px; font-size: 0.7rem; }
+      .title-text { font-size: 2.2rem; white-space: nowrap; top: 22%; }
+    }
+  </style>
+</head>
+<body>
+  <canvas></canvas>
+  <div class="title-text">💥 CLICK TO BLAST 💥</div>
+  
+  <div class="color-panel" id="colorPanel">
+    <button class="color-btn btn-red" data-theme="0">🔥 RED BLAZE</button>
+    <button class="color-btn btn-cyan" data-theme="1">💙 CYAN DREAM</button>
+    <button class="color-btn btn-green" data-theme="2">💚 GREEN GOLD</button>
+    <button class="color-btn btn-purple" data-theme="3">💜 PURPLE HAZE</button>
+    <button class="color-btn btn-rainbow" data-theme="4">🌈 RAINBOW</button>
+    <button class="color-btn btn-white" data-theme="5">🤍 PEARL</button>
+    <button class="color-btn btn-reset" data-theme="reset">🔄 CLASSIC</button>
+  </div>
+  <div class="instruction">🎆 CLICK ANYWHERE → FIREWORK EXPLOSION! 🎆</div>
+
+  <script>
+    (function() {
+      // CANVAS SETUP
+      const canvas = document.querySelector('canvas');
+      const ctx = canvas.getContext('2d');
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // ========== FIREWORK PARTICLE SYSTEM ==========
+      const gravity = 0.15;
+      const particles = [];
+      
+      // Color themes (each theme has an array of vibrant colors)
+      const themes = {
+        red: {
+          name: "Red Blaze",
+          colors: ["#ff2a2a", "#ff5e00", "#ff8c42", "#ff3b3b", "#ff6b6b", "#ffaa33", "#ff4747"]
+        },
+        cyan: {
+          name: "Cyan Dream",
+          colors: ["#00e5ff", "#00c8ff", "#66ffff", "#00aaff", "#33ccff", "#88ddff", "#00b4d8"]
+        },
+        green: {
+          name: "Green Gold",
+          colors: ["#3eff6e", "#b3ff42", "#7eff3a", "#ccff66", "#aaff55", "#66ff33", "#d4ff42"]
+        },
+        purple: {
+          name: "Purple Haze",
+          colors: ["#c154ff", "#dd88ff", "#ff7bcb", "#ab4eff", "#e066ff", "#ff9ef5", "#cc66ff"]
+        },
+        rainbow: {
+          name: "Rainbow",
+          colors: ["#ff3b3b", "#ff9f3b", "#ffeb3b", "#3bff6e", "#3bc4ff", "#b43bff", "#ff3bc4", "#ff66cc"]
+        },
+        pearl: {
+          name: "Pearl",
+          colors: ["#ffffff", "#ffebaa", "#fff0c0", "#ffe0a3", "#f5e6b0", "#ffdd99", "#fff5cc"]
+        },
+        classic: {
+          name: "Classic",
+          colors: ["#ff4747", "#00ceed", "#ffffff", "#ffaa66", "#ff6b6b", "#88ddff"]
+        }
+      };
+      
+      let currentTheme = { ...themes.classic };
+      
+      // Change active theme
+      function setTheme(themeKey) {
+        if (themeKey === "reset") {
+          currentTheme = { ...themes.classic };
+        } else if (themes[themeKey]) {
+          currentTheme = { ...themes[themeKey] };
+        }
+        // visual feedback on panel
+        const panel = document.getElementById('colorPanel');
+        if (panel) {
+          panel.style.transform = "translateX(-50%) scale(0.97)";
+          setTimeout(() => { if(panel) panel.style.transform = "translateX(-50%) scale(1)"; }, 100);
+        }
+      }
+      
+      // ========== PARTICLE CLASS ==========
+      class Particle {
+        constructor(x, y, dx, dy, color, size = 3.5) {
+          this.x = x;
+          this.y = y;
+          this.dx = dx;
+          this.dy = dy;
+          this.color = color;
+          this.size = size;
+          this.alpha = 1;
+          this.gravity = gravity;
+          this.friction = 0.98;
+          this.decay = 0.016;   // fade out speed
+        }
+        
+        update() {
+          this.dx *= this.friction;
+          this.dy += this.gravity;
+          this.dx *= 0.99;
+          this.x += this.dx;
+          this.y += this.dy;
+          this.alpha -= this.decay;
+          return this.alpha > 0;
+        }
+        
+        draw() {
+          ctx.save();
+          ctx.globalAlpha = this.alpha;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = this.color;
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      
+      // ========== EXPLOSION GENERATOR (BLAST EFFECT) ==========
+      function createExplosion(x, y) {
+        const particleCount = 70 + Math.floor(Math.random() * 35); // massive blast!
+        const themeColors = currentTheme.colors;
+        
+        for (let i = 0; i < particleCount; i++) {
+          // random direction: full 360 degrees
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 7;
+          const dx = Math.cos(angle) * speed * (Math.random() * 1.5);
+          const dy = Math.sin(angle) * speed * (Math.random() * 1.5);
+          const color = themeColors[Math.floor(Math.random() * themeColors.length)];
+          const size = 2.5 + Math.random() * 4;
+          particles.push(new Particle(x, y, dx, dy, color, size));
+        }
+        
+        // Add extra sparkles / core burst
+        for (let i = 0; i < 20; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 3 + Math.random() * 6;
+          const dx = Math.cos(angle) * speed;
+          const dy = Math.sin(angle) * speed;
+          const color = themeColors[Math.floor(Math.random() * themeColors.length)];
+          particles.push(new Particle(x, y, dx, dy, color, 3));
+        }
+        
+        // Small "crackle" effect: tiny fast particles
+        for (let i = 0; i < 35; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 4 + Math.random() * 9;
+          const dx = Math.cos(angle) * speed;
+          const dy = Math.sin(angle) * speed;
+          const color = themeColors[Math.floor(Math.random() * themeColors.length)];
+          particles.push(new Particle(x, y, dx, dy, color, 2));
+        }
+      }
+      
+      // ========== MOUSE CLICK = FIREWORK LAUNCH & BLAST ==========
+      function handleFireworkClick(e) {
+        // Get click coordinates (supports touch and mouse)
+        let clickX, clickY;
+        if (e.touches) {
+          // touch event
+          clickX = e.touches[0].clientX;
+          clickY = e.touches[0].clientY;
+          e.preventDefault();
+        } else {
+          clickX = e.clientX;
+          clickY = e.clientY;
+        }
+        
+        // Create immediate explosion at click point
+        createExplosion(clickX, clickY);
+        
+        // Also add a little screen shake effect via CSS (optional subtle vibration)
+        canvas.style.transform = "translate(1px, 1px)";
+        setTimeout(() => { canvas.style.transform = "translate(0,0)"; }, 50);
+        setTimeout(() => { canvas.style.transform = "translate(-1px, 0)"; }, 100);
+        setTimeout(() => { canvas.style.transform = "translate(0,0)"; }, 150);
+      }
+      
+      // ========== EVENT LISTENERS ==========
+      // Mouse click
+      canvas.addEventListener('click', handleFireworkClick);
+      // Touch for mobile
+      canvas.addEventListener('touchstart', handleFireworkClick, { passive: false });
+      // Prevent context menu on canvas
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+      
+      // ========== COLOR BUTTONS ==========
+      const btns = document.querySelectorAll('.color-btn');
+      btns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = btn.getAttribute('data-theme');
+          if (val === 'reset') setTheme('reset');
+          else if (val === '0') setTheme('red');
+          else if (val === '1') setTheme('cyan');
+          else if (val === '2') setTheme('green');
+          else if (val === '3') setTheme('purple');
+          else if (val === '4') setTheme('rainbow');
+          else if (val === '5') setTheme('pearl');
+        });
+      });
+      
+      // ========== BACKGROUND & TRAIL EFFECT ==========
+      let bgOpacity = 0.25;
+      
+      // Optional: add a few floating stars in background
+      function drawBackgroundStars() {
+        for (let i = 0; i < 120; i++) {
+          if (!window.starPositions) {
+            window.starPositions = [];
+            for (let s = 0; s < 120; s++) {
+              window.starPositions.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: 1 + Math.random() * 2,
+                alpha: 0.3 + Math.random() * 0.5
+              });
+            }
+          }
+          const star = window.starPositions[i];
+          if (star) {
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 240, 200, ${star.alpha * 0.6})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      // ========== ANIMATION LOOP ==========
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        // Fade trail effect (creates motion blur / lingering glow)
+        ctx.fillStyle = `rgba(5, 5, 20, ${bgOpacity})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // draw faint stars
+        drawBackgroundStars();
+        
+        // update and draw all particles
+        for (let i = 0; i < particles.length; i++) {
+          const alive = particles[i].update();
+          particles[i].draw();
+          if (!alive) {
+            particles.splice(i, 1);
+            i--;
+          }
+        }
+        
+        // small glowing effect at explosion zones (optional)
+        if (particles.length > 0) {
+          ctx.shadowBlur = 0;
+        }
+      }
+      
+      // initial animation start
+      animate();
+      
+      // handle canvas resize and reset star positions
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        window.starPositions = null; // regenerate stars next frame
+        // redraw background
+        ctx.fillStyle = "#050510";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      });
+      
+      // small welcome burst on load (to show it works)
+      setTimeout(() => {
+        if (canvas.width && canvas.height) {
+          createExplosion(canvas.width / 2, canvas.height / 2);
+        }
+      }, 500);
+    })();
+  </script>
+</body>
+</html>
+
