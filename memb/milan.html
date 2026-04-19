@@ -9,130 +9,219 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Segoe UI", sans-serif;
+    font-family: "Segoe UI", system-ui, sans-serif;
 }
+
+html { scroll-behavior: smooth; }
 
 body {
     overflow-x: hidden;
-    background: #05070f;
+    background: radial-gradient(circle at center, #05070f 0%, #000 100%);
     color: white;
 }
 
-/* ===== BACKGROUND ===== */
-canvas {
+/* CANVAS */
+#space {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 0;
+    z-index: -3;
 }
 
-/* ===== CURSOR ===== */
-.cursor {
+/* STARS */
+#stars {
     position: fixed;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #00e5ff, #3a7bd5);
-    box-shadow: 0 0 20px #00e5ff, 0 0 60px #3a7bd5;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    z-index: 9999;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
 }
 
-/* ===== NAV ===== */
+/* BLACK HOLE */
+.blackhole {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 260px;
+    height: 260px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(0,229,255,0.2) 0%,
+        rgba(0,0,0,0.85) 60%,
+        transparent 100%);
+    box-shadow: 0 0 120px rgba(0,229,255,0.15);
+    animation: breathe 6s ease-in-out infinite;
+    z-index: -1;
+}
+
+@keyframes breathe {
+    0%,100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* NAV */
 .navbar {
     position: fixed;
     top: 0;
     width: 100%;
-    padding: 15px 40px;
+    padding: 18px 50px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(10, 12, 25, 0.4);
-    backdrop-filter: blur(12px);
+    background: rgba(10, 12, 25, 0.25);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     z-index: 10;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .logo {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 18px;
+    font-weight: 600;
     color: #00e5ff;
 }
 
 .nav-links {
-    list-style: none;
     display: flex;
     gap: 25px;
+    list-style: none;
 }
 
 .nav-links a {
+    color: #aaa;
     text-decoration: none;
-    color: #ddd;
-    font-size: 14px;
+    font-size: 13px;
+    transition: 0.3s;
 }
 
-/* ===== SECTIONS ===== */
+.nav-links a:hover {
+    color: #00e5ff;
+}
+
+/* SECTIONS */
 .section {
     height: 100vh;
     display: flex;
-    align-items: center;
     justify-content: center;
-    position: relative;
-    z-index: 2;
+    align-items: center;
+
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s ease;
 }
 
-/* ===== CARD ===== */
+.section.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* CARD */
 .card {
-    padding: 40px;
-    width: 450px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 20px;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 0 60px rgba(0,229,255,0.08);
+    width: 480px;
+    padding: 45px;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(22px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
 }
 
-/* ===== TITLES ===== */
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* TITLE */
 .title {
-    font-size: 40px;
+    font-size: 38px;
     color: #00e5ff;
-    text-shadow: 0 0 20px rgba(0,229,255,0.3);
+    margin-bottom: 10px;
 }
 
-/* ===== PROJECTS ===== */
+/* PROJECTS */
 .projects-box {
     width: 85%;
     max-width: 900px;
     padding: 30px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(0,229,255,0.15);
-    border-radius: 20px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 0 40px rgba(0,229,255,0.1);
+    border-radius: 24px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(18px);
 }
 
 .project-item {
-    margin-top: 20px;
+    margin-top: 12px;
     padding: 15px;
-    border-left: 3px solid #00e5ff;
+    border-radius: 12px;
+    border-left: 2px solid rgba(0,229,255,0.7);
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
     transition: 0.3s;
 }
 
 .project-item:hover {
-    transform: translateX(10px);
-    box-shadow: 0 0 20px rgba(0,229,255,0.2);
+    transform: translateX(6px);
+    background: rgba(0,229,255,0.05);
 }
 
-.project-item h3 {
-    color: #00e5ff;
-    margin-bottom: 8px;
-}
-
-.project-item p {
+.details {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: 0.5s ease;
     font-size: 13px;
+    color: #bbb;
+}
+
+.project-item.active .details {
+    max-height: 200px;
+    opacity: 1;
+    margin-top: 8px;
+}
+
+/* CONTACT */
+.contact-card {
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #888;
+    margin: 10px 0 25px;
+}
+
+.contact-item {
+    margin: 14px 0;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.contact-item span {
+    display: block;
+    margin-top: 5px;
     color: #ccc;
-    line-height: 1.6;
+    font-size: 13px;
+}
+
+.contact-btn {
+    margin-top: 20px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 10px;
+    background: #00e5ff;
+    color: black;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.contact-btn.sent {
+    background: #00ff88;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+    .card{width:90%;}
 }
 </style>
 </head>
@@ -140,9 +229,9 @@ canvas {
 <body>
 
 <canvas id="space"></canvas>
-<div class="cursor" id="cursor"></div>
+<div id="stars"></div>
+<div class="blackhole"></div>
 
-<!-- NAV -->
 <nav class="navbar">
     <div class="logo">MilanDev</div>
     <ul class="nav-links">
@@ -153,116 +242,153 @@ canvas {
     </ul>
 </nav>
 
-<!-- HOME -->
-<section id="home" class="section">
+<section id="home" class="section show">
     <div class="card">
-        <h1 style="color:#00e5ff;">MilanDev</h1>
-        <p>Astrophysics • Space • Engineering</p>
+        <h1 class="title">MilanDev</h1>
+        <p style="color:#aaa;">Space • Physics • Engineering • Simulation</p>
     </div>
 </section>
 
-<!-- PROJECTS -->
 <section id="projects" class="section">
     <div class="projects-box">
-
         <h2 class="title">Cosmic Projects</h2>
 
         <div class="project-item">
-            <h3>🕳️ Black Hole Dynamics</h3>
-            <p>Simulation of spacetime curvature and event horizon physics.</p>
+            🕳️ Black Hole Dynamics
+            <div class="details">Spacetime curvature near singularity simulations.</div>
         </div>
 
         <div class="project-item">
-            <h3>🌌 Wormhole Physics</h3>
-            <p>Einstein–Rosen bridge and spacetime tunnel visualization.</p>
+            🌌 Wormhole Physics
+            <div class="details">Einstein-Rosen bridge theoretical model.</div>
         </div>
 
         <div class="project-item">
-            <h3>❄️ Cryogenics Research</h3>
-            <p>Study of ultra-cold physics near absolute zero temperature.</p>
+            ❄️ Cryogenics Research
+            <div class="details">Physics at near absolute zero temperature.</div>
         </div>
 
+        <div class="project-item">
+            ⚛️ Nuclear Fusion
+            <div class="details">Plasma confinement energy system modeling.</div>
+        </div>
     </div>
 </section>
 
-<!-- ABOUT (NO PHONE) -->
 <section id="about" class="section">
     <div class="card">
-
         <h2 class="title">About Me</h2>
-
-        <p style="margin-top:15px; font-size:14px; color:#ccc; line-height:1.8;">
-            👨‍🚀 Astrophysicist • Astronomer • Sky Watcher • Cryogenic Engineer • Arduino Expert  
+        <p style="color:#bbb; line-height:1.6;">
+            Astrophysics • Space Systems • Simulation Engineering • Cosmic Explorer
         </p>
-
-        <p style="margin-top:10px; font-size:13px; color:#aaa; line-height:1.8;">
-            I explore the universe through physics, astronomy, and engineering.
-            My work includes black hole simulations, space-time research,
-            cryogenic systems, and Arduino-based scientific development.
-        </p>
-
     </div>
 </section>
 
-<!-- CONTACT (UPDATED WITH BOTH EMAIL + PHONE) -->
 <section id="contact" class="section">
-    <div class="card">
-
+    <div class="card contact-card">
         <h2 class="title">Contact</h2>
+        <p class="subtitle">Send a signal across spacetime</p>
 
-        <p style="margin-top:15px; font-size:14px; color:#ccc;">
-            📧 Gmail: <span style="color:#00e5ff;">pmilandev@gmail.com</span>
-        </p>
+        <div class="contact-item">
+            Email <span>pmilandev@gmail.com</span>
+        </div>
 
-        <p style="margin-top:10px; font-size:14px; color:#ccc;">
-            📞 Phone: <span style="color:#00e5ff;">9539266388</span>
-        </p>
+        <div class="contact-item">
+            Phone <span>+91 95392 66388</span>
+        </div>
 
+        <div class="contact-item">
+            Location <span>Kerala, India</span>
+        </div>
+
+        <button class="contact-btn" id="btn">Send Signal</button>
     </div>
 </section>
 
 <script>
-/* ===== BACKGROUND ===== */
-const canvas = document.getElementById("space");
-const ctx = canvas.getContext("2d");
+/* SCROLL ANIMATION */
+const sections=document.querySelectorAll(".section");
+window.addEventListener("scroll",()=>{
+    sections.forEach(sec=>{
+        if(sec.getBoundingClientRect().top < window.innerHeight*0.85){
+            sec.classList.add("show");
+        }
+    });
+});
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+/* PROJECT TOGGLE */
+document.querySelectorAll(".project-item").forEach(p=>{
+    p.addEventListener("click",()=>p.classList.toggle("active"));
+});
 
-let stars = Array.from({length: 300}, () => ({
-    x: Math.random()*canvas.width,
-    y: Math.random()*canvas.height
+/* BUTTON */
+const btn=document.getElementById("btn");
+btn.onclick=()=>{
+    btn.classList.add("sent");
+    btn.innerText="Signal Sent ✓";
+    setTimeout(()=>{
+        btn.classList.remove("sent");
+        btn.innerText="Send Signal";
+    },2000);
+};
+
+/* STAR FIELD */
+const stars=document.getElementById("stars");
+for(let i=0;i<120;i++){
+    const s=document.createElement("div");
+    s.style.position="absolute";
+    s.style.width="2px";
+    s.style.height="2px";
+    s.style.background="#00e5ff";
+    s.style.left=Math.random()*100+"%";
+    s.style.top=Math.random()*100+"%";
+    s.style.opacity=Math.random();
+    stars.appendChild(s);
+}
+
+/* SPACE CURVATURE */
+const canvas=document.getElementById("space");
+const ctx=canvas.getContext("2d");
+let w,h;
+
+function resize(){
+    w=canvas.width=innerWidth;
+    h=canvas.height=innerHeight;
+}
+resize();
+addEventListener("resize",resize);
+
+const particles=Array.from({length:200},()=>({
+x:Math.random()*w,
+y:Math.random()*h,
+z:Math.random()*w
 }));
 
-function draw(){
-    ctx.fillStyle="#05070f";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+function animate(){
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,w,h);
 
-    ctx.fillStyle="white";
-    stars.forEach(s=>{
-        ctx.fillRect(s.x,s.y,1,1);
-    });
+    const cx=w/2, cy=h/2;
 
-    requestAnimationFrame(draw);
+    for(let p of particles){
+        p.z-=2;
+        if(p.z<=0){
+            p.x=Math.random()*w;
+            p.y=Math.random()*h;
+            p.z=w;
+        }
+
+        let k=200/p.z;
+        let px=(p.x-cx)*k+cx;
+        let py=(p.y-cy)*k+cy;
+
+        ctx.fillStyle="#00e5ff";
+        ctx.fillRect(px,py,2,2);
+    }
+
+    requestAnimationFrame(animate);
 }
-draw();
-
-/* ===== CURSOR ===== */
-const cursor = document.getElementById("cursor");
-
-window.addEventListener("mousemove", (e) => {
-    cursor.style.left = e.clientX + "px";
-    cursor.style.top = e.clientY + "px";
-});
-
-/* ===== SMOOTH SCROLL ===== */
-document.querySelectorAll("a[href^='#']").forEach(link=>{
-    link.addEventListener("click",(e)=>{
-        e.preventDefault();
-        document.querySelector(link.getAttribute("href"))
-        .scrollIntoView({behavior:"smooth"});
-    });
-});
+animate();
 </script>
 
 </body>
