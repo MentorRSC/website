@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Dynamic Framework | Sheet-Ready Canvas</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #ffffff;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      color: #1a1a1a;
+    }
+
+    /* loading / error states */
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 3rem;
+      color: #5e7c7e;
+    }
+
+    .error-state {
+      color: #c23d2b;
+    }
+
+    /* main content area grows to push footer down */
+    .main-content {
+      flex: 1;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* ===== HEADER STYLES ===== */
+    .site-header {
+      background-color: #ffffff;
+      border-bottom: 1px solid #eaeef2;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      width: 100%;
+    }
+
+    .header-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .logo-icon {
+      background: #000000;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .logo-text {
+      font-weight: 600;
+      font-size: 1.4rem;
+      letter-spacing: -0.3px;
+      color: #000000;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #2c3e3f;
+      font-weight: 500;
+      transition: color 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a:hover {
+      color: #000000;
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    .header-cta {
+      background: #f0f2f5;
+      padding: 0.45rem 1.1rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .header-cta:hover {
+      background: #e4e8ec;
+    }
+
+    /* ===== MAIN / BODY STYLES ===== */
+    .hero-section {
+      margin-bottom: 3rem;
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+    }
+
+    .hero-title {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #1e2a2a, #2c4c4c);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 1rem;
+    }
+
+    .hero-sub {
+      font-size: 1.2rem;
+      color: #4a5b5e;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0 2rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 1.8rem;
+      transition: all 0.25s ease;
+      border: 1px solid #edf2f4;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #d4e0e3;
+      box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-icon {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .card p {
+      color: #3e5a5e;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .stat-banner {
+      background: #fafcfd;
+      border-radius: 2rem;
+      border: 1px solid #eef3f5;
+      padding: 2rem 1.5rem;
+      margin: 2.5rem 0 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .stat-item {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5e7c7e;
+    }
+
+    .feature-quote {
+      background: #fefefe;
+      border-left: 4px solid #1e2a2a;
+      padding: 1.5rem 2rem;
+      margin: 2rem 0;
+      border-radius: 20px;
+      background: #fbfdfd;
+    }
+
+    .feature-quote p {
+      font-size: 1.1rem;
+      font-weight: 450;
+      color: #1f2f30;
+    }
+
+    .dynamic-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .info-panel {
+      flex: 1.5;
+    }
+
+    .info-panel h2 {
+      font-weight: 600;
+      font-size: 1.7rem;
+      letter-spacing: -0.3px;
+      margin-bottom: 0.8rem;
+    }
+
+    .info-panel p {
+      color: #3b5e63;
+    }
+
+    .visual-card {
+      flex: 1;
+      background: #f5f9fa;
+      border-radius: 36px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      border: 1px solid #eef2f5;
+    }
+
+    .visual-icon {
+      font-size: 3rem;
+    }
+
+    /* ===== FOOTER STYLES ===== */
+    .site-footer {
+      background-color: #fafbfc;
+      border-top: 1px solid #eef2f4;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .footer-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 1.8rem;
+    }
+
+    .footer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-col {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .footer-col h4 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      color: #1e2a2a;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col li {
+      margin-bottom: 0.6rem;
+    }
+
+    .footer-col a {
+      text-decoration: none;
+      color: #54787d;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer-col a:hover {
+      color: #000000;
+      text-decoration: underline;
+    }
+
+    .copyright {
+      text-align: center;
+      padding-top: 1.8rem;
+      margin-top: 1rem;
+      border-top: 1px solid #e6edef;
+      font-size: 0.8rem;
+      color: #6d8e92;
+    }
+
+    /* live badge */
+    .data-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      color: white;
+      font-size: 0.7rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 40px;
+      pointer-events: none;
+      z-index: 100;
+      font-family: monospace;
+    }
+
+    @media (max-width: 680px) {
+      .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .nav-links {
+        gap: 1rem;
+      }
+      .hero-title {
+        font-size: 2rem;
+      }
+      .card-grid {
+        gap: 1.2rem;
+      }
+      .stat-banner {
+        flex-direction: column;
+        align-items: center;
+      }
+      .footer-grid {
+        flex-direction: column;
+        gap: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== HEADER (dynamic) ========== -->
+  <header class="site-header">
+    <div class="header-container" id="headerContainer">
+      <!-- filled by JS -->
+    </div>
+  </header>
+
+  <!-- ========== MAIN CONTENT / BODY (dynamic) ========== -->
+  <main class="main-content" id="mainContent">
+    <div class="loading-state" id="loadingMsg">📡 Loading dynamic content framework...</div>
+  </main>
+
+  <!-- ========== FOOTER (dynamic) ========== -->
+  <footer class="site-footer" id="siteFooter">
+    <div class="footer-container" id="footerContainer">
+      <!-- filled by JS -->
+    </div>
+  </footer>
+  
+  <div class="data-badge" id="dataBadge">⚡ DATA FRAMEWORK | LIVE</div>
+
+  <script>
+    // --------------------------------------------------------------
+    // DATA FRAMEWORK — CENTRALIZED STATE
+    // This object represents the entire website content.
+    // Change any value here → entire UI updates automatically.
+    // Perfect to connect with Google Sheets later (just replace loadWebsiteData)
+    // --------------------------------------------------------------
+    let websiteData = {
+      // header section
+      header: {
+        logoIcon: "✦",
+        logoText: "blank.",
+        navLinks: [
+          { name: "Discover", url: "#" },
+          { name: "Studio", url: "#" },
+          { name: "Journal", url: "#" },
+          { name: "Library", url: "#" }
+        ],
+        ctaText: "Get started →",
+        ctaUrl: "#"
+      },
+      // hero section
+      hero: {
+        title: "Structure meets clarity",
+        subtitle: "A calm, intentional layout — header, main area, and footer. Built on a pure white canvas."
+      },
+      // cards array (each card has icon, title, description)
+      cards: [
+        { icon: "📄", title: "Blank slate", description: "Start from absolute minimalism. Every element is intentional, leaving room for your ideas to breathe." },
+        { icon: "⚡", title: "Fluid rhythm", description: "Flexible grid & spacing that adapts perfectly across devices — from mobile to widescreen." },
+        { icon: "🎨", title: "Quiet aesthetic", description: "Neutral tones, soft borders, and subtle shadows that elevate without distraction." }
+      ],
+      // statistics banner (array of {number, label})
+      stats: [
+        { number: "100%", label: "Customizable" },
+        { number: "0.2s", label: "Paint time" },
+        { number: "∞", label: "Possibilities" }
+      ],
+      // featured quote
+      quote: {
+        text: "“A well-structured page is like architecture — header, body, footer form a natural rhythm. No clutter, just purpose.”",
+        author: "design principle"
+      },
+      // bottom dynamic row (info + visual)
+      dynamicSection: {
+        title: "Every canvas deserves order",
+        description: "The header anchors navigation, the main body holds meaningful content, and the footer grounds the experience. This layout respects visual hierarchy while staying fresh and responsive.",
+        buttonText: "Explore framework →",
+        buttonUrl: "#",
+        visualEmoji: "🖌️",
+        visualTitle: "Header • Main • Footer",
+        visualSub: "pure semantic structure"
+      },
+      // footer data (columns)
+      footer: {
+        columns: [
+          {
+            title: "blank.studio",
+            links: [
+              { label: "About", url: "#" },
+              { label: "Journal", url: "#" },
+              { label: "Careers", url: "#" },
+              { label: "Press", url: "#" }
+            ]
+          },
+          {
+            title: "Resources",
+            links: [
+              { label: "Documentation", url: "#" },
+              { label: "Guides", url: "#" },
+              { label: "Showcase", url: "#" },
+              { label: "Support", url: "#" }
+            ]
+          },
+          {
+            title: "Legal",
+            links: [
+              { label: "Privacy", url: "#" },
+              { label: "Terms", url: "#" },
+              { label: "Cookies", url: "#" },
+              { label: "License", url: "#" }
+            ]
+          },
+          {
+            title: "Connect",
+            links: [
+              { label: "Twitter", url: "#" },
+              { label: "GitHub", url: "#" },
+              { label: "Instagram", url: "#" },
+              { label: "hello@blank.studio", url: "#" }
+            ]
+          }
+        ],
+        copyright: "© 2025 blank canvas · structured with clarity · header · body · footer"
+      }
+    };
+
+    // Helper: safely render entire UI based on current websiteData
+    function renderWebsite() {
+      // 1. RENDER HEADER
+      const headerContainer = document.getElementById('headerContainer');
+      if (headerContainer) {
+        const h = websiteData.header;
+        headerContainer.innerHTML = `
+          <div class="logo-area">
+            <div class="logo-icon">${escapeHtml(h.logoIcon)}</div>
+            <span class="logo-text">${escapeHtml(h.logoText)}</span>
+          </div>
+          <div class="nav-links">
+            ${h.navLinks.map(link => `<a href="${escapeHtml(link.url)}">${escapeHtml(link.name)}</a>`).join('')}
+            <a href="${escapeHtml(h.ctaUrl)}" class="header-cta">${escapeHtml(h.ctaText)}</a>
+          </div>
+        `;
+      }
+
+      // 2. RENDER MAIN BODY (full dynamic)
+      const mainContainer = document.getElementById('mainContent');
+      if (mainContainer) {
+        // build cards HTML
+        const cardsHtml = websiteData.cards.map(card => `
+          <div class="card">
+            <div class="card-icon">${escapeHtml(card.icon)}</div>
+            <h3>${escapeHtml(card.title)}</h3>
+            <p>${escapeHtml(card.description)}</p>
+          </div>
+        `).join('');
+        
+        // stats html
+        const statsHtml = websiteData.stats.map(stat => `
+          <div class="stat-item">
+            <div class="stat-number">${escapeHtml(stat.number)}</div>
+            <div class="stat-label">${escapeHtml(stat.label)}</div>
+          </div>
+        `).join('');
+        
+        // quote section
+        const quoteHtml = `
+          <div class="feature-quote">
+            <p>${escapeHtml(websiteData.quote.text)}</p>
+            <div style="margin-top: 0.8rem; font-size: 0.8rem; color: #688b8f;">— ${escapeHtml(websiteData.quote.author)}</div>
+          </div>
+        `;
+        
+        // dynamic row (info + visual)
+        const ds = websiteData.dynamicSection;
+        const dynamicRowHtml = `
+          <div class="dynamic-row">
+            <div class="info-panel">
+              <h2>${escapeHtml(ds.title)}</h2>
+              <p>${escapeHtml(ds.description)}</p>
+              <div style="margin-top: 1.2rem;">
+                <a href="${escapeHtml(ds.buttonUrl)}" style="background: #1e2a2a; color: white; padding: 0.5rem 1.3rem; border-radius: 60px; text-decoration: none; font-size: 0.85rem; display: inline-block;">${escapeHtml(ds.buttonText)}</a>
+              </div>
+            </div>
+            <div class="visual-card">
+              <div class="visual-icon">${escapeHtml(ds.visualEmoji)}</div>
+              <p style="margin-top: 0.5rem; font-weight: 500;">${escapeHtml(ds.visualTitle)}</p>
+              <p style="font-size: 0.75rem; color: #658387;">${escapeHtml(ds.visualSub)}</p>
+            </div>
+          </div>
+        `;
+        
+        const heroHtml = `
+          <div class="hero-section">
+            <h1 class="hero-title">${escapeHtml(websiteData.hero.title)}</h1>
+            <p class="hero-sub">${escapeHtml(websiteData.hero.subtitle)}</p>
+          </div>
+        `;
+        
+        mainContainer.innerHTML = `
+          ${heroHtml}
+          <div class="card-grid">${cardsHtml}</div>
+          <div class="stat-banner">${statsHtml}</div>
+          ${quoteHtml}
+          ${dynamicRowHtml}
+        `;
+      }
+      
+      // 3. RENDER FOOTER
+      const footerContainer = document.getElementById('footerContainer');
+      if (footerContainer) {
+        const footerData = websiteData.footer;
+        const columnsHtml = footerData.columns.map(col => `
+          <div class="footer-col">
+            <h4>${escapeHtml(col.title)}</h4>
+            <ul>
+              ${col.links.map(link => `<li><a href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a></li>`).join('')}
+            </ul>
+          </div>
+        `).join('');
+        
+        footerContainer.innerHTML = `
+          <div class="footer-grid">
+            ${columnsHtml}
+          </div>
+          <div class="copyright">
+            ${escapeHtml(footerData.copyright)}
+          </div>
+        `;
+      }
+      
+      // optional: update badge text to reflect dynamic state
+      const badge = document.getElementById('dataBadge');
+      if (badge) {
+        badge.textContent = '✓ FRAMEWORK ACTIVE | edit websiteData object';
+      }
+    }
+    
+    // simple escape to avoid injection
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+        return c;
+      });
+    }
+    
+    // --------------------------------------------------------------
+    // MOCK GOOGLE SHEETS INTEGRATION (ready-to-plug)
+    // To connect to real Google Sheet:
+    // 1. Publish your sheet as CSV/JSON (File → Share → Publish to web)
+    // 2. Replace this function with fetch() and transform sheet rows into websiteData format.
+    // --------------------------------------------------------------
+    async function fetchDataFromSheet() {
+      // This is where you will integrate your real Google Sheets URL.
+      // For now, we simulate a successful load with existing websiteData.
+      // When you have a public sheet, you would do:
+      // const response = await fetch('YOUR_GOOGLE_SHEETS_PUBLISHED_CSV_URL');
+      // const csvText = await response.text();
+      // then parse CSV and map columns to websiteData fields.
+      
+      // For demonstration, we return a resolved promise with current data.
+      // But also we demonstrate that you can modify websiteData dynamically.
+      console.log("📊 Framework ready. To connect real sheet: replace fetchDataFromSheet with actual Google Sheets API / published CSV.");
+      return { ...websiteData }; // return copy
+    }
+    
+    // Apply external data (merging / updating the global websiteData)
+    function applySheetData(newData) {
+      // deep merge (simple but effective for our structure)
+      if (!newData) return;
+      // recursively update main sections (header, hero, cards, stats, quote, dynamicSection, footer)
+      if (newData.header) websiteData.header = { ...websiteData.header, ...newData.header };
+      if (newData.hero) websiteData.hero = { ...websiteData.hero, ...newData.hero };
+      if (newData.cards) websiteData.cards = newData.cards;
+      if (newData.stats) websiteData.stats = newData.stats;
+      if (newData.quote) websiteData.quote = { ...websiteData.quote, ...newData.quote };
+      if (newData.dynamicSection) websiteData.dynamicSection = { ...websiteData.dynamicSection, ...newData.dynamicSection };
+      if (newData.footer) websiteData.footer = { ...websiteData.footer, ...newData.footer };
+      renderWebsite();
+    }
+    
+    // --------------------------------------------------------------
+    // DEMO: Simulate real-time update when "something changes"
+    // In real scenario, you would call fetchDataFromSheet periodically
+    // or after user action, and then applySheetData(response).
+    // For now, we add a visual demonstration: a mini console tool + 
+    // you can test updating data from browser dev tools.
+    // --------------------------------------------------------------
+    
+    // Expose helper globally for testing / manual updates (like a sheet simulator)
+    window.updateWebsiteFromObject = function(newData) {
+      applySheetData(newData);
+      console.log("✅ Website updated with new data:", newData);
+    };
+    
+    // Add demo: show that you can change any field and reflect instantly
+    // For example after 2 seconds, you can uncomment to test dynamic change, but keep optional.
+    // Instead provide a live example: we set a small timeout to show that framework works,
+    // but not intrusive.
+    setTimeout(() => {
+      // Just to illustrate that data is reactive, we won't override anything but we'll show badge note.
+      const badge = document.getElementById('dataBadge');
+      if (badge) badge.style.opacity = '0.9';
+    }, 500);
+    
+    // initial render
+    async function init() {
+      // optional: fetch from sheet if you had URL, but we load local framework data.
+      // we also attach a custom method: window.simulateSheetUpdate to show dynamic edit
+      renderWebsite();
+      
+      // Additional utility: simulate sheet change after 5 seconds? Not required but demonstrates dynamic.
+      // Instead, provide a clear instruction: click badge to simulate Google Sheets update (change hero title)
+      const badgeElem = document.getElementById('dataBadge');
+      if (badgeElem) {
+        badgeElem.style.cursor = 'pointer';
+        badgeElem.style.pointerEvents = 'auto';
+        badgeElem.addEventListener('click', () => {
+          // Simulate fetching new data from Google Sheet (dynamic change)
+          const mockSheetUpdate = {
+            hero: {
+              title: "✨ LIVE SYNC: Updated from Sheet!",
+              subtitle: "Data changed dynamically — just like editing your Google Sheet. Header, body & footer react instantly."
+            },
+            dynamicSection: {
+              title: "Fresh from spreadsheet",
+              description: "This content was modified by a simulated sheet update. Connect your real Google Sheet URL to enable live editing.",
+              buttonText: "Sync now →",
+              visualTitle: "Sheet → Website"
+            },
+            quote: {
+              text: "“When your spreadsheet changes, the website transforms automatically — no coding required.”",
+              author: "dynamic framework"
+            }
+          };
+          window.updateWebsiteFromObject(mockSheetUpdate);
+          // also update badge text to show live update
+          badgeElem.textContent = '🔄 SHEET SYNC SIMULATED | data updated';
+          setTimeout(() => {
+            badgeElem.textContent = '⚡ DATA FRAMEWORK | LIVE (click to simulate sheet)';
+          }, 3000);
+        });
+        badgeElem.title = "Click to simulate a live Google Sheets update (dynamic content change)";
+      }
+      
+      // log instructions
+      console.log('=== DYNAMIC FRAMEWORK READY ===');
+      console.log('To connect your real Google Sheet:');
+      console.log('1. Publish sheet: File → Share → Publish to web → CSV/JSON');
+      console.log('2. Modify fetchDataFromSheet() to fetch that URL');
+      console.log('3. Map sheet columns to websiteData fields');
+      console.log('Example: updateWebsiteFromObject({ hero: { title: "new title" } })');
+    }
+    
+    init();
+  </script>
+</body>
+</html>
