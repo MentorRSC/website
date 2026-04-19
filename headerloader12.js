@@ -51,11 +51,16 @@ function setupAutoTitleDisplay() {
         return;
     }
 
+    // Check if we're on mobile (screen width <= 768px)
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
     // Get all navigation items (excluding the button/CTA)
     const navItems = Array.from(nav.querySelectorAll("li:not(:has(.cta-button)) a, li > a:not(.cta-button)"));
     
     if (navItems.length === 0) {
-        console.error("No navigation items found");
+        console.error("Navigation items not found");
         return;
     }
 
@@ -68,7 +73,6 @@ function setupAutoTitleDisplay() {
     const originalTexts = navItems.map(item => {
         // Try to find span first, if not, use the text nodes
         let span = item.querySelector("span");
-        let textNode = null;
         let originalText = "";
         
         if (span) {
@@ -103,8 +107,10 @@ function setupAutoTitleDisplay() {
         };
     });
 
-    // Function to show only the title at given index
+    // Function to show only the title at given index (desktop only)
     function showTitleAtIndex(index) {
+        if (isMobile()) return; // Don't hide titles on mobile
+        
         console.log("Showing title at index:", index, "Text:", originalTexts[index]?.originalText);
         
         // Hide all titles first
@@ -123,15 +129,31 @@ function setupAutoTitleDisplay() {
 
     // Function to reset all titles (show all normally)
     function resetAllTitles() {
-        originalTexts.forEach(({ span, originalDisplay }) => {
-            if (span) {
-                span.style.display = originalDisplay || "inline";
-            }
-        });
+        if (isMobile()) {
+            // On mobile, always show all titles
+            originalTexts.forEach(({ span, originalDisplay }) => {
+                if (span) {
+                    span.style.display = "inline-block";
+                }
+            });
+        } else {
+            // On desktop, restore original display
+            originalTexts.forEach(({ span, originalDisplay }) => {
+                if (span) {
+                    span.style.display = originalDisplay || "inline";
+                }
+            });
+        }
     }
 
-    // Function to start auto rotation
+    // Function to start auto rotation (desktop only)
     function startAutoRotation() {
+        if (isMobile()) {
+            // On mobile, just show all titles and return
+            resetAllTitles();
+            return;
+        }
+        
         if (autoInterval) {
             clearInterval(autoInterval);
         }
@@ -152,7 +174,7 @@ function setupAutoTitleDisplay() {
             
             // Rotate every 3 seconds
             autoInterval = setInterval(() => {
-                if (!isHovering) {
+                if (!isHovering && !isMobile()) {
                     currentIndex = (currentIndex + 1) % originalTexts.length;
                     showTitleAtIndex(currentIndex);
                     console.log("Rotating to index:", currentIndex);
@@ -170,60 +192,119 @@ function setupAutoTitleDisplay() {
         resetAllTitles();
     }
 
-    // Add hover event listeners to each nav item
-    navItems.forEach((item, index) => {
-        // Mouse enter - stop auto rotation and show only this item's title
-        item.addEventListener("mouseenter", () => {
-            console.log("Hovering on item:", index);
-            if (hoverTimeout) {
-                clearTimeout(hoverTimeout);
-            }
-            
-            isHovering = true;
-            stopAutoRotation();
-            
-            // Hide all titles
-            originalTexts.forEach(({ span }) => {
-                if (span) {
-                    span.style.display = "none";
-                }
+    // Function to handle hover on nav items (desktop only)
+    function setupHoverHandlers() {
+        if (isMobile()) {
+            // On mobile, remove hover handlers if they exist
+            navItems.forEach((item) => {
+                item.removeEventListener("mouseenter", handleMouseEnter);
+                item.removeEventListener("mouseleave", handleMouseLeave);
             });
-            
-            // Show only the hovered item's title
-            const hoveredItem = originalTexts[index];
-            if (hoveredItem && hoveredItem.span) {
-                hoveredItem.span.style.display = "inline-block";
-            }
+            nav.removeEventListener("mouseenter", handleNavMouseEnter);
+            nav.removeEventListener("mouseleave", handleNavMouseLeave);
+            return;
+        }
+
+        // Add hover event listeners to each nav item
+        navItems.forEach((item, index) => {
+            item.addEventListener("mouseenter", () => handleMouseEnter(index));
+            item.addEventListener("mouseleave", handleMouseLeave);
         });
         
-        // Mouse leave - restart auto rotation after a short delay
-        item.addEventListener("mouseleave", () => {
-            hoverTimeout = setTimeout(() => {
-                isHovering = false;
-                stopAutoRotation();
-                startAutoRotation();
-            }, 300);
-        });
-    });
+        // Also handle hover on the entire nav container
+        nav.addEventListener("mouseenter", handleNavMouseEnter);
+        nav.addEventListener("mouseleave", handleNavMouseLeave);
+    }
 
-    // Also handle hover on the entire nav container
-    nav.addEventListener("mouseenter", () => {
+    function handleMouseEnter(index) {
+        console.log("Hovering on item:", index);
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
         }
-    });
-    
-    nav.addEventListener("mouseleave", () => {
+        
+        isHovering = true;
+        stopAutoRotation();
+        
+        // Hide all titles
+        originalTexts.forEach(({ span }) => {
+            if (span) {
+                span.style.display = "none";
+            }
+        });
+        
+        // Show only the hovered item's title
+        const hoveredItem = originalTexts[index];
+        if (hoveredItem && hoveredItem.span) {
+            hoveredItem.span.style.display = "inline-block";
+        }
+    }
+
+    function handleMouseLeave() {
         hoverTimeout = setTimeout(() => {
             isHovering = false;
             stopAutoRotation();
             startAutoRotation();
         }, 300);
-    });
+    }
 
-    // Start the auto rotation
-    startAutoRotation();
+    function handleNavMouseEnter() {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+        }
+    }
+
+    function handleNavMouseLeave() {
+        hoverTimeout = setTimeout(() => {
+            isHovering = false;
+            stopAutoRotation();
+            startAutoRotation();
+        }, 300);
+    }
+
+    // Function to handle window resize
+    function handleResize() {
+        console.log("Window resized, mobile:", isMobile());
+        
+        // Stop current auto rotation
+        if (autoInterval) {
+            clearInterval(autoInterval);
+            autoInterval = null;
+        }
+        
+        isHovering = false;
+        
+        if (isMobile()) {
+            // On mobile: show all titles, remove hover effects
+            resetAllTitles();
+            setupHoverHandlers(); // This will remove hover handlers on mobile
+        } else {
+            // On desktop: restart auto rotation
+            resetAllTitles();
+            startAutoRotation();
+            setupHoverHandlers();
+        }
+    }
+
+    // Initialize based on screen size
+    function init() {
+        if (isMobile()) {
+            // On mobile: always show all titles
+            resetAllTitles();
+            setupHoverHandlers(); // Remove hover handlers
+        } else {
+            // On desktop: start auto rotation
+            startAutoRotation();
+            setupHoverHandlers();
+        }
+    }
+
+    // Add resize event listener
+    window.addEventListener("resize", handleResize);
+    
+    // Initialize
+    init();
     
     console.log("Auto title display initialized with", originalTexts.length, "items");
+    console.log("Mobile mode:", isMobile());
     console.log("Nav items found:", navItems.length);
 }
