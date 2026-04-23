@@ -156,33 +156,6 @@
             transform: translateY(-6px);
             box-shadow: 0 18px 28px rgba(0,0,0,0.12);
         }
-        /* Floating action buttons */
-        .floating-buttons {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            z-index: 10;
-            display: flex;
-            gap: 8px;
-        }
-        .floating-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            font-size: 1rem;
-        }
-        .floating-btn:hover {
-            transform: scale(1.1);
-            background: var(--primary);
-        }
         .project-header {
             padding: 1.2rem 1.5rem;
             background: linear-gradient(115deg, var(--primary), var(--primary-dark));
@@ -419,50 +392,81 @@
             color: #f59e0b;
             width: 1.2rem;
         }
-        .modal-buttons {
+        
+        /* Beautiful Modal Action Buttons */
+        .modal-action-buttons {
             display: flex;
             gap: 1rem;
-            margin-top: 1.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-light);
+            margin: 0 0 1.5rem 0;
             flex-wrap: wrap;
+            justify-content: center;
         }
-        .action-btn {
+        .modal-action-btn {
             flex: 1;
+            min-width: 160px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.6rem;
-            padding: 0.7rem 1rem;
-            border-radius: 50px;
+            padding: 0.85rem 1.2rem;
+            border-radius: 60px;
             font-weight: 600;
             text-decoration: none;
-            transition: 0.2s;
-            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .site-btn {
-            background: var(--primary);
+        .modal-action-btn i {
+            font-size: 1.1rem;
+        }
+        .modal-action-btn.site-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
+            border: none;
         }
-        .site-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
+        .modal-action-btn.site-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(26,115,232,0.4);
         }
-        .github-btn {
+        .modal-action-btn.github-btn {
             background: #1e293b;
             color: white;
+            border: none;
         }
-        .github-btn:hover {
+        .modal-action-btn.github-btn:hover {
             background: #0f172a;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
+        
         .close-detail-btn {
             background: none;
             border: none;
             color: white;
             font-size: 1.8rem;
             cursor: pointer;
+            transition: transform 0.2s;
         }
+        .close-detail-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Image in modal */
+        .modal-image-container {
+            margin: 0 0 1.5rem 0;
+            text-align: center;
+        }
+        .modal-image {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            object-fit: contain;
+        }
+        
         /* Periodic Table Modal */
         .modal-overlay {
             position: fixed;
@@ -543,6 +547,8 @@
             .projects-grid { grid-template-columns: 1fr; }
             .hero h1 { font-size: 1.5rem; }
             .filter-container { flex-direction: column; align-items: stretch; }
+            .modal-action-buttons { flex-direction: column; }
+            .modal-action-btn { width: 100%; }
         }
     </style>
 </head>
@@ -755,14 +761,28 @@
             // Build modal content conditionally - only show sections with data
             let sections = [];
             
-            // Description section (always show if exists)
-            if(project.description) {
-                sections.push(`<div class="detail-section"><div class="detail-label"><i class="fas fa-align-left"></i> DESCRIPTION</div><div class="detail-value">${escapeHtml(project.description)}</div></div>`);
+            // ACTION BUTTONS - Beautiful buttons at the top (below title, above image)
+            let actionButtonsHtml = '';
+            if(hasValue(project.detailsLink) || hasValue(project.githubLink)) {
+                actionButtonsHtml = `<div class="modal-action-buttons">`;
+                if(hasValue(project.detailsLink)) {
+                    actionButtonsHtml += `<a href="${project.detailsLink}" target="_blank" class="modal-action-btn site-btn" rel="noopener noreferrer"><i class="fas fa-globe"></i> Live Site</a>`;
+                }
+                if(hasValue(project.githubLink)) {
+                    actionButtonsHtml += `<a href="${project.githubLink}" target="_blank" class="modal-action-btn github-btn" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub Repo</a>`;
+                }
+                actionButtonsHtml += `</div>`;
+                sections.push(actionButtonsHtml);
             }
             
-            // Image section
+            // Image section (below buttons)
             if(hasValue(project.imageLink)) {
-                sections.push(`<div class="detail-section"><div class="detail-label"><i class="fas fa-image"></i> PROJECT IMAGE</div><div class="detail-value"><img src="${escapeHtml(project.imageLink)}" alt="${escapeHtml(project.name)}" style="max-width:100%; border-radius:12px; height:auto;"></div></div>`);
+                sections.push(`<div class="modal-image-container"><img src="${escapeHtml(project.imageLink)}" alt="${escapeHtml(project.name)}" class="modal-image" onerror="this.style.display='none'"></div>`);
+            }
+            
+            // Description section
+            if(project.description) {
+                sections.push(`<div class="detail-section"><div class="detail-label"><i class="fas fa-align-left"></i> DESCRIPTION</div><div class="detail-value">${escapeHtml(project.description)}</div></div>`);
             }
             
             // Team/Members section
@@ -813,20 +833,6 @@
                 sections.push(`<div class="detail-section"><div class="detail-label"><i class="fas fa-hashtag"></i> TAGS</div><div class="project-tags" style="margin-top:0;">${project.tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div></div>`);
             }
             
-            // Buttons section (only if at least one link exists)
-            let buttonsHtml = '';
-            if(hasValue(project.detailsLink) || hasValue(project.githubLink)) {
-                buttonsHtml = `<div class="modal-buttons">`;
-                if(hasValue(project.detailsLink)) {
-                    buttonsHtml += `<a href="${project.detailsLink}" target="_blank" class="action-btn site-btn"><i class="fas fa-globe"></i> Live Site / Details</a>`;
-                }
-                if(hasValue(project.githubLink)) {
-                    buttonsHtml += `<a href="${project.githubLink}" target="_blank" class="action-btn github-btn"><i class="fab fa-github"></i> GitHub Repository</a>`;
-                }
-                buttonsHtml += `</div>`;
-                sections.push(buttonsHtml);
-            }
-            
             bodyEl.innerHTML = sections.join('');
             modal.classList.add('active');
         }
@@ -841,20 +847,7 @@
                 const ratingStars = proj.rating > 0 ? proj.rating.toFixed(1) : 'N/A';
                 const startDateFormatted = formatDate(proj.startDate);
                 
-                // Floating buttons HTML (only show if links exist)
-                let floatingBtnsHtml = '';
-                if(hasValue(proj.detailsLink) || hasValue(proj.githubLink)) {
-                    floatingBtnsHtml = `<div class="floating-buttons">`;
-                    if(hasValue(proj.detailsLink)) {
-                        floatingBtnsHtml += `<a href="${proj.detailsLink}" target="_blank" class="floating-btn" onclick="event.stopPropagation()" title="Live Site"><i class="fas fa-globe"></i></a>`;
-                    }
-                    if(hasValue(proj.githubLink)) {
-                        floatingBtnsHtml += `<a href="${proj.githubLink}" target="_blank" class="floating-btn" onclick="event.stopPropagation()" title="GitHub"><i class="fab fa-github"></i></a>`;
-                    }
-                    floatingBtnsHtml += `</div>`;
-                }
-                
-                // Image HTML
+                // Image HTML for card
                 let imageHtml = '';
                 if(hasValue(proj.imageLink)) {
                     imageHtml = `<div class="project-image"><img src="${escapeHtml(proj.imageLink)}" alt="${escapeHtml(proj.name)}" loading="lazy" onerror="this.style.display='none'"></div>`;
@@ -862,7 +855,6 @@
                 
                 return `
                     <div class="project-card" data-project-id="${proj.id}">
-                        ${floatingBtnsHtml}
                         <div class="project-header">
                             <div class="project-category"><i class="fas fa-cube"></i> ${escapeHtml(proj.category)}</div>
                             <div class="project-status ${getStatusClass(proj.status)}">${getStatusText(proj.status)}</div>
@@ -886,8 +878,6 @@
         function setupDelegation() {
             const grid = document.getElementById('projects-grid');
             grid.addEventListener('click', (e) => {
-                // Don't open modal if clicking on floating buttons
-                if(e.target.closest('.floating-btn')) return;
                 const card = e.target.closest('.project-card');
                 if(!card) return;
                 const projId = card.getAttribute('data-project-id');
