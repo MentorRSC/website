@@ -326,30 +326,6 @@
             transform: scale(1.02);
             box-shadow: 0 2px 8px rgba(26,115,232,0.3);
         }
-        
-        /* Floating Live Site Button */
-        .floating-live-btn {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 5;
-        }
-        .floating-live-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(26,115,232,0.4);
-        }
-        
         .project-rating {
             color: #fbbf24;
             font-size: 0.85rem;
@@ -398,36 +374,14 @@
         .detail-modal-header {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            padding: 1rem 1.8rem;
+            padding: 1.2rem 1.8rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .detail-modal-header h2 {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             margin-right: 1rem;
-        }
-        .header-buttons {
-            display: flex;
-            gap: 0.8rem;
-        }
-        .header-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-        .header-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
         }
         .detail-modal-body {
             flex: 1;
@@ -488,15 +442,69 @@
             width: 1.2rem;
         }
         
+        /* Modal Action Buttons */
+        .modal-action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 0 0 1.5rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .modal-action-btn {
+            flex: 1;
+            min-width: 160px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .modal-action-btn i {
+            font-size: 1.1rem;
+        }
+        .modal-action-btn.site-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        .modal-action-btn.site-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(26,115,232,0.4);
+        }
+        .modal-action-btn.github-btn {
+            background: #1e293b;
+            color: white;
+        }
+        .modal-action-btn.github-btn:hover {
+            background: #0f172a;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .modal-action-btn.newtab-btn {
+            background: #64748b;
+            color: white;
+        }
+        .modal-action-btn.newtab-btn:hover {
+            background: #475569;
+            transform: translateY(-3px);
+        }
+        
         .close-detail-btn {
-            background: rgba(255,255,255,0.2);
+            background: none;
             border: none;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.8rem;
             cursor: pointer;
             transition: transform 0.2s;
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -504,7 +512,7 @@
         }
         .close-detail-btn:hover {
             transform: scale(1.1);
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.2);
         }
         
         /* Image in modal */
@@ -591,6 +599,8 @@
             .projects-grid { grid-template-columns: 1fr; }
             .hero h1 { font-size: 1.8rem; }
             .filter-container { flex-direction: column; align-items: stretch; }
+            .modal-action-buttons { flex-direction: column; }
+            .modal-action-btn { width: 100%; }
         }
     </style>
 </head>
@@ -666,7 +676,6 @@
     <div class="detail-modal-container">
         <div class="detail-modal-header">
             <h2 id="detailModalTitle">Project Details</h2>
-            <div class="header-buttons" id="modalHeaderButtons"></div>
             <button class="close-detail-btn" id="closeDetailModalBtn"><i class="fas fa-times"></i></button>
         </div>
         <div class="detail-modal-body" id="detailModalBody"></div>
@@ -696,7 +705,6 @@
         let currentCategory = 'all';
         let currentSort = 'default';
         let activePopup = null;
-        let currentProject = null;
 
         function parseMembers(str) { if (!str) return []; try { let arr = JSON.parse(str); return Array.isArray(arr) ? arr : [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); } }
         function parseTags(str) { if (!str) return []; try { let arr = JSON.parse(str); return Array.isArray(arr) ? arr : [str]; } catch(e) { return str.split(/[,;]/).map(s=>s.trim()).filter(s=>s); } }
@@ -707,37 +715,18 @@
             if(!d || d === '' || d === 'TBD') return ''; 
             try{ 
                 let dateStr = String(d);
-                let date = null;
-                
                 if(dateStr.includes('/')) {
                     let parts = dateStr.split('/');
                     if(parts.length === 3) {
-                        let month = parseInt(parts[0], 10);
-                        let day = parseInt(parts[1], 10);
-                        let year = parseInt(parts[2], 10);
-                        if(!isNaN(month) && !isNaN(day) && !isNaN(year)) {
-                            date = new Date(year, month - 1, day);
-                        }
+                        let formatted = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                        let date = new Date(formatted);
+                        if(!isNaN(date.getTime())) return date.toLocaleDateString('en-IN');
                     }
-                } else if(dateStr.includes('-')) {
-                    let parts = dateStr.split('-');
-                    if(parts.length === 3) {
-                        let year = parseInt(parts[0], 10);
-                        let month = parseInt(parts[1], 10);
-                        let day = parseInt(parts[2], 10);
-                        if(!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-                            date = new Date(year, month - 1, day);
-                        }
-                    }
-                } else {
-                    date = new Date(dateStr);
                 }
-                
-                if(date && !isNaN(date.getTime())) {
-                    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-                }
-                return '';
-            } catch(e){ return ''; } 
+                let date = new Date(dateStr);
+                if(!isNaN(date.getTime())) return date.toLocaleDateString('en-IN');
+                return dateStr;
+            } catch(e){ return d; } 
         }
         
         function getStatusClass(st) { if(st==='completed') return 'status-completed'; if(st==='ongoing') return 'status-ongoing'; return 'status-planning'; }
@@ -756,7 +745,7 @@
                     <h3><i class="fas fa-external-link-alt"></i> ${escapeHtml(title)}</h3>
                     <button class="close-popup"><i class="fas fa-times"></i></button>
                 </div>
-                <iframe class="popup-iframe" src="${escapeHtml(url)}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"></iframe>
+                <iframe class="popup-iframe" src="${escapeHtml(url)}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
             `;
             document.body.appendChild(popup);
             activePopup = popup;
@@ -764,6 +753,10 @@
                 popup.remove();
                 activePopup = null;
             });
+        }
+
+        function openInNewTab(url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
         }
 
         async function fetchProjects() {
@@ -849,29 +842,28 @@
             return filtered;
         }
 
-        function updateModalHeaderButtons(project) {
-            const headerButtons = document.getElementById('modalHeaderButtons');
-            if(!headerButtons) return;
-            
-            let buttonsHtml = '';
-            if(hasValue(project.detailsLink)) {
-                buttonsHtml += `<button class="header-btn" onclick="window.openPopup('${project.detailsLink}', 'Live Site')" title="Open Live Site"><i class="fas fa-globe"></i></button>`;
-            }
-            if(hasValue(project.githubLink)) {
-                buttonsHtml += `<button class="header-btn" onclick="window.openPopup('${project.githubLink}', 'GitHub Repository')" title="Open GitHub"><i class="fab fa-github"></i></button>`;
-            }
-            headerButtons.innerHTML = buttonsHtml;
-        }
-
         function openDetailModal(project) {
             const modal = document.getElementById('detailModal');
             const titleEl = document.getElementById('detailModalTitle');
             const bodyEl = document.getElementById('detailModalBody');
             titleEl.innerHTML = `<i class="fas fa-project-diagram"></i> ${escapeHtml(project.name)}`;
             
-            updateModalHeaderButtons(project);
-            
             let sections = [];
+            
+            let actionButtonsHtml = '';
+            if(hasValue(project.detailsLink) || hasValue(project.githubLink)) {
+                actionButtonsHtml = `<div class="modal-action-buttons">`;
+                if(hasValue(project.detailsLink)) {
+                    actionButtonsHtml += `<button onclick="window.openPopup('${project.detailsLink}', 'Live Site')" class="modal-action-btn site-btn"><i class="fas fa-globe"></i> Live Site (Popup)</button>`;
+                    actionButtonsHtml += `<button onclick="window.openInNewTab('${project.detailsLink}')" class="modal-action-btn newtab-btn"><i class="fas fa-external-link-alt"></i> Live Site (New Tab)</button>`;
+                }
+                if(hasValue(project.githubLink)) {
+                    actionButtonsHtml += `<button onclick="window.openPopup('${project.githubLink}', 'GitHub Repository')" class="modal-action-btn github-btn"><i class="fab fa-github"></i> GitHub (Popup)</button>`;
+                    actionButtonsHtml += `<button onclick="window.openInNewTab('${project.githubLink}')" class="modal-action-btn newtab-btn"><i class="fas fa-external-link-alt"></i> GitHub (New Tab)</button>`;
+                }
+                actionButtonsHtml += `</div>`;
+                sections.push(actionButtonsHtml);
+            }
             
             if(hasValue(project.imageLink)) {
                 sections.push(`<div class="modal-image-container"><img src="${escapeHtml(project.imageLink)}" alt="${escapeHtml(project.name)}" class="modal-image" onerror="this.style.display='none'"></div>`);
@@ -944,14 +936,8 @@
                     imageHtml = `<div class="project-image"><img src="${escapeHtml(proj.imageLink)}" alt="${escapeHtml(proj.name)}" loading="lazy" onerror="this.style.display='none'"></div>`;
                 }
                 
-                let floatingLiveBtn = '';
-                if(hasValue(proj.detailsLink)) {
-                    floatingLiveBtn = `<div class="floating-live-btn" onclick="event.stopPropagation(); window.openPopup('${proj.detailsLink}', 'Live Site')" title="Open Live Site"><i class="fas fa-globe"></i></div>`;
-                }
-                
                 return `
                     <div class="project-card" data-project-id="${proj.id}">
-                        ${floatingLiveBtn}
                         <div class="project-header">
                             <div class="project-category"><i class="fas fa-cube"></i> ${escapeHtml(proj.category)}</div>
                             <div class="project-status ${getStatusClass(proj.status)}">${getStatusText(proj.status)}</div>
@@ -975,7 +961,6 @@
         function setupDelegation() {
             const grid = document.getElementById('projects-grid');
             grid.addEventListener('click', (e) => {
-                if(e.target.closest('.floating-live-btn')) return;
                 const card = e.target.closest('.project-card');
                 if(!card) return;
                 const projId = card.getAttribute('data-project-id');
@@ -985,6 +970,7 @@
         }
 
         window.openPopup = openPopup;
+        window.openInNewTab = openInNewTab;
 
         document.getElementById('search-input')?.addEventListener('input', (e) => { searchTerm = e.target.value; renderProjects(); });
         document.getElementById('status-filter')?.addEventListener('change', (e) => { currentStatus = e.target.value; renderProjects(); });
