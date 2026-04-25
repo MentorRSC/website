@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Student & Guest Check-in System | Attendance Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 18px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #64748b;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            background: white;
+        }
+
+        /* Content Panels */
+        .panel {
+            display: none;
+            padding: 32px 24px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Elements */
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 0.875rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background: #f1f5f9;
+            color: #334155;
+            margin-top: 12px;
+        }
+
+        /* Member Card Display */
+        .member-card {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #c7d2fe;
+        }
+
+        .member-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .member-info {
+            margin-top: 12px;
+        }
+
+        .member-info p {
+            margin: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .status-valid {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .status-expired {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .attendance-counter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            width: auto;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 16px;
+        }
+
+        .student-list-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Guest section */
+        .guest-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .guest-btn {
+            flex: 1;
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .guest-btn.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .website-preview {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <div class="logo">📋 Attendance Hub</div>
+            <button class="attendance-counter" id="viewActiveBtn">👥 View Active (0)</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="member">👤 Member</button>
+            <button class="tab" data-tab="guest">🚪 Guest</button>
+        </div>
+
+        <!-- Member Panel -->
+        <div class="panel active" id="memberPanel">
+            <h2>Member Check-in</h2>
+            <div class="subtitle">Enter your Membership ID to check in</div>
+            
+            <div class="input-group">
+                <label>📇 ID Number / Registration No.</label>
+                <input type="text" id="memberIdInput" placeholder="e.g., REG001 or 12345" autocomplete="off">
+            </div>
+            
+            <button id="submitMemberBtn">✓ Check In</button>
+            <button class="secondary" id="exitMemberBtn">🚪 Exit & Log Out</button>
+            
+            <div id="memberInfoCard" style="display: none;"></div>
+        </div>
+
+        <!-- Guest Panel -->
+        <div class="panel" id="guestPanel">
+            <h2>Guest Visit</h2>
+            <div class="subtitle">Are you visiting our facility?</div>
+            
+            <div class="guest-options">
+                <button class="guest-btn" data-guest="yes">✅ Yes - Access Website</button>
+                <button class="guest-btn" data-guest="no">❌ No - View Info Only</button>
+            </div>
+            
+            <div id="guestContent" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- Active Students Modal -->
+    <div class="modal" id="activeModal">
+        <div class="modal-content">
+            <h3>👥 Currently Active Members</h3>
+            <div id="activeList"></div>
+            <button class="secondary" onclick="closeModal()" style="margin-top: 16px;">Close</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuration
+        const SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE'; // Replace with your Apps Script Web App URL
+        
+        // Active sessions storage
+        let activeSessions = JSON.parse(localStorage.getItem('activeSessions') || '[]');
+        
+        // Current checked-in member (for exit)
+        let currentMember = null;
+        
+        // Guest mode selection
+        let guestChoice = null;
+        
+        // Helper: Show toast message
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = isError ? '#ef4444' : '#10b981';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // Update active counter
+        function updateActiveCounter() {
+            const now = new Date();
+            // Filter sessions that are less than 8 hours old
+            const active = activeSessions.filter(s => (now - new Date(s.checkinTime)) < 8 * 60 * 60 * 1000);
+            if (active.length !== activeSessions.length) {
+                activeSessions = active;
+                localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+            }
+            document.getElementById('viewActiveBtn').textContent = `👥 Active (${activeSessions.length})`;
+            return activeSessions;
+        }
+        
+        // Add to active session
+        function addActiveSession(memberData) {
+            const session = {
+                id: memberData.id,
+                name: memberData.name,
+                regNo: memberData.regNo,
+                checkinTime: new Date().toISOString()
+            };
+            activeSessions.push(session);
+            localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+            updateActiveCounter();
+        }
+        
+        // Remove from active session
+        function removeActiveSession(regNo) {
+            activeSessions = activeSessions.filter(s => s.regNo !== regNo);
+            localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+            updateActiveCounter();
+        }
+        
+        // Send data to Google Sheets via Apps Script
+        async function sendToGoogleSheets(data, type) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // For simple Apps Script deployment
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: type,
+                        data: data,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                console.log('Data sent to sheet');
+                return true;
+            } catch (error) {
+                console.error('Error sending to sheet:', error);
+                showToast('⚠️ Log saved locally, will sync when online', true);
+                // Save to local queue
+                let queue = JSON.parse(localStorage.getItem('syncQueue') || '[]');
+                queue.push({ type, data, timestamp: new Date().toISOString() });
+                localStorage.setItem('syncQueue', JSON.stringify(queue));
+                return false;
+            }
+        }
+        
+        // Fetch member data from spreadsheet (via Apps Script)
+        async function fetchMemberData(regNo) {
+            // Since we can't directly query Google Sheets from frontend without CORS,
+            // we'll simulate by checking against a known endpoint
+            // In production, your Apps Script should have a doGet() to return member data
+            
+            // For demo, we'll use a mock or you can implement a GET endpoint
+            // Better approach: Apps Script returns JSONP or use proxy
+            
+            // Real implementation: Call your Apps Script with GET parameter
+            try {
+                const response = await fetch(`${SCRIPT_URL}?regNo=${encodeURIComponent(regNo)}&action=getMember`);
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (e) {
+                console.log('Using fallback - implement GET endpoint in Apps Script');
+            }
+            
+            // Fallback: check localStorage for demo members
+            let members = JSON.parse(localStorage.getItem('memberDatabase') || '[]');
+            let member = members.find(m => m.regNo === regNo || m.id === regNo);
+            if (!member && regNo === 'DEMO001') {
+                member = {
+                    regNo: 'DEMO001',
+                    name: 'John Doe',
+                    phone: '+1234567890',
+                    dob: '1990-01-01',
+                    regDate: '2024-01-01',
+                    validity: '2025-12-31',
+                    imageLink: 'https://via.placeholder.com/80',
+                    profileLink: '#'
+                };
+            }
+            return member;
+        }
+        
+        // Check member validity
+        function checkValidity(validityDate) {
+            const today = new Date();
+            const expiry = new Date(validityDate);
+            return expiry >= today;
+        }
+        
+        // Member check-in process
+        async function memberCheckin() {
+            const idInput = document.getElementById('memberIdInput');
+            const regNo = idInput.value.trim();
+            
+            if (!regNo) {
+                showToast('Please enter ID Number', true);
+                return;
+            }
+            
+            showToast('Checking membership...');
+            
+            // Fetch member data
+            const member = await fetchMemberData(regNo);
+            
+            if (!member) {
+                showToast('❌ Member not found! Please check your ID.', true);
+                return;
+            }
+            
+            // Check validity
+            const isValid = checkValidity(member.validity);
+            
+            if (!isValid) {
+                showToast(`⚠️ Membership expired on ${member.validity}. Please renew.`, true);
+                // Log expired attempt
+                await sendToGoogleSheets({
+                    ...member,
+                    status: 'EXPIRED',
+                    entryTime: new Date().toISOString()
+                }, 'EXPIRED_ATTEMPT');
+                return;
+            }
+            
+            // Valid member - log check-in
+            const checkinData = {
+                regNo: member.regNo,
+                name: member.name,
+                phone: member.phone,
+                dob: member.dob,
+                regDate: member.regDate,
+                validity: member.validity,
+                entryTime: new Date().toISOString(),
+                status: 'CHECKED_IN'
+            };
+            
+            await sendToGoogleSheets(checkinData, 'MEMBER_CHECKIN');
+            addActiveSession(member);
+            currentMember = member;
+            
+            // Show member card
+            showMemberCard(member, isValid);
+            showToast(`✅ Welcome ${member.name}! Check-in successful.`);
+            idInput.value = '';
+        }
+        
+        // Show member info card
+        function showMemberCard(member, isValid) {
+            const cardDiv = document.getElementById('memberInfoCard');
+            cardDiv.style.display = 'block';
+            cardDiv.innerHTML = `
+                <div class="member-card">
+                    <img src="${member.imageLink || 'https://via.placeholder.com/80'}" class="member-photo" alt="Photo" onerror="this.src='https://via.placeholder.com/80'">
+                    <div class="member-info">
+                        <p><strong>${escapeHtml(member.name)}</strong></p>
+                        <p>📛 Reg No: ${member.regNo}</p>
+                        <p>📞 ${member.phone || 'N/A'}</p>
+                        <p>📅 Member since: ${member.regDate || 'N/A'}</p>
+                        <p>🎫 Valid until: ${member.validity || 'N/A'}</p>
+                        <p class="${isValid ? 'status-valid' : 'status-expired'}">${isValid ? '✅ Active Member' : '❌ Expired'}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Member exit/logout
+        async function memberExit() {
+            if (!currentMember) {
+                showToast('No active session found', true);
+                return;
+            }
+            
+            const exitData = {
+                regNo: currentMember.regNo,
+                name: currentMember.name,
+                exitTime: new Date().toISOString(),
+                duration: 'Session ended'
+            };
+            
+            await sendToGoogleSheets(exitData, 'MEMBER_EXIT');
+            removeActiveSession(currentMember.regNo);
+            
+            showToast(`👋 Goodbye ${currentMember.name}! Logged out.`);
+            currentMember = null;
+            document.getElementById('memberInfoCard').style.display = 'none';
+        }
+        
+        // Guest handling
+        function handleGuestChoice(choice) {
+            guestChoice = choice;
+            const guestContent = document.getElementById('guestContent');
+            
+            if (choice === 'yes') {
+                guestContent.innerHTML = `
+                    <div class="website-preview">
+                        <h4>🌐 Welcome Guest!</h4>
+                        <p>You can explore our public resources:</p>
+                        <ul style="margin-top: 12px; margin-left: 20px;">
+                            <li><a href="#" onclick="showToast('Hub portal coming soon')">📚 Learning Hub</a></li>
+                            <li><a href="#" onclick="showToast('Events calendar')">📅 Upcoming Events</a></li>
+                            <li><a href="#" onclick="window.open('https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/edit', '_blank')">📊 Membership Directory</a></li>
+                        </ul>
+                        <button onclick="logGuestVisit()" style="margin-top: 16px;">✓ Confirm Guest Visit</button>
+                    </div>
+                `;
+            } else {
+                guestContent.innerHTML = `
+                    <div class="website-preview">
+                        <h4>📌 About Our Hub</h4>
+                        <p>We offer co-working spaces, learning resources, and community events.</p>
+                        <hr style="margin: 16px 0;">
+                        <p><strong>Quick Links:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>📞 Contact: info@hub.com</li>
+                            <li>📍 Location: Downtown Campus</li>
+                            <li>🕒 Hours: 9 AM - 9 PM</li>
+                        </ul>
+                        <button onclick="logGuestVisit()" style="margin-top: 16px;">📝 Log as Guest Info Only</button>
+                    </div>
+                `;
+            }
+            
+            // Log guest selection
+            sendToGoogleSheets({
+                guestChoice: choice,
+                timestamp: new Date().toISOString()
+            }, 'GUEST_INTERACTION');
+        }
+        
+        async function logGuestVisit() {
+            await sendToGoogleSheets({
+                guestChoice: guestChoice,
+                visitTime: new Date().toISOString(),
+                status: 'GUEST_VISIT_COMPLETED'
+            }, 'GUEST_VISIT');
+            showToast('Guest visit logged. Thank you!');
+        }
+        
+        // View active members
+        function showActiveMembers() {
+            const active = activeSessions.filter(s => (new Date() - new Date(s.checkinTime)) < 8 * 60 * 60 * 1000);
+            const modal = document.getElementById('activeModal');
+            const listDiv = document.getElementById('activeList');
+            
+            if (active.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#64748b;">No active members at the moment</p>';
+            } else {
+                listDiv.innerHTML = active.map(s => `
+                    <div class="student-list-item">
+                        <span>👤 ${escapeHtml(s.name)}</span>
+                        <span style="font-size:0.75rem; color:#64748b;">${new Date(s.checkinTime).toLocaleTimeString()}</span>
+                    </div>
+                `).join('');
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('activeModal').classList.remove('active');
+        }
+        
+        // Utility
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Tab switching
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.dataset.tab;
+                    document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}Panel`).classList.add('active');
+                });
+            });
+        }
+        
+        // Guest button selection
+        function initGuestButtons() {
+            document.querySelectorAll('.guest-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.guest-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    handleGuestChoice(btn.dataset.guest);
+                });
+            });
+        }
+        
+        // Event Listeners
+        document.getElementById('submitMemberBtn').addEventListener('click', memberCheckin);
+        document.getElementById('exitMemberBtn').addEventListener('click', memberExit);
+        document.getElementById('memberIdInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') memberCheckin();
+        });
+        document.getElementById('viewActiveBtn').addEventListener('click', showActiveMembers);
+        
+        // Sync queue on load
+        async function syncQueue() {
+            const queue = JSON.parse(localStorage.getItem('syncQueue') || '[]');
+            if (queue.length > 0 && SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE') {
+                for (let item of queue) {
+                    await sendToGoogleSheets(item.data, item.type);
+                }
+                localStorage.setItem('syncQueue', '[]');
+            }
+        }
+        
+        // Initialize
+        updateActiveCounter();
+        initTabs();
+        initGuestButtons();
+        syncQueue();
+        
+        // For demo: populate sample member in localStorage
+        if (!localStorage.getItem('memberDatabase')) {
+            localStorage.setItem('memberDatabase', JSON.stringify([
+                {
+                    regNo: 'DEMO001',
+                    name: 'John Doe',
+                    phone: '+1234567890',
+                    dob: '1990-01-01',
+                    regDate: '2024-01-01',
+                    validity: '2025-12-31',
+                    imageLink: 'https://randomuser.me/api/portraits/men/1.jpg'
+                },
+                {
+                    regNo: 'DEMO002',
+                    name: 'Jane Smith',
+                    phone: '+1987654321',
+                    dob: '1992-05-15',
+                    regDate: '2024-03-15',
+                    validity: '2025-03-14',
+                    imageLink: 'https://randomuser.me/api/portraits/women/2.jpg'
+                }
+            ]));
+        }
+    </script>
+</body>
+</html>
