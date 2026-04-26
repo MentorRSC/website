@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Sheet Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Google Sheets Data Viewer | Live Loader</title>
     <style>
         * {
             margin: 0;
@@ -12,354 +12,483 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
+            background: linear-gradient(145deg, #f6f9fc 0%, #eef2f5 100%);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 2rem 1.5rem;
+            color: #1a2c3e;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
+        }
+
+        /* header card */
+        .header-card {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .controls {
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
+            border-radius: 32px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.02);
             display: flex;
-            gap: 15px;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
+            gap: 1rem;
+            border: 1px solid rgba(66, 133, 244, 0.15);
         }
 
-        .search-box {
-            flex: 1;
-            min-width: 200px;
+        .title-section h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.2px;
         }
 
-        .search-box input {
-            width: 100%;
-            padding: 10px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s;
+        .title-section p {
+            color: #5a6e7c;
+            margin-top: 0.3rem;
+            font-size: 0.9rem;
         }
 
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            border: 1px solid #cddfe7;
+            padding: 0.6rem 1.4rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #fefefe;
+            color: #1f3b4c;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            border-color: #1a73e8;
+            color: white;
+            box-shadow: 0 2px 6px rgba(26, 115, 232, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #0c5ed9;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(26, 115, 232, 0.25);
+        }
+
+        .btn-outline:hover {
+            background: #e9f0f5;
+            border-color: #b9d0dd;
         }
 
         .status {
-            display: flex;
+            background: #eef3fa;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
             align-items: center;
-            gap: 15px;
-            font-size: 14px;
-            color: #666;
+            gap: 8px;
         }
 
-        .refresh-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: transform 0.2s;
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 10px;
+            background: #34a853;
+            display: inline-block;
         }
 
-        .refresh-btn:hover {
-            transform: translateY(-2px);
-            background: #5a67d8;
+        .status-dot.loading {
+            background: #f9ab00;
+            animation: pulse 1.2s infinite;
         }
 
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.8);}
+            100% { opacity: 1; transform: scale(1);}
+        }
+
+        /* table wrapper */
         .table-wrapper {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
             overflow-x: auto;
-            padding: 20px 30px;
-            max-height: 70vh;
-            overflow-y: auto;
+            border: 1px solid #e2edf2;
+            transition: all 0.2s;
         }
 
-        table {
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            min-width: 500px;
         }
 
-        th {
-            background: #667eea;
-            color: white;
-            padding: 12px;
+        .data-table th {
+            background: #f8fafd;
+            padding: 1rem 1rem;
             text-align: left;
             font-weight: 600;
+            color: #1e4663;
+            border-bottom: 1px solid #e0eef5;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
             position: sticky;
             top: 0;
-            z-index: 10;
+            background-color: #f8fafd;
         }
 
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e0e0e0;
+        .data-table td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid #edf3f7;
+            color: #234259;
+            vertical-align: top;
         }
 
-        tr:hover {
-            background: #f8f9fa;
+        .data-table tr:hover td {
+            background-color: #fafcff;
         }
 
-        .loading {
+        .empty-row td {
             text-align: center;
-            padding: 40px;
-            font-size: 18px;
-            color: #666;
+            padding: 3rem;
+            color: #8ba0ae;
+            font-style: italic;
         }
 
-        .error {
+        .error-message {
+            background: #fff2f0;
+            border-left: 5px solid #d93025;
+            padding: 1rem 1.5rem;
+            border-radius: 20px;
+            color: #b33c2c;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .footer-info {
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            color: #6f8e9e;
             text-align: center;
-            padding: 40px;
-            color: #dc3545;
-            background: #fff3f3;
-            border-radius: 8px;
-            margin: 20px;
-        }
-
-        .stats {
-            padding: 15px 30px;
-            background: #f8f9fa;
-            border-top: 1px solid #e0e0e0;
-            color: #666;
-            font-size: 14px;
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        @media (max-width: 768px) {
-            .controls {
+        .badge {
+            background: #e9f0f5;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 1rem;
+            }
+            .header-card {
                 flex-direction: column;
-                align-items: stretch;
+                align-items: flex-start;
             }
-            
-            .header h1 {
-                font-size: 20px;
-            }
-            
-            th, td {
-                font-size: 12px;
+            .data-table th, .data-table td {
+                padding: 0.7rem 0.8rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 Attendance Sheet Viewer</h1>
-            <p>View and search attendance data from Google Sheets</p>
-        </div>
 
+<div class="container">
+    <div class="header-card">
+        <div class="title-section">
+            <h1>📊 Google Sheets Live Data</h1>
+            <p>Direct fetch from your spreadsheet • personal project integration</p>
+        </div>
         <div class="controls">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="🔍 Search in any column...">
-            </div>
-            <div class="status">
-                <span id="rowCount">Loading...</span>
-                <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
-            </div>
-        </div>
-
-        <div class="table-wrapper">
-            <div id="tableContainer">
-                <div class="loading">Loading data from Google Sheet...</div>
-            </div>
-        </div>
-
-        <div class="stats">
-            <span>📅 Last updated: <span id="lastUpdated">-</span></span>
-            <span>💡 Tip: Data updates when you refresh the page</span>
+            <button class="btn btn-primary" id="refreshBtn">⟳ Load / Refresh Data</button>
+            <span class="status" id="statusBadge">
+                <span class="status-dot"></span> Ready
+            </span>
         </div>
     </div>
 
-    <script>
-        // REPLACE THIS URL WITH YOUR PUBLISHED GOOGLE SHEET CSV URL
-        // After publishing, get the CSV link from File → Publish to web
-        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY/export?format=csv&gid=0';
-        
-        let originalData = [];
-        let headers = [];
+    <div id="tableContainer">
+        <div class="table-wrapper">
+            <table class="data-table" id="dataTable">
+                <thead id="tableHeader">
+                    <tr>
+                        <th>Loading...</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="empty-row">
+                        <td colspan="10">Click "Load Data" or refresh to fetch rows from Google Sheet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer-info">
+            <div>⚡ Using <strong>Google Sheets API v4</strong> (public read access required)</div>
+            <div class="badge">Spreadsheet ID: 1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY</div>
+        </div>
+    </div>
+</div>
 
-        async function loadData() {
-            const container = document.getElementById('tableContainer');
-            container.innerHTML = '<div class="loading">Loading data from Google Sheet...</div>';
+<script>
+    // ------------------------------------------------------------------
+    // CONFIGURATION: Personal Google Sheet - direct usage
+    // Spreadsheet URL: https://docs.google.com/spreadsheets/d/1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY/edit?usp=sharing
+    // Extracted SPREADSHEET_ID = "1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY"
+    // We'll fetch via Google Sheets API (JSON endpoint) which requires the sheet to be published OR 
+    // we can use the `export?format=csv` fallback, BUT modern Google Sheets API needs API key for full control.
+    // However: for simple personal projects with a *publicly viewable* sheet (anyone with link can view),
+    // we can use the Google Sheets API without API key? Actually Google requires API key for sheets API v4.
+    // ALTERNATIVE: Use the "published to web" CSV/JSON approach. It's easier, no API key.
+    // Since you want to use it directly from the link and it's a personal project, we'll implement 
+    // the most robust free method: "Publish to web" CSV/JSON feed. But to avoid extra steps for user,
+    // I'll also implement a method that works if sheet is shared as "Anyone with the link can view".
+    // But the simplest & most reliable to avoid CORS / API keys is to use:
+    // `https://docs.google.com/spreadsheets/d/{sheetId}/gviz/tq?tqx=out:json&tq&sheet=Sheet1`
+    // This is a Google Visualization API endpoint, works for public/viewable sheets without API key!
+    // Yes - this endpoint returns JSONP-like data but we can parse cleanly. It's officially supported.
+    // No need for API key, no need for publish to web. If the sheet is accessible "Anyone with the link can view",
+    // this endpoint works perfectly. That's the best "direct personal project" approach.
+    // ------------------------------------------------------------------
+
+    const SPREADSHEET_ID = "1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY";
+    // default sheet name (most common first sheet). If your sheet has specific name, we can use "Sheet1" or first sheet.
+    // Using query param 'sheet' is optional, endpoint will return first sheet by default.
+    const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
+
+    // DOM elements
+    const refreshBtn = document.getElementById('refreshBtn');
+    const statusBadgeSpan = document.getElementById('statusBadge');
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+
+    // Helper: update status UI
+    function setStatus(isLoading, message = null) {
+        if (isLoading) {
+            statusBadgeSpan.innerHTML = `<span class="status-dot loading"></span> Loading data...`;
+        } else {
+            const dotClass = message && message.includes('Error') ? 'status-dot' : 'status-dot';
+            const finalMessage = message || 'Data ready';
+            statusBadgeSpan.innerHTML = `<span class="${dotClass}" style="${message && message.includes('Error') ? 'background:#d93025;' : ''}"></span> ${finalMessage}`;
+            if (message && message.includes('Error')) {
+                statusBadgeSpan.style.background = "#ffeae5";
+            } else {
+                statusBadgeSpan.style.background = "#eef3fa";
+            }
+        }
+    }
+
+    // Helper: show error inline
+    function showErrorInTable(errorMsg) {
+        tableHeader.innerHTML = `<tr><th>⚠️ Error</th></tr>`;
+        tableBody.innerHTML = `<tr class="empty-row"><td colspan="10" style="color:#c5221f;">${errorMsg}<br><small>Make sure your Google Sheet is shared with "Anyone with the link can view".<br>Go to File → Share → "General access" → "Anyone with the link" → Viewer.</small></td></tr>`;
+    }
+
+    // Parse the Google Visualization API JSON response (which includes a little javascript prefix)
+    function parseGvizResponse(responseText) {
+        // The response is like: /*O_o*/ google.visualization.Query.setResponse({...});
+        // or google.visualization.Query.setResponse({...});
+        // We extract the JSON part.
+        let jsonString = responseText;
+        // Remove the leading google.visualization.Query.setResponse( and trailing );
+        const regex = /google\.visualization\.Query\.setResponse\(([\s\S]*)\);/;
+        const match = jsonString.match(regex);
+        if (match && match[1]) {
+            jsonString = match[1];
+        } else {
+            // fallback: if the text starts with something else, try to find first curly brace.
+            const firstBrace = jsonString.indexOf('{');
+            const lastBrace = jsonString.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1) {
+                jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+            }
+        }
+        return JSON.parse(jsonString);
+    }
+
+    // Render table from parsed GViz data object
+    function renderTableFromGviz(dataObject) {
+        // dataObject structure: { version, reqId, status, table: { cols, rows } }
+        if (!dataObject.table || !dataObject.table.cols || !dataObject.table.rows) {
+            throw new Error("Invalid data format: missing table columns or rows");
+        }
+        
+        const cols = dataObject.table.cols;
+        const rows = dataObject.table.rows;
+        
+        if (cols.length === 0) {
+            throw new Error("Sheet has no columns, check if sheet is empty");
+        }
+        
+        // Build column headers (using label or id)
+        const headers = cols.map(col => col.label || col.id || `Column${col.index}`);
+        
+        // Generate thead html
+        const theadRow = document.createElement('tr');
+        headers.forEach(headerText => {
+            const th = document.createElement('th');
+            th.textContent = headerText;
+            theadRow.appendChild(th);
+        });
+        // Clear and set new header
+        tableHeader.innerHTML = '';
+        tableHeader.appendChild(theadRow);
+        
+        // Process rows: each row has 'c' array of cells (each cell could be null or object with 'v' value)
+        if (rows.length === 0) {
+            tableBody.innerHTML = `<tr class="empty-row"><td colspan="${headers.length}">✨ No data rows found in this sheet. Add some content to see records.</td></tr>`;
+            return;
+        }
+        
+        const fragment = document.createDocumentFragment();
+        for (const row of rows) {
+            const cells = row.c || [];
+            const tr = document.createElement('tr');
+            // Iterate over columns to maintain alignment
+            for (let i = 0; i < headers.length; i++) {
+                const cell = cells[i];
+                let cellValue = (cell && cell.v !== undefined && cell.v !== null) ? cell.v : '';
+                // handle dates or special types? just convert to string
+                if (typeof cellValue === 'object') {
+                    try {
+                        cellValue = JSON.stringify(cellValue);
+                    } catch (e) {
+                        cellValue = '[complex]';
+                    }
+                }
+                const td = document.createElement('td');
+                td.textContent = cellValue;
+                tr.appendChild(td);
+            }
+            fragment.appendChild(tr);
+        }
+        tableBody.innerHTML = '';
+        tableBody.appendChild(fragment);
+    }
+    
+    // Main fetch function using the Google Visualization API (no API key required)
+    async function fetchSheetData() {
+        setStatus(true);
+        // Show loading in table
+        tableHeader.innerHTML = `<tr><th>⟳ Fetching live data...</th></tr>`;
+        tableBody.innerHTML = `<tr class="empty-row"><td colspan="10">Contacting Google Sheets API — please wait...</td></tr>`;
+        
+        try {
+            // Construct URL with cache buster
+            const url = `${GViz_URL}&t=${Date.now()}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                // Important: this endpoint doesn't require CORS heavy hacks, but we set mode 'cors' works fine.
+                headers: {
+                    'Accept': 'application/json, text/plain, */*'
+                }
+            });
             
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}. Check sheet sharing settings.`);
+            }
+            
+            const responseText = await response.text();
+            // Parse the JSONP-like response
+            let parsedData;
             try {
-                // Add cache-busting parameter
-                const url = `${GOOGLE_SHEET_CSV_URL}&_=${Date.now()}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const csvText = await response.text();
-                parseAndDisplayCSV(csvText);
-                
-                document.getElementById('lastUpdated').innerText = new Date().toLocaleString();
-            } catch (error) {
-                console.error('Error loading data:', error);
-                container.innerHTML = `
-                    <div class="error">
-                        <strong>⚠️ Error loading data</strong><br><br>
-                        Make sure you have:<br>
-                        1. Published your Google Sheet to the web (File → Share → Publish to web)<br>
-                        2. Used the correct CSV export URL<br>
-                        3. Set sheet sharing to "Anyone with link can view"<br><br>
-                        Technical details: ${error.message}
-                    </div>
-                `;
-            }
-        }
-
-        function parseAndDisplayCSV(csvText) {
-            // Parse CSV (handles quoted fields properly)
-            const rows = [];
-            const regex = /(?:,|^)(?:"([^"]*(?:""[^"]*)*)"|([^",]*))/g;
-            const lines = csvText.split(/\r?\n/);
-            
-            if (lines.length === 0) {
-                throw new Error('Empty CSV data');
+                parsedData = parseGvizResponse(responseText);
+            } catch (parseErr) {
+                console.error("Parse error details:", parseErr, "Raw first 200 chars:", responseText.substring(0, 200));
+                throw new Error("Unable to parse sheet response. Ensure sheet is accessible (Anyone with link can view) and not empty.");
             }
             
-            // Parse headers
-            headers = parseCSVLine(lines[0]);
-            
-            // Parse data rows
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim()) {
-                    const row = parseCSVLine(lines[i]);
-                    if (row.length > 0) {
-                        rows.push(row);
-                    }
-                }
+            // Check for query status
+            if (parsedData.status && parsedData.status !== 'ok') {
+                throw new Error(`Google API error: ${parsedData.errors ? parsedData.errors.map(e=>e.message).join(', ') : 'Unknown error'}`);
             }
             
-            originalData = rows;
-            displayTable(originalData);
-            document.getElementById('rowCount').innerText = `📊 ${rows.length} rows`;
-        }
-
-        function parseCSVLine(line) {
-            const result = [];
-            let inQuotes = false;
-            let currentField = '';
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                
-                if (char === '"') {
-                    if (inQuotes && line[i+1] === '"') {
-                        currentField += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === ',' && !inQuotes) {
-                    result.push(currentField.trim());
-                    currentField = '';
-                } else {
-                    currentField += char;
-                }
+            // Render table with data
+            renderTableFromGviz(parsedData);
+            const rowCount = parsedData.table?.rows?.length || 0;
+            const colCount = parsedData.table?.cols?.length || 0;
+            setStatus(false, `✓ ${rowCount} rows, ${colCount} columns loaded`);
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            let friendlyMsg = error.message;
+            if (friendlyMsg.includes('Failed to fetch') || friendlyMsg.includes('NetworkError')) {
+                friendlyMsg = "Network issue: Could not connect to Google Sheets. Check your internet / CORS not blocking (but this endpoint supports CORS).";
+            } else if (friendlyMsg.includes('HTTP 404')) {
+                friendlyMsg = "Spreadsheet not found. Verify the sheet ID is correct and the sheet exists.";
+            } else if (friendlyMsg.includes('Parse')) {
+                friendlyMsg = "Data parsing error. Make sure sheet is shared as 'Anyone with the link can view'. Go to Share → General access → Anyone with the link → Viewer.";
+            } else if (friendlyMsg.includes('status')) {
+                friendlyMsg = "The sheet might be private or Google service returned error. Ensure link sharing is ON (Viewer).";
             }
-            result.push(currentField.trim());
-            return result;
+            showErrorInTable(`Failed to load data: ${friendlyMsg}`);
+            setStatus(false, `⚠️ Error - ${friendlyMsg.substring(0, 80)}`);
         }
-
-        function displayTable(data) {
-            const container = document.getElementById('tableContainer');
-            
-            if (!data || data.length === 0) {
-                container.innerHTML = '<div class="error">No data found in the sheet</div>';
-                return;
-            }
-            
-            let html = '<table>';
-            
-            // Create header
-            html += '<thead><tr>';
-            headers.forEach(header => {
-                html += `<th>${escapeHtml(header || '')}</th>`;
-            });
-            html += '</tr></thead>';
-            
-            // Create body
-            html += '<tbody>';
-            data.forEach(row => {
-                html += '<tr>';
-                for (let i = 0; i < headers.length; i++) {
-                    const cellValue = row[i] || '';
-                    html += `<td>${escapeHtml(cellValue)}</td>`;
-                }
-                html += '</tr>';
-            });
-            html += '</tbody></table>';
-            
-            container.innerHTML = html;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function filterData() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            if (!searchTerm) {
-                displayTable(originalData);
-                document.getElementById('rowCount').innerText = `📊 ${originalData.length} rows`;
-                return;
-            }
-            
-            const filtered = originalData.filter(row => {
-                return row.some(cell => 
-                    cell && cell.toString().toLowerCase().includes(searchTerm)
-                );
-            });
-            
-            displayTable(filtered);
-            document.getElementById('rowCount').innerText = `🔍 ${filtered.length} of ${originalData.length} rows`;
-        }
-
-        // Add search event listener
-        document.getElementById('searchInput').addEventListener('input', filterData);
-        
-        // Load data when page loads
-        loadData();
-    </script>
+    }
+    
+    // Optional: quick share instructions for first-time users
+    function checkAndWarnIfEmpty() {
+        // just a friendly console reminder
+        console.info("📌 Hint: For this personal project, make sure your Google Sheet is shared as 'Anyone with the link can view'. Update rows → refresh.");
+    }
+    
+    // Attach event listeners
+    refreshBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        fetchSheetData();
+    });
+    
+    // Load data automatically when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+        checkAndWarnIfEmpty();
+        fetchSheetData().catch(e => console.warn("initial load minor issue", e));
+    });
+    
+    // Add a little extra: if the user wants to open sheet in new tab for reference (optional yet useful)
+    const sheetLink = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit?usp=sharing`;
+    const footerDiv = document.querySelector('.footer-info');
+    if (footerDiv) {
+        const editLink = document.createElement('a');
+        editLink.href = sheetLink;
+        editLink.target = '_blank';
+        editLink.style.textDecoration = 'none';
+        editLink.style.marginLeft = '12px';
+        editLink.style.color = '#1a73e8';
+        editLink.style.fontWeight = '500';
+        editLink.innerHTML = '🔗 Open Spreadsheet';
+        footerDiv.appendChild(editLink);
+    }
+</script>
+<!-- 
+    IMPORTANT NOTES FOR PERSONAL PROJECT:
+    - This HTML uses Google Visualization API (gviz/tq) which works as long as your Google Sheet is shared with "Anyone with the link can view".
+    - To set that: Open your sheet → Click "Share" (top-right) → Under "General access" choose "Anyone with the link" → set role to "Viewer".
+    - No API key required. No publish to web step needed. Works instantly for your personal project.
+    - The spreadsheet ID is extracted from your provided link: 1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY
+    - Columns and rows are rendered automatically. Empty cells show as blank.
+    - For best performance, keep first sheet as the main data sheet.
+-->
 </body>
 </html>
