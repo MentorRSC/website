@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puzzle Game with Submit Button</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f4f7fa;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: 32px;
+}
+
+p {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 20px 0;
+  font-weight: bold;
+  font-size: 18px;
+  flex-wrap: wrap;
+}
+
+.top-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.95;
+}
+
+.puzzle {
+  width: 450px;
+  height: 450px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  background: #ddd;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.piece {
+  cursor: pointer;
+  border: 2px solid white;
+  transition: 0.2s;
+  background-size: 450px 450px;
+}
+
+.piece:hover {
+  transform: scale(1.02);
+}
+
+/* Popup */
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.popup-box {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  width: 350px;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<!-- Start Popup -->
+<div class="popup" id="startPopup">
+  <div class="popup-box">
+    <h2>🎮 Start Game</h2>
+    <p>Complete the puzzle before time ends!</p>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<!-- Result Popup -->
+<div class="popup hidden" id="resultPopup">
+  <div class="popup-box">
+    <h2 id="popupTitle">Result</h2>
+    <p id="popupText"></p>
+    <button onclick="restartGame()">Next / Restart</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1>🧩 Multi Level Puzzle Game</h1>
+  <p>Different images + Change Image + Submit Button</p>
+
+  <div class="stats">
+    <div>⭐ Score: <span id="score">0</span></div>
+    <div>🏆 Level: <span id="level">1</span></div>
+    <div>⏰ Time Left: <span id="timer">60</span>s</div>
+  </div>
+
+  <div class="top-buttons">
+    <button onclick="shufflePuzzle()">🔀 Shuffle</button>
+    <button onclick="changeImage()">🖼 Change Image</button>
+    <button onclick="checkWin()">✅ Submit</button>
+  </div>
+
+  <div class="puzzle" id="puzzle"></div>
+</div>
+
+<script>
+const puzzle = document.getElementById("puzzle");
+const scoreDisplay = document.getElementById("score");
+const levelDisplay = document.getElementById("level");
+const timerDisplay = document.getElementById("timer");
+
+const startPopup = document.getElementById("startPopup");
+const resultPopup = document.getElementById("resultPopup");
+const popupTitle = document.getElementById("popupTitle");
+const popupText = document.getElementById("popupText");
+
+const size = 3;
+
+let pieces = [];
+let draggedPiece = null;
+let score = 0;
+let level = 1;
+let timeLeft = 60;
+let timer;
+let currentImageIndex = 0;
+
+/* Multiple images */
+const imageLevels = [
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+  "https://images.unsplash.com/photo-1493246507139-91e8fad9978e",
+  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+  "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07",
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+  "https://images.unsplash.com/photo-1433086966358-54859d0ed716",
+  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e"
+];
+
+function createPuzzle() {
+  puzzle.innerHTML = "";
+  pieces = [];
+
+  let currentImage = imageLevels[currentImageIndex];
+
+  for (let i = 0; i < size * size; i++) {
+    const piece = document.createElement("div");
+    piece.classList.add("piece");
+    piece.dataset.index = i;
+
+    piece.style.backgroundImage = `url('${currentImage}')`;
+    piece.style.backgroundPosition =
+      `${-(i % size) * 150}px ${-Math.floor(i / size) * 150}px`;
+
+    piece.setAttribute("draggable", "true");
+
+    piece.addEventListener("dragstart", dragStart);
+    piece.addEventListener("dragover", dragOver);
+    piece.addEventListener("drop", dropPiece);
+
+    pieces.push(piece);
+  }
+
+  shufflePuzzle();
+}
+
+function startCountdown() {
+  clearInterval(timer);
+
+  timeLeft = 60;
+  timerDisplay.textContent = timeLeft;
+
+  timer = setInterval(() => {
+    timeLeft--;
+    timerDisplay.textContent = timeLeft;
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      showPopup("💀 Game Over", "Time is up! Try Again");
+    }
+  }, 1000);
+}
+
+function shufflePuzzle() {
+  let shuffled = [...pieces].sort(() => Math.random() - 0.5);
+  puzzle.innerHTML = "";
+
+  shuffled.forEach(piece => {
+    puzzle.appendChild(piece);
+  });
+}
+
+function changeImage() {
+  currentImageIndex++;
+
+  if (currentImageIndex >= imageLevels.length) {
+    currentImageIndex = 0;
+  }
+
+  createPuzzle();
+  startCountdown();
+}
+
+function dragStart() {
+  draggedPiece = this;
+}
+
+function dragOver(e) {
+  e.preventDefault();
+}
+
+function dropPiece(e) {
+  e.preventDefault();
+
+  if (draggedPiece !== this) {
+    swapPieces(draggedPiece, this);
+  }
+}
+
+function swapPieces(piece1, piece2) {
+  const temp = document.createElement("div");
+
+  puzzle.replaceChild(temp, piece1);
+  puzzle.replaceChild(piece1, piece2);
+  puzzle.replaceChild(piece2, temp);
+}
+
+function checkWin() {
+  const currentPieces = [...puzzle.children];
+
+  const isCorrect = currentPieces.every((piece, index) =>
+    Number(piece.dataset.index) === index
+  );
+
+  if (isCorrect) {
+    clearInterval(timer);
+
+    score += 100;
+    level++;
+
+    scoreDisplay.textContent = score;
+    levelDisplay.textContent = level;
+
+    currentImageIndex++;
+
+    if (currentImageIndex >= imageLevels.length) {
+      currentImageIndex = 0;
+    }
+
+    showPopup(
+      "🎉 Level Completed!",
+      `+100 Score\nNext Level: ${level}`
+    );
+  } else {
+    showPopup(
+      "❌ Wrong Arrangement",
+      "Puzzle is not solved correctly. Try again!"
+    );
+  }
+}
+
+function showPopup(title, text) {
+  popupTitle.innerText = title;
+  popupText.innerText = text;
+  resultPopup.classList.remove("hidden");
+}
+
+function startGame() {
+  startPopup.classList.add("hidden");
+  createPuzzle();
+  startCountdown();
+}
+
+function restartGame() {
+  resultPopup.classList.add("hidden");
+  createPuzzle();
+  startCountdown();
+}
+
+scoreDisplay.textContent = score;
+levelDisplay.textContent = level;
+</script>
+
+</body>
+</html>
