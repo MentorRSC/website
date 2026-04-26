@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Apps Script</title>
+</head>
+<body>
+    <h2>Attendance System Test</h2>
+    <div id="result"></div>
+    
+    <script>
+    const SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE'; // PASTE YOUR URL
+    
+    async function test() {
+        const resultDiv = document.getElementById('result');
+        
+        // Test GET
+        try {
+            const getResponse = await fetch(SCRIPT_URL);
+            const getData = await getResponse.json();
+            resultDiv.innerHTML += '<p>✅ GET Test: ' + JSON.stringify(getData) + '</p>';
+        } catch(e) {
+            resultDiv.innerHTML += '<p>❌ GET Error: ' + e.message + '</p>';
+        }
+        
+        // Test POST
+        try {
+            const postResponse = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: 'TEST_CHECKIN',
+                    data: { regNo: 'TEST001', name: 'Test User' },
+                    timestamp: new Date().toISOString()
+                })
+            });
+            const postData = await postResponse.json();
+            resultDiv.innerHTML += '<p>✅ POST Test: ' + JSON.stringify(postData) + '</p>';
+        } catch(e) {
+            resultDiv.innerHTML += '<p>❌ POST Error: ' + e.message + '</p>';
+        }
+    }
+    
+    test();
+    </script>
+</body>
+</html>
