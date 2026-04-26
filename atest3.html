@@ -3,347 +3,432 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Innovation Hub - Attendance System</title>
+    <title>Innovation Hub - Live Attendance with Popup</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 700px; margin: 0 auto; }
-        
-        /* Header */
-        .header { background: white; border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .header h1 { color: #667eea; font-size: 26px; }
-        .header p { color: #666; font-size: 13px; margin-top: 5px; }
-        
-        /* QR Icon Button */
-        .qr-icon-btn {
-            position: fixed;
-            top: 90px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            z-index: 1000;
-            transition: all 0.3s;
-            border: 2px solid white;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .qr-icon-btn:hover { transform: scale(1.05); }
-        .qr-icon-btn .icon { font-size: 28px; color: white; }
-        
-        /* 3 Options Side by Side */
-        .options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        .option-card { background: white; border-radius: 15px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .option-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-        .option-card.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .option-card .icon { font-size: 32px; margin-bottom: 8px; }
-        .option-card h3 { font-size: 13px; }
-        
-        /* Report Card */
-        .report-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .report-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        .stat { text-align: center; padding: 12px; background: #f8f9fa; border-radius: 12px; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #667eea; }
-        .stat-label { font-size: 11px; color: #666; margin-top: 5px; }
-        
-        /* Checked-in Students List */
-        .student-list { margin-top: 20px; max-height: 300px; overflow-y: auto; }
-        .student-list h4 { margin-bottom: 10px; color: #333; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-        .student-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e0e0e0; }
-        .student-info { display: flex; flex-direction: column; }
-        .student-name { font-weight: 600; color: #333; font-size: 14px; }
-        .student-reg { font-size: 11px; color: #888; }
-        .student-time { font-size: 12px; color: #667eea; font-weight: 500; }
-        .empty-list { text-align: center; color: #999; padding: 20px; font-size: 13px; }
-        
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 26px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 18px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Search Box */
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            overflow-x: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-in {
+            background: #28a74520;
+            color: #155724;
+        }
+
+        .status-out {
+            background: #dc354520;
+            color: #721c24;
+        }
+
+        .btn-action {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-checkin {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-checkout {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+
         /* Modal Popup */
-        .modal {
+        .modal-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 2000;
             justify-content: center;
             align-items: center;
         }
-        .modal.active { display: flex; }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
         .modal-content {
             background: white;
-            border-radius: 25px;
-            padding: 25px;
+            border-radius: 24px;
             width: 90%;
-            max-width: 400px;
-            position: relative;
-            animation: modalSlideIn 0.3s ease;
+            max-width: 450px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
-        @keyframes modalSlideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
+        .modal-header {
+            padding: 20px 20px 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: #333;
+        }
+
         .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 24px;
+            font-size: 28px;
             cursor: pointer;
             color: #999;
             transition: color 0.2s;
         }
-        .close-modal:hover { color: #333; }
-        .modal-header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
+
+        .close-modal:hover {
+            color: #333;
         }
-        .modal-header h3 { color: #667eea; font-size: 22px; }
-        .member-detail-row {
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .detail-row {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 12px 0;
+            margin-bottom: 12px;
             padding: 8px 0;
             border-bottom: 1px solid #f0f0f0;
         }
-        .member-detail-icon { font-size: 20px; width: 35px; }
-        .member-detail-text { flex: 1; }
-        .member-detail-label { font-size: 11px; color: #888; }
-        .member-detail-value { font-size: 15px; font-weight: 500; color: #333; }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 10px;
+
+        .detail-label {
+            width: 100px;
+            font-weight: 600;
+            color: #555;
         }
-        .status-active { background: #28a74520; color: #155724; }
-        .status-expired { background: #dc354520; color: #721c24; }
-        
-        /* Toggle Button */
-        .toggle-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .toggle-switch {
-            position: relative;
-            display: inline-flex;
-            width: 200px;
-            height: 50px;
-            background: #f0f0f0;
-            border-radius: 50px;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .toggle-option {
+
+        .detail-value {
             flex: 1;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .modal-footer {
+            padding: 15px 20px 20px 20px;
+            border-top: 1px solid #e0e0e0;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            z-index: 2;
-            transition: color 0.3s;
+            gap: 12px;
         }
-        .toggle-option.checkin { color: #666; }
-        .toggle-option.checkout { color: #666; }
-        .toggle-slider {
-            position: absolute;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            border-radius: 50px;
-            transition: transform 0.3s;
-            z-index: 1;
-        }
-        .toggle-slider.checkout-mode { transform: translateX(100%); background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
-        .toggle-option.checkin.active-toggle { color: white; }
-        .toggle-option.checkout.active-toggle { color: white; }
-        
-        .modal-btn {
-            width: 100%;
-            padding: 14px;
+
+        .modal-footer button {
+            flex: 1;
+            padding: 12px;
             border: none;
             border-radius: 12px;
-            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: transform 0.2s;
-            margin-top: 15px;
         }
-        .btn-confirm { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
-        .btn-confirm.checkout-mode { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
-        .btn-secondary { background: #6c757d; color: white; margin-top: 10px; }
-        .btn-confirm:hover { transform: translateY(-2px); }
-        
-        /* Guest Form in Modal */
-        .guest-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 15px;
+
+        .modal-footer button:hover {
+            transform: translateY(-2px);
         }
-        .guest-input:focus { outline: none; border-color: #667eea; }
-        
-        .loading { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.6s linear infinite; margin-right: 8px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* QR Modal */
-        .qr-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 3000;
-            justify-content: center;
-            align-items: center;
+
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
         }
-        .qr-modal.active { display: flex; }
-        .qr-modal-content {
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-row td {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .refresh-btn {
             background: white;
-            border-radius: 20px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-weight: bold;
         }
-        #qr-reader-modal { width: 100%; }
-        
-        @media (max-width: 500px) {
-            .options-grid { gap: 8px; }
-            .option-card { padding: 10px; }
-            .option-card .icon { font-size: 24px; }
-            .option-card h3 { font-size: 11px; }
-            .qr-icon-btn { width: 45px; height: 45px; top: 80px; right: 15px; }
+
+        @media (max-width: 700px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .search-box {
+                flex-direction: column;
+            }
+            td, th {
+                padding: 10px;
+                font-size: 13px;
+            }
         }
     </style>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🏢 Innovation Hub</h1>
-            <p>Attendance Management System</p>
+            <h1>🏢 Innovation Hub - Attendance Dashboard</h1>
+            <p>Live Tracking | Today's Records Only</p>
+            <button class="refresh-btn" onclick="fetchAndDisplayData()" style="margin-top: 12px;">⟳ Refresh Data</button>
         </div>
-        
-        <!-- 3 Options Side by Side -->
-        <div class="options-grid">
-            <div class="option-card" data-option="regNo">
-                <div class="icon">🆔</div>
-                <h3>Enter Reg ID</h3>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">-</div>
+                <div class="stat-label">Total Visitors Today</div>
             </div>
-            <div class="option-card" data-option="name">
-                <div class="icon">👤</div>
-                <h3>Enter Name</h3>
+            <div class="stat-card">
+                <div class="stat-number" id="checkedInCount">-</div>
+                <div class="stat-label">Currently Inside</div>
             </div>
-            <div class="option-card" data-option="guest">
-                <div class="icon">👋</div>
-                <h3>Guest Login</h3>
+            <div class="stat-card">
+                <div class="stat-number" id="completedCount">-</div>
+                <div class="stat-label">Checked Out Today</div>
             </div>
         </div>
-        
-        <!-- QR Icon Button -->
-        <div class="qr-icon-btn" onclick="openQRModal()">
-            <div class="icon">📱</div>
-        </div>
-        
-        <!-- Report Section -->
-        <div class="report-card">
-            <h3>📊 Today's Report</h3>
-            <div id="reportContent">Loading...</div>
-        </div>
-        
-        <!-- Checked-in Students List -->
-        <div class="report-card">
-            <div class="student-list">
-                <h4>📋 Currently Checked-in</h4>
-                <div id="checkedInList">Loading...</div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search by Name, Reg ID, or Phone..." autocomplete="off">
+                <button onclick="searchAttendance()">Search</button>
+                <button onclick="clearSearch()" style="background: #6c757d;">Clear</button>
             </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table id="attendanceTable">
+                <thead>
+                    <tr>
+                        <th>SL No</th>
+                        <th>Reg ID</th>
+                        <th>Name</th>
+                        <th>Sign In Time</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="empty-row">
+                        <td colspan="7">Loading today's attendance data...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-    
-    <!-- Member Modal Popup -->
-    <div id="memberModal" class="modal">
+
+    <!-- Modal Popup -->
+    <div id="memberModal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeMemberModal()">&times;</span>
             <div class="modal-header">
                 <h3>👤 Member Details</h3>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
             </div>
-            <div id="memberModalContent"></div>
-            <div class="toggle-container">
-                <div class="toggle-switch" onclick="toggleMode()">
-                    <div class="toggle-option checkin" id="toggleCheckin">✅ Check In</div>
-                    <div class="toggle-option checkout" id="toggleCheckout">🚪 Check Out</div>
-                    <div class="toggle-slider" id="toggleSlider"></div>
-                </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content will be inserted here -->
             </div>
-            <button class="modal-btn btn-confirm" id="confirmBtn" onclick="confirmAction()">Confirm Check In</button>
-            <button class="modal-btn btn-secondary" onclick="closeMemberModal()">Cancel</button>
-        </div>
-    </div>
-    
-    <!-- Guest Modal Popup -->
-    <div id="guestModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeGuestModal()">&times;</span>
-            <div class="modal-header">
-                <h3>👋 Guest Check-in</h3>
+            <div class="modal-footer" id="modalFooter">
+                <!-- Dynamic button will be inserted here -->
             </div>
-            <input type="text" id="guestNameInput" class="guest-input" placeholder="Full Name *">
-            <input type="tel" id="guestMobileInput" class="guest-input" placeholder="Mobile Number *">
-            <input type="text" id="guestPurposeInput" class="guest-input" placeholder="Purpose of Visit (Optional)">
-            <button class="modal-btn btn-confirm" onclick="confirmGuestCheckIn()">Check In</button>
-            <button class="modal-btn btn-secondary" onclick="closeGuestModal()">Cancel</button>
-            <div id="guestModalMessage"></div>
-        </div>
-    </div>
-    
-    <!-- QR Modal -->
-    <div id="qrModal" class="qr-modal">
-        <div class="qr-modal-content">
-            <span class="close-modal" onclick="closeQRModal()">&times;</span>
-            <h3 style="margin-bottom: 15px;">📱 Scan QR Code</h3>
-            <div id="qr-reader-modal"></div>
-            <button onclick="closeQRModal()" style="margin-top: 15px; background: #dc3545; width: 100%; padding: 12px; border: none; border-radius: 10px; color: white;">Close</button>
-            <div id="qrResultModal"></div>
         </div>
     </div>
 
     <script>
-        // ⚠️ REPLACE WITH YOUR WEB APP URL (for member data)
-        const MEMBER_API_URL = 'https://script.google.com/macros/s/AKfycbxpvw7_VOAsx0Qkwjuuj9ynS9VmJju5dRszFpHlX4ntwtQWKZRfem0fiakneQNrpb0V/exec';
+        // ---------- CONFIGURATION ----------
+        // Google Sheets Web App URL (replace with your deployed URL)
+        const SHEET_ID = '1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxpvw7_VOAsx0Qkwjuuj9ynS9VmJju5dRszFpHlX4ntwtQWKZRfem0fiakneQNrpb0V/exec';
         
-        // ⚠️ ATTENDANCE REPORT SHEET URL (for reading/writing attendance)
-        const ATTENDANCE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY/edit?usp=sharing';
-        // Extract sheet ID from URL
-        const ATTENDANCE_SHEET_ID = '1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY';
+        let currentAttendanceData = []; // Store current day's data
+        let currentSelectedRecord = null; // Store selected record for modal
         
-        let currentMember = null;
-        let currentMode = 'checkin'; // 'checkin' or 'checkout'
-        let currentSource = null;
-        let html5QrCode = null;
-        let autoRefreshInterval = null;
-        
-        // JSONP API Call for Member Data
-        async function callAPI(action, params = {}) {
+        // ---------- HELPER: Fetch data from Google Sheets via JSONP ----------
+        async function fetchSheetData() {
             return new Promise((resolve, reject) => {
-                const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-                let url = `${MEMBER_API_URL}?action=${action}&callback=${callbackName}`;
-                for (let key in params) {
-                    url += `&${key}=${encodeURIComponent(params[key])}`;
-                }
+                const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                let url = `${WEB_APP_URL}?action=getTodayAttendance&sheetId=${SHEET_ID}&callback=${callbackName}`;
                 
                 window[callbackName] = function(data) {
                     delete window[callbackName];
@@ -356,445 +441,364 @@
                 script.onerror = function() {
                     delete window[callbackName];
                     document.body.removeChild(script);
-                    reject(new Error('JSONP request failed'));
+                    reject(new Error('Failed to fetch data from server'));
                 };
                 document.body.appendChild(script);
             });
         }
         
-        // Direct POST to Attendance Sheet using Google Apps Script Web App
-        async function saveToAttendanceSheet(action, data) {
-            // You need to create a separate Apps Script for attendance sheet operations
-            // For now, we'll use the same API with different action names
-            return await callAPI(action, data);
+        // ---------- Process and Display Data ----------
+        async function fetchAndDisplayData() {
+            showLoadingState();
+            try {
+                const result = await fetchSheetData();
+                if (result && result.status === 'success') {
+                    currentAttendanceData = result.data || [];
+                    renderStats(currentAttendanceData);
+                    renderTable(currentAttendanceData);
+                } else {
+                    throw new Error(result?.message || 'Failed to load data');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('tableBody').innerHTML = '<tr class="empty-row"><td colspan="7">❌ Error loading data. Please check connection and try again.</td></tr>';
+                document.getElementById('totalCount').innerText = '0';
+                document.getElementById('checkedInCount').innerText = '0';
+                document.getElementById('completedCount').innerText = '0';
+            }
         }
         
-        async function getMemberByRegNo(regNo) {
-            return await callAPI('getMemberByReg', { regNo: regNo });
+        function showLoadingState() {
+            document.getElementById('tableBody').innerHTML = '<tr class="empty-row"><td colspan="7"><span class="loading-spinner"></span> Loading today\'s records...</td></tr>';
         }
         
-        async function getMemberByName(name) {
-            return await callAPI('getMemberByName', { name: name });
+        function renderStats(data) {
+            const total = data.length;
+            // Currently inside = checked in but not checked out (Sign Out Time is empty)
+            const checkedIn = data.filter(record => record.signInTime && (!record.signOutTime || record.signOutTime === '')).length;
+            const completed = data.filter(record => record.signOutTime && record.signOutTime !== '').length;
+            
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('checkedInCount').innerText = checkedIn;
+            document.getElementById('completedCount').innerText = completed;
         }
         
-        async function memberCheckIn(data) {
-            return await callAPI('memberCheckin', data);
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="7">📭 No attendance records for today.</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach((record, index) => {
+                const isCheckedIn = record.signInTime && (!record.signOutTime || record.signOutTime === '');
+                const statusText = isCheckedIn ? 'Inside' : 'Completed';
+                const statusClass = isCheckedIn ? 'status-in' : 'status-out';
+                const actionText = isCheckedIn ? 'Check Out' : 'Check In';
+                const actionClass = isCheckedIn ? 'btn-checkout' : 'btn-checkin';
+                
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapeHtml(record.regId || '-')}</td>
+                        <td><strong>${escapeHtml(record.name || 'Guest')}</strong></td>
+                        <td>${escapeHtml(record.signInTime || '-')}</td>
+                        <td>${escapeHtml(record.phone || '-')}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="btn-action ${actionClass}" onclick="openMemberModal(${index})">
+                                ${actionText}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
         
-        async function memberCheckOut(data) {
-            return await callAPI('memberCheckout', data);
+        // ---------- Search Functionality ----------
+        function searchAttendance() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!searchTerm) {
+                renderTable(currentAttendanceData);
+                return;
+            }
+            
+            const filtered = currentAttendanceData.filter(record => {
+                return (record.name && record.name.toLowerCase().includes(searchTerm)) ||
+                       (record.regId && record.regId.toLowerCase().includes(searchTerm)) ||
+                       (record.phone && record.phone.includes(searchTerm));
+            });
+            renderTable(filtered);
+            
+            // Update stats for filtered view? Optional: We'll keep original stats, but show filtered count in a small note
+            const statsGrid = document.getElementById('statsGrid');
+            let note = document.getElementById('searchNote');
+            if (!note) {
+                note = document.createElement('div');
+                note.id = 'searchNote';
+                note.style.fontSize = '12px';
+                note.style.marginTop = '8px';
+                note.style.textAlign = 'center';
+                statsGrid.parentNode.insertBefore(note, statsGrid.nextSibling);
+            }
+            if (filtered.length !== currentAttendanceData.length) {
+                note.innerHTML = `🔍 Showing ${filtered.length} of ${currentAttendanceData.length} records`;
+                note.style.display = 'block';
+            } else {
+                note.style.display = 'none';
+            }
         }
         
-        async function guestCheckIn(data) {
-            return await callAPI('guestCheckin', data);
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            renderTable(currentAttendanceData);
+            const note = document.getElementById('searchNote');
+            if (note) note.style.display = 'none';
         }
         
-        async function getTodayReport() {
-            return await callAPI('getTodayReport');
-        }
-        
-        // Show Member Modal
-        function showMemberModal(member, source) {
-            currentMember = member;
-            currentSource = source;
-            currentMode = 'checkin';
-            updateModalUI();
+        // ---------- Modal Functions (Popup with Details & Toggle Action) ----------
+        function openMemberModal(index) {
+            const record = currentAttendanceData[index];
+            if (!record) return;
+            currentSelectedRecord = record;
+            currentSelectedRecord.originalIndex = index;
+            
+            const isCheckedIn = record.signInTime && (!record.signOutTime || record.signOutTime === '');
+            
+            // Build modal body with details
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">SL No:</div>
+                    <div class="detail-value">${index + 1}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Reg ID:</div>
+                    <div class="detail-value">${escapeHtml(record.regId || 'Guest')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Name:</div>
+                    <div class="detail-value"><strong>${escapeHtml(record.name || 'Guest User')}</strong></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Phone:</div>
+                    <div class="detail-value">${escapeHtml(record.phone || 'Not provided')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Sign In Time:</div>
+                    <div class="detail-value">${escapeHtml(record.signInTime || '-')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Sign Out Time:</div>
+                    <div class="detail-value">${escapeHtml(record.signOutTime || 'Not checked out')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Type:</div>
+                    <div class="detail-value">${escapeHtml(record.type || 'Member')}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Day:</div>
+                    <div class="detail-value">${escapeHtml(record.day || new Date().toLocaleDateString())}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Status:</div>
+                    <div class="detail-value">${isCheckedIn ? '✅ Currently Inside' : '🏁 Completed Visit'}</div>
+                </div>
+            `;
+            
+            // Build footer with appropriate action button
+            const modalFooter = document.getElementById('modalFooter');
+            const actionButton = isCheckedIn 
+                ? `<button class="btn-checkout" style="background:#dc3545; color:white;" onclick="performCheckOut()">🚪 Check Out</button>`
+                : `<button class="btn-checkin" style="background:#28a745; color:white;" onclick="performCheckIn()">✅ Check In</button>`;
+            
+            modalFooter.innerHTML = `
+                ${actionButton}
+                <button onclick="closeModal()" style="background:#6c757d; color:white;">Cancel</button>
+            `;
+            
+            // Show modal
             document.getElementById('memberModal').classList.add('active');
         }
         
-        function updateModalUI() {
-            if (!currentMember) return;
+        // ---------- Perform Check In / Check Out actions (Updates UI & Simulates backend) ----------
+        async function performCheckIn() {
+            if (!currentSelectedRecord) return;
             
-            const isValid = currentMember.isValid;
-            const statusClass = isValid ? 'status-active' : 'status-expired';
-            const statusText = isValid ? 'ACTIVE' : 'EXPIRED';
+            // Disable button during operation
+            const footerBtns = document.querySelectorAll('#modalFooter button');
+            footerBtns.forEach(btn => btn.disabled = true);
             
-            const html = `
-                <div class="member-detail-row">
-                    <div class="member-detail-icon">👤</div>
-                    <div class="member-detail-text">
-                        <div class="member-detail-label">Name</div>
-                        <div class="member-detail-value">${escapeHtml(currentMember.name)} <span class="status-badge ${statusClass}">${statusText}</span></div>
-                    </div>
-                </div>
-                <div class="member-detail-row">
-                    <div class="member-detail-icon">🆔</div>
-                    <div class="member-detail-text">
-                        <div class="member-detail-label">Registration Number</div>
-                        <div class="member-detail-value">${escapeHtml(currentMember.regNo)}</div>
-                    </div>
-                </div>
-                <div class="member-detail-row">
-                    <div class="member-detail-icon">📞</div>
-                    <div class="member-detail-text">
-                        <div class="member-detail-label">Phone Number</div>
-                        <div class="member-detail-value">${escapeHtml(currentMember.phone) || 'N/A'}</div>
-                    </div>
-                </div>
-                <div class="member-detail-row">
-                    <div class="member-detail-icon">📅</div>
-                    <div class="member-detail-text">
-                        <div class="member-detail-label">Membership Validity</div>
-                        <div class="member-detail-value">${escapeHtml(currentMember.validity) || 'N/A'}</div>
-                    </div>
-                </div>
-                ${!isValid ? '<div style="color:#dc3545; text-align:center; margin-top:10px;">⚠️ Membership Expired! Please renew.</div>' : ''}
-            `;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
             
-            document.getElementById('memberModalContent').innerHTML = html;
-            updateToggleUI();
-        }
-        
-        function toggleMode() {
-            if (!currentMember || !currentMember.isValid) return;
-            currentMode = currentMode === 'checkin' ? 'checkout' : 'checkin';
-            updateToggleUI();
+            // Prepare updated record
+            const updatedRecord = {
+                ...currentSelectedRecord,
+                signInTime: timeString,
+                signOutTime: '',
+                day: dateString,
+                status: 'Inside'
+            };
             
-            const confirmBtn = document.getElementById('confirmBtn');
-            if (currentMode === 'checkin') {
-                confirmBtn.innerHTML = 'Confirm Check In';
-                confirmBtn.classList.remove('checkout-mode');
-            } else {
-                confirmBtn.innerHTML = 'Confirm Check Out';
-                confirmBtn.classList.add('checkout-mode');
-            }
-        }
-        
-        function updateToggleUI() {
-            const slider = document.getElementById('toggleSlider');
-            const checkinOpt = document.getElementById('toggleCheckin');
-            const checkoutOpt = document.getElementById('toggleCheckout');
-            
-            if (currentMode === 'checkin') {
-                slider.classList.remove('checkout-mode');
-                checkinOpt.classList.add('active-toggle');
-                checkoutOpt.classList.remove('active-toggle');
-            } else {
-                slider.classList.add('checkout-mode');
-                checkoutOpt.classList.add('active-toggle');
-                checkinOpt.classList.remove('active-toggle');
-            }
-        }
-        
-        async function confirmAction() {
-            if (!currentMember) return;
-            
-            const confirmBtn = document.getElementById('confirmBtn');
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="loading"></span> Processing...';
-            
-            let result;
-            if (currentMode === 'checkin') {
-                result = await memberCheckIn({
-                    regNo: currentMember.regNo,
-                    name: currentMember.name,
-                    phone: currentMember.phone,
-                    validity: currentMember.validity,
-                    timestamp: new Date().toISOString()
-                });
-            } else {
-                result = await memberCheckOut({
-                    regNo: currentMember.regNo,
-                    name: currentMember.name,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            if (result.status === 'success') {
-                closeMemberModal();
-                await loadTodayReport();
-                await loadCheckedInList();
-                showToast(result.message, 'success');
-            } else {
-                showToast(result.message || 'Action failed', result.status === 'warning' ? 'warning' : 'error');
-            }
-            
-            confirmBtn.disabled = false;
-            confirmBtn.innerHTML = currentMode === 'checkin' ? 'Confirm Check In' : 'Confirm Check Out';
-        }
-        
-        async function verifyAndShowModal(source) {
-            let result;
-            
-            if (source === 'regNo') {
-                const regNo = document.getElementById('regInput').value.trim();
-                if (!regNo) { showToast('Please enter Registration Number', 'error'); return; }
-                result = await getMemberByRegNo(regNo);
-            } else if (source === 'name') {
-                const name = document.getElementById('nameInput').value.trim();
-                if (!name) { showToast('Please enter Name', 'error'); return; }
-                result = await getMemberByName(name);
-            }
-            
-            if (result && result.status === 'found') {
-                // Check current status from live report
-                const report = await getTodayReport();
-                const isCheckedIn = report.activeMembers?.some(m => m.regNo === result.regNo) || false;
-                
-                currentMember = result;
-                currentSource = source;
-                currentMode = isCheckedIn ? 'checkout' : 'checkin';
-                showMemberModal(currentMember, source);
-            } else if (result && result.status === 'multiple') {
-                showToast('Multiple members found. Please use Reg ID.', 'warning');
-            } else {
-                showToast(`Member not found`, 'error');
-            }
-        }
-        
-        // Guest Functions
-        function showGuestModal() {
-            document.getElementById('guestModal').classList.add('active');
-        }
-        
-        function closeGuestModal() {
-            document.getElementById('guestModal').classList.remove('active');
-            document.getElementById('guestNameInput').value = '';
-            document.getElementById('guestMobileInput').value = '';
-            document.getElementById('guestPurposeInput').value = '';
-            document.getElementById('guestModalMessage').innerHTML = '';
-        }
-        
-        async function confirmGuestCheckIn() {
-            const name = document.getElementById('guestNameInput').value.trim();
-            const mobile = document.getElementById('guestMobileInput').value.trim();
-            const purpose = document.getElementById('guestPurposeInput').value.trim();
-            
-            if (!name || !mobile) {
-                document.getElementById('guestModalMessage').innerHTML = '<div class="message error">Please enter Name and Mobile Number</div>';
-                return;
-            }
-            if (!/^\d{10}$/.test(mobile)) {
-                document.getElementById('guestModalMessage').innerHTML = '<div class="message error">Please enter valid 10-digit mobile number</div>';
-                return;
-            }
-            
-            const btn = event.target;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Processing...';
-            
-            const result = await guestCheckIn({
-                name: name,
-                mobile: mobile,
-                purpose: purpose || 'Visit',
-                timestamp: new Date().toISOString()
-            });
-            
-            if (result.status === 'success') {
-                closeGuestModal();
-                await loadTodayReport();
-                await loadCheckedInList();
-                showToast(result.message, 'success');
-                
-                if (confirm('Would you like to check out now?')) {
-                    await guestCheckOut(name);
-                    await loadTodayReport();
-                    await loadCheckedInList();
-                }
-            } else {
-                document.getElementById('guestModalMessage').innerHTML = `<div class="message error">${result.message}</div>`;
-            }
-            
-            btn.disabled = false;
-            btn.innerHTML = 'Check In';
-        }
-        
-        async function guestCheckOut(name) {
-            const result = await callAPI('guestCheckout', { name: name, timestamp: new Date().toISOString() });
-            if (result.status === 'success') {
-                showToast(result.message, 'success');
-            } else {
-                showToast(result.message, 'warning');
-            }
-        }
-        
-        // Load Report from Attendance Sheet
-        async function loadTodayReport() {
             try {
-                // This should fetch from your attendance sheet
-                const report = await getTodayReport();
-                if (report.status === 'success') {
-                    document.getElementById('reportContent').innerHTML = `
-                        <div class="report-stats">
-                            <div class="stat"><div class="stat-number">${report.activeCount || 0}</div><div class="stat-label">Currently Inside</div></div>
-                            <div class="stat"><div class="stat-number">${report.completedCount || 0}</div><div class="stat-label">Completed Today</div></div>
-                            <div class="stat"><div class="stat-number">${report.guestCount || 0}</div><div class="stat-label">Guest Visitors</div></div>
-                        </div>
-                        <div class="stat"><div class="stat-number">${report.totalVisitors || 0}</div><div class="stat-label">Total Visitors Today</div></div>
-                    `;
+                // Call backend to update (simulate or real API)
+                const result = await updateAttendanceInSheet(currentSelectedRecord, 'checkin', timeString);
+                if (result && result.status === 'success') {
+                    // Update local data
+                    const index = currentSelectedRecord.originalIndex;
+                    currentAttendanceData[index] = updatedRecord;
+                    currentSelectedRecord = updatedRecord;
+                    
+                    // Re-render UI
+                    renderStats(currentAttendanceData);
+                    renderTable(currentAttendanceData);
+                    closeModal();
+                    showToast('✅ Check-in successful!', 'success');
                 } else {
-                    document.getElementById('reportContent').innerHTML = '<p>Waiting for attendance data...</p>';
+                    throw new Error(result?.message || 'Check-in failed');
                 }
-            } catch(e) { 
-                document.getElementById('reportContent').innerHTML = '<p>Loading report...</p>';
+            } catch (error) {
+                console.error('Check-in error:', error);
+                showToast('❌ Check-in failed: ' + error.message, 'error');
+                footerBtns.forEach(btn => btn.disabled = false);
+                closeModal();
             }
         }
         
-        async function loadCheckedInList() {
-            try {
-                const report = await getTodayReport();
-                if (report.status === 'success' && report.activeMembers && report.activeMembers.length > 0) {
-                    let html = '';
-                    report.activeMembers.forEach(m => {
-                        html += `
-                            <div class="student-item">
-                                <div class="student-info">
-                                    <span class="student-name">👤 ${escapeHtml(m.name)}</span>
-                                    <span class="student-reg">🆔 ${escapeHtml(m.regNo)}</span>
-                                </div>
-                                <div class="student-time">⏰ ${m.checkIn}</div>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('checkedInList').innerHTML = html;
-                } else {
-                    document.getElementById('checkedInList').innerHTML = '<div class="empty-list">✨ No one is currently checked in</div>';
-                }
-            } catch(e) {
-                document.getElementById('checkedInList').innerHTML = '<div class="empty-list">Loading...</div>';
-            }
-        }
-        
-        // Toast Notification
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#ffc107'};
-                color: white;
-                padding: 12px 20px;
-                border-radius: 25px;
-                font-size: 14px;
-                z-index: 4000;
-                animation: slideUp 0.3s ease;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            `;
-            toast.innerHTML = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'slideDown 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-        
-        // QR Modal Functions
-        function openQRModal() {
-            document.getElementById('qrModal').classList.add('active');
-            startQRScannerInModal();
-        }
-        
-        function closeQRModal() {
-            document.getElementById('qrModal').classList.remove('active');
-            if (html5QrCode) {
-                html5QrCode.stop();
-                html5QrCode = null;
-            }
-            document.getElementById('qrResultModal').innerHTML = '';
-        }
-        
-        function startQRScannerInModal() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => startNewScannerModal()).catch(() => startNewScannerModal());
-            } else {
-                startNewScannerModal();
-            }
-        }
-        
-        function startNewScannerModal() {
-            html5QrCode = new Html5Qrcode("qr-reader-modal");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
-                async (decodedText) => {
-                    html5QrCode.stop();
-                    const result = await getMemberByRegNo(decodedText);
-                    if (result.status === 'found') {
-                        document.getElementById('qrResultModal').innerHTML = `
-                            <div class="member-info" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px;">
-                                <div><strong>✅ ${escapeHtml(result.name)}</strong></div>
-                                <div>🆔 ${result.regNo}</div>
-                                <button onclick="processQRCheckin('${result.regNo}', '${escapeHtml(result.name)}', '${result.phone || ''}', '${result.validity || ''}')" style="margin-top: 10px; width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px;">Check In Now</button>
-                            </div>
-                        `;
-                    } else {
-                        document.getElementById('qrResultModal').innerHTML = `<div class="message error" style="margin-top: 15px;">❌ Not a valid member QR code.</div>`;
-                    }
-                }, (error) => { console.log("Scanning..."); });
-        }
-        
-        async function processQRCheckin(regNo, name, phone, validity) {
-            const result = await memberCheckIn({
-                regNo: regNo,
-                name: name,
-                phone: phone,
-                validity: validity,
-                timestamp: new Date().toISOString()
-            });
+        async function performCheckOut() {
+            if (!currentSelectedRecord) return;
             
-            if (result.status === 'success') {
-                showToast(result.message, 'success');
-                closeQRModal();
-                await loadTodayReport();
-                await loadCheckedInList();
-            } else {
-                showToast(result.message || 'Check-in failed', 'error');
+            // Disable buttons
+            const footerBtns = document.querySelectorAll('#modalFooter button');
+            footerBtns.forEach(btn => btn.disabled = true);
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            const updatedRecord = {
+                ...currentSelectedRecord,
+                signOutTime: timeString,
+                status: 'Completed'
+            };
+            
+            try {
+                const result = await updateAttendanceInSheet(currentSelectedRecord, 'checkout', timeString);
+                if (result && result.status === 'success') {
+                    const index = currentSelectedRecord.originalIndex;
+                    currentAttendanceData[index] = updatedRecord;
+                    currentSelectedRecord = updatedRecord;
+                    
+                    renderStats(currentAttendanceData);
+                    renderTable(currentAttendanceData);
+                    closeModal();
+                    showToast('🚪 Check-out successful!', 'success');
+                } else {
+                    throw new Error(result?.message || 'Check-out failed');
+                }
+            } catch (error) {
+                console.error('Check-out error:', error);
+                showToast('❌ Check-out failed: ' + error.message, 'error');
+                footerBtns.forEach(btn => btn.disabled = false);
+                closeModal();
             }
         }
         
-        function closeMemberModal() {
+        // Backend communication (update sheet via JSONP)
+        async function updateAttendanceInSheet(record, action, timeValue) {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'jsonp_update_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                let url = `${WEB_APP_URL}?action=updateAttendance&sheetId=${SHEET_ID}&regId=${encodeURIComponent(record.regId || '')}&name=${encodeURIComponent(record.name || '')}&actionType=${action}&time=${encodeURIComponent(timeValue)}&callback=${callbackName}`;
+                
+                // Add phone if exists
+                if (record.phone) url += `&phone=${encodeURIComponent(record.phone)}`;
+                if (record.type) url += `&type=${encodeURIComponent(record.type)}`;
+                
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    resolve(data);
+                };
+                
+                const script = document.createElement('script');
+                script.src = url;
+                script.onerror = function() {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    reject(new Error('Network error while updating'));
+                };
+                document.body.appendChild(script);
+            });
+        }
+        
+        // ---------- Utility Functions ----------
+        function closeModal() {
             document.getElementById('memberModal').classList.remove('active');
-            currentMember = null;
+            currentSelectedRecord = null;
         }
         
-        function escapeHtml(str) { 
-            if (!str) return ''; 
-            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); 
+        function showToast(message, type = 'info') {
+            // Create temporary toast element
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
+            toast.innerHTML = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = type === 'success' ? '#28a745' : '#dc3545';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '30px';
+            toast.style.fontWeight = 'bold';
+            toast.style.zIndex = '3000';
+            toast.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            toast.style.fontSize = '14px';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 300);
+            }, 2500);
         }
         
-        // Option selection
-        document.querySelectorAll('.option-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const option = card.dataset.option;
-                if (option === 'regNo') {
-                    const regNo = prompt('Enter Registration Number:');
-                    if (regNo) {
-                        document.getElementById('regInput').value = regNo;
-                        verifyAndShowModal('regNo');
-                    }
-                } else if (option === 'name') {
-                    const name = prompt('Enter your Name:');
-                    if (name) {
-                        document.getElementById('nameInput').value = name;
-                        verifyAndShowModal('name');
-                    }
-                } else if (option === 'guest') {
-                    showGuestModal();
-                }
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
+        }
+        
+        // ---------- Auto Refresh Every 15 Seconds ----------
+        let autoRefreshInterval = null;
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                fetchAndDisplayData();
+            }, 15000);
+        }
+        
+        // Close modal when clicking outside content
+        document.getElementById('memberModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
         });
         
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideUp {
-                from { transform: translateX(-50%) translateY(100px); opacity: 0; }
-                to { transform: translateX(-50%) translateY(0); opacity: 1; }
-            }
-            @keyframes slideDown {
-                from { transform: translateX(-50%) translateY(0); opacity: 1; }
-                to { transform: translateX(-50%) translateY(100px); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-        
         // Initialize
-        loadTodayReport();
-        loadCheckedInList();
-        setInterval(() => {
-            loadTodayReport();
-            loadCheckedInList();
-        }, 10000);
+        fetchAndDisplayData();
+        startAutoRefresh();
+        
+        // Add search on Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchAttendance();
+        });
     </script>
 </body>
 </html>
