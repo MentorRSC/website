@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Logger - Innovation Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #1e3c72;
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .member-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .member-info.expired {
+            border-left-color: #dc3545;
+            background: #fef2f2;
+        }
+        
+        .member-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .badge-active {
+            background: #28a74520;
+            color: #155724;
+        }
+        
+        .badge-expired {
+            background: #dc354520;
+            color: #721c24;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-buttons button {
+            flex: 1;
+            padding: 12px;
+        }
+        
+        .btn-checkin {
+            background: #28a745;
+        }
+        
+        .btn-checkout {
+            background: #dc3545;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🏢 Innovation Hub</h1>
+                <p>Member Attendance Logger</p>
+            </div>
+            
+            <div class="input-group">
+                <label>📇 Registration Number</label>
+                <input type="text" id="regNo" placeholder="Enter your Reg No (e.g., IH2511053)" autocomplete="off">
+            </div>
+            
+            <button id="verifyBtn">🔍 Verify & Proceed</button>
+            
+            <div id="result"></div>
+        </div>
+        
+        <div class="card" id="statsCard" style="display: none;">
+            <h3>📊 Today's Attendance</h3>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE WITH YOUR WEB APP URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+        
+        let currentMember = null;
+        let currentStatus = null;
+        
+        async function callAPI(action, data = {}) {
+            try {
+                let url = `${WEB_APP_URL}?action=${action}`;
+                if (data.regNo) url += `&regNo=${data.regNo}`;
+                if (data.date) url += `&date=${data.date}`;
+                
+                const response = await fetch(url);
+                return await response.json();
+            } catch(e) {
+                console.error('API Error:', e);
+                return { status: 'error', message: 'Network error' };
+            }
+        }
+        
+        async function postAction(type, data) {
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: type,
+                        data: data,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                return await response.json();
+            } catch(e) {
+                console.error('Post Error:', e);
+                return { status: 'error', message: e.message };
+            }
+        }
+        
+        function showMessage(text, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}`;
+            msgDiv.innerHTML = text;
+            
+            const existingMsg = resultDiv.querySelector('.message');
+            if (existingMsg) existingMsg.remove();
+            
+            resultDiv.insertBefore(msgDiv, resultDiv.firstChild);
+            
+            setTimeout(() => {
+                if (msgDiv.parentNode) msgDiv.remove();
+            }, 5000);
+        }
+        
+        async function handleVerify() {
+            const regNo = document.getElementById('regNo').value.trim();
+            if (!regNo) {
+                showMessage('Please enter Registration Number', 'error');
+                return;
+            }
+            
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="loading"></span> Verifying...';
+            
+            try {
+                const member = await callAPI('getMember', { regNo: regNo });
+                
+                if (member.status === 'found') {
+                    currentMember = member;
+                    
+                    // Check if already checked in today
+                    const attendance = await callAPI('getAttendance', { regNo: regNo });
+                    const todayRecord = attendance.records?.find(r => r.status === 'CHECKED-IN');
+                    currentStatus = todayRecord ? 'CHECKED-IN' : null;
+                    
+                    displayMemberCard(member, currentStatus === 'CHECKED-IN');
+                    showMessage(`✅ Member verified: ${member.name}`, 'success');
+                    
+                    // Load today's stats
+                    loadTodayStats();
+                } else {
+                    currentMember = null;
+                    document.getElementById('result').innerHTML = '';
+                    showMessage(`❌ Registration number ${regNo} not found`, 'error');
+                }
+            } catch(e) {
+                showMessage('Server error. Please try again.', 'error');
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '🔍 Verify & Proceed';
+            }
+        }
+        
+        function displayMemberCard(member, isCheckedIn) {
+            const isValid = member.isValid;
+            const statusClass = isValid ? 'badge-active' : 'badge-expired';
+            const statusText = isValid ? 'ACTIVE' : 'EXPIRED';
+            const cardClass = isValid ? '' : 'expired';
+            
+            const html = `
+                <div class="member-info ${cardClass}">
+                    <div class="member-name">
+                        ${escapeHtml(member.name)}
+                        <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="detail-row">🆔 ${escapeHtml(member.regNo)}</div>
+                    <div class="detail-row">📞 ${escapeHtml(member.phone) || 'N/A'}</div>
+                    <div class="detail-row">📅 Valid until: ${escapeHtml(member.validity) || 'N/A'}</div>
+                    <div class="detail-row">⏰ ${member.validityMessage || ''}</div>
+                    
+                    ${isValid ? `
+                        <div class="action-buttons">
+                            ${!isCheckedIn ? '<button class="btn-checkin" onclick="handleCheckIn()">✅ Check In</button>' : ''}
+                            ${isCheckedIn ? '<button class="btn-checkout" onclick="handleCheckOut()">🚪 Check Out</button>' : ''}
+                        </div>
+                    ` : '<div style="color:#dc3545; margin-top:10px;">⚠️ Membership expired. Please renew.</div>'}
+                </div>
+            `;
+            
+            document.getElementById('result').innerHTML = html;
+        }
+        
+        async function handleCheckIn() {
+            if (!currentMember || !currentMember.isValid) return;
+            
+            const result = await postAction('CHECKIN', {
+                regNo: currentMember.regNo,
+                name: currentMember.name,
+                phone: currentMember.phone,
+                dob: currentMember.dob,
+                validity: currentMember.validity
+            });
+            
+            if (result.status === 'success') {
+                showMessage(result.message, 'success');
+                currentStatus = 'CHECKED-IN';
+                displayMemberCard(currentMember, true);
+                loadTodayStats();
+            } else if (result.status === 'warning') {
+                showMessage(result.message, 'warning');
+            } else {
+                showMessage('Check-in failed: ' + result.message, 'error');
+            }
+        }
+        
+        async function handleCheckOut() {
+            if (!currentMember) return;
+            
+            const result = await postAction('CHECKOUT', {
+                regNo: currentMember.regNo,
+                name: currentMember.name
+            });
+            
+            if (result.status === 'success') {
+                showMessage(result.message, 'success');
+                currentStatus = null;
+                displayMemberCard(currentMember, false);
+                loadTodayStats();
+            } else {
+                showMessage('Check-out failed: ' + result.message, 'error');
+            }
+        }
+        
+        async function loadTodayStats() {
+            try {
+                const stats = await callAPI('getTodayAttendance');
+                if (stats.status === 'success' && stats.totalCheckedIn > 0) {
+                    document.getElementById('statsCard').style.display = 'block';
+                    document.getElementById('stats').innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-number">${stats.totalCheckedIn}</div>
+                            <div class="stat-label">Currently Checked In</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${stats.totalCompleted}</div>
+                            <div class="stat-label">Completed Today</div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('statsCard').style.display = 'none';
+                }
+            } catch(e) {
+                console.log('Stats error:', e);
+            }
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Event listeners
+        document.getElementById('verifyBtn').addEventListener('click', handleVerify);
+        document.getElementById('regNo').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleVerify();
+        });
+        
+        // Load stats on page load
+        loadTodayStats();
+    </script>
+</body>
+</html>
