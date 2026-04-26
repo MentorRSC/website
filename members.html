@@ -3,380 +3,630 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Innovation Hub | Live Attendance Register</title>
+    <title>Innovation Hub | Digital ID Card System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/common.css">
+    <script src="header-loader.js"></script>
+    <script src="scripts/common.js"></script>
+    <meta name="description" content="InnovationHub: A hub transforming tech and development with hands on practicals.">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+       :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d5bbb;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --text: #5f6368;
+            --white: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --border-light: #eef2f6;
+            --gray-50: #f8fafc;
+            --gray-200: #e2e8f0;
+            --gray-500: #64748b;
         }
 
         body {
-            background: #f1f5f9;
+            background: #f5f9ff;
+            color: var(--dark);
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Modern Header */
-        .app-header {
-            background: linear-gradient(135deg, #0f2b3d 0%, #1a4a6f 100%);
-            color: white;
-            padding: 28px 24px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .app-header h1 {
-            font-size: 1.9rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .app-header p {
-            opacity: 0.85;
-            margin-top: 8px;
-            font-size: 0.95rem;
-        }
-
-        /* Stats Bar */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 20px 20px 0 20px;
+        .container {
+            width: 94%;
             max-width: 1280px;
             margin: 0 auto;
         }
 
-        .stat-card {
+        .hero-section {
+            background: linear-gradient(125deg, var(--primary) 0%, #4285f4 100%);
+            color: white;
+            padding: 48px 0 44px;
+            text-align: center;
+        }
+
+        .hero-section h1 { font-size: 2rem; margin-bottom: 10px; letter-spacing: -0.3px; }
+        .hero-section p { font-size: 1rem; max-width: 650px; margin: 0 auto; opacity: 0.92; }
+
+        .stats-section {
             background: white;
-            border-radius: 28px;
-            padding: 12px 28px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stats-grid {
             display: flex;
-            align-items: center;
-            gap: 14px;
-            flex: 1;
-            min-width: 160px;
             justify-content: center;
-            border: 1px solid #e2e8f0;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        .stat-icon {
-            font-size: 2rem;
-            color: #1e6f5c;
+        .stat-card {
+            background: var(--gray-50);
+            padding: 12px 24px;
+            border-radius: 60px;
+            text-align: center;
+            min-width: 130px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            border: 1px solid var(--gray-200);
         }
 
-        .stat-info {
-            text-align: left;
-        }
+        .stat-number { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .stat-label { font-size: 0.75rem; color: var(--gray-500); font-weight: 500; letter-spacing: 0.3px; }
 
-        .stat-number {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #0f2b3d;
-            line-height: 1.2;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #5b6e8c;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1400px;
-            margin: 24px auto;
-            padding: 0 20px 40px;
-            width: 100%;
-        }
-
-        /* Controls Panel */
-        .controls-panel {
+        .sticky-controls {
+            position: sticky;
+            top: 68px;
+            z-index: 99;
             background: white;
-            border-radius: 32px;
-            padding: 18px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
-            border: 1px solid #eef2f6;
+            border-radius: 28px 28px 0 0;
+            margin-top: 28px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .controls-panel {
+            padding: 18px 20px 12px 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .title-search-flex {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 16px;
+            margin-bottom: 16px;
         }
+
+        .title-icon { display: flex; align-items: center; gap: 10px; }
+        .title-icon h2 { font-size: 1.5rem; font-weight: 700; color: var(--dark); }
+        .title-icon i { font-size: 1.6rem; color: var(--primary); }
 
         .search-box {
             position: relative;
+            min-width: 260px;
             flex: 1;
             max-width: 340px;
         }
 
         .search-box i {
             position: absolute;
-            left: 16px;
+            left: 14px;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
+            font-size: 0.9rem;
         }
 
         #searchInput {
             width: 100%;
-            padding: 12px 16px 12px 44px;
-            border: 1px solid #e2e8f0;
-            border-radius: 60px;
+            padding: 10px 38px 10px 42px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 48px;
             font-size: 0.9rem;
-            background: #f9fafb;
-            transition: all 0.2s;
+            background: white;
+            transition: 0.2s;
         }
 
         #searchInput:focus {
-            border-color: #1e6f5c;
+            border-color: var(--primary);
             outline: none;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(30,111,92,0.15);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
         }
 
-        .filter-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            display: none;
+            font-size: 1rem;
         }
+
+        .filter-stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 6px;
+        }
+
+        .filter-group { display: flex; gap: 10px; flex-wrap: wrap; }
 
         .filter-chip {
-            padding: 8px 18px;
-            background: #f1f5f9;
-            border: none;
+            padding: 6px 18px;
+            background: white;
+            border: 1px solid var(--gray-200);
             border-radius: 40px;
-            font-weight: 600;
             font-size: 0.8rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            color: #1e293b;
         }
 
         .filter-chip.active {
-            background: #1e6f5c;
+            background: var(--primary);
+            border-color: var(--primary);
             color: white;
-            box-shadow: 0 2px 8px rgba(30,111,92,0.3);
         }
 
-        .live-badge {
-            background: #e6f7f2;
-            padding: 6px 16px;
-            border-radius: 50px;
+        .result-badge {
+            background: var(--gray-50);
+            padding: 5px 14px;
+            border-radius: 40px;
             font-size: 0.75rem;
-            font-weight: 700;
-            color: #1e6f5c;
-        }
-
-        .live-badge i {
-            margin-right: 6px;
-            color: #10b981;
-        }
-
-        /* Table Header */
-        .attendance-grid {
-            background: white;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-            border: 1px solid #eef2f6;
+            font-weight: 500;
+            color: var(--gray-500);
         }
 
         .grid-header {
+            background: var(--primary);
+            border-radius: 0;
+            width: 100%;
             display: grid;
-            grid-template-columns: 60px 1.2fr 1fr 1.2fr 1.2fr 100px 110px;
-            background: #0f2b3d;
+            grid-template-columns: 70px 1fr 1.1fr 1.3fr 130px;
             color: white;
-            padding: 16px 20px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            letter-spacing: 0.3px;
-            gap: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 12px 16px;
+            gap: 8px;
+            align-items: center;
         }
 
-        .member-list {
+        .members-list-container {
             background: white;
+            border-radius: 0 0 28px 28px;
+            overflow-x: auto;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 48px;
         }
+
+        .member-grid { width: 100%; display: flex; flex-direction: column; }
 
         .member-row {
             display: grid;
-            grid-template-columns: 60px 1.2fr 1fr 1.2fr 1.2fr 100px 110px;
-            gap: 12px;
+            grid-template-columns: 70px 1fr 1.1fr 1.3fr 130px;
+            gap: 8px;
             align-items: center;
-            padding: 14px 20px;
-            border-bottom: 1px solid #edf2f7;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
             transition: background 0.15s;
         }
 
-        .member-row:hover {
-            background: #fafcff;
-        }
+        .member-row:hover { background: var(--gray-50); }
 
-        .member-name {
-            font-weight: 700;
-            color: #0f2b3d;
-        }
-
-        .reg-id {
-            font-family: monospace;
-            font-size: 0.8rem;
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .status-checked-in {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-checked-out {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .status-live {
-            background: #fef3c7;
-            color: #b45309;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; background: #fed7aa; }
-            100% { opacity: 0.7; }
-        }
-
-        .action-btn {
-            border: none;
-            padding: 8px 14px;
-            border-radius: 40px;
+        /* Hyperlink styles */
+        .member-name-link {
             font-weight: 600;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: 0.2s;
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            word-break: break-word;
+            cursor: pointer;
         }
-
-        .signin-btn {
-            background: #1e6f5c;
-            color: white;
+        .member-name-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
         }
-
-        .signin-btn:hover {
-            background: #0e5a49;
-            transform: scale(0.98);
-        }
-
-        .signout-btn {
-            background: #d97706;
-            color: white;
-        }
-
-        .signout-btn:hover {
-            background: #b45309;
-        }
-
-        .disabled-btn {
-            background: #cbd5e1;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .time-info {
+        .member-name-link i {
             font-size: 0.7rem;
-            color: #5b6e8c;
-            font-family: monospace;
+            opacity: 0.8;
+        }
+        
+        .member-name-no-profile {
+            font-weight: 600;
+            color: var(--dark);
+            word-break: break-word;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
-        }
+        .member-reg { font-family: monospace; font-size: 0.85rem; color: #2c3e66; word-break: break-word; }
+        .valid-active { color: #10b981; font-weight: 600; font-size: 0.85rem; }
+        .valid-expired { color: #ef4444; font-weight: 600; }
+        .valid-expiring { color: #f59e0b; font-weight: 600; }
 
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #1e293b;
+        .id-btn {
+            background: linear-gradient(100deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 7px 12px;
+            border-radius: 40px;
             color: white;
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .id-btn:disabled { background: #cbd5e1; cursor: not-allowed; opacity: 0.7; }
+        .id-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+        .no-results { text-align: center; padding: 48px 20px; color: var(--gray-500); }
+
+        /* QR Popup */
+        #qrPopup {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .popup-card {
+            background: white;
+            border-radius: 36px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px;
+            text-align: center;
+            animation: fadeScale 0.25s ease;
+        }
+
+        @keyframes fadeScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .card-preview-area {
+            background: #f1f5f9;
+            border-radius: 24px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .preview-img img { 
+            max-width: 100%; 
+            border-radius: 20px; 
+            box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mode-toggle-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn i { font-size: 0.9rem; }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(26,115,232,0.3);
+        }
+        
+        .mode-btn:not(.active):hover {
+            background: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        
+        .photo-status-badge {
+            font-size: 0.7rem;
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 10px;
+            color: var(--gray-500);
+        }
+
+        .popup-actions { 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
             padding: 12px 24px;
-            border-radius: 60px;
-            font-weight: 500;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: var(--gray-500);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* ========== FULL SCREEN PROFILE POPUP ========== */
+        #profilePopup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .profile-popup-container {
+            position: relative;
+            width: 95%;
+            height: 92%;
+            max-width: 1400px;
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .profile-popup-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .profile-popup-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
+        /* Small profile image in popup header */
+        .popup-profile-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .profile-popup-header h3 i {
+            font-size: 1.3rem;
+        }
+
+        .close-profile-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-profile-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .profile-iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+
+        .profile-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--gray-500);
+        }
+
+        .profile-loading i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        /* Update Profile Warning Popup */
+        #updateProfileWarningPopup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            justify-content: center;
+            align-items: center;
+            z-index: 2100;
+            padding: 20px;
+        }
+        
+        .warning-popup-card {
+            background: white;
+            border-radius: 32px;
+            max-width: 450px;
+            width: 100%;
+            padding: 32px 28px;
+            text-align: center;
+            animation: fadeScale 0.25s ease;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
+        }
+        
+        .warning-icon {
+            background: #fef3c7;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        
+        .warning-icon i {
+            font-size: 2.5rem;
+            color: #f59e0b;
+        }
+        
+        .warning-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        
+        .warning-message {
+            color: #475569;
+            line-height: 1.5;
+            margin-bottom: 24px;
+            font-size: 1rem;
+        }
+        
+        .warning-close-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .warning-close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(26,115,232,0.3);
         }
 
         footer {
-            background: #0f2b3d;
-            color: #cbd5e1;
-            text-align: center;
-            padding: 24px;
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 48px 0 24px;
             margin-top: auto;
-            font-size: 0.8rem;
         }
 
-        @media (max-width: 900px) {
-            .grid-header, .member-row {
-                grid-template-columns: 50px 1fr 1fr 1.2fr 1fr 90px 100px;
-                gap: 6px;
-                font-size: 0.75rem;
-            }
-            .action-btn {
-                padding: 6px 10px;
-                font-size: 0.65rem;
-            }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
         }
+
+        .footer-col h3 { font-size: 1.2rem; margin-bottom: 16px; position: relative; display: inline-block; }
+        .footer-col h3:after { content: ''; display: block; width: 40px; height: 2px; background: var(--primary); margin-top: 6px; }
+        .footer-col ul { list-style: none; }
+        .footer-col li { margin-bottom: 8px; }
+        .footer-col a { color: #cbd5e1; text-decoration: none; }
+        .footer-col a:hover { color: white; }
+        .footer-bottom { text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; font-size: 0.8rem; }
 
         @media (max-width: 780px) {
-            .grid-header {
-                display: none;
+            .grid-header, .member-row { 
+                grid-template-columns: 50px 1fr 1.1fr 1.2fr 100px; 
+                gap: 6px; 
+                padding: 12px 12px; 
             }
+            .profile-popup-container { width: 98%; height: 96%; }
+            .profile-popup-header h3 { font-size: 0.9rem; }
+            .popup-profile-thumb { width: 30px; height: 30px; }
+        }
+
+        @media (max-width: 640px) {
+            .grid-header { display: none; }
             .member-row {
                 display: flex;
                 flex-direction: column;
-                align-items: stretch;
                 background: white;
                 border-radius: 24px;
-                margin-bottom: 12px;
-                border: 1px solid #e2e8f0;
                 padding: 16px;
+                margin-bottom: 12px;
+                border: 1px solid var(--gray-200);
             }
             .member-row > span {
                 display: flex;
@@ -384,416 +634,495 @@
                 align-items: center;
                 width: 100%;
             }
-            .member-row > span:before {
-                font-weight: 700;
-                color: #1e6f5c;
-                font-size: 0.7rem;
-            }
-            .member-row > span:nth-child(1):before { content: "# SL NO"; }
-            .member-row > span:nth-child(2):before { content: "👤 NAME"; }
-            .member-row > span:nth-child(3):before { content: "🆔 REG ID"; }
-            .member-row > span:nth-child(4):before { content: "📞 PHONE"; }
-            .member-row > span:nth-child(5):before { content: "⏱️ STATUS"; }
-            .member-row > span:nth-child(6):before { content: "⏰ SIGN IN"; }
-            .member-row > span:nth-child(7):before { content: "🎫 ACTION"; }
+            .member-row > span:first-child:before { content: "# SL No"; font-weight: 600; color: var(--primary); }
+            .member-row > span:nth-child(2):before { content: "👤 Full Name"; font-weight: 600; color: var(--dark); }
+            .member-row > span:nth-child(3):before { content: "🆔 Registration No"; font-weight: 600; color: var(--dark); }
+            .member-row > span:nth-child(4):before { content: "📅 Validity"; font-weight: 600; color: var(--dark); }
+            .member-row > span:nth-child(5):before { content: "🎫 ID Card"; font-weight: 600; color: var(--dark); }
         }
     </style>
 </head>
 <body>
+    <site-header></site-header>
 
-<div class="app-header">
-    <h1><i class="fas fa-fingerprint"></i> Innovation Hub · Live Attendance</h1>
-    <p>Real-time sign-in / sign-out register | Track active members on-site</p>
-</div>
+<section class="hero-section">
+    <div class="container">
+        <h1>📇 Digital ID Card System</h1>
+        <p>Meet the brilliant minds driving innovation at Regional Science Centre and Planetarium, Calicut</p>
+    </div>
+</section>
 
-<div class="stats-bar">
-    <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-number" id="totalCount">0</div><div class="stat-label">Total Members</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-number" id="checkedInCount">0</div><div class="stat-label">Checked In Today</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fas fa-broadcast-tower"></i></div><div class="stat-info"><div class="stat-number" id="liveCount">0</div><div class="stat-label"><i class="fas fa-circle" style="color:#10b981; font-size:0.6rem;"></i> Live (Not Signed Out)</div></div></div>
-</div>
+<section class="stats-section">
+    <div class="container stats-grid">
+        <div class="stat-card"><div class="stat-number" id="totalMembers">0</div><div class="stat-label">Total Members</div></div>
+        <div class="stat-card"><div class="stat-number" id="activeMembers">0</div><div class="stat-label">Active Members</div></div>
+        <div class="stat-card"><div class="stat-number" id="expiringSoon">0</div><div class="stat-label">Expiring Soon</div></div>
+    </div>
+</section>
 
 <div class="container">
-    <div class="controls-panel">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search by Name, Reg ID or Phone...">
+    <div class="sticky-controls">
+        <div class="controls-panel">
+            <div class="title-search-flex">
+                <div class="title-icon">
+                    <i class="fas fa-id-card"></i>
+                    <h2>Member Directory <span style="font-size:0.8rem; background:#e2e8f0; padding:2px 10px; border-radius:20px; margin-left:10px;">🔗 Click names for profile</span></h2>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search name or reg no...">
+                    <button id="clearSearchBtn" class="clear-search"><i class="fas fa-times-circle"></i></button>
+                </div>
+            </div>
+            <div class="filter-stats-row">
+                <div class="filter-group" id="filterGroup">
+                    <button class="filter-chip" data-filter="all">All</button>
+                    <button class="filter-chip active" data-filter="active">Active</button>
+                    <button class="filter-chip" data-filter="expiring">Expiring Soon</button>
+                </div>
+                <div class="result-badge" id="searchStats">—</div>
+            </div>
         </div>
-        <div class="filter-group">
-            <button class="filter-chip active" data-filter="all">📋 All</button>
-            <button class="filter-chip" data-filter="live">🔴 Live (Signed In)</button>
-            <button class="filter-chip" data-filter="checkedout">✅ Checked Out</button>
-        </div>
-        <div class="live-badge"><i class="fas fa-sync-alt"></i> Auto-sync every 15s</div>
-    </div>
-
-    <div class="attendance-grid">
         <div class="grid-header">
             <span>#</span>
             <span>Full Name</span>
-            <span>Reg ID</span>
-            <span>Phone</span>
-            <span>Attendance Status</span>
-            <span>Sign In Time</span>
-            <span>Action</span>
+            <span>Registration No</span>
+            <span>Validity</span>
+            <span>ID Card</span>
         </div>
-        <div id="attendanceList" class="member-list">
-            <div class="empty-state"><i class="fas fa-spinner fa-pulse"></i> Loading members & attendance...</div>
+    </div>
+
+    <div class="members-list-container">
+        <div id="membersList" class="member-grid">
+            <div class="no-results"><i class="fas fa-spinner fa-spin"></i> Loading members...</div>
         </div>
     </div>
 </div>
 
-<div id="toastMsg" class="toast"><i class="fas fa-info-circle"></i> <span id="toastText"></span></div>
+<!-- QR Popup -->
+<div id="qrPopup">
+    <div class="popup-card">
+        <h3><i class="fas fa-id-card"></i> Digital ID Card</h3>
+        <div id="photoStatusBadge" class="photo-status-badge"></div>
+        <div class="mode-toggle-group">
+            <button id="normalModeBtn" class="mode-btn active"><i class="fas fa-user-circle"></i> With Photo</button>
+            <button id="qrOnlyModeBtn" class="mode-btn"><i class="fas fa-qrcode"></i> QR Only</button>
+        </div>
+        <div class="card-preview-area">
+            <div class="preview-img"><img id="cardPreviewImage" alt="ID Card Preview"></div>
+        </div>
+        <div class="popup-actions">
+            <button id="downloadCardBtn" class="btn-primary"><i class="fas fa-download"></i> Download PNG</button>
+            <button onclick="closePopup()" class="btn-secondary"><i class="fas fa-times"></i> Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- FULL SCREEN PROFILE POPUP -->
+<div id="profilePopup">
+    <div class="profile-popup-container">
+        <div class="profile-popup-header">
+            <h3>
+                <img id="popupProfileThumb" class="popup-profile-thumb" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="profile thumb">
+                <span id="profileMemberName">Member Profile</span>
+            </h3>
+            <button class="close-profile-btn" onclick="closeProfilePopup()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="profile-loading" id="profileLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+            <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            <p style="margin-top: 15px;">Loading profile...</p>
+        </div>
+        <iframe id="profileIframe" class="profile-iframe" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation allow-modals" style="display: none;"></iframe>
+    </div>
+</div>
+
+<!-- UPDATE PROFILE WARNING POPUP (No Profile URL) -->
+<div id="updateProfileWarningPopup">
+    <div class="warning-popup-card">
+        <div class="warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="warning-title">Profile Required</div>
+        <div class="warning-message">
+            <strong id="warningMemberName">Member</strong> doesn't have a profile page yet.<br><br>
+            Please update your profile page URL to generate and download your digital ID card. Contact admin to set up your profile.
+        </div>
+        <button class="warning-close-btn" onclick="closeWarningPopup()"><i class="fas fa-times-circle"></i> Close</button>
+    </div>
+</div>
 
 <footer>
-    <p>© 2025 Regional Science Centre & Planetarium, Calicut — Live Attendance Register | Sign In/Out with real-time tracking</p>
+    <div class="container">
+        <div class="footer-bottom"><p>&copy; 2025 Regional Science Centre and Planetarium, Calicut. All rights reserved.</p></div>
+    </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-    // ======================= CONFIGURATION =======================
-    // Google Sheet ID extracted from your link:
-    // Sheet ID: 1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY
-    // Structure assumed: Date | Reg ID | Name | Sign In Time | Sign Out Time | Type | Phone | Day | Status | Report
-    // We'll fetch using Google Visualization API (public sheet)
-    const SHEET_ID = "1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY";
-    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-    
-    // Attendance store (in-memory + localStorage for persistence across refresh)
-    // Each entry: { regId, name, phone, signInTime, signOutTime, status, lastUpdated }
-    let attendanceRecords = new Map(); // key = regId
-    
-    // Master members list from sheet (unique by Reg ID)
+    const CARD_W = 416;
+    const CARD_H = 636;
+    const BG_URL = "https://lh3.googleusercontent.com/d/1e2f4G676r-kVVb9uba2O4SVHJIZvXGq9";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1CLmhUxbgZrdlFAs_lLxYv1e6Gqikyo7MEUDSjUxnReM/gviz/tq?tqx=out:json";
+
     let masterMembers = [];
-    
-    // UI state
-    let currentFilter = "all";
+    let currentFilter = "active";
     let currentSearch = "";
-    let refreshInterval = null;
-    
-    // Helper functions
-    function showToast(message, isError = false) {
-        const toast = document.getElementById("toastMsg");
-        const textSpan = document.getElementById("toastText");
-        textSpan.innerText = message;
-        toast.classList.add("show");
-        setTimeout(() => {
-            toast.classList.remove("show");
-        }, 2800);
+    let activeCardBlob = null;
+    let currentMemberData = null;
+    let currentQrCanvas = null;
+    let currentMode = "normal";
+    let hasValidPhoto = false;
+
+    function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+    function parseDateFromStr(dateStr) {
+        if (!dateStr) return null;
+        const monthMap = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+        const match = dateStr.match(/([A-Za-z]{3})\s+(\d{4})/);
+        if (match && monthMap[match[1]] !== undefined) return new Date(parseInt(match[2]), monthMap[match[1]] + 1, 0);
+        const d = new Date(dateStr);
+        return isNaN(d) ? null : d;
     }
-    
-    // Load attendance from localStorage on init
-    function loadAttendanceFromStorage() {
-        const stored = localStorage.getItem("ih_attendance_register");
-        if (stored) {
+
+    function getValidityStatus(raw) {
+        if (!raw || raw === "") return { class: "valid-active", text: "Active Member", status: "active" };
+        const expiry = parseDateFromStr(raw);
+        if (!expiry) return { class: "valid-active", text: raw, status: "active" };
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((expiry - today) / (1000 * 3600 * 24));
+        if (diffDays < 0) return { class: "valid-expired", text: `Expired (${raw})`, status: "expired" };
+        if (diffDays <= 30) return { class: "valid-expiring", text: `Expires in ${diffDays} days (${raw})`, status: "expiring" };
+        return { class: "valid-active", text: `Valid till ${raw}`, status: "active" };
+    }
+
+    function generateQRCanvas(text, size) {
+        return new Promise((resolve) => {
+            const tempDiv = document.createElement("div");
+            tempDiv.style.cssText = "position:absolute;left:-9999px;top:-9999px;";
+            document.body.appendChild(tempDiv);
             try {
-                const parsed = JSON.parse(stored);
-                for (let [key, val] of Object.entries(parsed)) {
-                    attendanceRecords.set(key, val);
-                }
-            } catch(e) {}
-        }
+                new QRCode(tempDiv, { text: text, width: size, height: size, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+                setTimeout(() => {
+                    const finalCanvas = document.createElement("canvas");
+                    finalCanvas.width = size; finalCanvas.height = size;
+                    const ctx = finalCanvas.getContext("2d");
+                    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, size, size);
+                    const qrImg = tempDiv.querySelector("img");
+                    const qrCanvas = tempDiv.querySelector("canvas");
+                    if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) ctx.drawImage(qrImg, 0, 0, size, size);
+                    else if (qrCanvas) ctx.drawImage(qrCanvas, 0, 0, size, size);
+                    document.body.removeChild(tempDiv);
+                    resolve(finalCanvas);
+                }, 200);
+            } catch(e) { if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv); resolve(null); }
+        });
     }
-    
-    // Save attendance to localStorage
-    function persistAttendance() {
-        const obj = {};
-        for (let [k, v] of attendanceRecords.entries()) {
-            obj[k] = v;
-        }
-        localStorage.setItem("ih_attendance_register", JSON.stringify(obj));
+
+    function loadImage(src) {
+        return new Promise((resolve) => {
+            if (!src || src === "") { resolve(null); return; }
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = src;
+        });
     }
-    
-    // Get current system time formatted as "HH:MM AM/PM"
-    function getCurrentTimeFormatted() {
-        const now = new Date();
-        let hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        return `${hours}:${minutes} ${ampm}`;
+
+    async function checkPhotoExists(url) {
+        if (!url || url === "") return false;
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+        });
     }
-    
-    // Get full datetime string for record
-    function getCurrentDateTime() {
-        const now = new Date();
-        return now.toLocaleString();
-    }
-    
-    // Sign In action
-    function signIn(regId, memberName, phone) {
-        const existing = attendanceRecords.get(regId);
-        // If user already signed in and NOT signed out -> live session exists, prevent duplicate signin
-        if (existing && existing.status === "checked-in" && !existing.signOutTime) {
-            showToast(`${memberName} is already signed in! Please sign out first.`, false);
-            return false;
-        }
-        const nowTime = getCurrentTimeFormatted();
-        const nowFull = getCurrentDateTime();
-        const record = {
-            regId: regId,
-            name: memberName,
-            phone: phone,
-            signInTime: nowFull,
-            signInDisplay: nowTime,
-            signOutTime: null,
-            signOutDisplay: null,
-            status: "checked-in",   // checked-in = live on site
-            lastUpdated: Date.now()
-        };
-        attendanceRecords.set(regId, record);
-        persistAttendance();
-        showToast(`✅ ${memberName} signed in at ${nowTime}`, false);
-        renderAttendanceList();
-        updateStats();
-        return true;
-    }
-    
-    // Sign Out action (only if currently signed in & live)
-    function signOut(regId, memberName) {
-        const record = attendanceRecords.get(regId);
-        if (!record || record.status !== "checked-in" || record.signOutTime) {
-            showToast(`${memberName} is not currently signed in or already checked out.`, true);
-            return false;
-        }
-        const outTime = getCurrentTimeFormatted();
-        const outFull = getCurrentDateTime();
-        record.signOutTime = outFull;
-        record.signOutDisplay = outTime;
-        record.status = "checked-out";
-        record.lastUpdated = Date.now();
-        attendanceRecords.set(regId, record);
-        persistAttendance();
-        showToast(`🚪 ${memberName} signed out at ${outTime}`, false);
-        renderAttendanceList();
-        updateStats();
-        return true;
-    }
-    
-    // Compute stats based on current attendance
-    function updateStats() {
-        const total = masterMembers.length;
-        let checkedInToday = 0;
-        let liveCount = 0;
-        for (let mem of masterMembers) {
-            const record = attendanceRecords.get(mem.regId);
-            if (record && record.status === "checked-in") {
-                checkedInToday++;
-                if (!record.signOutTime) liveCount++;
-            } else if (record && record.status === "checked-out") {
-                checkedInToday++; // counted as checked-in today but signed out
+
+    async function buildCard(member, qrCanvas, mode) {
+        const bgImg = await loadImage(BG_URL);
+        const canvas = document.createElement('canvas'); 
+        canvas.width = CARD_W; canvas.height = CARD_H;
+        const ctx = canvas.getContext('2d');
+        if (bgImg) ctx.drawImage(bgImg, 0, 0, CARD_W, CARD_H);
+        else { const grad = ctx.createLinearGradient(0, 0, CARD_W, CARD_H); grad.addColorStop(0, '#1a73e8'); grad.addColorStop(1, '#34a853'); ctx.fillStyle = grad; ctx.fillRect(0, 0, CARD_W, CARD_H); }
+        const centerX = CARD_W/2;
+        const textBaseY = CARD_H * 0.75;
+        const qrSize = 160;
+        if (mode === "qrOnly") {
+            const qrX = centerX - qrSize/2;
+            const qrY = CARD_H/2 - qrSize/2;
+            ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        } else {
+            let photoImg = null;
+            if (member.photo && member.photo !== "") photoImg = await loadImage(member.photo);
+            const photoSize = 140;
+            const gap = 30;
+            const totalWidth = photoSize + gap + qrSize;
+            const startX = centerX - totalWidth/2;
+            const photoX = startX;
+            const qrX = startX + photoSize + gap;
+            const elementY = CARD_H/2;
+            if (photoImg) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(photoImg, photoX, elementY - photoSize/2, photoSize, photoSize);
+                ctx.restore();
+                ctx.beginPath();
+                ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
+                ctx.strokeStyle = "#1a73e8";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.arc(photoX + photoSize/2, elementY, photoSize/2, 0, Math.PI * 2);
+                ctx.fillStyle = "#e2e8f0";
+                ctx.fill();
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("No Photo", photoX + photoSize/2, elementY + 5);
             }
+            ctx.drawImage(qrCanvas, qrX, elementY - qrSize/2, qrSize, qrSize);
         }
-        document.getElementById("totalCount").innerText = total;
-        document.getElementById("checkedInCount").innerText = checkedInToday;
-        document.getElementById("liveCount").innerText = liveCount;
+        ctx.textAlign = "center";
+        ctx.font = "bold 26px 'Segoe UI', sans-serif";
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText(member.name, centerX, textBaseY);
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#1e3a5f";
+        ctx.fillText(`ID: ${member.reg}`, centerX, textBaseY + 38);
+        ctx.font = "15px sans-serif";
+        ctx.fillStyle = member.validityText.includes("Expired") ? "#dc2626" : "#16a34a";
+        ctx.fillText(member.validityText, centerX, textBaseY + 70);
+        ctx.font = "11px sans-serif";
+        ctx.fillStyle = "#64748b";
+        ctx.fillText("Scan to verify membership", centerX, textBaseY + 110);
+        return new Promise(resolve => canvas.toBlob(resolve));
     }
-    
-    // Parse sheet rows: expected columns: [Date, Reg ID, Name, Sign In Time, Sign Out Time, Type, Phone, Day, Status, Report...]
-    // We dynamically map by header row. But also we handle fallback if headers vary.
-    async function fetchMembersFromSheet() {
-        try {
-            const response = await fetch(SHEET_URL);
-            const text = await response.text();
-            const jsonStr = text.substring(47).slice(0, -2);
-            const json = JSON.parse(jsonStr);
-            const rows = json.table.rows;
-            if (!rows || rows.length < 2) throw new Error("No data rows");
-            
-            // First row as header
-            const headers = rows[0].c.map(cell => cell ? cell.v?.toString().toLowerCase().trim() : "");
-            
-            // Find column indexes
-            const colIndex = {
-                regId: headers.findIndex(h => h && (h.includes("reg") || h.includes("id"))),
-                name: headers.findIndex(h => h && (h.includes("name") || h === "name")),
-                phone: headers.findIndex(h => h && (h.includes("phone") || h.includes("mobile"))),
-            };
-            // fallback if not found (based on typical sheet structure)
-            if (colIndex.regId === -1) colIndex.regId = 1;   // Reg ID likely column 2
-            if (colIndex.name === -1) colIndex.name = 2;     // Name column 3rd index
-            if (colIndex.phone === -1) colIndex.phone = 6;   // Phone index 7th column (Type then Phone)
-            
-            const membersMap = new Map();
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (!row || !row.c) continue;
-                const regIdRaw = row.c[colIndex.regId]?.v;
-                const nameRaw = row.c[colIndex.name]?.v;
-                const phoneRaw = row.c[colIndex.phone]?.v;
-                if (!regIdRaw && !nameRaw) continue;
-                const regId = regIdRaw ? regIdRaw.toString().trim() : `IH${i}`;
-                const name = nameRaw ? nameRaw.toString().trim() : "Unknown Member";
-                const phone = phoneRaw ? phoneRaw.toString().trim() : "N/A";
-                if (!membersMap.has(regId)) {
-                    membersMap.set(regId, { regId, name, phone });
-                }
-            }
-            // Convert to array
-            const membersArray = Array.from(membersMap.values());
-            if (membersArray.length === 0) throw new Error("No members found");
-            return membersArray;
-        } catch (error) {
-            console.error("Sheet fetch error:", error);
-            // Fallback demo data for testing (if sheet inaccessible)
-            return [
-                { regId: "IH1001", name: "Dr. Arjun Nair", phone: "+91 9876543210" },
-                { regId: "IH1002", name: "Priya Menon", phone: "+91 9988776655" },
-                { regId: "IH1003", name: "Rahul Varma", phone: "+91 8123456789" },
-                { regId: "IH1004", name: "Anjali Krishnan", phone: "+91 7894561230" },
-                { regId: "IH1005", name: "Sandeep Raj", phone: "+91 9562347812" }
-            ];
+
+    async function refreshCardPreview() {
+        if (!currentMemberData || !currentQrCanvas) return;
+        let modeToUse = currentMode;
+        if (modeToUse === "normal" && !hasValidPhoto) { modeToUse = "qrOnly"; document.getElementById("normalModeBtn").classList.remove("active"); document.getElementById("qrOnlyModeBtn").classList.add("active"); }
+        const blob = await buildCard(currentMemberData, currentQrCanvas, modeToUse);
+        activeCardBlob = blob;
+        const url = URL.createObjectURL(blob);
+        document.getElementById("cardPreviewImage").src = url;
+        if(window._currentPreviewUrl) URL.revokeObjectURL(window._currentPreviewUrl);
+        window._currentPreviewUrl = url;
+        const badge = document.getElementById("photoStatusBadge");
+        if (!hasValidPhoto) {
+            badge.innerHTML = '<i class="fas fa-info-circle"></i> No photo available - QR only mode active';
+            badge.style.background = "#fef3c7";
+            badge.style.color = "#92400e";
+        } else {
+            badge.innerHTML = '<i class="fas fa-check-circle"></i> Photo available';
+            badge.style.background = "#d1fae5";
+            badge.style.color = "#065f46";
         }
     }
+
+    function showProfileRequiredWarning(memberName) {
+        const warningPopup = document.getElementById("updateProfileWarningPopup");
+        const warningNameSpan = document.getElementById("warningMemberName");
+        warningNameSpan.innerText = escapeHtml(memberName);
+        warningPopup.style.display = "flex";
+    }
     
-    // Filter & render members with attendance status
-    function renderAttendanceList() {
-        let filtered = [...masterMembers];
-        
-        // Apply search filter
-        if (currentSearch.trim()) {
-            const s = currentSearch.toLowerCase();
-            filtered = filtered.filter(m => 
-                m.name.toLowerCase().includes(s) || 
-                m.regId.toLowerCase().includes(s) || 
-                m.phone.toLowerCase().includes(s)
-            );
-        }
-        
-        // Apply status filter (all, live, checkedout)
-        if (currentFilter === "live") {
-            filtered = filtered.filter(m => {
-                const rec = attendanceRecords.get(m.regId);
-                return rec && rec.status === "checked-in" && !rec.signOutTime;
-            });
-        } else if (currentFilter === "checkedout") {
-            filtered = filtered.filter(m => {
-                const rec = attendanceRecords.get(m.regId);
-                return rec && rec.status === "checked-out";
-            });
-        }
-        
-        const container = document.getElementById("attendanceList");
-        if (filtered.length === 0) {
-            container.innerHTML = `<div class="empty-state"><i class="far fa-clock"></i> No members match the current filter</div>`;
+    window.closeWarningPopup = function() {
+        document.getElementById("updateProfileWarningPopup").style.display = "none";
+    };
+
+    async function showIDCard(member, isExpired, hasProfileUrl = false) {
+        if (isExpired) { alert("⚠️ Membership expired. ID card cannot be generated."); return; }
+        if (!hasProfileUrl) {
+            showProfileRequiredWarning(member.name);
             return;
         }
-        
-        container.innerHTML = filtered.map((member, idx) => {
-            const record = attendanceRecords.get(member.regId);
-            let statusHtml = "";
-            let signInDisplay = "—";
-            let actionBtn = "";
-            let isLive = false;
-            
-            if (record && record.status === "checked-in" && !record.signOutTime) {
-                statusHtml = `<span class="status-badge status-live"><i class="fas fa-circle" style="font-size:8px;"></i> LIVE (On-site)</span>`;
-                signInDisplay = record.signInDisplay || record.signInTime.substring(0,16);
-                isLive = true;
-                actionBtn = `<button class="action-btn signout-btn" onclick="handleSignOut('${member.regId}','${escapeHtml(member.name)}')"><i class="fas fa-sign-out-alt"></i> Sign Out</button>`;
-            } 
-            else if (record && record.status === "checked-out") {
-                statusHtml = `<span class="status-badge status-checked-out"><i class="fas fa-check-double"></i> Checked Out</span>`;
-                signInDisplay = record.signInDisplay || "—";
-                actionBtn = `<button class="action-btn signin-btn" onclick="handleSignIn('${member.regId}','${escapeHtml(member.name)}','${escapeHtml(member.phone)}')"><i class="fas fa-sign-in-alt"></i> Sign In</button>`;
-            }
-            else {
-                statusHtml = `<span class="status-badge status-checked-out"><i class="far fa-calendar-times"></i> Not Signed In</span>`;
-                signInDisplay = "—";
-                actionBtn = `<button class="action-btn signin-btn" onclick="handleSignIn('${member.regId}','${escapeHtml(member.name)}','${escapeHtml(member.phone)}')"><i class="fas fa-sign-in-alt"></i> Sign In</button>`;
-            }
-            
-            // For live, we also show sign out button already defined. For others show sign in.
-            // Also for checked-out we show sign in as above.
-            return `
-                <div class="member-row">
-                    <span>${idx + 1}</span>
-                    <span class="member-name">${escapeHtml(member.name)}</span>
-                    <span><span class="reg-id">${escapeHtml(member.regId)}</span></span>
-                    <span>${escapeHtml(member.phone)}</span>
-                    <span>${statusHtml}</span>
-                    <span class="time-info">${signInDisplay}</span>
-                    <span>${actionBtn}</span>
-                </div>
-            `;
-        }).join('');
+        const verifyLink = `https://mentorrsc.github.io/website/qrscan.html?id=${encodeURIComponent(member.reg)}`;
+        const qrCanvas = await generateQRCanvas(verifyLink, 280);
+        if (!qrCanvas) { alert("QR generation error"); return; }
+        currentQrCanvas = qrCanvas;
+        hasValidPhoto = false;
+        if (member.photo && member.photo !== "") hasValidPhoto = await checkPhotoExists(member.photo);
+        currentMemberData = { name: member.name, reg: member.reg, validityText: member.validityText, photo: member.photo };
+        if (hasValidPhoto) {
+            currentMode = "normal";
+            document.getElementById("normalModeBtn").classList.add("active");
+            document.getElementById("qrOnlyModeBtn").classList.remove("active");
+        } else {
+            currentMode = "qrOnly";
+            document.getElementById("normalModeBtn").classList.remove("active");
+            document.getElementById("qrOnlyModeBtn").classList.add("active");
+        }
+        await refreshCardPreview();
+        document.getElementById("qrPopup").style.display = "flex";
+    }
+
+    async function setMode(mode) {
+        if (mode === "qrOnly") {
+            currentMode = "qrOnly";
+            document.getElementById("normalModeBtn").classList.remove("active");
+            document.getElementById("qrOnlyModeBtn").classList.add("active");
+        } else if (mode === "normal" && hasValidPhoto) {
+            currentMode = "normal";
+            document.getElementById("normalModeBtn").classList.add("active");
+            document.getElementById("qrOnlyModeBtn").classList.remove("active");
+        } else if (mode === "normal" && !hasValidPhoto) {
+            alert("⚠️ No photo available for this member. QR only mode will be used.");
+            return;
+        }
+        await refreshCardPreview();
+    }
+
+    function downloadCard() { 
+        if (activeCardBlob) { 
+            const link = document.createElement('a'); 
+            link.href = URL.createObjectURL(activeCardBlob); 
+            link.download = `id_${currentMemberData?.reg || 'card'}.png`; 
+            link.click(); 
+            URL.revokeObjectURL(link.href);
+        } 
     }
     
-    function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
-    
-    // Global handlers for inline onclick
-    window.handleSignIn = function(regId, name, phone) {
-        signIn(regId, name, phone);
+    window.closePopup = () => { 
+        document.getElementById("qrPopup").style.display = "none"; 
+        if (window._currentPreviewUrl) URL.revokeObjectURL(window._currentPreviewUrl); 
+        activeCardBlob = null; 
     };
     
-    window.handleSignOut = function(regId, name) {
-        signOut(regId, name);
+    async function openProfilePopup(url, memberName, photoUrl) {
+        if (!url || url === "") {
+            alert("No profile link available for this member.");
+            return;
+        }
+        const popup = document.getElementById("profilePopup");
+        const iframe = document.getElementById("profileIframe");
+        const loading = document.getElementById("profileLoading");
+        const nameSpan = document.getElementById("profileMemberName");
+        const thumbImg = document.getElementById("popupProfileThumb");
+        
+        nameSpan.innerHTML = `${escapeHtml(memberName)}'s Profile`;
+        
+        if (photoUrl && photoUrl !== "") {
+            const testImg = new Image();
+            testImg.onload = () => { thumbImg.src = photoUrl; };
+            testImg.onerror = () => { thumbImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+            };
+            testImg.src = photoUrl;
+        } else {
+            thumbImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+        }
+        
+        iframe.style.display = "none";
+        loading.style.display = "flex";
+        iframe.onload = function() {
+            loading.style.display = "none";
+            iframe.style.display = "block";
+        };
+        iframe.onerror = function() {
+            loading.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><p>Failed to load profile page. Please check the URL.</p>';
+        };
+        iframe.src = url;
+        popup.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
+    
+    window.closeProfilePopup = function() {
+        const popup = document.getElementById("profilePopup");
+        const iframe = document.getElementById("profileIframe");
+        popup.style.display = "none";
+        iframe.src = "about:blank";
+        document.body.style.overflow = "";
+        const loading = document.getElementById("profileLoading");
+        loading.style.display = "flex";
+        loading.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 15px;">Loading profile...</p>';
+        iframe.style.display = "none";
+        document.getElementById("popupProfileThumb").src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
     };
     
-    // Refresh master members from sheet (preserve existing attendance records that are still valid)
-    async function refreshMembersFromSheet() {
+    window.showIDCardGlobal = (memberObj, expiredFlag, hasProfileUrl) => showIDCard(memberObj, expiredFlag, hasProfileUrl);
+
+    async function loadData() {
         try {
-            const members = await fetchMembersFromSheet();
-            if (members && members.length > 0) {
-                // Merge: keep existing attendance records for members that still exist
-                const newMasterMap = new Map();
-                for (const m of members) {
-                    newMasterMap.set(m.regId, m);
-                    // Ensure we keep any existing attendance record for this regId
-                    if (!attendanceRecords.has(m.regId)) {
-                        // no record, skip
-                    }
+            const resp = await fetch(SHEET_URL);
+            const txt = await resp.text();
+            const jsonStr = txt.substring(47).slice(0, -2);
+            const json = JSON.parse(jsonStr);
+            const rows = json.table.rows;
+            let membersRaw = [];
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r?.c) continue;
+                const name = r.c[3]?.v || "";
+                const validityRaw = r.c[7]?.v || "";
+                const reg = r.c[8]?.v || `IH${String(i + 1).padStart(4, '0')}`;
+                const photo = r.c[9]?.v || "";
+                const profileUrl = (r.c[10] && r.c[10].v) ? r.c[10].v.toString().trim() : "";
+                if (name && name !== "Name" && name.trim() !== "") {
+                    const status = getValidityStatus(validityRaw);
+                    membersRaw.push({ 
+                        name: name.toString().trim(), 
+                        reg: reg.toString().trim(), 
+                        photo: photo, 
+                        profileUrl: profileUrl,
+                        hasProfile: (profileUrl && profileUrl.startsWith('http')),
+                        validityText: status.text, 
+                        statusClass: status.class, 
+                        status: status.status 
+                    });
                 }
-                masterMembers = Array.from(newMasterMap.values());
-                // Clean up attendance records that no longer exist in master list
-                for (let [regId] of attendanceRecords.entries()) {
-                    if (!newMasterMap.has(regId)) {
-                        attendanceRecords.delete(regId);
-                    }
-                }
-                persistAttendance();
-                renderAttendanceList();
-                updateStats();
-                showToast(`Synced ${masterMembers.length} members from register`, false);
             }
-        } catch (error) {
-            console.warn("Sheet refresh error", error);
+            membersRaw.sort((a, b) => {
+                if (a.hasProfile !== b.hasProfile) return a.hasProfile ? -1 : 1;
+                return a.name.localeCompare(b.name);
+            });
+            masterMembers = membersRaw.map((m, idx) => ({ ...m, sl: idx+1 }));
+            document.getElementById("totalMembers").innerText = masterMembers.length;
+            document.getElementById("activeMembers").innerText = masterMembers.filter(m => m.status === "active").length;
+            document.getElementById("expiringSoon").innerText = masterMembers.filter(m => m.status === "expiring").length;
+            renderMembers();
+        } catch(e) { 
+            document.getElementById("membersList").innerHTML = `<div class="no-results">⚠️ Failed to load data</div>`; 
         }
     }
-    
-    // Initial load + interval sync
-    async function init() {
-        loadAttendanceFromStorage();
-        await refreshMembersFromSheet();  // load members and sync attendance
-        // Set auto-refresh every 20 seconds (sheet data sync)
-        if (refreshInterval) clearInterval(refreshInterval);
-        refreshInterval = setInterval(() => {
-            refreshMembersFromSheet();
-        }, 20000);
-        
-        // Search event
-        const searchInput = document.getElementById("searchInput");
-        searchInput.addEventListener("input", (e) => {
-            currentSearch = e.target.value;
-            renderAttendanceList();
-        });
-        
-        // Filter chips
-        document.querySelectorAll(".filter-chip").forEach(btn => {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                currentFilter = btn.dataset.filter;
-                renderAttendanceList();
-            });
-        });
-        
-        // initial render
-        renderAttendanceList();
-        updateStats();
+
+    function renderMembers() {
+        let filtered = [...masterMembers];
+        if (currentFilter !== "all") filtered = filtered.filter(m => m.status === currentFilter);
+        if (currentSearch.trim()) { const s = currentSearch.toLowerCase(); filtered = filtered.filter(m => m.name.toLowerCase().includes(s) || m.reg.toLowerCase().includes(s)); }
+        document.getElementById("searchStats").innerHTML = `${filtered.length} of ${masterMembers.length}`;
+        const container = document.getElementById("membersList");
+        if (filtered.length === 0) { container.innerHTML = `<div class="no-results"><i class="fas fa-user-slash"></i> No members match</div>`; return; }
+        container.innerHTML = filtered.map((m, idx) => {
+            const expiredFlag = m.status === "expired";
+            const hasProfile = m.hasProfile;
+            const memberData = { name: m.name, reg: m.reg, validityText: m.validityText, status: m.status, photo: m.photo, profileUrl: m.profileUrl };
+            const safeMember = JSON.stringify(memberData).replace(/"/g, '&quot;');
+            
+            let nameHtml = '';
+            if (hasProfile) {
+                nameHtml = `<a href="javascript:void(0)" onclick="openProfilePopup('${escapeHtml(m.profileUrl)}', '${escapeHtml(m.name)}', '${escapeHtml(m.photo)}')" class="member-name-link" title="View profile page in fullscreen">${escapeHtml(m.name)} <i class="fas fa-external-link-alt"></i></a>`;
+            } else {
+                nameHtml = `<span class="member-name-no-profile">${escapeHtml(m.name)}</span>`;
+            }
+            
+            return `<div class="member-row"><span style="color:#5f6c80;">${idx+1}</span><span>${nameHtml}</span><span class="member-reg">${escapeHtml(m.reg)}</span><span class="${m.statusClass}">${escapeHtml(m.validityText)}</span><span><button class="id-btn" ${expiredFlag ? 'disabled' : ''} onclick="showIDCardGlobal(${safeMember}, ${expiredFlag}, ${hasProfile})"><i class="fas fa-id-card"></i> Get ID</button></span></div>`;
+        }).join('');
     }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => { currentSearch = e.target.value; document.getElementById("clearSearchBtn").style.display = currentSearch ? "block" : "none"; if(currentSearch.trim()){ currentFilter="all"; document.querySelectorAll(".filter-chip").forEach(b=>b.classList.remove("active")); document.querySelector('[data-filter="all"]').classList.add("active"); } renderMembers(); });
+    document.getElementById("clearSearchBtn").addEventListener("click", () => { document.getElementById("searchInput").value = ""; currentSearch = ""; document.getElementById("clearSearchBtn").style.display = "none"; renderMembers(); });
+    document.querySelectorAll(".filter-chip").forEach(btn => { btn.addEventListener("click", () => { document.querySelectorAll(".filter-chip").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); currentFilter = btn.dataset.filter; renderMembers(); }); });
+    document.getElementById("downloadCardBtn")?.addEventListener("click", downloadCard);
+    document.getElementById("normalModeBtn").addEventListener("click", () => setMode("normal"));
+    document.getElementById("qrOnlyModeBtn").addEventListener("click", () => setMode("qrOnly"));
     
-    // start everything
-    init();
+    loadData();
 </script>
 </body>
 </html>
