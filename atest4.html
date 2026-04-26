@@ -1,594 +1,390 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Innovation Hub | Complete Attendance System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        body {
-            background: #f0f2f5;
-            min-height: 100vh;
-        }
-        /* Header */
-        .app-header {
-            background: linear-gradient(135deg, #0f2b3d 0%, #1a4a6f 100%);
-            color: white;
-            padding: 20px 24px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .app-header h1 {
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .app-header p {
-            opacity: 0.85;
-            margin-top: 6px;
-            font-size: 0.9rem;
-        }
-        /* Stats Bar */
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 20px 20px 0 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 28px;
-            padding: 12px 28px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex: 1;
-            min-width: 150px;
-            justify-content: center;
-            border: 1px solid #e2e8f0;
-        }
-        .stat-icon { font-size: 2rem; color: #1e6f5c; }
-        .stat-number { font-size: 1.8rem; font-weight: 800; color: #0f2b3d; line-height: 1.2; }
-        .stat-label { font-size: 0.75rem; color: #5b6e8c; font-weight: 600; }
-        /* Container */
-        .container {
-            max-width: 1400px;
-            margin: 24px auto;
-            padding: 0 20px 40px;
-        }
-        /* Options Row */
-        .options-row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .option-btn {
-            background: white;
-            border: none;
-            padding: 16px;
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-            color: #1e293b;
-        }
-        .option-btn i { font-size: 1.4rem; color: #1e6f5c; }
-        .option-btn.active {
-            background: linear-gradient(135deg, #1e6f5c, #0e5a49);
-            color: white;
-        }
-        .option-btn.active i { color: white; }
-        /* Forms */
-        .form-panel {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-            display: none;
-        }
-        .form-panel.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .input-group { margin-bottom: 16px; }
-        label { font-weight: 600; color: #334155; display: block; margin-bottom: 6px; font-size: 0.85rem; }
-        input, select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 16px;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-        input:focus { outline: none; border-color: #1e6f5c; box-shadow: 0 0 0 3px rgba(30,111,92,0.1); }
-        .btn-primary {
-            background: linear-gradient(135deg, #1e6f5c, #0e5a49);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(30,111,92,0.3); }
-        .member-card {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 18px;
-            margin-top: 16px;
-            border-left: 5px solid #1e6f5c;
-        }
-        .member-name { font-size: 1.2rem; font-weight: 800; color: #0f2b3d; }
-        .detail-row { display: flex; gap: 8px; margin: 8px 0; font-size: 0.85rem; color: #475569; flex-wrap: wrap; }
-        .badge { padding: 3px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; }
-        .badge-active { background: #d1fae5; color: #065f46; }
-        .badge-expired { background: #fee2e2; color: #991b1b; }
-        .action-buttons { display: flex; gap: 12px; margin-top: 12px; }
-        .btn-checkin { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 40px; font-weight: 600; cursor: pointer; }
-        .btn-checkout { background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 40px; font-weight: 600; cursor: pointer; }
-        /* Attendance Table */
-        .attendance-grid {
-            background: white;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-            margin-top: 20px;
-        }
-        .grid-header {
-            display: grid;
-            grid-template-columns: 50px 1.5fr 1fr 1.2fr 1.2fr 110px;
-            background: #0f2b3d;
-            color: white;
-            padding: 14px 20px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            gap: 12px;
-        }
-        .member-row {
-            display: grid;
-            grid-template-columns: 50px 1.5fr 1fr 1.2fr 1.2fr 110px;
-            gap: 12px;
-            align-items: center;
-            padding: 12px 20px;
-            border-bottom: 1px solid #edf2f7;
-        }
-        .status-live { background: #fef3c7; color: #b45309; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; display: inline-block; }
-        .status-checked-out { background: #e2e8f0; color: #475569; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; }
-        .signout-small-btn { background: #f59e0b; border: none; padding: 6px 12px; border-radius: 30px; color: white; font-weight: 600; font-size: 0.7rem; cursor: pointer; }
-        .signin-small-btn { background: #1e6f5c; border: none; padding: 6px 12px; border-radius: 30px; color: white; font-weight: 600; font-size: 0.7rem; cursor: pointer; }
-        /* QR Modal */
-        .qr-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .qr-modal.active { display: flex; }
-        .qr-modal-content {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
-        }
-        .close-qr { position: absolute; top: 12px; right: 20px; font-size: 28px; cursor: pointer; }
-        #qr-reader-modal { width: 100%; }
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #1e293b;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 60px;
-            z-index: 1000;
-            transition: 0.3s;
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        @media (max-width: 850px) {
-            .grid-header, .member-row { grid-template-columns: 40px 1fr 0.8fr 1fr 1fr 90px; gap: 6px; font-size: 0.7rem; }
-            .options-row { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 640px) {
-            .grid-header { display: none; }
-            .member-row { display: flex; flex-direction: column; background: white; border-radius: 20px; margin-bottom: 12px; border: 1px solid #e2e8f0; padding: 14px; }
-            .member-row > span { display: flex; justify-content: space-between; width: 100%; }
-            .member-row > span:before { font-weight: 700; color: #1e6f5c; }
-            .member-row > span:nth-child(1):before { content: "#"; }
-            .member-row > span:nth-child(2):before { content: "👤 Name"; }
-            .member-row > span:nth-child(3):before { content: "🆔 Reg ID"; }
-            .member-row > span:nth-child(4):before { content: "📞 Phone"; }
-            .member-row > span:nth-child(5):before { content: "⏱️ Status"; }
-            .member-row > span:nth-child(6):before { content: "⚡ Action"; }
-        }
-        footer { background: #0f2b3d; color: #cbd5e1; text-align: center; padding: 24px; margin-top: 20px; font-size: 0.8rem; }
-    </style>
+  <base target="_top">
+  <title>Today's Attendance Register</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      padding: 20px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .stat-card {
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    
+    .refresh-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid white;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .refresh-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    .table-wrapper {
+      overflow-x: auto;
+      padding: 20px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    th {
+      background: #667eea;
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    tr:hover {
+      background: #f5f5f5;
+    }
+    
+    .signout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+    
+    .signout-btn:hover {
+      background: #c82333;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .signout-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-active {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-signedout {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 18px;
+      color: #667eea;
+    }
+    
+    .no-data {
+      text-align: center;
+      padding: 50px;
+      color: #999;
+      font-size: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      th, td {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+      
+      .signout-btn {
+        padding: 5px 12px;
+        font-size: 11px;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div class="app-header">
-    <h1><i class="fas fa-fingerprint"></i> Innovation Hub · Smart Attendance</h1>
-    <p>Sign In / Sign Out | Live Tracking | Google Sheets Backend</p>
-</div>
-
-<div class="stats-bar">
-    <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-number" id="totalCount">0</div><div class="stat-label">Total Members</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-number" id="checkedInCount">0</div><div class="stat-label">Checked In Today</div></div></div>
-    <div class="stat-card"><div class="stat-icon"><i class="fas fa-broadcast-tower"></i></div><div class="stat-info"><div class="stat-number" id="liveCount">0</div><div class="stat-label">Live (On-site)</div></div></div>
-</div>
-
-<div class="container">
-    <div class="options-row">
-        <button class="option-btn" data-opt="reg"><i class="fas fa-qrcode"></i> Reg ID / QR</button>
-        <button class="option-btn" data-opt="name"><i class="fas fa-search"></i> Search by Name</button>
-        <button class="option-btn" data-opt="guest"><i class="fas fa-user-plus"></i> Guest Check-in</button>
-        <button class="option-btn" data-opt="report"><i class="fas fa-chart-line"></i> Today's Report</button>
+  <div class="container">
+    <div class="header">
+      <button class="refresh-btn" onclick="loadAttendance()">🔄 Refresh</button>
+      <h1>📋 Today's Attendance Register</h1>
+      <p>Real-time member check-ins and check-outs</p>
     </div>
-
-    <!-- Reg ID Form -->
-    <div id="regPanel" class="form-panel">
-        <h3><i class="fas fa-id-card"></i> Enter Registration Number</h3>
-        <div class="input-group"><label>Registration ID</label><input type="text" id="regIdInput" placeholder="e.g., IH1001 or IH2511053"></div>
-        <button class="btn-primary" onclick="fetchMemberByReg()">Verify Member</button>
-        <div id="regMemberResult"></div>
-        <button class="btn-primary" style="margin-top: 12px; background:#6c757d;" onclick="openQRScanner()"><i class="fas fa-camera"></i> 📷 Scan QR Code</button>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="totalCount">0</div>
+        <div class="stat-label">Total Members</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="activeCount">0</div>
+        <div class="stat-label">Active (Signed In)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="signedOutCount">0</div>
+        <div class="stat-label">Signed Out</div>
+      </div>
     </div>
-
-    <!-- Name Search Form -->
-    <div id="namePanel" class="form-panel">
-        <h3><i class="fas fa-user"></i> Search by Name</h3>
-        <div class="input-group"><label>Full Name</label><input type="text" id="searchNameInput" placeholder="Enter name"></div>
-        <button class="btn-primary" onclick="searchMemberByName()">Search</button>
-        <div id="nameMemberResult"></div>
+    
+    <div class="table-wrapper">
+      <div id="attendanceTable">
+        <div class="loading">Loading attendance data...</div>
+      </div>
     </div>
-
-    <!-- Guest Form -->
-    <div id="guestPanel" class="form-panel">
-        <h3><i class="fas fa-user-friends"></i> Guest Registration</h3>
-        <div class="input-group"><label>Full Name *</label><input type="text" id="guestName" placeholder="Guest Name"></div>
-        <div class="input-group"><label>Mobile Number *</label><input type="tel" id="guestMobile" placeholder="10-digit mobile"></div>
-        <div class="input-group"><label>Purpose</label><input type="text" id="guestPurpose" placeholder="Meeting / Workshop / Visit"></div>
-        <button class="btn-primary" onclick="guestCheckIn()">Guest Check-in</button>
-        <div id="guestResultMsg"></div>
-    </div>
-
-    <!-- Today's Report Panel -->
-    <div id="reportPanel" class="form-panel">
-        <h3><i class="fas fa-calendar-day"></i> Today's Attendance Report <span id="reportDate"></span></h3>
-        <div id="reportStats" style="display: flex; gap: 15px; flex-wrap: wrap; margin: 15px 0;">
-            <div style="background:#e0f2fe; padding:12px; border-radius:20px; flex:1; text-align:center;"><strong id="activeCountToday">0</strong><br>Currently Inside</div>
-            <div style="background:#dcfce7; padding:12px; border-radius:20px; flex:1; text-align:center;"><strong id="completedCount">0</strong><br>Completed Today</div>
-            <div style="background:#fff3cd; padding:12px; border-radius:20px; flex:1; text-align:center;"><strong id="guestCountToday">0</strong><br>Guest Visitors</div>
-        </div>
-        <h4>📋 Checked-in Members (Live)</h4>
-        <div id="liveMembersList" style="max-height: 300px; overflow-y: auto; background:#f9fafb; border-radius: 20px; padding: 12px;"></div>
-        <h4 style="margin-top: 15px;">📜 Today's History</h4>
-        <div id="todayHistoryList" style="max-height: 250px; overflow-y: auto;"></div>
-    </div>
-
-    <!-- Attendance Register Table -->
-    <div class="attendance-grid">
-        <div class="grid-header"><span>#</span><span>Full Name</span><span>Reg ID</span><span>Phone</span><span>Status</span><span>Action</span></div>
-        <div id="attendanceList" style="background: white;"></div>
-    </div>
-</div>
-
-<div id="qrModal" class="qr-modal"><div class="qr-modal-content"><span class="close-qr" onclick="closeQRModal()">&times;</span><h3>Scan QR Code</h3><div id="qr-reader-modal"></div><button onclick="closeQRModal()" style="margin-top: 15px; width:100%;">Close</button><div id="qrResultMsg"></div></div></div>
-<div id="toastMsg" class="toast"><i class="fas fa-info-circle"></i> <span id="toastText"></span></div>
-<footer>© 2025 Regional Science Centre & Planetarium, Calicut — Live Attendance with Google Sheets Integration</footer>
-
-<script>
-    // ======================= CONFIGURATION =======================
-    // Google Apps Script Web App URL (Deploy as web app with execute as "me" and access "Anyone")
-    // IMPORTANT: Replace with your actual Apps Script URL after deployment
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_YOUR_SCRIPT_ID_HERE/exec";
-    
-    // Sheet ID for read-only member data (public sheet)
-    const MEMBER_SHEET_ID = "1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY";
-    const MEMBER_SHEET_URL = `https://docs.google.com/spreadsheets/d/${MEMBER_SHEET_ID}/gviz/tq?tqx=out:json`;
-    
-    // Local state
-    let masterMembers = [];     // { regId, name, phone, validity? }
-    let attendanceRecords = new Map(); // regId -> { status, signInTime, signOutTime, isGuest? }
-    let currentFilter = "all";
-    let currentSearch = "";
-    let html5QrScanner = null;
-    let autoRefreshInterval = null;
-    
-    // Helper: Show Toast
-    function showToast(msg, isError = false) {
-        const toast = document.getElementById("toastMsg");
-        document.getElementById("toastText").innerText = msg;
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 3000);
-    }
-    
-    // Call Apps Script API (GET via fetch)
-    async function callAppsScript(action, params = {}) {
-        let url = `${APPS_SCRIPT_URL}?action=${action}`;
-        for (let key in params) url += `&${key}=${encodeURIComponent(params[key])}`;
-        try {
-            const res = await fetch(url);
-            return await res.json();
-        } catch(e) { console.error(e); return { status: 'error', message: 'Network error' }; }
-    }
-    
-    // Fetch members from public Google Sheet
-    async function fetchMembersFromSheet() {
-        try {
-            const resp = await fetch(MEMBER_SHEET_URL);
-            const txt = await resp.text();
-            const jsonStr = txt.substring(47).slice(0, -2);
-            const json = JSON.parse(jsonStr);
-            const rows = json.table.rows;
-            if (!rows || rows.length < 2) throw new Error();
-            const headers = rows[0].c.map(c => c ? c.v?.toString().toLowerCase() : "");
-            const idxReg = headers.findIndex(h => h && (h.includes("reg") || h.includes("id"))) !== -1 ? headers.findIndex(h => h && (h.includes("reg") || h.includes("id"))) : 1;
-            const idxName = headers.findIndex(h => h && (h.includes("name") || h === "name")) !== -1 ? headers.findIndex(h => h && (h.includes("name") || h === "name")) : 2;
-            const idxPhone = headers.findIndex(h => h && (h.includes("phone") || h.includes("mobile"))) !== -1 ? headers.findIndex(h => h && (h.includes("phone") || h.includes("mobile"))) : 6;
-            const members = [];
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                if (!row?.c) continue;
-                const reg = row.c[idxReg]?.v ? row.c[idxReg].v.toString().trim() : `IH${i}`;
-                const name = row.c[idxName]?.v ? row.c[idxName].v.toString().trim() : "";
-                const phone = row.c[idxPhone]?.v ? row.c[idxPhone].v.toString().trim() : "N/A";
-                if (name && name !== "Name") members.push({ regId: reg, name, phone, isGuest: false });
-            }
-            if (members.length === 0) throw new Error();
-            return members;
-        } catch(e) {
-            console.warn("Using fallback demo members");
-            return [
-                { regId: "IH1001", name: "Dr. Arjun Nair", phone: "9876543210", isGuest: false },
-                { regId: "IH1002", name: "Priya Menon", phone: "9988776655", isGuest: false },
-                { regId: "IH1003", name: "Rahul Varma", phone: "8123456789", isGuest: false }
-            ];
-        }
-    }
-    
-    // Load today's report from Apps Script (sign-in/out logs)
-    async function loadTodayReport() {
-        const report = await callAppsScript("getTodayReport");
-        if (report.status === "success") {
-            document.getElementById("activeCountToday").innerText = report.activeCount || 0;
-            document.getElementById("completedCount").innerText = report.completedCount || 0;
-            document.getElementById("guestCountToday").innerText = report.guestCount || 0;
-            const dateSpan = document.getElementById("reportDate");
-            if (dateSpan) dateSpan.innerText = ` - ${new Date().toLocaleDateString()}`;
-            // Live members list
-            let liveHtml = "";
-            if (report.activeMembers && report.activeMembers.length) {
-                report.activeMembers.forEach(m => {
-                    liveHtml += `<div style="padding:8px 12px; border-bottom:1px solid #e2e8f0;"><strong>👤 ${escapeHtml(m.name)}</strong> <span style="color:#1e6f5c;">(${m.regNo || 'Guest'})</span><br><small>⏰ ${m.checkIn || 'Just now'}</small></div>`;
-                });
-            } else { liveHtml = "<div style='padding:20px;text-align:center;color:#888;'>No active check-ins</div>"; }
-            document.getElementById("liveMembersList").innerHTML = liveHtml;
-            // History
-            let historyHtml = "";
-            if (report.history && report.history.length) {
-                report.history.slice(0, 20).forEach(h => {
-                    historyHtml += `<div style="padding:6px 12px; border-bottom:1px solid #f0f0f0; font-size:0.8rem;"><i class="fas ${h.type === 'checkin' ? 'fa-sign-in-alt' : 'fa-sign-out-alt'}"></i> ${escapeHtml(h.name)} ${h.type === 'checkin' ? 'Checked In' : 'Checked Out'} at ${h.time}</div>`;
-                });
-            } else { historyHtml = "<div style='padding:12px; text-align:center;'>No activity today</div>"; }
-            document.getElementById("todayHistoryList").innerHTML = historyHtml;
-        } else {
-            document.getElementById("liveMembersList").innerHTML = "<div>Unable to load report</div>";
-        }
-    }
-    
-    // Sync attendance from server and merge with local
-    async function syncAttendanceFromServer() {
-        const data = await callAppsScript("getAllActive");
-        if (data.status === "success" && data.records) {
-            attendanceRecords.clear();
-            data.records.forEach(rec => {
-                attendanceRecords.set(rec.regId || rec.id, { status: rec.status, signInTime: rec.signInTime, signOutTime: rec.signOutTime, isGuest: rec.isGuest });
-            });
-            persistLocalAttendance();
-            renderAttendanceList();
-            updateStats();
-        }
-        await loadTodayReport();
-    }
-    
-    // Sign In via Apps Script
-    async function signInMember(regId, name, phone, isGuest = false) {
-        const result = await callAppsScript("checkin", { regId, name, phone, isGuest: isGuest ? "true" : "false", timestamp: new Date().toISOString() });
-        if (result.status === "success") {
-            showToast(result.message);
-            await syncAttendanceFromServer();
-            return true;
-        } else {
-            showToast(result.message || "Check-in failed", true);
-            return false;
-        }
-    }
-    
-    async function signOutMember(regId, name) {
-        const result = await callAppsScript("checkout", { regId, name, timestamp: new Date().toISOString() });
-        if (result.status === "success") {
-            showToast(result.message);
-            await syncAttendanceFromServer();
-            return true;
-        } else {
-            showToast(result.message || "Check-out failed", true);
-            return false;
-        }
-    }
-    
-    async function guestCheckIn() {
-        const name = document.getElementById("guestName").value.trim();
-        const mobile = document.getElementById("guestMobile").value.trim();
-        const purpose = document.getElementById("guestPurpose").value.trim() || "Visit";
-        if (!name || !mobile) { showToast("Please enter name and mobile", true); return; }
-        if (!/^\d{10}$/.test(mobile)) { showToast("Valid 10-digit mobile required", true); return; }
-        const result = await callAppsScript("guestCheckin", { name, mobile, purpose, timestamp: new Date().toISOString() });
-        if (result.status === "success") {
-            showToast(result.message);
-            document.getElementById("guestName").value = "";
-            document.getElementById("guestMobile").value = "";
-            document.getElementById("guestPurpose").value = "";
-            await syncAttendanceFromServer();
-            await fetchMembersFromSheetAndRefresh();
-        } else {
-            showToast(result.message, true);
-        }
-    }
-    
-    async function fetchMembersFromSheetAndRefresh() {
-        const members = await fetchMembersFromSheet();
-        masterMembers = members;
-        document.getElementById("totalCount").innerText = masterMembers.length;
-        renderAttendanceList();
-        updateStats();
-    }
-    
-    function renderAttendanceList() {
-        let filtered = [...masterMembers];
-        if (currentSearch.trim()) {
-            const s = currentSearch.toLowerCase();
-            filtered = filtered.filter(m => m.name.toLowerCase().includes(s) || m.regId.toLowerCase().includes(s) || m.phone.includes(s));
-        }
-        if (currentFilter === "live") filtered = filtered.filter(m => attendanceRecords.get(m.regId)?.status === "checked-in");
-        else if (currentFilter === "checkedout") filtered = filtered.filter(m => attendanceRecords.get(m.regId)?.status === "checked-out");
-        
-        const container = document.getElementById("attendanceList");
-        if (filtered.length === 0) { container.innerHTML = "<div class='empty-state' style='padding:40px;text-align:center;'>No members found</div>"; return; }
-        container.innerHTML = filtered.map((m, idx) => {
-            const rec = attendanceRecords.get(m.regId);
-            const isLive = rec && rec.status === "checked-in" && !rec.signOutTime;
-            const statusHtml = isLive ? `<span class="status-live"><i class="fas fa-circle" style="font-size:8px;"></i> LIVE</span>` : (rec?.status === "checked-out" ? `<span class="status-checked-out">Checked Out</span>` : `<span class="status-checked-out">Not Signed In</span>`);
-            const actionHtml = isLive ? `<button class="signout-small-btn" onclick="performSignOut('${m.regId}','${escapeHtml(m.name)}')"><i class="fas fa-sign-out-alt"></i> Out</button>` : `<button class="signin-small-btn" onclick="performSignIn('${m.regId}','${escapeHtml(m.name)}','${escapeHtml(m.phone)}')"><i class="fas fa-sign-in-alt"></i> In</button>`;
-            return `<div class="member-row"><span>${idx+1}</span><span><strong>${escapeHtml(m.name)}</strong></span><span>${escapeHtml(m.regId)}</span><span>${escapeHtml(m.phone)}</span><span>${statusHtml}</span><span>${actionHtml}</span></div>`;
-        }).join('');
-    }
-    
-    function updateStats() {
-        const total = masterMembers.length;
-        let checkedInToday = 0, liveCount = 0;
-        for (let m of masterMembers) {
-            const rec = attendanceRecords.get(m.regId);
-            if (rec && rec.status === "checked-in") { checkedInToday++; if (!rec.signOutTime) liveCount++; }
-            else if (rec && rec.status === "checked-out") checkedInToday++;
-        }
-        document.getElementById("totalCount").innerText = total;
-        document.getElementById("checkedInCount").innerText = checkedInToday;
-        document.getElementById("liveCount").innerText = liveCount;
-    }
-    
-    window.performSignIn = async (regId, name, phone) => { await signInMember(regId, name, phone); };
-    window.performSignOut = async (regId, name) => { await signOutMember(regId, name); };
-    
-    async function fetchMemberByReg() {
-        const reg = document.getElementById("regIdInput").value.trim();
-        if (!reg) { showToast("Enter Reg ID", true); return; }
-        const member = masterMembers.find(m => m.regId.toLowerCase() === reg.toLowerCase());
-        if (!member) { document.getElementById("regMemberResult").innerHTML = `<div class="member-card" style="border-left-color:#dc2626;">❌ Member not found</div>`; return; }
-        displayMemberCard(member, "regMemberResult", "regIdInput");
-    }
-    
-    async function searchMemberByName() {
-        const name = document.getElementById("searchNameInput").value.trim();
-        if (!name) { showToast("Enter name", true); return; }
-        const matches = masterMembers.filter(m => m.name.toLowerCase().includes(name.toLowerCase()));
-        if (matches.length === 0) { document.getElementById("nameMemberResult").innerHTML = `<div class="member-card">No member found</div>`; return; }
-        if (matches.length === 1) displayMemberCard(matches[0], "nameMemberResult", "searchNameInput");
-        else {
-            let html = `<div class="member-card"><strong>Multiple matches:</strong><br>`;
-            matches.forEach(m => { html += `<div style="margin:5px 0">📇 ${escapeHtml(m.name)} (${m.regId}) <button class="signin-small-btn" onclick="quickSelectMember('${m.regId}')">Select</button></div>`; });
-            html += `</div>`;
-            document.getElementById("nameMemberResult").innerHTML = html;
-        }
-    }
-    window.quickSelectMember = (regId) => { const member = masterMembers.find(m => m.regId === regId); if(member) displayMemberCard(member, "nameMemberResult", "searchNameInput"); };
-    
-    function displayMemberCard(member, containerId, inputId) {
-        const rec = attendanceRecords.get(member.regId);
-        const isLive = rec && rec.status === "checked-in";
-        const card = `<div class="member-card"><div class="member-name">${escapeHtml(member.name)}</div><div class="detail-row"><span>🆔 ${member.regId}</span><span>📞 ${member.phone}</span></div><div class="action-buttons">${!isLive ? `<button class="btn-checkin" onclick="performSignIn('${member.regId}','${escapeHtml(member.name)}','${escapeHtml(member.phone)}')">✅ Check In</button>` : `<button class="btn-checkout" onclick="performSignOut('${member.regId}','${escapeHtml(member.name)}')">🚪 Check Out</button>`}</div></div>`;
-        document.getElementById(containerId).innerHTML = card;
-        if(inputId) document.getElementById(inputId).value = '';
-    }
-    
-    function persistLocalAttendance() { localStorage.setItem("ih_attendance_backup", JSON.stringify(Array.from(attendanceRecords.entries()))); }
-    function loadLocalAttendance() { try { const stored = localStorage.getItem("ih_attendance_backup"); if(stored) attendanceRecords = new Map(JSON.parse(stored)); } catch(e){} }
-    
-    // QR Scanner
-    function openQRScanner() { document.getElementById("qrModal").classList.add("active"); startQR(); }
-    function closeQRModal() { document.getElementById("qrModal").classList.remove("active"); if(html5QrScanner) { html5QrScanner.stop(); html5QrScanner = null; } }
-    function startQR() { if(html5QrScanner) html5QrScanner.stop(); html5QrScanner = new Html5Qrcode("qr-reader-modal"); html5QrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, async (text) => { html5QrScanner.stop(); const member = masterMembers.find(m => m.regId === text); if(member) { displayMemberCard(member, "qrResultMsg", ""); setTimeout(() => closeQRModal(), 2000); } else { document.getElementById("qrResultMsg").innerHTML = `<div class="member-card" style="border-left-color:#dc2626;">❌ Invalid QR: ${text}</div>`; } }, (err) => {}); }
-    
-    // UI Tabs
-    document.querySelectorAll(".option-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".form-panel").forEach(p => p.classList.remove("active"));
-            document.getElementById(btn.dataset.opt + "Panel").classList.add("active");
-        });
+  </div>
+  
+  <script>
+    // Load attendance on page load
+    window.addEventListener('load', function() {
+      loadAttendance();
+      // Auto-refresh every 30 seconds
+      setInterval(loadAttendance, 30000);
     });
-    document.getElementById("regPanel").classList.add("active");
-    document.getElementById("searchInput")?.addEventListener?.("input", (e) => { currentSearch = e.target.value; renderAttendanceList(); });
-    // Filter buttons in controls
-    const searchDiv = document.createElement("div"); searchDiv.className = "controls-panel" etc? we add inline on top - but we already have stats bar. add filter row after.
     
-    async function init() {
-        loadLocalAttendance();
-        await fetchMembersFromSheetAndRefresh();
-        await syncAttendanceFromServer();
-        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        autoRefreshInterval = setInterval(async () => {
-            await syncAttendanceFromServer();
-            await fetchMembersFromSheetAndRefresh();
-        }, 15000);
-        // Add filter UI dynamically
-        const containerDiv = document.querySelector(".container");
-        const filterDiv = document.createElement("div");
-        filterDiv.className = "controls-panel";
-        filterDiv.style.cssText = "background:white; border-radius:28px; padding:12px 20px; margin-bottom:20px; display:flex; gap:12px;";
-        filterDiv.innerHTML = `<button class="filter-chip active" data-filter="all">📋 All</button><button class="filter-chip" data-filter="live">🔴 Live</button><button class="filter-chip" data-filter="checkedout">✅ Checked Out</button><div style="flex:1"></div><div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search..."></div>`;
-        containerDiv.insertBefore(filterDiv, containerDiv.firstChild);
-        document.querySelectorAll(".filter-chip").forEach(btn => {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                currentFilter = btn.dataset.filter;
-                renderAttendanceList();
-            });
-        });
-        document.getElementById("searchInput")?.addEventListener("input", (e) => { currentSearch = e.target.value; renderAttendanceList(); });
+    function loadAttendance() {
+      google.script.run
+        .withSuccessHandler(displayAttendance)
+        .withFailureHandler(showError)
+        .getTodayAttendance();
     }
-    function escapeHtml(str) { if(!str) return ""; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-    init();
-</script>
+    
+    function displayAttendance(attendanceData) {
+      const container = document.getElementById('attendanceTable');
+      
+      if (!attendanceData || attendanceData.length === 0) {
+        container.innerHTML = '<div class="no-data">📭 No attendance records for today</div>';
+        updateStats(0, 0, 0);
+        return;
+      }
+      
+      // Calculate stats
+      const total = attendanceData.length;
+      const active = attendanceData.filter(m => m.status === 'Active').length;
+      const signedOut = total - active;
+      updateStats(total, active, signedOut);
+      
+      // Build table HTML
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>SL No</th>
+              <th>Name</th>
+              <th>Phone Number</th>
+              <th>Registration ID</th>
+              <th>Sign In Time</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      attendanceData.forEach((member) => {
+        const isSignedOut = member.status !== 'Active';
+        const signOutTimeDisplay = member.signOutTime ? ` (${member.signOutTime})` : '';
+        
+        html += `
+          <tr>
+            <td>${member.slNo || '-'}</td>
+            <td><strong>${escapeHtml(member.name)}</strong></td>
+            <td>${member.phone || '-'}</td>
+            <td>${member.regNo || '-'}</td>
+            <td>${formatTime(member.signInTime)}</td>
+            <td>
+              <span class="status-badge ${isSignedOut ? 'status-signedout' : 'status-active'}">
+                ${isSignedOut ? 'Signed Out' + signOutTimeDisplay : 'Active'}
+              </span>
+            </td>
+            <td>
+              ${!isSignedOut ? 
+                `<button class="signout-btn" onclick="signOut(${member.rowId}, '${escapeHtml(member.name)}')">
+                  Sign Out
+                </button>` : 
+                '<span style="color:#999;">✓ Completed</span>'
+              }
+            </td>
+          </tr>
+        `;
+      });
+      
+      html += `
+          </tbody>
+        </table>
+      `;
+      
+      container.innerHTML = html;
+    }
+    
+    function updateStats(total, active, signedOut) {
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('activeCount').textContent = active;
+      document.getElementById('signedOutCount').textContent = signedOut;
+    }
+    
+    function signOut(rowId, memberName) {
+      if (confirm(`Sign out ${memberName}?`)) {
+        const signOutTime = new Date().toLocaleTimeString();
+        
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result.success) {
+              showNotification(`${memberName} signed out successfully at ${signOutTime}`, 'success');
+              loadAttendance(); // Refresh the table
+            } else {
+              showNotification('Error: ' + result.message, 'error');
+            }
+          })
+          .withFailureHandler(function(error) {
+            showNotification('Error signing out: ' + error.message, 'error');
+          })
+          .signOutMember(rowId, signOutTime);
+      }
+    }
+    
+    function formatTime(timeString) {
+      if (!timeString) return '-';
+      // If time is already formatted, return as is
+      if (typeof timeString === 'string') return timeString;
+      // If it's a date object, format it
+      try {
+        const date = new Date(timeString);
+        return date.toLocaleTimeString();
+      } catch(e) {
+        return timeString;
+      }
+    }
+    
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function showError(error) {
+      document.getElementById('attendanceTable').innerHTML = 
+        '<div class="no-data">❌ Error loading attendance: ' + error.message + '</div>';
+    }
+    
+    function showNotification(message, type) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        color: white;
+        border-radius: 5px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>
