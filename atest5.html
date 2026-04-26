@@ -20,7 +20,6 @@
             flex-direction: column;
         }
 
-        /* Modern Header */
         .app-header {
             background: linear-gradient(135deg, #0f2b3d 0%, #1a4a6f 100%);
             color: white;
@@ -46,7 +45,6 @@
             font-size: 0.95rem;
         }
 
-        /* Stats Bar */
         .stats-bar {
             display: flex;
             justify-content: center;
@@ -94,7 +92,6 @@
             letter-spacing: 0.3px;
         }
 
-        /* Main Container */
         .container {
             max-width: 1400px;
             margin: 24px auto;
@@ -102,7 +99,6 @@
             width: 100%;
         }
 
-        /* Controls Panel */
         .controls-panel {
             background: white;
             border-radius: 32px;
@@ -186,7 +182,6 @@
             color: #10b981;
         }
 
-        /* Table Header */
         .attendance-grid {
             background: white;
             border-radius: 28px;
@@ -283,7 +278,6 @@
             gap: 6px;
         }
 
-        /* Only Sign Out button remains - style it prominently */
         .signout-btn {
             background: #d97706;
             color: white;
@@ -295,7 +289,6 @@
             transform: scale(0.98);
         }
         
-        /* Disabled state for already signed out members (no action needed but show subtle disabled) */
         .disabled-state {
             background: #e2e8f0;
             color: #64748b;
@@ -322,7 +315,16 @@
             color: #94a3b8;
         }
 
-        /* Toast Notification */
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
         .toast {
             position: fixed;
             bottom: 30px;
@@ -442,6 +444,11 @@
             <div class="empty-state"><i class="fas fa-spinner fa-pulse"></i> Loading members & attendance...</div>
         </div>
     </div>
+    
+    <!-- Debug info to show actual sheet data -->
+    <div class="debug-info" id="debugInfo">
+        <i class="fas fa-info-circle"></i> Debug: Waiting for sheet data...
+    </div>
 </div>
 
 <div id="toastMsg" class="toast"><i class="fas fa-info-circle"></i> <span id="toastText"></span></div>
@@ -451,23 +458,15 @@
 </footer>
 
 <script>
-    // ======================= CONFIGURATION =======================
-    // Google Sheet ID extracted from your link
     const SHEET_ID = "1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY";
     const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
     
-    // Attendance store (in-memory + localStorage for persistence)
-    let attendanceRecords = new Map(); // key = regId
-    
-    // Master members list from sheet
+    let attendanceRecords = new Map();
     let masterMembers = [];
-    
-    // UI state
     let currentFilter = "all";
     let currentSearch = "";
     let refreshInterval = null;
     
-    // Helper functions
     function showToast(message, isError = false) {
         const toast = document.getElementById("toastMsg");
         const textSpan = document.getElementById("toastText");
@@ -478,7 +477,6 @@
         }, 2800);
     }
     
-    // Load attendance from localStorage
     function loadAttendanceFromStorage() {
         const stored = localStorage.getItem("ih_attendance_register_signoutonly");
         if (stored) {
@@ -491,7 +489,6 @@
         }
     }
     
-    // Save attendance to localStorage
     function persistAttendance() {
         const obj = {};
         for (let [k, v] of attendanceRecords.entries()) {
@@ -500,7 +497,6 @@
         localStorage.setItem("ih_attendance_register_signoutonly", JSON.stringify(obj));
     }
     
-    // Get current system time formatted as "HH:MM AM/PM"
     function getCurrentTimeFormatted() {
         const now = new Date();
         let hours = now.getHours();
@@ -511,15 +507,11 @@
         return `${hours}:${minutes} ${ampm}`;
     }
     
-    // Get full datetime string for record
     function getCurrentDateTime() {
         const now = new Date();
         return now.toLocaleString();
     }
     
-    // REMOVED: signIn function completely - no more sign in capability
-    
-    // Sign Out action ONLY - only available for members who are currently signed in (live)
     function signOut(regId, memberName) {
         const record = attendanceRecords.get(regId);
         if (!record || record.status !== "checked-in" || record.signOutTime) {
@@ -540,7 +532,6 @@
         return true;
     }
     
-    // Compute stats based on current attendance
     function updateStats() {
         const total = masterMembers.length;
         let checkedInToday = 0;
@@ -559,7 +550,6 @@
         document.getElementById("liveCount").innerText = liveCount;
     }
     
-    // Parse sheet rows
     async function fetchMembersFromSheet() {
         try {
             const response = await fetch(SHEET_URL);
@@ -567,52 +557,73 @@
             const jsonStr = text.substring(47).slice(0, -2);
             const json = JSON.parse(jsonStr);
             const rows = json.table.rows;
-            if (!rows || rows.length < 2) throw new Error("No data rows");
+            
+            // Update debug info
+            const debugDiv = document.getElementById("debugInfo");
+            debugDiv.innerHTML = `<i class="fas fa-database"></i> Sheet has ${rows ? rows.length : 0} total rows (including header). `;
+            
+            if (!rows || rows.length < 2) {
+                debugDiv.innerHTML += `⚠️ No data rows found!`;
+                throw new Error("No data rows");
+            }
             
             const headers = rows[0].c.map(cell => cell ? cell.v?.toString().toLowerCase().trim() : "");
+            debugDiv.innerHTML += `<br>📋 Headers: ${headers.join(', ')}`;
             
             let colIndex = {
                 regId: headers.findIndex(h => h && (h.includes("reg") || h.includes("id"))),
                 name: headers.findIndex(h => h && (h.includes("name") || h === "name")),
                 phone: headers.findIndex(h => h && (h.includes("phone") || h.includes("mobile"))),
             };
+            
+            // Auto-detect if indexes not found
             if (colIndex.regId === -1) colIndex.regId = 1;
             if (colIndex.name === -1) colIndex.name = 2;
             if (colIndex.phone === -1) colIndex.phone = 6;
             
-            const membersMap = new Map();
+            debugDiv.innerHTML += `<br>🎯 Using columns: Reg ID col ${colIndex.regId}, Name col ${colIndex.name}, Phone col ${colIndex.phone}`;
+            
+            // IMPORTANT: Keep ALL rows including duplicates
+            const membersList = [];
             for (let i = 1; i < rows.length; i++) {
                 const row = rows[i];
-                if (!row || !row.c) continue;
+                if (!row || !row.c) {
+                    debugDiv.innerHTML += `<br>⚠️ Row ${i} has no cells`;
+                    continue;
+                }
                 const regIdRaw = row.c[colIndex.regId]?.v;
                 const nameRaw = row.c[colIndex.name]?.v;
                 const phoneRaw = row.c[colIndex.phone]?.v;
-                if (!regIdRaw && !nameRaw) continue;
-                const regId = regIdRaw ? regIdRaw.toString().trim() : `IH${i}`;
+                
+                if (!regIdRaw && !nameRaw) {
+                    debugDiv.innerHTML += `<br>⚠️ Row ${i} has no Reg ID or Name, skipping`;
+                    continue;
+                }
+                
+                const regId = regIdRaw ? regIdRaw.toString().trim() : `MEMBER${i}`;
                 const name = nameRaw ? nameRaw.toString().trim() : "Unknown Member";
                 const phone = phoneRaw ? phoneRaw.toString().trim() : "N/A";
-                if (!membersMap.has(regId)) {
-                    membersMap.set(regId, { regId, name, phone });
-                }
+                
+                membersList.push({ regId, name, phone });
             }
-            const membersArray = Array.from(membersMap.values());
-            if (membersArray.length === 0) throw new Error("No members found");
-            return membersArray;
+            
+            debugDiv.innerHTML += `<br>✅ Found ${membersList.length} member rows in sheet (ALL rows shown)`;
+            
+            if (membersList.length === 0) throw new Error("No members found");
+            return membersList;
         } catch (error) {
             console.error("Sheet fetch error:", error);
-            // Fallback demo data
+            document.getElementById("debugInfo").innerHTML += `<br>❌ Error: ${error.message}. Using fallback data.`;
+            // Fallback demo data - 4 members for testing
             return [
                 { regId: "IH1001", name: "Dr. Arjun Nair", phone: "+91 9876543210" },
                 { regId: "IH1002", name: "Priya Menon", phone: "+91 9988776655" },
                 { regId: "IH1003", name: "Rahul Varma", phone: "+91 8123456789" },
-                { regId: "IH1004", name: "Anjali Krishnan", phone: "+91 7894561230" },
-                { regId: "IH1005", name: "Sandeep Raj", phone: "+91 9562347812" }
+                { regId: "IH1004", name: "Anjali Krishnan", phone: "+91 7894561230" }
             ];
         }
     }
     
-    // Function to pre-populate demo live session for demonstration (so sign out button is useful)
-    // This creates a sample active session for first few members for demo purpose if no existing data
     function ensureDemoLiveSessions() {
         if (masterMembers.length === 0) return;
         let hasAnyLive = false;
@@ -623,7 +634,7 @@
                 break;
             }
         }
-        // If no live sessions exist and attendanceRecords has no checked-in, create 2 demo active sessions for first members
+        
         if (!hasAnyLive) {
             const demoMembers = masterMembers.slice(0, Math.min(3, masterMembers.length));
             demoMembers.forEach(mem => {
@@ -644,7 +655,6 @@
                 } else {
                     const existing = attendanceRecords.get(mem.regId);
                     if (existing.status === "checked-out") {
-                        // reset to checked-in for demo
                         existing.status = "checked-in";
                         existing.signOutTime = null;
                         existing.signOutDisplay = null;
@@ -658,7 +668,6 @@
         }
     }
     
-    // Filter & render members with ONLY sign out button for live members
     function renderAttendanceList() {
         let filtered = [...masterMembers];
         
@@ -694,25 +703,20 @@
             let statusHtml = "";
             let signInDisplay = "—";
             let actionHtml = "";
-            let isLive = false;
             
             if (record && record.status === "checked-in" && !record.signOutTime) {
                 statusHtml = `<span class="status-badge status-live"><i class="fas fa-circle" style="font-size:8px;"></i> LIVE (On-site)</span>`;
                 signInDisplay = record.signInDisplay || record.signInTime?.substring(0,16) || "—";
-                isLive = true;
-                // ONLY SIGN OUT BUTTON for active members
                 actionHtml = `<button class="action-btn signout-btn" onclick="handleSignOut('${member.regId}','${escapeHtml(member.name)}')"><i class="fas fa-sign-out-alt"></i> Sign Out</button>`;
             } 
             else if (record && record.status === "checked-out") {
                 statusHtml = `<span class="status-badge status-checked-out"><i class="fas fa-check-double"></i> Checked Out</span>`;
                 signInDisplay = record.signInDisplay || "—";
-                // Already checked out -> cannot sign out again, provide disabled indicator (no sign in button allowed as per requirement)
                 actionHtml = `<span class="disabled-state"><i class="fas fa-ban"></i> Already Out</span>`;
             }
             else {
                 statusHtml = `<span class="status-badge status-checked-out"><i class="far fa-calendar-times"></i> Not Signed In</span>`;
                 signInDisplay = "—";
-                // No sign in button, just show that sign out is not possible
                 actionHtml = `<span class="disabled-state"><i class="fas fa-user-clock"></i> No Active Session</span>`;
             }
             
@@ -732,50 +736,42 @@
     
     function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
     
-    // Global handlers for inline onclick
     window.handleSignOut = function(regId, name) {
         signOut(regId, name);
     };
     
-    // Refresh members from sheet, preserve attendance, then optionally seed demo if needed
     async function refreshMembersFromSheet() {
         try {
             const members = await fetchMembersFromSheet();
             if (members && members.length > 0) {
-                const newMasterMap = new Map();
-                for (const m of members) {
-                    newMasterMap.set(m.regId, m);
-                }
-                masterMembers = Array.from(newMasterMap.values());
+                masterMembers = members; // Keep ALL members, no deduplication
+                
                 // Clean up orphan attendance records
+                const validRegIds = new Set(members.map(m => m.regId));
                 for (let [regId] of attendanceRecords.entries()) {
-                    if (!newMasterMap.has(regId)) {
+                    if (!validRegIds.has(regId)) {
                         attendanceRecords.delete(regId);
                     }
                 }
                 persistAttendance();
-                // If after cleanup there is no live session AND we want demo for signout visibility, run demo seed (only on first load or when empty)
+                
                 const anyLive = Array.from(attendanceRecords.values()).some(rec => rec.status === "checked-in" && !rec.signOutTime);
-                if (!anyLive && masterMembers.length > 0 && attendanceRecords.size === 0) {
+                if (!anyLive && attendanceRecords.size === 0) {
                     ensureDemoLiveSessions();
-                } else if (!anyLive && masterMembers.length > 0) {
-                    // Check if there are any records at all; if none, seed demo
-                    if (attendanceRecords.size === 0) ensureDemoLiveSessions();
                 }
+                
                 renderAttendanceList();
                 updateStats();
-                showToast(`↻ Synced ${masterMembers.length} members`, false);
+                showToast(`↻ Synced ${masterMembers.length} members from sheet`, false);
             }
         } catch (error) {
             console.warn("Sheet refresh error", error);
         }
     }
     
-    // Initial load + interval
     async function init() {
         loadAttendanceFromStorage();
         await refreshMembersFromSheet();
-        // Ensure demo after merge
         if (masterMembers.length > 0) {
             const hasLive = Array.from(attendanceRecords.values()).some(r => r.status === "checked-in" && !r.signOutTime);
             if (!hasLive && attendanceRecords.size === 0) ensureDemoLiveSessions();
@@ -786,7 +782,7 @@
         if (refreshInterval) clearInterval(refreshInterval);
         refreshInterval = setInterval(() => {
             refreshMembersFromSheet();
-        }, 20000);
+        }, 15000);
         
         const searchInput = document.getElementById("searchInput");
         searchInput.addEventListener("input", (e) => {
