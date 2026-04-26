@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Innovation Hub | Live Attendance Register (Sign Out Only)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Modern Header */
+        .app-header {
+            background: linear-gradient(135deg, #0f2b3d 0%, #1a4a6f 100%);
+            color: white;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .app-header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .app-header p {
+            opacity: 0.85;
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 20px 20px 0 20px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 28px;
+            padding: 12px 28px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+            min-width: 160px;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: #1e6f5c;
+        }
+
+        .stat-info {
+            text-align: left;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f2b3d;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #5b6e8c;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 20px 40px;
+            width: 100%;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: white;
+            border-radius: 32px;
+            padding: 18px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+            border: 1px solid #eef2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 340px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            background: #f9fafb;
+            transition: all 0.2s;
+        }
+
+        #searchInput:focus {
+            border-color: #1e6f5c;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30,111,92,0.15);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 8px 18px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1e293b;
+        }
+
+        .filter-chip.active {
+            background: #1e6f5c;
+            color: white;
+            box-shadow: 0 2px 8px rgba(30,111,92,0.3);
+        }
+
+        .live-badge {
+            background: #e6f7f2;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1e6f5c;
+        }
+
+        .live-badge i {
+            margin-right: 6px;
+            color: #10b981;
+        }
+
+        /* Table Header */
+        .attendance-grid {
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            border: 1px solid #eef2f6;
+        }
+
+        .grid-header {
+            display: grid;
+            grid-template-columns: 60px 1.2fr 1fr 1.2fr 1.2fr 100px 110px;
+            background: #0f2b3d;
+            color: white;
+            padding: 16px 20px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+            gap: 12px;
+        }
+
+        .member-list {
+            background: white;
+        }
+
+        .member-row {
+            display: grid;
+            grid-template-columns: 60px 1.2fr 1fr 1.2fr 1.2fr 100px 110px;
+            gap: 12px;
+            align-items: center;
+            padding: 14px 20px;
+            border-bottom: 1px solid #edf2f7;
+            transition: background 0.15s;
+        }
+
+        .member-row:hover {
+            background: #fafcff;
+        }
+
+        .member-name {
+            font-weight: 700;
+            color: #0f2b3d;
+        }
+
+        .reg-id {
+            font-family: monospace;
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-checked-in {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-checked-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-live {
+            background: #fef3c7;
+            color: #b45309;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; background: #fed7aa; }
+            100% { opacity: 0.7; }
+        }
+
+        .action-btn {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Only Sign Out button remains - style it prominently */
+        .signout-btn {
+            background: #d97706;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .signout-btn:hover {
+            background: #b45309;
+            transform: scale(0.98);
+        }
+        
+        /* Disabled state for already signed out members (no action needed but show subtle disabled) */
+        .disabled-state {
+            background: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
+            font-size: 0.7rem;
+            padding: 8px 12px;
+            border-radius: 40px;
+            text-align: center;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .time-info {
+            font-size: 0.7rem;
+            color: #5b6e8c;
+            font-family: monospace;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        footer {
+            background: #0f2b3d;
+            color: #cbd5e1;
+            text-align: center;
+            padding: 24px;
+            margin-top: auto;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-header, .member-row {
+                grid-template-columns: 50px 1fr 1fr 1.2fr 1fr 90px 100px;
+                gap: 6px;
+                font-size: 0.75rem;
+            }
+            .action-btn, .disabled-state {
+                padding: 6px 10px;
+                font-size: 0.65rem;
+            }
+        }
+
+        @media (max-width: 780px) {
+            .grid-header {
+                display: none;
+            }
+            .member-row {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                background: white;
+                border-radius: 24px;
+                margin-bottom: 12px;
+                border: 1px solid #e2e8f0;
+                padding: 16px;
+            }
+            .member-row > span {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+            .member-row > span:before {
+                font-weight: 700;
+                color: #1e6f5c;
+                font-size: 0.7rem;
+            }
+            .member-row > span:nth-child(1):before { content: "# SL NO"; }
+            .member-row > span:nth-child(2):before { content: "👤 NAME"; }
+            .member-row > span:nth-child(3):before { content: "🆔 REG ID"; }
+            .member-row > span:nth-child(4):before { content: "📞 PHONE"; }
+            .member-row > span:nth-child(5):before { content: "⏱️ STATUS"; }
+            .member-row > span:nth-child(6):before { content: "⏰ SIGN IN"; }
+            .member-row > span:nth-child(7):before { content: "🎫 ACTION"; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1><i class="fas fa-fingerprint"></i> Innovation Hub · Live Attendance (Sign Out Only)</h1>
+    <p>Real-time sign-out register | Members can only be signed out from active sessions</p>
+</div>
+
+<div class="stats-bar">
+    <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-number" id="totalCount">0</div><div class="stat-label">Total Members</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-number" id="checkedInCount">0</div><div class="stat-label">Checked In Today</div></div></div>
+    <div class="stat-card"><div class="stat-icon"><i class="fas fa-broadcast-tower"></i></div><div class="stat-info"><div class="stat-number" id="liveCount">0</div><div class="stat-label"><i class="fas fa-circle" style="color:#10b981; font-size:0.6rem;"></i> Live (Not Signed Out)</div></div></div>
+</div>
+
+<div class="container">
+    <div class="controls-panel">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by Name, Reg ID or Phone...">
+        </div>
+        <div class="filter-group">
+            <button class="filter-chip active" data-filter="all">📋 All</button>
+            <button class="filter-chip" data-filter="live">🔴 Live (Signed In)</button>
+            <button class="filter-chip" data-filter="checkedout">✅ Checked Out</button>
+        </div>
+        <div class="live-badge"><i class="fas fa-sync-alt"></i> Auto-sync every 15s</div>
+    </div>
+
+    <div class="attendance-grid">
+        <div class="grid-header">
+            <span>#</span>
+            <span>Full Name</span>
+            <span>Reg ID</span>
+            <span>Phone</span>
+            <span>Attendance Status</span>
+            <span>Sign In Time</span>
+            <span>Action</span>
+        </div>
+        <div id="attendanceList" class="member-list">
+            <div class="empty-state"><i class="fas fa-spinner fa-pulse"></i> Loading members & attendance...</div>
+        </div>
+    </div>
+</div>
+
+<div id="toastMsg" class="toast"><i class="fas fa-info-circle"></i> <span id="toastText"></span></div>
+
+<footer>
+    <p>© 2025 Regional Science Centre & Planetarium, Calicut — Live Attendance Register | Sign Out only (active on-site members can be signed out)</p>
+</footer>
+
+<script>
+    // ======================= CONFIGURATION =======================
+    // Google Sheet ID extracted from your link
+    const SHEET_ID = "1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY";
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    
+    // Attendance store (in-memory + localStorage for persistence)
+    let attendanceRecords = new Map(); // key = regId
+    
+    // Master members list from sheet
+    let masterMembers = [];
+    
+    // UI state
+    let currentFilter = "all";
+    let currentSearch = "";
+    let refreshInterval = null;
+    
+    // Helper functions
+    function showToast(message, isError = false) {
+        const toast = document.getElementById("toastMsg");
+        const textSpan = document.getElementById("toastText");
+        textSpan.innerText = message;
+        toast.classList.add("show");
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 2800);
+    }
+    
+    // Load attendance from localStorage
+    function loadAttendanceFromStorage() {
+        const stored = localStorage.getItem("ih_attendance_register_signoutonly");
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                for (let [key, val] of Object.entries(parsed)) {
+                    attendanceRecords.set(key, val);
+                }
+            } catch(e) {}
+        }
+    }
+    
+    // Save attendance to localStorage
+    function persistAttendance() {
+        const obj = {};
+        for (let [k, v] of attendanceRecords.entries()) {
+            obj[k] = v;
+        }
+        localStorage.setItem("ih_attendance_register_signoutonly", JSON.stringify(obj));
+    }
+    
+    // Get current system time formatted as "HH:MM AM/PM"
+    function getCurrentTimeFormatted() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${hours}:${minutes} ${ampm}`;
+    }
+    
+    // Get full datetime string for record
+    function getCurrentDateTime() {
+        const now = new Date();
+        return now.toLocaleString();
+    }
+    
+    // REMOVED: signIn function completely - no more sign in capability
+    
+    // Sign Out action ONLY - only available for members who are currently signed in (live)
+    function signOut(regId, memberName) {
+        const record = attendanceRecords.get(regId);
+        if (!record || record.status !== "checked-in" || record.signOutTime) {
+            showToast(`❌ ${memberName} is not currently signed in. Only active on-site members can be signed out.`, true);
+            return false;
+        }
+        const outTime = getCurrentTimeFormatted();
+        const outFull = getCurrentDateTime();
+        record.signOutTime = outFull;
+        record.signOutDisplay = outTime;
+        record.status = "checked-out";
+        record.lastUpdated = Date.now();
+        attendanceRecords.set(regId, record);
+        persistAttendance();
+        showToast(`🚪 ${memberName} successfully signed out at ${outTime}`, false);
+        renderAttendanceList();
+        updateStats();
+        return true;
+    }
+    
+    // Compute stats based on current attendance
+    function updateStats() {
+        const total = masterMembers.length;
+        let checkedInToday = 0;
+        let liveCount = 0;
+        for (let mem of masterMembers) {
+            const record = attendanceRecords.get(mem.regId);
+            if (record && record.status === "checked-in") {
+                checkedInToday++;
+                if (!record.signOutTime) liveCount++;
+            } else if (record && record.status === "checked-out") {
+                checkedInToday++;
+            }
+        }
+        document.getElementById("totalCount").innerText = total;
+        document.getElementById("checkedInCount").innerText = checkedInToday;
+        document.getElementById("liveCount").innerText = liveCount;
+    }
+    
+    // Parse sheet rows
+    async function fetchMembersFromSheet() {
+        try {
+            const response = await fetch(SHEET_URL);
+            const text = await response.text();
+            const jsonStr = text.substring(47).slice(0, -2);
+            const json = JSON.parse(jsonStr);
+            const rows = json.table.rows;
+            if (!rows || rows.length < 2) throw new Error("No data rows");
+            
+            const headers = rows[0].c.map(cell => cell ? cell.v?.toString().toLowerCase().trim() : "");
+            
+            let colIndex = {
+                regId: headers.findIndex(h => h && (h.includes("reg") || h.includes("id"))),
+                name: headers.findIndex(h => h && (h.includes("name") || h === "name")),
+                phone: headers.findIndex(h => h && (h.includes("phone") || h.includes("mobile"))),
+            };
+            if (colIndex.regId === -1) colIndex.regId = 1;
+            if (colIndex.name === -1) colIndex.name = 2;
+            if (colIndex.phone === -1) colIndex.phone = 6;
+            
+            const membersMap = new Map();
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || !row.c) continue;
+                const regIdRaw = row.c[colIndex.regId]?.v;
+                const nameRaw = row.c[colIndex.name]?.v;
+                const phoneRaw = row.c[colIndex.phone]?.v;
+                if (!regIdRaw && !nameRaw) continue;
+                const regId = regIdRaw ? regIdRaw.toString().trim() : `IH${i}`;
+                const name = nameRaw ? nameRaw.toString().trim() : "Unknown Member";
+                const phone = phoneRaw ? phoneRaw.toString().trim() : "N/A";
+                if (!membersMap.has(regId)) {
+                    membersMap.set(regId, { regId, name, phone });
+                }
+            }
+            const membersArray = Array.from(membersMap.values());
+            if (membersArray.length === 0) throw new Error("No members found");
+            return membersArray;
+        } catch (error) {
+            console.error("Sheet fetch error:", error);
+            // Fallback demo data
+            return [
+                { regId: "IH1001", name: "Dr. Arjun Nair", phone: "+91 9876543210" },
+                { regId: "IH1002", name: "Priya Menon", phone: "+91 9988776655" },
+                { regId: "IH1003", name: "Rahul Varma", phone: "+91 8123456789" },
+                { regId: "IH1004", name: "Anjali Krishnan", phone: "+91 7894561230" },
+                { regId: "IH1005", name: "Sandeep Raj", phone: "+91 9562347812" }
+            ];
+        }
+    }
+    
+    // Function to pre-populate demo live session for demonstration (so sign out button is useful)
+    // This creates a sample active session for first few members for demo purpose if no existing data
+    function ensureDemoLiveSessions() {
+        if (masterMembers.length === 0) return;
+        let hasAnyLive = false;
+        for (let mem of masterMembers) {
+            const rec = attendanceRecords.get(mem.regId);
+            if (rec && rec.status === "checked-in" && !rec.signOutTime) {
+                hasAnyLive = true;
+                break;
+            }
+        }
+        // If no live sessions exist and attendanceRecords has no checked-in, create 2 demo active sessions for first members
+        if (!hasAnyLive) {
+            const demoMembers = masterMembers.slice(0, Math.min(3, masterMembers.length));
+            demoMembers.forEach(mem => {
+                if (!attendanceRecords.has(mem.regId)) {
+                    const nowTime = getCurrentTimeFormatted();
+                    const nowFull = getCurrentDateTime();
+                    attendanceRecords.set(mem.regId, {
+                        regId: mem.regId,
+                        name: mem.name,
+                        phone: mem.phone,
+                        signInTime: nowFull,
+                        signInDisplay: nowTime,
+                        signOutTime: null,
+                        signOutDisplay: null,
+                        status: "checked-in",
+                        lastUpdated: Date.now()
+                    });
+                } else {
+                    const existing = attendanceRecords.get(mem.regId);
+                    if (existing.status === "checked-out") {
+                        // reset to checked-in for demo
+                        existing.status = "checked-in";
+                        existing.signOutTime = null;
+                        existing.signOutDisplay = null;
+                        existing.lastUpdated = Date.now();
+                        attendanceRecords.set(mem.regId, existing);
+                    }
+                }
+            });
+            persistAttendance();
+            showToast("🎯 Demo: Active live sessions created. You can now sign out members.", false);
+        }
+    }
+    
+    // Filter & render members with ONLY sign out button for live members
+    function renderAttendanceList() {
+        let filtered = [...masterMembers];
+        
+        if (currentSearch.trim()) {
+            const s = currentSearch.toLowerCase();
+            filtered = filtered.filter(m => 
+                m.name.toLowerCase().includes(s) || 
+                m.regId.toLowerCase().includes(s) || 
+                m.phone.toLowerCase().includes(s)
+            );
+        }
+        
+        if (currentFilter === "live") {
+            filtered = filtered.filter(m => {
+                const rec = attendanceRecords.get(m.regId);
+                return rec && rec.status === "checked-in" && !rec.signOutTime;
+            });
+        } else if (currentFilter === "checkedout") {
+            filtered = filtered.filter(m => {
+                const rec = attendanceRecords.get(m.regId);
+                return rec && rec.status === "checked-out";
+            });
+        }
+        
+        const container = document.getElementById("attendanceList");
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="far fa-clock"></i> No members match the current filter</div>`;
+            return;
+        }
+        
+        container.innerHTML = filtered.map((member, idx) => {
+            const record = attendanceRecords.get(member.regId);
+            let statusHtml = "";
+            let signInDisplay = "—";
+            let actionHtml = "";
+            let isLive = false;
+            
+            if (record && record.status === "checked-in" && !record.signOutTime) {
+                statusHtml = `<span class="status-badge status-live"><i class="fas fa-circle" style="font-size:8px;"></i> LIVE (On-site)</span>`;
+                signInDisplay = record.signInDisplay || record.signInTime?.substring(0,16) || "—";
+                isLive = true;
+                // ONLY SIGN OUT BUTTON for active members
+                actionHtml = `<button class="action-btn signout-btn" onclick="handleSignOut('${member.regId}','${escapeHtml(member.name)}')"><i class="fas fa-sign-out-alt"></i> Sign Out</button>`;
+            } 
+            else if (record && record.status === "checked-out") {
+                statusHtml = `<span class="status-badge status-checked-out"><i class="fas fa-check-double"></i> Checked Out</span>`;
+                signInDisplay = record.signInDisplay || "—";
+                // Already checked out -> cannot sign out again, provide disabled indicator (no sign in button allowed as per requirement)
+                actionHtml = `<span class="disabled-state"><i class="fas fa-ban"></i> Already Out</span>`;
+            }
+            else {
+                statusHtml = `<span class="status-badge status-checked-out"><i class="far fa-calendar-times"></i> Not Signed In</span>`;
+                signInDisplay = "—";
+                // No sign in button, just show that sign out is not possible
+                actionHtml = `<span class="disabled-state"><i class="fas fa-user-clock"></i> No Active Session</span>`;
+            }
+            
+            return `
+                <div class="member-row">
+                    <span>${idx + 1}</span>
+                    <span class="member-name">${escapeHtml(member.name)}</span>
+                    <span><span class="reg-id">${escapeHtml(member.regId)}</span></span>
+                    <span>${escapeHtml(member.phone)}</span>
+                    <span>${statusHtml}</span>
+                    <span class="time-info">${signInDisplay}</span>
+                    <span>${actionHtml}</span>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function escapeHtml(str) { if (!str) return ""; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+    
+    // Global handlers for inline onclick
+    window.handleSignOut = function(regId, name) {
+        signOut(regId, name);
+    };
+    
+    // Refresh members from sheet, preserve attendance, then optionally seed demo if needed
+    async function refreshMembersFromSheet() {
+        try {
+            const members = await fetchMembersFromSheet();
+            if (members && members.length > 0) {
+                const newMasterMap = new Map();
+                for (const m of members) {
+                    newMasterMap.set(m.regId, m);
+                }
+                masterMembers = Array.from(newMasterMap.values());
+                // Clean up orphan attendance records
+                for (let [regId] of attendanceRecords.entries()) {
+                    if (!newMasterMap.has(regId)) {
+                        attendanceRecords.delete(regId);
+                    }
+                }
+                persistAttendance();
+                // If after cleanup there is no live session AND we want demo for signout visibility, run demo seed (only on first load or when empty)
+                const anyLive = Array.from(attendanceRecords.values()).some(rec => rec.status === "checked-in" && !rec.signOutTime);
+                if (!anyLive && masterMembers.length > 0 && attendanceRecords.size === 0) {
+                    ensureDemoLiveSessions();
+                } else if (!anyLive && masterMembers.length > 0) {
+                    // Check if there are any records at all; if none, seed demo
+                    if (attendanceRecords.size === 0) ensureDemoLiveSessions();
+                }
+                renderAttendanceList();
+                updateStats();
+                showToast(`↻ Synced ${masterMembers.length} members`, false);
+            }
+        } catch (error) {
+            console.warn("Sheet refresh error", error);
+        }
+    }
+    
+    // Initial load + interval
+    async function init() {
+        loadAttendanceFromStorage();
+        await refreshMembersFromSheet();
+        // Ensure demo after merge
+        if (masterMembers.length > 0) {
+            const hasLive = Array.from(attendanceRecords.values()).some(r => r.status === "checked-in" && !r.signOutTime);
+            if (!hasLive && attendanceRecords.size === 0) ensureDemoLiveSessions();
+            renderAttendanceList();
+            updateStats();
+        }
+        
+        if (refreshInterval) clearInterval(refreshInterval);
+        refreshInterval = setInterval(() => {
+            refreshMembersFromSheet();
+        }, 20000);
+        
+        const searchInput = document.getElementById("searchInput");
+        searchInput.addEventListener("input", (e) => {
+            currentSearch = e.target.value;
+            renderAttendanceList();
+        });
+        
+        document.querySelectorAll(".filter-chip").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
+                renderAttendanceList();
+            });
+        });
+        
+        renderAttendanceList();
+        updateStats();
+    }
+    
+    init();
+</script>
+</body>
+</html>
