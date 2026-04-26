@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Innovation Hub | Smart Attendance System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #eef2ff 0%, #d9e2f5 100%);
+            min-height: 100vh;
+            padding: 24px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(12px);
+            padding: 16px 28px;
+            border-radius: 60px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+
+        .brand h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #0f2b4d, #1e4a76);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .login-btn {
+            background: linear-gradient(105deg, #1e293b, #0f172a);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .login-btn:hover {
+            transform: scale(1.02);
+            background: #0f172a;
+        }
+
+        .register-card {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8fafc;
+            padding: 20px 28px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge-live {
+            background: #10b98120;
+            color: #047857;
+            border-radius: 100px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .refresh-note {
+            font-size: 0.75rem;
+            color: #475569;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 0 0 20px 0;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .attendance-table th {
+            text-align: left;
+            padding: 16px 20px;
+            background: #f9fafb;
+            color: #334155;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .attendance-table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid #f0f2f5;
+            color: #1e293b;
+        }
+
+        .sign-out-btn {
+            background: #ef4444;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .status-badge {
+            background: #e6f7e6;
+            color: #15803d;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .empty-row td {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .full-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .full-modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-glass {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 48px;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 24px 0;
+        }
+
+        .option-card-modal {
+            background: #f1f5f9;
+            border-radius: 28px;
+            padding: 16px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+
+        .option-card-modal:hover {
+            background: #e0e7ff;
+            transform: translateY(-3px);
+        }
+
+        .icon-big {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 60px;
+            border: 1.5px solid #cbd5e1;
+            margin: 8px 0;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #3b82f6;
+        }
+
+        .modal-action-btn {
+            background: linear-gradient(95deg, #2563eb, #1e40af);
+            width: 100%;
+            padding: 14px;
+            border-radius: 60px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+
+        .close-modal-btn {
+            background: #e2e8f0;
+            color: #1e293b;
+            margin-top: 8px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .loading-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .spinner-circle {
+            width: 70px;
+            height: 70px;
+            border: 6px solid rgba(255,255,255,0.3);
+            border-top: 6px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .member-preview {
+            background: #eef2ff;
+            border-radius: 28px;
+            padding: 16px;
+            margin-top: 16px;
+            text-align: left;
+        }
+    </style>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <div class="dashboard-header">
+        <div class="brand">
+            <h1>📋 Innovation Hub</h1>
+            <p>Live Attendance Register • Auto sync</p>
+        </div>
+        <button class="login-btn" id="openLoginBtn">🔐 Sign In / Check-in</button>
+    </div>
+
+    <div class="register-card">
+        <div class="card-header">
+            <h2>📌 Today's Attendance Register <span class="badge-live" id="liveCount">0 inside</span></h2>
+            <div class="refresh-note">🔄 Updates every 90s</div>
+        </div>
+        <div class="table-wrapper">
+            <table class="attendance-table">
+                <thead><tr><th>Name</th><th>Reg ID / Guest</th><th>Check-in Time</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="attendanceTableBody"><tr class="empty-row"><td colspan="5">Loading register...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="loginModal" class="full-modal">
+    <div class="modal-glass" id="modalGlass">
+        <h3 id="modalTitle">✨ Welcome Back</h3>
+        <p id="modalSub" style="color:#475569; margin-bottom: 12px;">Choose check-in method</p>
+        
+        <div id="optionsContainer" class="options-grid">
+            <div class="option-card-modal" data-method="regNo"><div class="icon-big">🆔</div><span>Reg ID</span></div>
+            <div class="option-card-modal" data-method="name"><div class="icon-big">👤</div><span>Name</span></div>
+            <div class="option-card-modal" data-method="guest"><div class="icon-big">👋</div><span>Guest</span></div>
+            <div class="option-card-modal" data-method="qr"><div class="icon-big">📱</div><span>Scan QR</span></div>
+        </div>
+        
+        <div id="dynamicStepArea"></div>
+        <button class="modal-action-btn close-modal-btn" id="cancelModalBtn">Cancel</button>
+    </div>
+</div>
+
+<div id="globalLoader" class="loading-overlay"><div class="spinner-circle"></div></div>
+
+<script>
+    // ==================== CONFIGURATION ====================
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxjYVqDbx8ef8NoHY8-pdTJ60JDhFjTbWuB1cjU8IP-UZ_aE_pJkKPL_TCFBFZUYvdZ/exec';
+    
+    let html5QrScanner = null;
+    let autoRefreshInterval = null;
+    let tempMemberData = null;
+
+    // Helper JSONP
+    async function callAPI(action, params = {}) {
+        return new Promise((resolve, reject) => {
+            const callbackName = 'jsonp_cb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+            let url = `${WEB_APP_URL}?action=${action}&callback=${callbackName}`;
+            for (let key in params) {
+                if (params[key] !== undefined && params[key] !== null)
+                    url += `&${key}=${encodeURIComponent(params[key])}`;
+            }
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                resolve(data);
+            };
+            const script = document.createElement('script');
+            script.src = url;
+            script.onerror = () => { delete window[callbackName]; reject(new Error('JSONP failed')); };
+            document.body.appendChild(script);
+        });
+    }
+
+    function showLoader(show) {
+        const loader = document.getElementById('globalLoader');
+        if (show) loader.classList.add('active');
+        else loader.classList.remove('active');
+    }
+
+    // ========== ATTENDANCE REGISTER - FIXED TO SHOW DATA ==========
+    async function loadAttendanceRegister() {
+        try {
+            console.log("Fetching attendance report...");
+            const report = await callAPI('getTodayReport');
+            console.log("Report received:", report);
+            
+            if (report && report.status === 'success') {
+                renderAttendanceTable(report);
+                document.getElementById('liveCount').innerHTML = `${report.activeCount || 0} inside`;
+            } else {
+                // If no data or error, show meaningful message
+                document.getElementById('attendanceTableBody').innerHTML = '<tr class="empty-row"><td colspan="5">📭 No attendance data available. Check-ins will appear here.</td></tr>';
+                document.getElementById('liveCount').innerHTML = `0 inside`;
+            }
+        } catch (err) {
+            console.error("Load error:", err);
+            document.getElementById('attendanceTableBody').innerHTML = '<tr class="empty-row"><td colspan="5">⚠️ Unable to connect. Please check backend URL or network.</td></tr>';
+        }
+    }
+
+    function renderAttendanceTable(report) {
+        const tbody = document.getElementById('attendanceTableBody');
+        const activeList = report.activeMembers || [];
+        
+        if (activeList.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="5">✨ No active check-ins at the moment</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        activeList.forEach(m => {
+            const displayId = m.regNo || (m.isGuest ? 'Guest' : '—');
+            html += `
+                <tr>
+                    <td><strong>${escapeHtml(m.name)}</strong> ${m.isGuest ? '<span style="background:#fef3c7; padding:2px 8px; border-radius:20px; font-size:11px;">Guest</span>' : ''}</td>
+                    <td>${escapeHtml(displayId)}</td>
+                    <td>${escapeHtml(m.checkIn || 'Just now')}</td>
+                    <td><span class="status-badge">● Checked In</span></td>
+                    <td><button class="sign-out-btn" data-name="${escapeHtml(m.name)}" data-reg="${escapeHtml(m.regNo || '')}" data-isguest="${m.isGuest || false}">Sign Out</button></td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+
+        // Attach sign-out events
+        document.querySelectorAll('.sign-out-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const name = btn.getAttribute('data-name');
+                const regNo = btn.getAttribute('data-reg');
+                const isGuest = btn.getAttribute('data-isguest') === 'true';
+                showLoader(true);
+                try {
+                    let result;
+                    if (isGuest) {
+                        result = await callAPI('guestCheckout', { name: name, timestamp: new Date().toISOString() });
+                    } else {
+                        result = await callAPI('memberCheckout', { regNo: regNo, name: name, timestamp: new Date().toISOString() });
+                    }
+                    if (result.status === 'success') {
+                        await loadAttendanceRegister();
+                    } else {
+                        alert(result.message || 'Sign-out failed');
+                    }
+                } catch (err) { alert('Error signing out'); }
+                finally { showLoader(false); }
+            });
+        });
+    }
+
+    // ========== MODAL LOGIC ==========
+    const modal = document.getElementById('loginModal');
+    const openBtn = document.getElementById('openLoginBtn');
+    const cancelBtn = document.getElementById('cancelModalBtn');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const dynamicArea = document.getElementById('dynamicStepArea');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSub = document.getElementById('modalSub');
+
+    function resetModalUI() {
+        optionsContainer.style.display = 'grid';
+        dynamicArea.innerHTML = '';
+        modalTitle.innerText = '✨ Welcome Back';
+        modalSub.innerText = 'Choose check-in method';
+        tempMemberData = null;
+        if (html5QrScanner) {
+            try { html5QrScanner.stop(); } catch(e) {}
+            html5QrScanner = null;
+        }
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        resetModalUI();
+    }
+
+    openBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        resetModalUI();
+    });
+    cancelBtn.addEventListener('click', closeModal);
+
+    // When user selects an option → hide options grid, show input
+    function onMethodSelected(method) {
+        optionsContainer.style.display = 'none';
+        dynamicArea.innerHTML = '';
+        modalTitle.innerText = `🔍 ${method === 'regNo' ? 'Reg ID' : method === 'name' ? 'Search by Name' : method === 'guest' ? 'Guest Details' : 'Scan QR Code'}`;
+        modalSub.innerText = method === 'qr' ? 'Position QR code in frame' : 'Enter details below';
+        
+        if (method === 'regNo') showRegNoInput();
+        else if (method === 'name') showNameInput();
+        else if (method === 'guest') showGuestForm();
+        else if (method === 'qr') showQRScanner();
+    }
+
+    // ----- REG NUMBER: Remove input + button after fetching details, show preview + Sign In -----
+    function showRegNoInput() {
+        dynamicArea.innerHTML = `
+            <div id="regInputWrapper">
+                <input type="text" id="regInputField" class="input-field" placeholder="Enter registration number (e.g., IH2511053)" autocomplete="off">
+                <button id="verifyRegBtn" class="modal-action-btn" style="background:#3b82f6;">Verify & Find Member</button>
+                <div id="regVerifyResult"></div>
+            </div>
+        `;
+        document.getElementById('verifyRegBtn').addEventListener('click', async () => {
+            const regNo = document.getElementById('regInputField').value.trim();
+            if (!regNo) return showStepMsg('regVerifyResult', 'Please enter Reg ID', 'error');
+            showLoader(true);
+            try {
+                const result = await callAPI('getMemberByReg', { regNo: regNo });
+                if (result.status === 'found') {
+                    tempMemberData = result;
+                    // Replace entire input wrapper with member preview + sign in button
+                    replaceWithMemberPreview('regInputWrapper', tempMemberData);
+                } else {
+                    showStepMsg('regVerifyResult', '❌ Registration number not found', 'error');
+                }
+            } catch(e) { showStepMsg('regVerifyResult', 'Server error', 'error'); }
+            finally { showLoader(false); }
+        });
+    }
+
+    // ----- NAME: replace input + search button with preview once member found -----
+    function showNameInput() {
+        dynamicArea.innerHTML = `
+            <div id="nameInputWrapper">
+                <input type="text" id="nameInputField" class="input-field" placeholder="Enter full name" autocomplete="off">
+                <button id="verifyNameBtn" class="modal-action-btn" style="background:#3b82f6;">Search Member</button>
+                <div id="nameVerifyResult"></div>
+            </div>
+        `;
+        document.getElementById('verifyNameBtn').addEventListener('click', async () => {
+            const name = document.getElementById('nameInputField').value.trim();
+            if (!name) return showStepMsg('nameVerifyResult', 'Enter name', 'error');
+            showLoader(true);
+            try {
+                const result = await callAPI('getMemberByName', { name: name });
+                if (result.status === 'found') {
+                    tempMemberData = result;
+                    replaceWithMemberPreview('nameInputWrapper', tempMemberData);
+                } else if (result.status === 'multiple') {
+                    let listHtml = '<div style="background:#f1f5f9; border-radius:24px; padding:12px; margin-top:10px;"><strong>Multiple matches:</strong><ul>';
+                    result.matches.forEach(m => { listHtml += `<li>${escapeHtml(m.name)} (${m.regNo}) ${m.isValid ? '✅' : '⛔'}</li>`; });
+                    listHtml += '</ul><button id="retryNameBtn" class="modal-action-btn" style="background:#64748b; margin-top:8px;">Try Again</button></div>';
+                    document.getElementById('nameVerifyResult').innerHTML = listHtml;
+                    document.getElementById('retryNameBtn')?.addEventListener('click', () => showNameInput());
+                } else {
+                    showStepMsg('nameVerifyResult', '❌ No member found', 'error');
+                }
+            } catch(e) { showStepMsg('nameVerifyResult', 'Error', 'error'); }
+            finally { showLoader(false); }
+        });
+    }
+
+    // Replace input field + button with member details and Sign In button (core requirement)
+    function replaceWithMemberPreview(wrapperId, member) {
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+        
+        if (!member.isValid) {
+            wrapper.innerHTML = `
+                <div style="background:#fee2e2; border-radius:28px; padding:16px; margin-top:12px;">
+                    <strong>⚠️ Membership expired</strong><br>Valid until: ${member.validity || 'N/A'}<br>Please renew.
+                    <button id="backToOptionsBtn" class="modal-action-btn close-modal-btn" style="margin-top:10px;">Back to options</button>
+                </div>
+            `;
+            document.getElementById('backToOptionsBtn')?.addEventListener('click', () => {
+                resetModalUI();
+                optionsContainer.style.display = 'grid';
+            });
+            return;
+        }
+        
+        // Show member details + SIGN IN button (no input field remains)
+        wrapper.innerHTML = `
+            <div class="member-preview">
+                <div><strong>${escapeHtml(member.name)}</strong> (${member.regNo})</div>
+                <div style="font-size:13px;">📞 ${member.phone || '—'} &nbsp; 📅 Valid: ${member.validity || 'Active'}</div>
+                <button id="finalSignInNowBtn" class="modal-action-btn" style="background:#10b981; margin-top:16px;">✅ Sign In / Check-in</button>
+                <button id="resetToOptionsBtn" class="modal-action-btn close-modal-btn" style="margin-top:8px;">Choose different method</button>
+            </div>
+        `;
+        
+        document.getElementById('finalSignInNowBtn')?.addEventListener('click', async () => {
+            showLoader(true);
+            try {
+                const checkinResult = await callAPI('memberCheckin', {
+                    regNo: member.regNo,
+                    name: member.name,
+                    phone: member.phone || '',
+                    validity: member.validity || '',
+                    timestamp: new Date().toISOString()
+                });
+                if (checkinResult.status === 'success') {
+                    alert(`✅ ${member.name} checked in!`);
+                    closeModal();
+                    await loadAttendanceRegister();
+                } else {
+                    alert(checkinResult.message || 'Check-in failed');
+                }
+            } catch(err) { alert('Check-in error'); }
+            finally { showLoader(false); }
+        });
+        
+        document.getElementById('resetToOptionsBtn')?.addEventListener('click', () => {
+            resetModalUI();
+            optionsContainer.style.display = 'grid';
+        });
+    }
+
+    // ----- GUEST FORM (direct check-in) -----
+    function showGuestForm() {
+        dynamicArea.innerHTML = `
+            <div id="guestWrapper">
+                <input type="text" id="guestNameField" class="input-field" placeholder="Full Name *">
+                <input type="tel" id="guestMobileField" class="input-field" placeholder="Mobile Number *">
+                <input type="text" id="guestPurposeField" class="input-field" placeholder="Purpose (optional)">
+                <button id="guestCheckinFinalBtn" class="modal-action-btn">👋 Check-in as Guest</button>
+                <div id="guestResultMsg"></div>
+                <button id="backToGuestOptions" class="modal-action-btn close-modal-btn" style="margin-top:8px;">Back to options</button>
+            </div>
+        `;
+        document.getElementById('guestCheckinFinalBtn').addEventListener('click', async () => {
+            const name = document.getElementById('guestNameField').value.trim();
+            const mobile = document.getElementById('guestMobileField').value.trim();
+            const purpose = document.getElementById('guestPurposeField').value.trim() || 'Visit';
+            if (!name || !mobile) return showStepMsg('guestResultMsg', 'Name and Mobile required', 'error');
+            if (!/^\d{10}$/.test(mobile)) return showStepMsg('guestResultMsg', '10-digit mobile', 'error');
+            showLoader(true);
+            try {
+                const result = await callAPI('guestCheckin', {
+                    name: name, mobile: mobile, purpose: purpose, timestamp: new Date().toISOString()
+                });
+                if (result.status === 'success') {
+                    showStepMsg('guestResultMsg', '✅ Guest checked in successfully!', 'success');
+                    setTimeout(() => { closeModal(); loadAttendanceRegister(); }, 1200);
+                } else {
+                    showStepMsg('guestResultMsg', result.message || 'Guest checkin failed', 'error');
+                }
+            } catch(e) { showStepMsg('guestResultMsg', 'Server error', 'error'); }
+            finally { showLoader(false); }
+        });
+        document.getElementById('backToGuestOptions')?.addEventListener('click', () => {
+            resetModalUI();
+            optionsContainer.style.display = 'grid';
+        });
+    }
+
+    // ----- QR SCANNER -----
+    function showQRScanner() {
+        dynamicArea.innerHTML = `<div id="qrReaderContainer" style="width:100%;"></div><div id="qrScanMsg"></div><button id="stopQrScanBtn" class="modal-action-btn close-modal-btn" style="margin-top:12px;">Back to options</button>`;
+        const qrDiv = "qrReaderContainer";
+        if (html5QrScanner) {
+            try { html5QrScanner.stop(); } catch(e) {}
+        }
+        html5QrScanner = new Html5Qrcode(qrDiv);
+        html5QrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 260, height: 260 } },
+            async (decodedText) => {
+                html5QrScanner.stop();
+                showLoader(true);
+                try {
+                    const result = await callAPI('getMemberByReg', { regNo: decodedText });
+                    if (result.status === 'found' && result.isValid) {
+                        const checkinRes = await callAPI('memberCheckin', {
+                            regNo: result.regNo, name: result.name, phone: result.phone || '',
+                            validity: result.validity || '', timestamp: new Date().toISOString()
+                        });
+                        if (checkinRes.status === 'success') {
+                            alert(`✅ ${result.name} checked in!`);
+                            closeModal();
+                            loadAttendanceRegister();
+                        } else { alert(checkinRes.message); closeModal(); }
+                    } else {
+                        alert('Invalid QR or membership expired');
+                        closeModal();
+                    }
+                } catch (err) { alert('QR error'); closeModal(); }
+                finally { showLoader(false); }
+            }, (err) => { console.log("scanning..."); });
+        document.getElementById('stopQrScanBtn')?.addEventListener('click', () => {
+            if (html5QrScanner) { try { html5QrScanner.stop(); } catch(e) {} html5QrScanner = null; }
+            resetModalUI();
+            optionsContainer.style.display = 'grid';
+        });
+    }
+
+    function showStepMsg(containerId, text, type) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const bg = type === 'error' ? '#fee2e2' : '#dcfce7';
+        el.innerHTML = `<div style="background:${bg}; border-radius:50px; padding:10px; margin-top:8px;">${text}</div>`;
+        setTimeout(() => { if(el) el.innerHTML = ''; }, 3000);
+    }
+
+    // Attach option click events
+    document.querySelectorAll('.option-card-modal').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const method = card.getAttribute('data-method');
+            onMethodSelected(method);
+        });
+    });
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+
+    // Auto refresh every 90 seconds
+    function startAutoRefresh() { if(autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => loadAttendanceRegister(), 90000); }
+    
+    // Initial load with error resilience
+    loadAttendanceRegister();
+    startAutoRefresh();
+    window.onclick = (e) => { if (e.target === modal) closeModal(); };
+</script>
+</body>
+</html>
