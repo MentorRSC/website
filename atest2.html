@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Innovation Hub - Attendance System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        
+        /* Header */
+        .header { background: white; border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .header h1 { color: #667eea; font-size: 26px; }
+        .header p { color: #666; font-size: 13px; margin-top: 5px; }
+        
+        /* QR Icon Button */
+        .qr-icon-btn {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s;
+            border: 2px solid white;
+        }
+        .qr-icon-btn:hover { transform: scale(1.05); }
+        .qr-icon-btn .icon { font-size: 28px; color: white; }
+        
+        /* 3 Options Side by Side */
+        .options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .option-card { background: white; border-radius: 15px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .option-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .option-card.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .option-card .icon { font-size: 32px; margin-bottom: 8px; }
+        .option-card h3 { font-size: 13px; }
+        
+        /* Forms */
+        .form-container { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; }
+        .form-container.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px; }
+        input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 14px; }
+        input:focus { outline: none; border-color: #667eea; }
+        button { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        /* Member Card */
+        .member-info { background: #f8f9fa; border-radius: 15px; padding: 15px; margin-top: 15px; border-left: 4px solid #28a745; }
+        .member-info.expired { border-left-color: #dc3545; background: #fef2f2; }
+        .member-name { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .detail-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; color: #666; font-size: 13px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; margin-left: 8px; }
+        .badge-active { background: #28a74520; color: #155724; }
+        .badge-expired { background: #dc354520; color: #721c24; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 12px; }
+        .action-buttons button { flex: 1; }
+        .btn-checkin { background: #28a745; }
+        .btn-checkout { background: #dc3545; }
+        
+        /* Messages */
+        .message { padding: 10px; border-radius: 10px; margin: 12px 0; text-align: center; font-size: 13px; }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .message.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        /* Report Card */
+        .report-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .report-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat { text-align: center; padding: 12px; background: #f8f9fa; border-radius: 12px; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 11px; color: #666; margin-top: 5px; }
+        
+        /* Checked-in Students List */
+        .student-list { margin-top: 20px; max-height: 300px; overflow-y: auto; }
+        .student-list h4 { margin-bottom: 10px; color: #333; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .student-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e0e0e0; }
+        .student-item:last-child { border-bottom: none; }
+        .student-info { display: flex; flex-direction: column; }
+        .student-name { font-weight: 600; color: #333; font-size: 14px; }
+        .student-reg { font-size: 11px; color: #888; }
+        .student-time { font-size: 12px; color: #667eea; font-weight: 500; }
+        .empty-list { text-align: center; color: #999; padding: 20px; font-size: 13px; }
+        
+        .loading { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.6s linear infinite; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* QR Modal */
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .qr-modal.active { display: flex; }
+        .qr-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        .close-qr {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        #qr-reader-modal { width: 100%; }
+        
+        @media (max-width: 500px) {
+            .options-grid { gap: 8px; }
+            .option-card { padding: 10px; }
+            .option-card .icon { font-size: 24px; }
+            .option-card h3 { font-size: 11px; }
+            .qr-icon-btn { width: 45px; height: 45px; top: 80px; right: 15px; }
+            .qr-icon-btn .icon { font-size: 22px; }
+        }
+    </style>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏢 Innovation Hub</h1>
+            <p>Attendance Management System</p>
+        </div>
+        
+        <!-- 3 Options Side by Side -->
+        <div class="options-grid">
+            <div class="option-card" data-option="regNo">
+                <div class="icon">🆔</div>
+                <h3>Enter Reg ID</h3>
+            </div>
+            <div class="option-card" data-option="name">
+                <div class="icon">👤</div>
+                <h3>Enter Name</h3>
+            </div>
+            <div class="option-card" data-option="guest">
+                <div class="icon">👋</div>
+                <h3>Guest Login</h3>
+            </div>
+        </div>
+        
+        <!-- QR Icon Button -->
+        <div class="qr-icon-btn" onclick="openQRModal()">
+            <div class="icon">📱</div>
+        </div>
+        
+        <!-- Forms -->
+        <div id="regNoForm" class="form-container">
+            <h3>📇 Enter Registration Number</h3>
+            <div class="input-group">
+                <label>Registration Number</label>
+                <input type="text" id="regInput" placeholder="e.g., IH2511053" autocomplete="off">
+            </div>
+            <button onclick="verifyByRegNo()">Verify & Proceed</button>
+            <div id="regResult"></div>
+        </div>
+        
+        <div id="nameForm" class="form-container">
+            <h3>🔍 Search by Name</h3>
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="nameInput" placeholder="Enter your full name" autocomplete="off">
+            </div>
+            <button onclick="verifyByName()">Search & Verify</button>
+            <div id="nameResult"></div>
+        </div>
+        
+        <div id="guestForm" class="form-container">
+            <h3>👋 Guest Check-in</h3>
+            <div class="input-group">
+                <label>Full Name *</label>
+                <input type="text" id="guestName" placeholder="Enter your full name">
+            </div>
+            <div class="input-group">
+                <label>Mobile Number *</label>
+                <input type="tel" id="guestMobile" placeholder="Enter mobile number">
+            </div>
+            <div class="input-group">
+                <label>Purpose of Visit (Optional)</label>
+                <input type="text" id="guestPurpose" placeholder="e.g., Meeting, Workshop, Tour">
+            </div>
+            <button onclick="guestCheckIn()">Guest Check-in</button>
+            <div id="guestResult"></div>
+        </div>
+        
+        <!-- Report Section -->
+        <div class="report-card">
+            <h3>📊 Today's Report</h3>
+            <div id="reportContent">Loading...</div>
+        </div>
+        
+        <!-- Checked-in Students List -->
+        <div class="report-card">
+            <div class="student-list" id="studentList">
+                <h4>📋 Currently Checked-in Students</h4>
+                <div id="checkedInList">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- QR Modal -->
+    <div id="qrModal" class="qr-modal">
+        <div class="qr-modal-content">
+            <span class="close-qr" onclick="closeQRModal()">&times;</span>
+            <h3 style="margin-bottom: 15px;">📱 Scan QR Code</h3>
+            <div id="qr-reader-modal"></div>
+            <button onclick="closeQRModal()" style="margin-top: 15px; background: #dc3545;">Close</button>
+            <div id="qrResultModal"></div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE WITH YOUR WEB APP URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxpvw7_VOAsx0Qkwjuuj9ynS9VmJju5dRszFpHlX4ntwtQWKZRfem0fiakneQNrpb0V/exec';
+        
+        let currentMember = null;
+        let currentAction = null;
+        let html5QrCode = null;
+        let autoRefreshInterval = null;
+        
+        // JSONP API Call
+        async function callAPI(action, params = {}) {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                let url = `${WEB_APP_URL}?action=${action}&callback=${callbackName}`;
+                for (let key in params) {
+                    url += `&${key}=${encodeURIComponent(params[key])}`;
+                }
+                
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    resolve(data);
+                };
+                
+                const script = document.createElement('script');
+                script.src = url;
+                script.onerror = function() {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    reject(new Error('JSONP request failed'));
+                };
+                document.body.appendChild(script);
+            });
+        }
+        
+        function showMessage(containerId, text, type = 'info') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}`;
+            msgDiv.innerHTML = text;
+            const existingMsgs = container.querySelectorAll('.message');
+            existingMsgs.forEach(msg => msg.remove());
+            container.insertBefore(msgDiv, container.firstChild);
+            setTimeout(() => { if (msgDiv.parentNode) msgDiv.remove(); }, 5000);
+        }
+        
+        async function verifyByRegNo() {
+            const regNo = document.getElementById('regInput').value.trim();
+            if (!regNo) { showMessage('regResult', 'Please enter Registration Number', 'error'); return; }
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Verifying...';
+            
+            try {
+                const result = await callAPI('getMemberByReg', { regNo: regNo });
+                if (result.status === 'found') {
+                    currentMember = result;
+                    displayMemberCard('regResult', result, 'regNo');
+                } else {
+                    showMessage('regResult', `❌ Registration number ${regNo} not found`, 'error');
+                }
+            } catch(e) {
+                showMessage('regResult', 'Server error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Verify & Proceed';
+            }
+        }
+        
+        async function verifyByName() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) { showMessage('nameResult', 'Please enter Name', 'error'); return; }
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Searching...';
+            
+            try {
+                const result = await callAPI('getMemberByName', { name: name });
+                if (result.status === 'found') {
+                    currentMember = result;
+                    displayMemberCard('nameResult', result, 'name');
+                } else if (result.status === 'multiple') {
+                    let html = '<div class="member-info"><h4>Multiple members found:</h4>';
+                    result.matches.forEach(m => {
+                        html += `<div class="detail-row">📇 ${escapeHtml(m.name)} (${m.regNo}) - ${m.isValid ? '✅ Active' : '❌ Expired'}</div>`;
+                    });
+                    html += '<button onclick="clearNameSearch()" style="margin-top:10px;">Try Again</button></div>';
+                    document.getElementById('nameResult').innerHTML = html;
+                } else {
+                    showMessage('nameResult', `❌ No member found with name "${name}"`, 'error');
+                }
+            } catch(e) {
+                showMessage('nameResult', 'Server error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Search & Verify';
+            }
+        }
+        
+        async function displayMemberCard(containerId, member, source) {
+            const isValid = member.isValid;
+            const statusClass = isValid ? 'badge-active' : 'badge-expired';
+            const statusText = isValid ? 'ACTIVE' : 'EXPIRED';
+            const cardClass = isValid ? '' : 'expired';
+            
+            // Check current check-in status from live report
+            const report = await callAPI('getTodayReport');
+            const isCheckedIn = report.activeMembers?.some(m => m.regNo === member.regNo) || false;
+            
+            const html = `
+                <div class="member-info ${cardClass}">
+                    <div class="member-name">
+                        ${escapeHtml(member.name)}
+                        <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="detail-row">🆔 ${escapeHtml(member.regNo)}</div>
+                    <div class="detail-row">📞 ${escapeHtml(member.phone) || 'N/A'}</div>
+                    <div class="detail-row">📅 Valid until: ${escapeHtml(member.validity) || 'N/A'}</div>
+                    <div class="detail-row">⏰ ${member.validityMessage || ''}</div>
+                    ${isValid ? `<div class="action-buttons">
+                        ${!isCheckedIn ? `<button class="btn-checkin" onclick="memberCheckIn('${source}')">✅ Check In</button>` : ''}
+                        ${isCheckedIn ? `<button class="btn-checkout" onclick="memberCheckOut('${source}')">🚪 Check Out</button>` : ''}
+                    </div>` : '<div style="color:#dc3545; margin-top:10px;">⚠️ Membership expired. Please renew.</div>'}
+                </div>
+            `;
+            document.getElementById(containerId).innerHTML = html;
+        }
+        
+        async function memberCheckIn(source) {
+            if (!currentMember) return;
+            
+            const result = await callAPI('memberCheckin', {
+                regNo: currentMember.regNo,
+                name: currentMember.name,
+                phone: currentMember.phone,
+                validity: currentMember.validity,
+                timestamp: new Date().toISOString()
+            });
+            
+            if (result.status === 'success') {
+                showMessage(source === 'regNo' ? 'regResult' : 'nameResult', result.message, 'success');
+                await loadTodayReport();
+                await loadCheckedInList();
+                // Refresh the member card
+                if (source === 'regNo') await verifyByRegNo();
+                else await verifyByName();
+            } else {
+                showMessage(source === 'regNo' ? 'regResult' : 'nameResult', result.message || 'Check-in failed', result.status === 'warning' ? 'warning' : 'error');
+            }
+        }
+        
+        async function memberCheckOut(source) {
+            if (!currentMember) return;
+            
+            const result = await callAPI('memberCheckout', {
+                regNo: currentMember.regNo,
+                name: currentMember.name,
+                timestamp: new Date().toISOString()
+            });
+            
+            if (result.status === 'success') {
+                showMessage(source === 'regNo' ? 'regResult' : 'nameResult', result.message, 'success');
+                await loadTodayReport();
+                await loadCheckedInList();
+                // Refresh the member card
+                if (source === 'regNo') await verifyByRegNo();
+                else await verifyByName();
+            } else {
+                showMessage(source === 'regNo' ? 'regResult' : 'nameResult', result.message || 'Check-out failed', 'warning');
+            }
+        }
+        
+        async function guestCheckIn() {
+            const name = document.getElementById('guestName').value.trim();
+            const mobile = document.getElementById('guestMobile').value.trim();
+            const purpose = document.getElementById('guestPurpose').value.trim();
+            
+            if (!name || !mobile) { showMessage('guestResult', 'Please enter Name and Mobile Number', 'error'); return; }
+            if (!/^\d{10}$/.test(mobile)) { showMessage('guestResult', 'Please enter valid 10-digit mobile number', 'error'); return; }
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Processing...';
+            
+            const result = await callAPI('guestCheckin', {
+                name: name,
+                mobile: mobile,
+                purpose: purpose || 'Visit',
+                timestamp: new Date().toISOString()
+            });
+            
+            if (result.status === 'success') {
+                showMessage('guestResult', result.message, 'success');
+                document.getElementById('guestName').value = '';
+                document.getElementById('guestMobile').value = '';
+                document.getElementById('guestPurpose').value = '';
+                await loadTodayReport();
+                await loadCheckedInList();
+                
+                if (confirm('Would you like to check out now?')) {
+                    await guestCheckOut(name);
+                }
+            } else {
+                showMessage('guestResult', 'Check-in failed: ' + result.message, 'error');
+            }
+            btn.disabled = false;
+            btn.innerHTML = 'Guest Check-in';
+        }
+        
+        async function guestCheckOut(name) {
+            const result = await callAPI('guestCheckout', { name: name, timestamp: new Date().toISOString() });
+            if (result.status === 'success') {
+                showMessage('guestResult', result.message, 'success');
+                await loadTodayReport();
+                await loadCheckedInList();
+            } else {
+                showMessage('guestResult', result.message, 'warning');
+            }
+        }
+        
+        async function loadTodayReport() {
+            try {
+                const report = await callAPI('getTodayReport');
+                if (report.status === 'success') {
+                    document.getElementById('reportContent').innerHTML = `
+                        <div class="report-stats">
+                            <div class="stat"><div class="stat-number">${report.activeCount}</div><div class="stat-label">Currently Inside</div></div>
+                            <div class="stat"><div class="stat-number">${report.completedCount}</div><div class="stat-label">Completed Today</div></div>
+                            <div class="stat"><div class="stat-number">${report.guestCount}</div><div class="stat-label">Guest Visitors</div></div>
+                        </div>
+                        <div class="stat"><div class="stat-number">${report.totalVisitors}</div><div class="stat-label">Total Visitors Today</div></div>
+                    `;
+                }
+            } catch(e) { 
+                document.getElementById('reportContent').innerHTML = '<p>Error loading report</p>';
+            }
+        }
+        
+        async function loadCheckedInList() {
+            try {
+                const report = await callAPI('getTodayReport');
+                if (report.status === 'success' && report.activeMembers) {
+                    if (report.activeMembers.length === 0) {
+                        document.getElementById('checkedInList').innerHTML = '<div class="empty-list">✨ No one is currently checked in</div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    report.activeMembers.forEach(m => {
+                        html += `
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <span class="student-name">👤 ${escapeHtml(m.name)}</span>
+                                    <span class="student-reg">🆔 ${escapeHtml(m.regNo)}</span>
+                                </div>
+                                <div class="student-time">⏰ ${m.checkIn}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('checkedInList').innerHTML = html;
+                } else {
+                    document.getElementById('checkedInList').innerHTML = '<div class="empty-list">No active check-ins</div>';
+                }
+            } catch(e) {
+                document.getElementById('checkedInList').innerHTML = '<div class="empty-list">Error loading list</div>';
+            }
+        }
+        
+        // QR Modal Functions
+        function openQRModal() {
+            document.getElementById('qrModal').classList.add('active');
+            startQRScannerInModal();
+        }
+        
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.remove('active');
+            if (html5QrCode) {
+                html5QrCode.stop();
+                html5QrCode = null;
+            }
+        }
+        
+        function startQRScannerInModal() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => startNewScannerModal()).catch(() => startNewScannerModal());
+            } else {
+                startNewScannerModal();
+            }
+        }
+        
+        function startNewScannerModal() {
+            html5QrCode = new Html5Qrcode("qr-reader-modal");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
+                async (decodedText) => {
+                    html5QrCode.stop();
+                    const result = await callAPI('getMemberByReg', { regNo: decodedText });
+                    if (result.status === 'found') {
+                        currentMember = result;
+                        document.getElementById('qrResultModal').innerHTML = `
+                            <div class="member-info" style="margin-top: 15px;">
+                                <div class="member-name">✅ ${escapeHtml(result.name)}</div>
+                                <div class="detail-row">🆔 ${result.regNo}</div>
+                                <button onclick="processQRCheckin('${result.regNo}', '${escapeHtml(result.name)}', '${result.phone || ''}', '${result.validity || ''}')" style="margin-top: 10px;">Check In Now</button>
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('qrResultModal').innerHTML = `<div class="message error">❌ Not a valid member QR code.</div>`;
+                    }
+                }, (error) => { console.log("Scanning..."); });
+        }
+        
+        async function processQRCheckin(regNo, name, phone, validity) {
+            const result = await callAPI('memberCheckin', {
+                regNo: regNo,
+                name: name,
+                phone: phone,
+                validity: validity,
+                timestamp: new Date().toISOString()
+            });
+            
+            if (result.status === 'success') {
+                alert(result.message);
+                closeQRModal();
+                await loadTodayReport();
+                await loadCheckedInList();
+                // Clear any active form
+                document.querySelectorAll('.form-container').forEach(form => form.classList.remove('active'));
+            } else {
+                alert(result.message || 'Check-in failed');
+            }
+        }
+        
+        function clearNameSearch() {
+            document.getElementById('nameInput').value = '';
+            document.getElementById('nameResult').innerHTML = '';
+            document.getElementById('nameInput').focus();
+        }
+        
+        function escapeHtml(str) { 
+            if (!str) return ''; 
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); 
+        }
+        
+        // Option selection
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const option = card.dataset.option;
+                currentAction = option;
+                document.querySelectorAll('.form-container').forEach(form => form.classList.remove('active'));
+                document.getElementById(`${option}Form`).classList.add('active');
+                document.querySelectorAll('[id$="Result"]').forEach(el => el.innerHTML = '');
+                // Close QR modal if open
+                closeQRModal();
+            });
+        });
+        
+        // Auto refresh every 10 seconds
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                loadTodayReport();
+                loadCheckedInList();
+            }, 10000);
+        }
+        
+        // Initialize
+        loadTodayReport();
+        loadCheckedInList();
+        startAutoRefresh();
+    </script>
+</body>
+</html>
