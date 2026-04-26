@@ -3,360 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Register</title>
+    <title>Attendance Sheet Viewer</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
             padding: 20px;
+            min-height: 100vh;
         }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
         }
+
         .header {
-            background: #2c3e50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px 30px;
         }
+
         .header h1 {
-            margin-bottom: 10px;
+            font-size: 28px;
+            margin-bottom: 8px;
         }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
         .controls {
             padding: 20px 30px;
             background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid #e0e0e0;
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
             align-items: center;
+            justify-content: space-between;
         }
-        .date-filter {
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .status {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-        .date-filter input {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
+            gap: 15px;
             font-size: 14px;
+            color: #666;
         }
-        button {
-            padding: 8px 20px;
+
+        .refresh-btn {
             background: #667eea;
             color: white;
             border: none;
-            border-radius: 5px;
+            padding: 8px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.3s;
+            transition: transform 0.2s;
         }
-        button:hover {
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
             background: #5a67d8;
         }
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-left: auto;
-            font-size: 14px;
-        }
-        .stat-card {
-            background: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            color: #2c3e50;
-        }
+
         .table-wrapper {
             overflow-x: auto;
             padding: 20px 30px;
-            max-height: 600px;
+            max-height: 70vh;
             overflow-y: auto;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+
         th {
-            background: #34495e;
+            background: #667eea;
             color: white;
-            padding: 12px 8px;
+            padding: 12px;
             text-align: left;
+            font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 10;
         }
+
         td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
         }
+
         tr:hover {
-            background: #f7fafc;
+            background: #f8f9fa;
         }
-        .status-present {
-            background: #c6f6d5;
-            color: #22543d;
-            padding: 4px 8px;
-            border-radius: 12px;
-            display: inline-block;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-absent {
-            background: #fed7d7;
-            color: #742a2a;
-            padding: 4px 8px;
-            border-radius: 12px;
-            display: inline-block;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-late {
-            background: #feebc8;
-            color: #7b341e;
-            padding: 4px 8px;
-            border-radius: 12px;
-            display: inline-block;
-            font-size: 12px;
-            font-weight: bold;
-        }
+
         .loading {
             text-align: center;
-            padding: 50px;
+            padding: 40px;
             font-size: 18px;
-            color: #718096;
+            color: #666;
         }
+
         .error {
-            background: #fed7d7;
-            color: #742a2a;
-            padding: 15px;
+            text-align: center;
+            padding: 40px;
+            color: #dc3545;
+            background: #fff3f3;
             border-radius: 8px;
             margin: 20px;
-            text-align: center;
         }
+
+        .stats {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
         @media (max-width: 768px) {
-            th, td {
-                font-size: 12px;
-                padding: 6px 4px;
-            }
             .controls {
                 flex-direction: column;
                 align-items: stretch;
             }
-            .stats {
-                margin-left: 0;
-                justify-content: space-between;
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            th, td {
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>📋 Attendance Register</h1>
-        <p>Staff Attendance Tracking System</p>
-    </div>
-    <div class="controls">
-        <div class="date-filter">
-            <label>📅 Filter by Date:</label>
-            <input type="date" id="dateFilter">
+    <div class="container">
+        <div class="header">
+            <h1>📊 Attendance Sheet Viewer</h1>
+            <p>View and search attendance data from Google Sheets</p>
         </div>
-        <button onclick="filterByDate()">Apply Filter</button>
-        <button onclick="resetFilter()">Reset</button>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search in any column...">
+            </div>
+            <div class="status">
+                <span id="rowCount">Loading...</span>
+                <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <div id="tableContainer">
+                <div class="loading">Loading data from Google Sheet...</div>
+            </div>
+        </div>
+
         <div class="stats">
-            <div class="stat-card">👥 Total: <span id="totalCount">0</span></div>
-            <div class="stat-card">✅ Present: <span id="presentCount">0</span></div>
-            <div class="stat-card">❌ Absent: <span id="absentCount">0</span></div>
+            <span>📅 Last updated: <span id="lastUpdated">-</span></span>
+            <span>💡 Tip: Data updates when you refresh the page</span>
         </div>
     </div>
-    <div class="table-wrapper">
-        <div id="attendanceTable">
-            <div class="loading">Loading attendance data...</div>
-        </div>
-    </div>
-</div>
 
-<script>
-    // ============================================================
-    // CONFIGURATION - REPLACE WITH YOUR ACTUAL DATA SOURCE
-    // ============================================================
-    
-    // OPTION A: If you publish your sheet as CSV (Easiest)
-    // Go to File → Share → Publish to web → Link (CSV)
-    // Then uncomment and use the URL below:
-    // const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pub?output=csv';
-    
-    // OPTION B: Sample data for demonstration
-    // Replace this with your actual data fetch code
-    const SAMPLE_DATA = [
-        { date: '2026-04-26', regId: 'EMP001', name: 'John Doe', signIn: '09:00 AM', signOut: '05:30 PM', type: 'Office', phone: '9876543210', day: 'Monday', status: 'Present', report: 'Full Day' },
-        { date: '2026-04-26', regId: 'EMP002', name: 'Jane Smith', signIn: '09:15 AM', signOut: '05:30 PM', type: 'Office', phone: '9876543211', day: 'Monday', status: 'Late', report: 'Full Day' },
-        { date: '2026-04-26', regId: 'EMP003', name: 'Mike Johnson', signIn: '--', signOut: '--', type: 'Office', phone: '9876543212', day: 'Monday', status: 'Absent', report: '--' },
-        { date: '2026-04-25', regId: 'EMP001', name: 'John Doe', signIn: '08:55 AM', signOut: '05:25 PM', type: 'Office', phone: '9876543210', day: 'Sunday', status: 'Present', report: 'Full Day' },
-        { date: '2026-04-25', regId: 'EMP002', name: 'Jane Smith', signIn: '08:50 AM', signOut: '05:30 PM', type: 'Office', phone: '9876543211', day: 'Sunday', status: 'Present', report: 'Full Day' },
-        { date: '2026-04-24', regId: 'EMP001', name: 'John Doe', signIn: '09:10 AM', signOut: '05:20 PM', type: 'WFH', phone: '9876543210', day: 'Saturday', status: 'Present', report: 'Full Day' },
-        { date: '2026-04-24', regId: 'EMP002', name: 'Jane Smith', signIn: '09:30 AM', signOut: '06:00 PM', type: 'Office', phone: '9876543211', day: 'Saturday', status: 'Late', report: 'Full Day' },
-        { date: '2026-04-24', regId: 'EMP003', name: 'Mike Johnson', signIn: '09:00 AM', signOut: '05:30 PM', type: 'Office', phone: '9876543212', day: 'Saturday', status: 'Present', report: 'Full Day' },
-    ];
-
-    let attendanceData = [];
-
-    // Function to fetch data from Google Sheet (if published as CSV)
-    async function fetchFromGoogleSheet() {
-        try {
-            // Uncomment and set your published CSV URL
-            // const response = await fetch(DATA_URL);
-            // const csvText = await response.text();
-            // const parsedData = parseCSV(csvText);
-            // return parsedData;
-            
-            // For now, using sample data
-            return SAMPLE_DATA;
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            throw new Error('Failed to load attendance data');
-        }
-    }
-
-    // CSV parser helper (if using CSV method)
-    function parseCSV(csvText) {
-        const lines = csvText.split('\n');
-        const headers = lines[0].split(',');
-        const result = [];
+    <script>
+        // REPLACE THIS URL WITH YOUR PUBLISHED GOOGLE SHEET CSV URL
+        // After publishing, get the CSV link from File → Publish to web
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1dlcXpacMoKbk-T4ice9TCr99FxKkT0bvgRDfNK07_rY/export?format=csv&gid=0';
         
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const values = lines[i].split(',');
-            const row = {};
-            headers.forEach((header, index) => {
-                let key = header.trim().toLowerCase();
-                if (key === 'date') row.date = values[index];
-                else if (key === 'reg id') row.regId = values[index];
-                else if (key === 'name') row.name = values[index];
-                else if (key === 'sign in time') row.signIn = values[index];
-                else if (key === 'sign out time') row.signOut = values[index];
-                else if (key === 'type') row.type = values[index];
-                else if (key === 'phone') row.phone = values[index];
-                else if (key === 'day') row.day = values[index];
-                else if (key === 'status') row.status = values[index];
-                else if (key === 'report') row.report = values[index];
-                else row[header.trim()] = values[index];
+        let originalData = [];
+        let headers = [];
+
+        async function loadData() {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = '<div class="loading">Loading data from Google Sheet...</div>';
+            
+            try {
+                // Add cache-busting parameter
+                const url = `${GOOGLE_SHEET_CSV_URL}&_=${Date.now()}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                parseAndDisplayCSV(csvText);
+                
+                document.getElementById('lastUpdated').innerText = new Date().toLocaleString();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                container.innerHTML = `
+                    <div class="error">
+                        <strong>⚠️ Error loading data</strong><br><br>
+                        Make sure you have:<br>
+                        1. Published your Google Sheet to the web (File → Share → Publish to web)<br>
+                        2. Used the correct CSV export URL<br>
+                        3. Set sheet sharing to "Anyone with link can view"<br><br>
+                        Technical details: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function parseAndDisplayCSV(csvText) {
+            // Parse CSV (handles quoted fields properly)
+            const rows = [];
+            const regex = /(?:,|^)(?:"([^"]*(?:""[^"]*)*)"|([^",]*))/g;
+            const lines = csvText.split(/\r?\n/);
+            
+            if (lines.length === 0) {
+                throw new Error('Empty CSV data');
+            }
+            
+            // Parse headers
+            headers = parseCSVLine(lines[0]);
+            
+            // Parse data rows
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const row = parseCSVLine(lines[i]);
+                    if (row.length > 0) {
+                        rows.push(row);
+                    }
+                }
+            }
+            
+            originalData = rows;
+            displayTable(originalData);
+            document.getElementById('rowCount').innerText = `📊 ${rows.length} rows`;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let inQuotes = false;
+            let currentField = '';
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i+1] === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(currentField.trim());
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            result.push(currentField.trim());
+            return result;
+        }
+
+        function displayTable(data) {
+            const container = document.getElementById('tableContainer');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="error">No data found in the sheet</div>';
+                return;
+            }
+            
+            let html = '<table>';
+            
+            // Create header
+            html += '<thead><tr>';
+            headers.forEach(header => {
+                html += `<th>${escapeHtml(header || '')}</th>`;
             });
-            result.push(row);
-        }
-        return result;
-    }
-
-    // Display table with optional date filter
-    function displayTable(filterDate = '') {
-        const container = document.getElementById('attendanceTable');
-        let filteredData = attendanceData;
-        
-        if (filterDate) {
-            filteredData = attendanceData.filter(row => row.date === filterDate);
-        }
-        
-        if (filteredData.length === 0) {
-            container.innerHTML = '<div class="error">No attendance records found for the selected date.</div>';
-            document.getElementById('totalCount').textContent = '0';
-            document.getElementById('presentCount').textContent = '0';
-            document.getElementById('absentCount').textContent = '0';
-            return;
-        }
-        
-        // Update stats
-        const total = filteredData.length;
-        const present = filteredData.filter(row => row.status === 'Present').length;
-        const absent = filteredData.filter(row => row.status === 'Absent').length;
-        
-        document.getElementById('totalCount').textContent = total;
-        document.getElementById('presentCount').textContent = present;
-        document.getElementById('absentCount').textContent = absent;
-        
-        // Build table HTML
-        let html = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Reg ID</th>
-                        <th>Name</th>
-                        <th>Sign In Time</th>
-                        <th>Sign Out Time</th>
-                        <th>Type</th>
-                        <th>Phone</th>
-                        <th>Day</th>
-                        <th>Status</th>
-                        <th>Report</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        filteredData.forEach(row => {
-            let statusClass = '';
-            if (row.status === 'Present') statusClass = 'status-present';
-            else if (row.status === 'Absent') statusClass = 'status-absent';
-            else if (row.status === 'Late') statusClass = 'status-late';
+            html += '</tr></thead>';
             
-            html += `
-                <tr>
-                    <td>${row.date || '--'}</td>
-                    <td>${row.regId || '--'}</td>
-                    <td>${row.name || '--'}</td>
-                    <td>${row.signIn || '--'}</td>
-                    <td>${row.signOut || '--'}</td>
-                    <td>${row.type || '--'}</td>
-                    <td>${row.phone || '--'}</td>
-                    <td>${row.day || '--'}</td>
-                    <td><span class="${statusClass}">${row.status || '--'}</span></td>
-                    <td>${row.report || '--'}</td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                </tbody>
-            </table>
-        `;
-        
-        container.innerHTML = html;
-    }
-    
-    function filterByDate() {
-        const dateInput = document.getElementById('dateFilter').value;
-        displayTable(dateInput);
-    }
-    
-    function resetFilter() {
-        document.getElementById('dateFilter').value = '';
-        displayTable('');
-    }
-    
-    // Initialize the page
-    async function init() {
-        try {
-            attendanceData = await fetchFromGoogleSheet();
-            displayTable('');
-        } catch (error) {
-            document.getElementById('attendanceTable').innerHTML = 
-                '<div class="error">⚠️ Error loading attendance data. Please check your data source configuration.</div>';
-            console.error(error);
+            // Create body
+            html += '<tbody>';
+            data.forEach(row => {
+                html += '<tr>';
+                for (let i = 0; i < headers.length; i++) {
+                    const cellValue = row[i] || '';
+                    html += `<td>${escapeHtml(cellValue)}</td>`;
+                }
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            
+            container.innerHTML = html;
         }
-    }
-    
-    init();
-</script>
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm) {
+                displayTable(originalData);
+                document.getElementById('rowCount').innerText = `📊 ${originalData.length} rows`;
+                return;
+            }
+            
+            const filtered = originalData.filter(row => {
+                return row.some(cell => 
+                    cell && cell.toString().toLowerCase().includes(searchTerm)
+                );
+            });
+            
+            displayTable(filtered);
+            document.getElementById('rowCount').innerText = `🔍 ${filtered.length} of ${originalData.length} rows`;
+        }
+
+        // Add search event listener
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        
+        // Load data when page loads
+        loadData();
+    </script>
 </body>
 </html>
