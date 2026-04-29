@@ -3,595 +3,469 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Slide Puzzle · 8 Cells · 1 Minute</title>
+<title>Slide Puzzle · 8 Tiles + 1 Blank</title>
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  user-select: none; /* avoid accidental selection on mobile */
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 16px;
-  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .container {
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(0px);
-  padding: 20px 18px 24px;
-  border-radius: 48px;
-  box-shadow: 0 20px 35px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
+  background: white;
+  padding: 20px;
+  border-radius: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   text-align: center;
-  max-width: 550px;
+  max-width: 500px;
   width: 100%;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 h1 {
-  font-size: 1.7rem;
-  background: linear-gradient(135deg, #0f172a, #2563eb);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  margin-bottom: 6px;
-  letter-spacing: -0.3px;
+  font-size: 1.6rem;
+  color: #1e293b;
+  margin-bottom: 5px;
 }
 
 .sub {
   font-size: 0.8rem;
-  color: #334155;
-  margin-bottom: 12px;
-  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 15px;
 }
 
 .stats {
   display: flex;
   justify-content: space-between;
-  background: #f1f5f9;
-  padding: 12px 20px;
-  border-radius: 60px;
-  margin: 12px 0 16px;
-  font-weight: 700;
-  font-size: 1.2rem;
-  gap: 15px;
-  flex-wrap: wrap;
-  box-shadow: inset 0 1px 2px #0000, 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.stats > div {
-  background: white;
-  padding: 6px 16px;
-  border-radius: 40px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  flex: 1;
-  justify-content: center;
-}
-
-.stats span {
-  font-weight: 800;
-  color: #2563eb;
-  font-size: 1.3rem;
-  min-width: 50px;
-}
-
-.top-buttons {
-  display: flex;
-  justify-content: center;
   gap: 12px;
+  margin: 15px 0;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 10px 15px;
+  border-radius: 20px;
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  color: #1e293b;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.stat-card span {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #3b82f6;
+  margin-top: 5px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+  flex-wrap: wrap;
 }
 
 .btn {
-  background: #2563eb;
+  background: #3b82f6;
+  color: white;
   border: none;
   padding: 12px 20px;
-  border-radius: 50px;
+  border-radius: 40px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  backdrop-filter: blur(2px);
-  touch-action: manipulation;
+  transition: transform 0.1s, background 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .btn:active {
-  transform: scale(0.96);
-  background: #1d4ed8;
+  transform: scale(0.95);
 }
 
 .btn-secondary {
-  background: #475569;
+  background: #64748b;
 }
 
-.btn-secondary:active {
-  background: #334155;
+.btn-danger {
+  background: #ef4444;
 }
 
-/* PUZZLE GRID: 3x3 but one empty cell (blank) → 8 movable pieces */
-.puzzle {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  max-width: 430px;
-  margin: 10px auto;
+.puzzle-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 5px;
+  gap: 6px;
   background: #cbd5e1;
-  border-radius: 28px;
   padding: 8px;
-  box-shadow: 0 12px 25px rgba(0,0,0,0.2);
-  touch-action: manipulation;
+  border-radius: 24px;
+  margin: 15px 0;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  box-shadow: inset 0 0 0 2px #94a3b8, 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* each cell is a puzzle piece (including blank) */
-.piece {
-  border-radius: 18px;
-  background-size: 300% 300%;  /* because 3x3, each piece shows 1/3 of width/height */
+.tile {
+  background: #f8fafc;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-size: 300% 300%;
   background-repeat: no-repeat;
-  transition: 0.08s linear;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  cursor: pointer;
-  touch-action: manipulation;
-  will-change: transform;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* blank cell style */
-.piece.blank {
-  background: #e2e8f0 !important;
-  background-image: none !important;
-  box-shadow: inset 0 0 0 2px #94a3b8;
-  backdrop-filter: blur(2px);
-  cursor: pointer;
-}
-
-/* hover / tap feedback */
-.piece:active {
+.tile:active {
   transform: scale(0.96);
 }
 
-/* Popups */
+.tile.blank {
+  background: #e2e8f0 !important;
+  background-image: none !important;
+  box-shadow: inset 0 0 0 2px #94a3b8;
+  cursor: pointer;
+}
+
 .popup {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(5px);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   padding: 20px;
-  transition: 0.2s;
 }
 
-.popup-box {
+.popup-content {
   background: white;
-  padding: 28px 20px;
-  border-radius: 48px;
-  width: 85%;
-  max-width: 340px;
+  padding: 30px;
+  border-radius: 40px;
   text-align: center;
-  box-shadow: 0 30px 40px rgba(0,0,0,0.3);
+  max-width: 320px;
+  width: 90%;
+  animation: popIn 0.3s ease;
 }
 
-.popup-box h2 {
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.popup-content h2 {
   font-size: 1.8rem;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
 }
 
-.popup-box p {
-  font-size: 1.1rem;
-  margin: 16px 0;
-  color: #1e293b;
-  font-weight: 500;
+.popup-content p {
+  margin: 15px 0;
+  color: #475569;
+  line-height: 1.5;
 }
 
-.popup-box button {
-  background: #2563eb;
+.popup-content button {
+  background: #3b82f6;
+  color: white;
   border: none;
-  padding: 14px 20px;
-  border-radius: 50px;
-  font-weight: bold;
+  padding: 12px 25px;
+  border-radius: 40px;
   font-size: 1rem;
-  margin-top: 8px;
-  width: 80%;
+  font-weight: bold;
   cursor: pointer;
-  transition: 0.1s linear;
+  margin-top: 10px;
 }
 
 .hidden {
   display: none;
 }
 
-/* mobile friendly */
 @media (max-width: 480px) {
   .container {
-    padding: 16px 14px 20px;
+    padding: 15px;
   }
-  .stats {
-    padding: 8px 12px;
+  
+  .stat-card span {
+    font-size: 1.4rem;
   }
-  .stats > div {
-    font-size: 0.9rem;
-    padding: 4px 10px;
-  }
-  .stats span {
-    font-size: 1.1rem;
-  }
+  
   .btn {
     padding: 10px 16px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
-  .puzzle {
-    gap: 4px;
-    padding: 6px;
+  
+  .tile {
+    border-radius: 12px;
   }
-  .piece {
-    border-radius: 14px;
-  }
-}
-
-/* make pieces crisp */
-.piece {
-  background-color: #f8fafc;
 }
 </style>
 </head>
 <body>
 
-<!-- start popup -->
 <div class="popup" id="startPopup">
-  <div class="popup-box">
-    <h2>🧩 Sliding Puzzle</h2>
-    <p>Arrange 8 pieces + 1 blank cell.<br>Tap any piece next to the blank to slide!<br>⏱️ 60 seconds per attempt</p>
-    <button id="startBtnInit">Start Game</button>
+  <div class="popup-content">
+    <h2>🧩 Slide Puzzle</h2>
+    <p>Tap any tile next to the empty space to slide it!</p>
+    <p>⏱️ 60 seconds to complete each level</p>
+    <button onclick="startGame()">Start Game</button>
   </div>
 </div>
 
-<!-- result popup -->
 <div class="popup hidden" id="resultPopup">
-  <div class="popup-box">
-    <h2 id="popupTitle">🎉</h2>
-    <p id="popupText"></p>
-    <button id="resultRestartBtn">▶ Next / Restart</button>
+  <div class="popup-content">
+    <h2 id="resultTitle"></h2>
+    <p id="resultMessage"></p>
+    <button onclick="closeResultPopup()">Continue</button>
   </div>
 </div>
 
 <div class="container">
-  <h1>✨ 8‑CELL SLIDE PUZZLE</h1>
-  <div class="sub">Tap tile next to empty cell → moves into blank</div>
+  <h1>✨ 8-Tile Puzzle</h1>
+  <div class="sub">Tap tile → slides into empty space</div>
   
   <div class="stats">
-    <div>⭐ SCORE <span id="score">0</span></div>
-    <div>🏆 LEVEL <span id="level">1</span></div>
-    <div>⏰ TIME <span id="timer">60</span>s</div>
+    <div class="stat-card">⭐ Score<br><span id="score">0</span></div>
+    <div class="stat-card">🏆 Level<br><span id="level">1</span></div>
+    <div class="stat-card">⏰ Time<br><span id="timer">60</span>s</div>
   </div>
-
-  <div class="top-buttons">
-    <button class="btn" id="shuffleBtn">🔀 Shuffle</button>
-    <button class="btn" id="changeImgBtn">🖼 Change Image</button>
-    <button class="btn btn-secondary" id="submitBtn">✅ Submit</button>
+  
+  <div class="button-group">
+    <button class="btn" onclick="shuffleBoard()">🔀 Shuffle</button>
+    <button class="btn btn-secondary" onclick="changePicture()">🖼 Change Image</button>
+    <button class="btn btn-danger" onclick="checkWin()">✅ Submit</button>
   </div>
-
-  <div class="puzzle" id="puzzleGrid"></div>
-  <div style="font-size: 12px; margin-top: 12px; color: #475569;">💡 Tip: adjacent tile to blank → slide into empty space</div>
+  
+  <div class="puzzle-grid" id="puzzleGrid"></div>
+  <div style="font-size: 11px; color: #94a3b8; margin-top: 10px;">💡 Tip: Tap tiles adjacent to the empty spot</div>
 </div>
 
 <script>
-  // -------- GAME LOGIC ----------
-  const SIZE = 3;          // 3x3 grid => 9 cells, one blank index
-  const TOTAL_CELLS = 9;
-  let board = [];           // holds piece objects: { imageIndex, correctPos, currentPos? we use array for cells }
-  let cellElements = [];    // DOM elements array
-  let blankIndex = 8;       // default blank at bottom-right (index 8)
-  
-  let currentImageIndex = 0;
+  // Game configuration
+  const SIZE = 3;
+  const TOTAL_TILES = 9;
+  let board = [];           // Stores which piece (0-7) is at each position, -1 for blank
+  let blankPosition = 8;    // Index of blank tile (starts at bottom-right)
   let score = 0;
   let level = 1;
   let timeLeft = 60;
   let timerInterval = null;
-  let gameActive = true;     // prevent moves after game over/win
-  let isGameStarted = false;
+  let gameActive = false;
+  let currentImageIndex = 0;
   
-  // image pool (vibrant, mobile-friendly)
-  const IMAGES = [
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&h=600&fit=crop"
+  // Image collection (high-quality puzzle images)
+  const images = [
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=500&h=500&fit=crop"
   ];
   
-  const puzzleContainer = document.getElementById("puzzleGrid");
-  const scoreSpan = document.getElementById("score");
-  const levelSpan = document.getElementById("level");
-  const timerSpan = document.getElementById("timer");
-  const shuffleBtn = document.getElementById("shuffleBtn");
-  const changeImgBtn = document.getElementById("changeImgBtn");
-  const submitBtn = document.getElementById("submitBtn");
-  const startPopupDiv = document.getElementById("startPopup");
-  const resultPopupDiv = document.getElementById("resultPopup");
-  const popupTitleSpan = document.getElementById("popupTitle");
-  const popupTextSpan = document.getElementById("popupText");
-  const startButtonAction = document.getElementById("startBtnInit");
-  const resultRestart = document.getElementById("resultRestartBtn");
+  // DOM elements
+  const puzzleGrid = document.getElementById('puzzleGrid');
+  const scoreElement = document.getElementById('score');
+  const levelElement = document.getElementById('level');
+  const timerElement = document.getElementById('timer');
+  const startPopupDiv = document.getElementById('startPopup');
+  const resultPopupDiv = document.getElementById('resultPopup');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMessage = document.getElementById('resultMessage');
   
-  // Helper: get current image URL based on index
-  function getCurrentImageUrl() {
-    return IMAGES[currentImageIndex % IMAGES.length];
+  // Initialize solved board
+  function initSolvedBoard() {
+    const solved = [];
+    for (let i = 0; i < TOTAL_TILES - 1; i++) {
+      solved.push(i);
+    }
+    solved.push(-1); // blank at the end
+    return solved;
   }
   
-  // Build board array: stores which piece (original index) resides at each position
-  // For sliding puzzle: each cell has a "pieceId" from 0 to 7 (tiles) and blank = -1
-  // We'll use tile numbers 0..7 for movable images, blank = null.
-  // Actually easier: Standard 3x3 sliding: each piece has correct position index (0-7) and blank is separate.
-  // We maintain an array "grid" length 9 where grid[i] = pieceNumber (0-7) or -1 for blank.
-  // The win condition: for i=0..7, grid[i] === i, and grid[8] === -1.
-  let grid = [];
-  
-  function initGridSolved() {
-    let arr = [];
-    for (let i = 0; i < TOTAL_CELLS - 1; i++) arr.push(i);
-    arr.push(-1);   // blank at last index
-    return arr;
+  // Get adjacent indices to blank
+  function getAdjacentToBlank(blankPos) {
+    const row = Math.floor(blankPos / SIZE);
+    const col = blankPos % SIZE;
+    const adjacent = [];
+    
+    if (row > 0) adjacent.push(blankPos - SIZE); // up
+    if (row < SIZE - 1) adjacent.push(blankPos + SIZE); // down
+    if (col > 0) adjacent.push(blankPos - 1); // left
+    if (col < SIZE - 1) adjacent.push(blankPos + 1); // right
+    
+    return adjacent;
   }
   
-  // positions that are adjacent to blank on 3x3 grid
-  function getAdjacentIndices(blankIdx) {
-    const row = Math.floor(blankIdx / SIZE);
-    const col = blankIdx % SIZE;
-    const neighbors = [];
-    if (row > 0) neighbors.push(blankIdx - SIZE);
-    if (row < SIZE-1) neighbors.push(blankIdx + SIZE);
-    if (col > 0) neighbors.push(blankIdx - 1);
-    if (col < SIZE-1) neighbors.push(blankIdx + 1);
-    return neighbors;
-  }
-  
-  // try to move tile at clicked index (if adjacent to blank)
-  function tryMovePiece(clickedIdx) {
-    if (!gameActive || !isGameStarted) return false;
-    if (timerInterval === null && isGameStarted) return false; // time out or finished
-  
-    const adjacent = getAdjacentIndices(blankIndex);
-    if (adjacent.includes(clickedIdx)) {
-      // swap grid[clickedIdx] with grid[blankIndex]
-      const temp = grid[clickedIdx];
-      grid[clickedIdx] = grid[blankIndex];
-      grid[blankIndex] = temp;
-      blankIndex = clickedIdx;
+  // Move tile at given position (if adjacent to blank)
+  function moveTile(position) {
+    if (!gameActive) return false;
+    
+    const adjacent = getAdjacentToBlank(blankPosition);
+    
+    if (adjacent.includes(position)) {
+      // Swap the clicked tile with blank
+      const temp = board[position];
+      board[position] = board[blankPosition];
+      board[blankPosition] = temp;
+      blankPosition = position;
       renderBoard();
-      // after move, check win automatically? but we have submit, though we can auto-win? best practice: submit triggers win. But we can also let them see.
       return true;
     }
     return false;
   }
   
-  // Fisher-Yates shuffle but ensure puzzle is solvable (we'll just shuffle by performing random valid moves)
-  function shufflePuzzle(moves = 120) {
+  // Shuffle by making random moves
+  function shuffleBoard(moves = 150) {
     if (!gameActive) return;
-    // perform random valid moves from current state
-    for (let step = 0; step < moves; step++) {
-      const adj = getAdjacentIndices(blankIndex);
-      if (adj.length === 0) continue;
-      const randomNeighbor = adj[Math.floor(Math.random() * adj.length)];
-      // swap
-      const temp = grid[randomNeighbor];
-      grid[randomNeighbor] = grid[blankIndex];
-      grid[blankIndex] = temp;
-      blankIndex = randomNeighbor;
+    
+    for (let i = 0; i < moves; i++) {
+      const adjacent = getAdjacentToBlank(blankPosition);
+      if (adjacent.length > 0) {
+        const randomIndex = Math.floor(Math.random() * adjacent.length);
+        const randomPos = adjacent[randomIndex];
+        // swap
+        const temp = board[randomPos];
+        board[randomPos] = board[blankPosition];
+        board[blankPosition] = temp;
+        blankPosition = randomPos;
+      }
     }
     renderBoard();
   }
   
-  // set up fresh game after level up or restart
-  function setupNewGame(resetScoreAndLevel = true, newImageAdvance = false) {
-    clearTimer();
-    grid = initGridSolved();
-    blankIndex = 8;   // blank at index 8 (bottom-right)
-    if (resetScoreAndLevel) {
-      score = 0;
-      level = 1;
-      currentImageIndex = 0;
-      scoreSpan.textContent = score;
-      levelSpan.textContent = level;
-    } else {
-      // keep level,score for level progression
-      scoreSpan.textContent = score;
-      levelSpan.textContent = level;
+  // Check if puzzle is solved
+  function isSolved() {
+    for (let i = 0; i < TOTAL_TILES - 1; i++) {
+      if (board[i] !== i) return false;
     }
-    if (newImageAdvance) {
-      // already handled externally
-    }
-    // shuffle enough to make it interesting but solvable
-    shufflePuzzle(140);
-    gameActive = true;
-    isGameStarted = true;
-    startCountdown();
-    renderBoard();
+    return board[8] === -1;
   }
   
-  function renderBoard() {
-    if (!puzzleContainer) return;
-    const imageUrl = getCurrentImageUrl();
-    // For each cell (0..8)
-    for (let i = 0; i < TOTAL_CELLS; i++) {
-      const pieceVal = grid[i];
-      const isBlank = (pieceVal === -1);
-      let element = cellElements[i];
-      if (!element) {
-        element = document.createElement("div");
-        element.classList.add("piece");
-        element.setAttribute("data-index", i);
-        element.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const idx = parseInt(element.getAttribute("data-index"));
-          tryMovePiece(idx);
-        });
-        // also touch event for mobile, but click works on mobile with fast tapping
-        element.addEventListener("touchstart", (e) => {
-          e.preventDefault();
-          const idx = parseInt(element.getAttribute("data-index"));
-          tryMovePiece(idx);
-        }, { passive: false });
-        puzzleContainer.appendChild(element);
-        cellElements[i] = element;
-      }
-      element = cellElements[i];
-      element.setAttribute("data-index", i);
-      
-      if (isBlank) {
-        element.classList.add("blank");
-        element.style.backgroundImage = "none";
-        element.style.backgroundColor = "#e2e8f0";
-      } else {
-        element.classList.remove("blank");
-        // pieceVal is tile correct number (0-7), we need background position based on correct target
-        // each piece displays a part of global image: row = Math.floor(pieceVal / SIZE), col = pieceVal % SIZE
-        const targetRow = Math.floor(pieceVal / SIZE);
-        const targetCol = pieceVal % SIZE;
-        // background size: 300% because 3 columns in % (each piece shows 1/3)
-        const posX = (targetCol * 100) / (SIZE - 1);  // 0%, 100%, 200%? Actually better: percent positions: each piece is 33.33% width of container.
-        const posY = (targetRow * 100) / (SIZE - 1);
-        element.style.backgroundImage = `url('${imageUrl}')`;
-        element.style.backgroundSize = `${SIZE * 100}% ${SIZE * 100}%`;
-        element.style.backgroundPosition = `${(targetCol * 100) / (SIZE-1)}% ${(targetRow * 100) / (SIZE-1)}%`;
-        element.style.backgroundColor = "transparent";
-      }
-    }
-  }
-  
-  // check win condition (grid[0..7] === 0..7 and grid[8] === -1)
-  function isPuzzleSolved() {
-    for (let i = 0; i < TOTAL_CELLS - 1; i++) {
-      if (grid[i] !== i) return false;
-    }
-    return grid[8] === -1;
-  }
-  
-  function checkWinAndSubmit() {
+  // Check win and handle level up
+  function checkWin() {
     if (!gameActive) {
-      showResultPopup("⏳ Game Over", "Game already ended. Press restart!");
+      showResult("⏸️ Game Inactive", "Please start a new game!");
       return;
     }
-    if (isPuzzleSolved()) {
-      // WIN!
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = null;
+    
+    if (isSolved()) {
+      // Win!
+      clearTimer();
       gameActive = false;
       
-      // increase score and level
+      // Update score and level
       score += 100;
       level++;
-      scoreSpan.textContent = score;
-      levelSpan.textContent = level;
+      scoreElement.textContent = score;
+      levelElement.textContent = level;
       
-      // advance to next image
-      currentImageIndex = (currentImageIndex + 1) % IMAGES.length;
+      // Change image for next level
+      currentImageIndex = (currentImageIndex + 1) % images.length;
       
-      // setup next level without resetting score/level but reset grid with new image
-      // reinit solved then shuffle
-      grid = initGridSolved();
-      blankIndex = 8;
-      shufflePuzzle(130);
-      gameActive = true;
-      isGameStarted = true;
-      // restart timer for next level
-      clearTimer();
-      startCountdown();
-      renderBoard();
-      
-      // optional popup message but we show brief notification, but no popup? better show small message in game? but earlier we show popup? we need to inform level up but not intrusive: 
-      showTemporaryMessage(`✨ Level ${level} ! +100 pts ✨`);
+      showResult("🎉 Puzzle Solved!", `+100 points! Moving to Level ${level}`);
     } else {
-      showResultPopup("❌ Not Solved", "Arrangement is incorrect. Keep sliding!");
+      showResult("❌ Not Solved Yet", "Keep sliding the tiles to match the image!");
     }
   }
   
-  function showTemporaryMessage(msg) {
-    // small floating but we can do simple alert? but use popup? instead we can show result popup with restart option? But for level up it might block. Better use a snackbar style but we show resultpopup only on fail?
-    // we use result popup but with auto close? but we show next level automatically, so show popup for 1.5 sec?
-    // Consistent design: show result popup but with quick hide? However, we have restart button, so user experience: when level up we auto advance & show success popup only? hmm but we already restart level internally
-    // decided: For level completion we show a congrat popup that auto-dismiss after 1 second? but it's simpler to not interrupt.
-    // Let's just show a custom floating notif? but ensure brief. Use slight hack: we create tiny alert div, but simpler: show popup with "Next Level" and auto close? 
-    // Better: for win from submit, we show success popup and user must click restart -> but then they gain score and level, move to new level. For fast flow: we show win popup with "Next level" click.
-    // But my internal code already automatically resets grid and timer for next level without popup. but user would be confused. So i adjust: when submit win, call levelUpAndContinue()
-  }
-  
-  function levelUpAndContinue() {
-    // already handled in checkWinAndSubmit but without popup, we show explicit win state
-    if(!gameActive) return;
-    if(isPuzzleSolved()){
-      // same logic but we show a win popup?
-      clearTimer();
-      gameActive = false;
-      score += 100;
-      level++;
-      scoreSpan.textContent = score;
-      levelSpan.textContent = level;
-      currentImageIndex = (currentImageIndex + 1) % IMAGES.length;
-      // show success popup before reloading
-      popupTitleSpan.innerText = "🎉 LEVEL UP!";
-      popupTextSpan.innerText = `+100 points! New level ${level} with fresh image.`;
-      resultPopupDiv.classList.remove("hidden");
-      // store flag to restart after popup
-      window.pendingRestartLevel = true;
-      return;
-    }
-  }
-  
-  function handleWinAfterPopup() {
-    // rebuild for next level
-    grid = initGridSolved();
-    blankIndex = 8;
-    shufflePuzzle(130);
+  // Continue to next level after win
+  function nextLevel() {
+    // Reset board to solved state
+    board = initSolvedBoard();
+    blankPosition = 8;
+    // Shuffle for new level
+    shuffleBoard(130);
     gameActive = true;
-    isGameStarted = true;
-    clearTimer();
     startCountdown();
     renderBoard();
-    resultPopupDiv.classList.add("hidden");
-    window.pendingRestartLevel = false;
   }
   
-  function showResultPopup(title, message) {
-    if(!gameActive && title !== "🎉 LEVEL UP!") {
-      // for game over also
-    }
-    popupTitleSpan.innerText = title;
-    popupTextSpan.innerText = message;
-    resultPopupDiv.classList.remove("hidden");
-    if(title.includes("Not Solved")){
-      // keep popup and not stop game activity
-      window.pendingRestartLevel = false;
-    } else {
-      if(title === "💀 Game Over"){
-        gameActive = false;
-        if(timerInterval) clearInterval(timerInterval);
-        timerInterval = null;
+  // Change image without resetting progress
+  function changePicture() {
+    if (!gameActive) return;
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    renderBoard();
+  }
+  
+  // Render the puzzle grid
+  function renderBoard() {
+    puzzleGrid.innerHTML = '';
+    const currentImage = images[currentImageIndex];
+    
+    for (let i = 0; i < TOTAL_TILES; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      
+      if (board[i] === -1) {
+        tile.classList.add('blank');
+        tile.style.backgroundImage = 'none';
+      } else {
+        const pieceNumber = board[i];
+        const row = Math.floor(pieceNumber / SIZE);
+        const col = pieceNumber % SIZE;
+        
+        tile.style.backgroundImage = `url('${currentImage}')`;
+        tile.style.backgroundSize = `${SIZE * 100}% ${SIZE * 100}%`;
+        tile.style.backgroundPosition = `${col * 50}% ${row * 50}%`;
       }
+      
+      tile.addEventListener('click', (function(pos) {
+        return function() { moveTile(pos); };
+      })(i));
+      
+      tile.addEventListener('touchstart', (function(pos) {
+        return function(e) { 
+          e.preventDefault();
+          moveTile(pos); 
+        };
+      })(i), { passive: false });
+      
+      puzzleGrid.appendChild(tile);
     }
+  }
+  
+  // Timer functions
+  function startCountdown() {
+    clearTimer();
+    timeLeft = 60;
+    timerElement.textContent = timeLeft;
+    
+    timerInterval = setInterval(() => {
+      if (!gameActive) return;
+      
+      if (timeLeft <= 1) {
+        clearTimer();
+        timerElement.textContent = '0';
+        gameActive = false;
+        showResult("💀 Time's Up!", "You ran out of time! Press Continue to try again.");
+      } else {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+      }
+    }, 1000);
   }
   
   function clearTimer() {
@@ -601,124 +475,70 @@ h1 {
     }
   }
   
-  function startCountdown() {
-    clearTimer();
-    if (!isGameStarted) return;
-    timeLeft = 60;
-    timerSpan.textContent = timeLeft;
-    timerInterval = setInterval(() => {
-      if (!gameActive) {
-        // if game inactive don't decrease
-        return;
-      }
-      if (timeLeft <= 1) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerSpan.textContent = "0";
-        gameActive = false;
-        isGameStarted = false;
-        showResultPopup("💀 TIME'S UP", "You ran out of time! Press restart.");
-      } else {
-        timeLeft--;
-        timerSpan.textContent = timeLeft;
-      }
-    }, 1000);
+  // UI Popup functions
+  function showResult(title, message) {
+    resultTitle.textContent = title;
+    resultMessage.textContent = message;
+    resultPopupDiv.classList.remove('hidden');
   }
   
-  function fullRestart(resetProgression = true) {
-    clearTimer();
-    if (resetProgression) {
+  function closeResultPopup() {
+    resultPopupDiv.classList.add('hidden');
+    
+    // If game is inactive (game over or win), restart fresh
+    if (!gameActive) {
+      // Reset everything for new game
       score = 0;
       level = 1;
       currentImageIndex = 0;
-      scoreSpan.textContent = score;
-      levelSpan.textContent = level;
+      scoreElement.textContent = score;
+      levelElement.textContent = level;
+      
+      board = initSolvedBoard();
+      blankPosition = 8;
+      shuffleBoard(140);
+      gameActive = true;
+      startCountdown();
+      renderBoard();
+    } else if (isSolved()) {
+      // This is for win condition - already handled in checkWin, but just in case
+      nextLevel();
     }
-    grid = initGridSolved();
-    blankIndex = 8;
+  }
+  
+  // Start game from main menu
+  function startGame() {
+    startPopupDiv.classList.add('hidden');
+    
+    // Reset all game state
+    score = 0;
+    level = 1;
+    currentImageIndex = 0;
+    scoreElement.textContent = score;
+    levelElement.textContent = level;
+    
+    board = initSolvedBoard();
+    blankPosition = 8;
+    shuffleBoard(140);
     gameActive = true;
-    isGameStarted = true;
-    shufflePuzzle(140);
-    renderBoard();
     startCountdown();
-    resultPopupDiv.classList.add("hidden");
-    startPopupDiv.classList.add("hidden");
-  }
-  
-  function changeImageOnly() {
-    if (!isGameStarted) return;
-    currentImageIndex = (currentImageIndex + 1) % IMAGES.length;
     renderBoard();
-    // optional keep current grid but new picture
   }
   
-  // Event listeners
-  startButtonAction.addEventListener("click", () => {
-    startPopupDiv.classList.add("hidden");
-    fullRestart(true);
-  });
+  // Restart game (called from various places)
+  window.startGame = startGame;
+  window.shuffleBoard = shuffleBoard;
+  window.changePicture = changePicture;
+  window.checkWin = checkWin;
+  window.closeResultPopup = closeResultPopup;
   
-  resultRestart.addEventListener("click", () => {
-    resultPopupDiv.classList.add("hidden");
-    if (window.pendingRestartLevel) {
-      // level up case
-      handleWinAfterPopup();
-      window.pendingRestartLevel = false;
-    } else {
-      // normal restart from fail / lose
-      fullRestart(true);
-    }
-  });
+  // Expose move function globally for debugging
+  window.moveTile = moveTile;
   
-  shuffleBtn.addEventListener("click", () => {
-    if (!isGameStarted || !gameActive) return;
-    shufflePuzzle(100);
-  });
-  changeImgBtn.addEventListener("click", () => {
-    if (!isGameStarted) return;
-    changeImageOnly();
-  });
-  submitBtn.addEventListener("click", () => {
-    if (!isGameStarted) {
-      showResultPopup("⚠️ Not started", "Press start game first!");
-      return;
-    }
-    if (!gameActive) {
-      showResultPopup("⏸️ Inactive", "Game over or time's up. Restart.");
-      return;
-    }
-    if (isPuzzleSolved()) {
-      // win case
-      clearTimer();
-      gameActive = false;
-      score += 100;
-      level++;
-      scoreSpan.textContent = score;
-      levelSpan.textContent = level;
-      currentImageIndex = (currentImageIndex + 1) % IMAGES.length;
-      popupTitleSpan.innerText = "🎉 PERFECT!";
-      popupTextSpan.innerText = `Solved! +100 pts, Level ${level} with new image.`;
-      resultPopupDiv.classList.remove("hidden");
-      window.pendingRestartLevel = true;
-    } else {
-      showResultPopup("❌ Wrong order", "Sliding not finished. Arrange pieces correctly!");
-    }
-  });
-  
-  // initialize elements but not start until startPopup
-  function initialEmptyRender() {
-    for (let i = 0; i < TOTAL_CELLS; i++) {
-      let dummy = document.createElement("div");
-      dummy.classList.add("piece");
-      puzzleContainer.appendChild(dummy);
-      cellElements.push(dummy);
-    }
-    renderBoard(); // placeholder
-  }
-  initialEmptyRender();
-  // disable moves initially
+  // Initial render (blank board until game starts)
+  board = initSolvedBoard();
+  renderBoard();
   gameActive = false;
-  isGameStarted = false;
 </script>
 </body>
 </html>
