@@ -344,43 +344,50 @@
         }
 
         function displayCheckins(result) {
-            const container = document.getElementById('checkinsList');
-            
-            if (!result.success) {
-                container.innerHTML = `<div class="error-message">Error: ${result.error}</div>`;
-                return;
-            }
-            
-            const checkins = result.checkins;
-            
-            if (checkins.length === 0) {
-                container.innerHTML = '<div class="empty-state">No one is currently checked in 🤔</div>';
-                return;
-            }
-            
-            let html = '<div class="checkins-grid">';
-            checkins.forEach(checkin => {
-                html += `
-                    <div class="checkin-card">
-                        <div class="checkin-name">${escapeHtml(checkin.name)}</div>
-                        <div class="checkin-details">📞 ${escapeHtml(checkin.phone)}</div>
-                        <div class="checkin-details">
-                            <span class="badge ${checkin.type === 'Member' ? 'badge-member' : 'badge-guest'}">
-                                ${checkin.type}
-                            </span>
-                        </div>
-                        ${checkin.purpose ? `<div class="checkin-details">🎯 Purpose: ${escapeHtml(checkin.purpose)}</div>` : ''}
-                        ${checkin.regNo ? `<div class="checkin-details">🆔 Reg ID: ${escapeHtml(checkin.regNo)}</div>` : ''}
-                        <div class="checkin-time">⏰ Checked in: ${escapeHtml(checkin.checkinTime)}</div>
-                        <button class="signout-btn" onclick="signOut('${escapeHtml(checkin.regNo || '')}', '${escapeHtml(checkin.phone)}', ${checkin.rowIndex})">
-                            🚪 Sign Out
-                        </button>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            container.innerHTML = html;
+    const container = document.getElementById('checkinsList');
+    
+    if (!result.success) {
+        container.innerHTML = `<div class="error-message">Error: ${result.error}</div>`;
+        return;
+    }
+    
+    const checkins = result.checkins;
+    
+    if (checkins.length === 0) {
+        container.innerHTML = '<div class="empty-state">No one is currently checked in 🤔</div>';
+        return;
+    }
+    
+    let html = '<div class="checkins-grid">';
+    checkins.forEach(checkin => {
+        // Format the date properly
+        let checkinTime = checkin.checkinTime;
+        if (checkinTime && checkinTime.includes('T')) {
+            const date = new Date(checkinTime);
+            checkinTime = date.toLocaleString();
         }
+        
+        html += `
+            <div class="checkin-card">
+                <div class="checkin-name">${escapeHtml(checkin.name)}</div>
+                <div class="checkin-details">📞 ${escapeHtml(checkin.phone)}</div>
+                <div class="checkin-details">
+                    <span class="badge ${checkin.type === 'Member' ? 'badge-member' : 'badge-guest'}">
+                        ${checkin.type}
+                    </span>
+                </div>
+                ${checkin.purpose ? `<div class="checkin-details">🎯 Purpose: ${escapeHtml(checkin.purpose)}</div>` : ''}
+                ${checkin.regNo ? `<div class="checkin-details">🆔 Reg ID: ${escapeHtml(checkin.regNo)}</div>` : ''}
+                <div class="checkin-time">⏰ Checked in: ${checkinTime}</div>
+                <button class="signout-btn" onclick="signOut('${escapeHtml(checkin.regNo || '')}', '${escapeHtml(checkin.phone)}', ${checkin.rowIndex})">
+                    🚪 Sign Out
+                </button>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
 
         function showMemberGuestPopup() {
             const modal = document.getElementById('modal');
