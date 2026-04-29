@@ -85,13 +85,15 @@ h1 {
   background: #3b82f6;
   color: white;
   border: none;
-  padding: 12px 20px;
+  padding: 12px 24px;
   border-radius: 40px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.1s, background 0.2s;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  flex: 1;
+  min-width: 100px;
 }
 
 .btn:active {
@@ -212,6 +214,7 @@ h1 {
   .btn {
     padding: 10px 16px;
     font-size: 0.85rem;
+    min-width: 80px;
   }
   
   .tile {
@@ -250,9 +253,9 @@ h1 {
   </div>
   
   <div class="button-group">
-    <button class="btn" onclick="shuffleBoard()">🔀 Shuffle</button>
     <button class="btn btn-secondary" onclick="changePicture()">🖼 Change Image</button>
-    <button class="btn btn-danger" onclick="checkWin()">✅ Submit</button>
+    <button class="btn" onclick="checkWin()">✅ Submit</button>
+    <button class="btn btn-danger" onclick="restartGame()">🔄 Restart</button>
   </div>
   
   <div class="puzzle-grid" id="puzzleGrid"></div>
@@ -339,8 +342,6 @@ h1 {
   
   // Shuffle by making random moves (ensures solvable puzzle)
   function shuffleBoard(moves = 150) {
-    if (!gameActive) return;
-    
     for (let i = 0; i < moves; i++) {
       const adjacent = getAdjacentToBlank(blankPosition);
       if (adjacent.length > 0) {
@@ -410,7 +411,30 @@ h1 {
     renderBoard();
   }
   
-  // Render the puzzle grid - CRITICAL: Shows the current shuffled state visually
+  // Restart game (reset everything)
+  function restartGame() {
+    clearTimer();
+    
+    // Reset all game state
+    score = 0;
+    level = 1;
+    currentImageIndex = 0;
+    scoreElement.textContent = score;
+    levelElement.textContent = level;
+    
+    board = initSolvedBoard();
+    blankPosition = 8;
+    // Shuffle at restart
+    shuffleBoard(150);
+    gameActive = true;
+    startCountdown();
+    renderBoard();
+    
+    // Close popup if open
+    resultPopupDiv.classList.add('hidden');
+  }
+  
+  // Render the puzzle grid - Shows the current shuffled state visually
   function renderBoard() {
     puzzleGrid.innerHTML = '';
     const currentImage = images[currentImageIndex];
@@ -425,13 +449,11 @@ h1 {
       } else {
         const pieceNumber = board[i];
         // Each piece shows the PART of the image based on its CORRECT position
-        // This ensures that when board is solved, the image is complete
         const correctRow = Math.floor(pieceNumber / SIZE);
         const correctCol = pieceNumber % SIZE;
         
         tile.style.backgroundImage = `url('${currentImage}')`;
         tile.style.backgroundSize = `${SIZE * 100}% ${SIZE * 100}%`;
-        // Show the correct slice of the image for this piece number
         tile.style.backgroundPosition = `${correctCol * 50}% ${correctRow * 50}%`;
       }
       
@@ -490,20 +512,7 @@ h1 {
     
     // If game is inactive (game over or win), restart fresh
     if (!gameActive) {
-      // Reset everything for new game
-      score = 0;
-      level = 1;
-      currentImageIndex = 0;
-      scoreElement.textContent = score;
-      levelElement.textContent = level;
-      
-      board = initSolvedBoard();
-      blankPosition = 8;
-      // CRITICAL: Shuffle at start so pieces are visually mixed
-      shuffleBoard(150);
-      gameActive = true;
-      startCountdown();
-      renderBoard();
+      restartGame();
     } else if (isSolved()) {
       // This is for win condition
       nextLevel();
@@ -513,38 +522,20 @@ h1 {
   // Start game from main menu
   function startGame() {
     startPopupDiv.classList.add('hidden');
-    
-    // Reset all game state
-    score = 0;
-    level = 1;
-    currentImageIndex = 0;
-    scoreElement.textContent = score;
-    levelElement.textContent = level;
-    
-    board = initSolvedBoard();
-    blankPosition = 8;
-    // CRITICAL: Shuffle at the beginning so image is scrambled!
-    shuffleBoard(150);
-    gameActive = true;
-    startCountdown();
-    renderBoard();
+    restartGame(); // This handles all initialization with shuffle
   }
   
-  // Restart game (called from various places)
+  // Expose functions globally
   window.startGame = startGame;
-  window.shuffleBoard = shuffleBoard;
   window.changePicture = changePicture;
   window.checkWin = checkWin;
   window.closeResultPopup = closeResultPopup;
+  window.restartGame = restartGame;
   
-  // Expose move function globally for debugging
-  window.moveTile = moveTile;
-  
-  // Initial render (blank board until game starts)
+  // Initial render (shuffled at beginning)
   board = initSolvedBoard();
   blankPosition = 8;
-  // Shuffle immediately so preview shows scrambled pieces
-  shuffleBoard(150);
+  shuffleBoard(150); // Auto-shuffle at beginning
   renderBoard();
   gameActive = false;
 </script>
