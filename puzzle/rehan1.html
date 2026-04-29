@@ -3,140 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Touch Puzzle - Full 9 Blocks Fixed</title>
+<title>Puzzle Master - Touch & Drag Puzzle</title>
+
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: system-ui, 'Segoe UI', 'Arial', sans-serif;
   -webkit-tap-highlight-color: transparent;
-  user-select: none;
 }
 
 body {
-  background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: linear-gradient(145deg, #e9f0f5 0%, #d9e2ec 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 16px;
-  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  margin: 0;
 }
 
 .container {
-  background: rgba(255, 255, 255, 0.98);
-  padding: 20px 16px;
-  border-radius: 48px 32px 48px 32px;
-  box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25);
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(2px);
+  padding: 20px 16px 24px;
+  border-radius: 48px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.05);
   text-align: center;
-  max-width: 550px;
+  max-width: 600px;
   width: 100%;
+  transition: all 0.2s ease;
 }
 
 h1 {
   font-size: 1.8rem;
-  background: linear-gradient(135deg, #1e293b, #3b82f6);
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   margin-bottom: 4px;
 }
 
-.sub {
-  font-size: 0.8rem;
-  color: #475569;
+.subhead {
+  font-size: 0.85rem;
+  color: #4b5563;
   margin-bottom: 16px;
+  font-weight: 500;
 }
 
 .stats {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin: 12px 0 16px;
-  font-weight: bold;
+  margin: 12px 0 18px;
+  font-weight: 700;
+  font-size: 1rem;
   background: #f1f5f9;
-  padding: 10px 16px;
+  padding: 10px 18px;
   border-radius: 60px;
   flex-wrap: wrap;
 }
 
 .stats > div {
-  flex: 1;
-  background: white;
-  padding: 6px 10px;
-  border-radius: 40px;
-  font-size: 0.85rem;
   display: flex;
   align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 6px 16px;
+  border-radius: 40px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  flex: 1;
   justify-content: center;
-  gap: 6px;
+  font-size: 0.95rem;
 }
 
 .top-buttons {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 18px;
 }
 
 button {
-  background: #2563eb;
+  background: #1e3a8a;
   color: white;
   border: none;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border-radius: 60px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   touch-action: manipulation;
+  min-width: 105px;
 }
 
 button:active {
   transform: scale(0.96);
+  background: #0f2b6d;
 }
 
 .puzzle {
   width: 100%;
-  aspect-ratio: 1 / 1;
   max-width: 450px;
-  margin: 10px auto;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  margin: 12px auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 5px;
-  background: #94a3b8;
-  border-radius: 20px;
-  padding: 5px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  background: #cbd5e1;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.2);
 }
 
 .piece {
   cursor: pointer;
-  touch-action: none;
-  border-radius: 14px;
-  background-repeat: no-repeat;
-  transition: transform 0.08s linear;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  transition: transform 0.05s linear, box-shadow 0.1s;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  touch-action: none; /* improves touch dragging */
+  width: 100%;
+  height: 100%;
 }
 
 .piece:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #3b82f6;
 }
 
-/* Popup */
+/* Popup modern styling */
 .popup {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   padding: 20px;
+  transition: all 0.2s;
 }
 
 .popup-box {
@@ -144,9 +158,10 @@ button:active {
   padding: 28px 20px;
   border-radius: 48px;
   width: 320px;
-  max-width: 85vw;
+  max-width: 85%;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 30px 40px rgba(0,0,0,0.2);
+  animation: fadeScale 0.2s ease;
 }
 
 .popup-box h2 {
@@ -155,206 +170,241 @@ button:active {
 }
 
 .popup-box p {
-  margin: 15px 0;
   font-size: 1rem;
+  margin: 16px 0;
   white-space: pre-line;
+  color: #2d3e50;
 }
 
 .hidden {
   display: none;
 }
 
-@media (max-width: 480px) {
-  .container {
-    padding: 16px 12px;
+@keyframes fadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
   }
-  .stats > div {
-    font-size: 0.75rem;
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive: improve small devices */
+@media (max-width: 550px) {
+  .container {
+    padding: 16px 12px 20px;
   }
   button {
-    padding: 8px 14px;
-    font-size: 0.75rem;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+    min-width: 88px;
   }
-  .piece {
-    border-radius: 10px;
+  .stats > div {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+  }
+  .top-buttons {
+    gap: 8px;
   }
   .puzzle {
     gap: 4px;
-    padding: 4px;
+    border-radius: 20px;
+  }
+  .piece {
+    border-radius: 10px;
   }
 }
 </style>
 </head>
 <body>
 
+<!-- Start Popup -->
 <div class="popup" id="startPopup">
   <div class="popup-box">
-    <h2>🧩 PUZZLE</h2>
-    <p>✨ Drag & Drop ✨<br>Complete the 9-piece puzzle!<br>👇 Touch & drag to swap 👇</p>
-    <button onclick="startGame()" style="background:#0f172b;">🎮 START GAME</button>
+    <h2>🧩 PUZZLE MASTER</h2>
+    <p>Drag & swap tiles or tap on mobile!<br>Complete puzzle before timer ends.<br>Submit when solved ✅</p>
+    <button onclick="startGame()" style="background:#0f3b5c; padding:12px 28px;">🎮 Start Game</button>
   </div>
 </div>
 
+<!-- Result Popup -->
 <div class="popup hidden" id="resultPopup">
   <div class="popup-box">
-    <h2 id="popupTitle">Result</h2>
+    <h2 id="popupTitle">✨ Result</h2>
     <p id="popupText"></p>
-    <button onclick="restartGame()" style="background:#3b82f6;">🔄 NEXT / RESTART</button>
+    <button onclick="restartGame()" style="background:#0f3b5c;">Continue ➡️</button>
   </div>
 </div>
 
 <div class="container">
-  <h1>🧩 TOUCH PUZZLE</h1>
-  <div class="sub">⭐ 9 blocks · drag & submit</div>
+  <h1>✨ Sliding Puzzle</h1>
+  <div class="subhead">⬆️ Drag / Touch & Swap | Submit to win ⬆️</div>
 
   <div class="stats">
-    <div>⭐ SCORE: <span id="score">0</span></div>
-    <div>🏆 LEVEL: <span id="level">1</span></div>
-    <div>⏰ TIME: <span id="timer">60</span>s</div>
+    <div>⭐ Score: <span id="score">0</span></div>
+    <div>🏆 Level: <span id="level">1</span></div>
+    <div>⏰ Time: <span id="timer">60</span>s</div>
   </div>
 
   <div class="top-buttons">
-    <button onclick="shufflePuzzle()">🔀 SHUFFLE</button>
-    <button onclick="changeImage()">🖼 CHANGE IMAGE</button>
-    <button onclick="checkWin()">✅ SUBMIT</button>
+    <button onclick="shufflePuzzle()">🔀 Shuffle</button>
+    <button onclick="changeImage()">🖼 Change Image</button>
+    <button onclick="checkWin()">✅ Submit</button>
   </div>
 
   <div class="puzzle" id="puzzle"></div>
-  <div style="font-size:11px; margin-top:10px; color:#475569;">👉 tap & hold, then drag to another tile</div>
 </div>
 
 <script>
+// ---------- DOM elements ----------
 const puzzleContainer = document.getElementById("puzzle");
 const scoreDisplay = document.getElementById("score");
 const levelDisplay = document.getElementById("level");
 const timerDisplay = document.getElementById("timer");
-const startPopupDiv = document.getElementById("startPopup");
-const resultPopupDiv = document.getElementById("resultPopup");
-const popupTitleSpan = document.getElementById("popupTitle");
-const popupTextSpan = document.getElementById("popupText");
 
-const GRID_SIZE = 3;
-const TOTAL_PIECES = 9;
+const startPopup = document.getElementById("startPopup");
+const resultPopup = document.getElementById("resultPopup");
+const popupTitle = document.getElementById("popupTitle");
+const popupText = document.getElementById("popupText");
 
-let gameActive = true;
+// Game constants
+const SIZE = 3;
+const TOTAL_PIECES = SIZE * SIZE; // 9
+
+let piecesArray = [];        // stores DOM elements
+let draggedElement = null;   // for drag & drop (desktop) + touch reference
 let score = 0;
 let level = 1;
 let timeLeft = 60;
 let timerInterval = null;
 let currentImageIndex = 0;
+let gameActive = true;        // to prevent actions after game over
 
-// Touch drag variables
-let touchStartElement = null;
-let touchCurrentTarget = null;
-let touchStarted = false;
-
-// Beautiful high-res images (all will appear as 3x3 grid)
-const imageList = [
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1426604966828-8004fad19e87?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1485470733090-0aae1788fde6?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1509316975850-ff9c5e7fcd1b?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&h=800&fit=crop",
-  "https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=800&h=800&fit=crop"
+// ----- High quality unsplash images (all distinct, beautiful) -----
+const imageLevels = [
+  "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=600&h=600&fit=crop",
+  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&h=600&fit=crop"
 ];
 
-// Function to set background on each piece correctly
-// Each piece gets background-size: 300% 300% (because 3x3 grid)
-// Background-position: based on its correct index (col*100%, row*100%)
-function updatePieceBackground(piece, imageUrl, correctIndex) {
-  const row = Math.floor(correctIndex / GRID_SIZE);
-  const col = correctIndex % GRID_SIZE;
-  piece.style.backgroundImage = `url('${imageUrl}')`;
-  piece.style.backgroundSize = "300% 300%";
-  piece.style.backgroundPosition = `${col * 100}% ${row * 100}%`;
-  piece.style.backgroundRepeat = "no-repeat";
+// ---- utility: get current background image url ----
+function getCurrentImageUrl() {
+  return imageLevels[currentImageIndex % imageLevels.length];
 }
 
-// Create fresh set of 9 pieces with correct background positions
-function createFreshPieces() {
-  const imgUrl = imageList[currentImageIndex % imageList.length];
-  const pieces = [];
-  
+// ---- Build pieces with correct background positions ----
+function buildPieces() {
+  const currentImg = getCurrentImageUrl();
+  const pieceSizePx = 450; // logical base size for background-size, but scaled via CSS grid
+  // each piece covers 1/3 of total image.
+  const pieceW = 450;
+  const pieceH = 450;
+  const pieceWThird = pieceW / SIZE;   // 150
+  const pieceHThird = pieceH / SIZE;   // 150
+
+  const newPieces = [];
   for (let i = 0; i < TOTAL_PIECES; i++) {
-    const piece = document.createElement("div");
-    piece.classList.add("piece");
-    piece.setAttribute("data-correct-index", i);
+    const div = document.createElement("div");
+    div.classList.add("piece");
+    div.dataset.index = i;           // original correct index
+    // background image + positioning using exact offsets
+    const row = Math.floor(i / SIZE);
+    const col = i % SIZE;
+    const bgPosX = -(col * pieceWThird);
+    const bgPosY = -(row * pieceHThird);
+    div.style.backgroundImage = `url('${currentImg}')`;
+    div.style.backgroundSize = `${pieceW}px ${pieceH}px`;
+    div.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+    div.style.backgroundRepeat = "no-repeat";
     
-    // Set background correctly for this piece's intended position
-    updatePieceBackground(piece, imgUrl, i);
+    // ---- Desktop Drag & Drop ----
+    div.setAttribute("draggable", "true");
+    div.addEventListener("dragstart", handleDragStart);
+    div.addEventListener("dragover", handleDragOver);
+    div.addEventListener("drop", handleDrop);
     
-    // Desktop drag events
-    piece.setAttribute("draggable", "true");
-    piece.addEventListener("dragstart", handleDragStart);
-    piece.addEventListener("dragover", handleDragOver);
-    piece.addEventListener("drop", handleDrop);
+    // ---- MOBILE TOUCH EVENTS (full touch-swap support) ----
+    // Touch start: store dragged element and the starting touch to prevent page scroll
+    div.addEventListener("touchstart", handleTouchStart, { passive: false });
+    div.addEventListener("touchmove", handleTouchMove, { passive: false });
+    div.addEventListener("touchend", handleTouchEnd);
     
-    // Mobile touch events
-    piece.addEventListener("touchstart", handleTouchStart, { passive: false });
-    piece.addEventListener("touchmove", handleTouchMove, { passive: false });
-    piece.addEventListener("touchend", handleTouchEnd);
-    
-    pieces.push(piece);
+    newPieces.push(div);
   }
-  return pieces;
+  return newPieces;
 }
 
-// Render pieces in order (0 to 8)
-function renderOrderedPieces(piecesArray) {
+// ---- Render puzzle in current DOM order ----
+function renderPuzzle(orderArray) {
   puzzleContainer.innerHTML = "";
-  for (let i = 0; i < piecesArray.length; i++) {
-    puzzleContainer.appendChild(piecesArray[i]);
-  }
+  orderArray.forEach(piece => {
+    puzzleContainer.appendChild(piece);
+  });
 }
 
-// Shuffle the DOM order randomly
-function shufflePuzzle() {
-  if (!gameActive) return;
-  const children = [...puzzleContainer.children];
-  for (let i = children.length - 1; i > 0; i--) {
+// ---- Shuffle (random order) preserve original dataset indices ----
+function shufflePuzzleArray(pieces) {
+  const shuffled = [...pieces];
+  for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    if (i !== j) {
-      puzzleContainer.insertBefore(children[j], children[i]);
-      puzzleContainer.insertBefore(children[i], children[j]);
-    }
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
+  return shuffled;
 }
 
-// Swap two pieces in DOM
-function swapPiecesInDOM(pieceA, pieceB) {
-  if (!gameActive || pieceA === pieceB) return false;
-  const parent = puzzleContainer;
-  const indexA = Array.from(parent.children).indexOf(pieceA);
-  const indexB = Array.from(parent.children).indexOf(pieceB);
-  
+function shufflePuzzle() {
+  if (!gameActive) {
+    // if game over, we can still shuffle but will not mess; but restart will reset anyway.
+    if (!timerInterval) return;
+  }
+  const shuffled = shufflePuzzleArray(piecesArray);
+  piecesArray = shuffled;
+  renderPuzzle(piecesArray);
+}
+
+// ---- Swap two DOM elements in puzzle container (visual and array sync) ----
+function swapPieces(pieceA, pieceB) {
+  if (!pieceA || !pieceB || pieceA === pieceB) return false;
+  const indexA = piecesArray.indexOf(pieceA);
+  const indexB = piecesArray.indexOf(pieceB);
   if (indexA === -1 || indexB === -1) return false;
-  
-  if (indexA < indexB) {
-    parent.insertBefore(pieceB, pieceA);
-    parent.insertBefore(pieceA, pieceB.nextSibling);
-  } else {
-    parent.insertBefore(pieceA, pieceB);
-    parent.insertBefore(pieceB, pieceA.nextSibling);
+  // swap in array
+  [piecesArray[indexA], piecesArray[indexB]] = [piecesArray[indexB], piecesArray[indexA]];
+  // reorder DOM without reflow cost: rearrange children
+  if (puzzleContainer.children.length === piecesArray.length) {
+    // Efficient: reinsert nodes
+    const parent = puzzleContainer;
+    const childA = pieceA;
+    const childB = pieceB;
+    if (parent) {
+      const placeholder = document.createElement("span");
+      parent.replaceChild(placeholder, childA);
+      parent.replaceChild(childA, childB);
+      parent.replaceChild(childB, placeholder);
+      placeholder.remove();
+    }
   }
   return true;
 }
 
-// Drag & Drop handlers
-let draggedPiece = null;
-
+// ----- Drag & Drop handlers -----
 function handleDragStart(e) {
   if (!gameActive) {
     e.preventDefault();
     return false;
   }
-  draggedPiece = this;
+  draggedElement = this;
   e.dataTransfer.setData("text/plain", "");
   e.dataTransfer.effectAllowed = "move";
-  this.style.opacity = "0.6";
 }
 
 function handleDragOver(e) {
@@ -365,120 +415,156 @@ function handleDragOver(e) {
 function handleDrop(e) {
   e.preventDefault();
   if (!gameActive) return;
-  if (draggedPiece && draggedPiece !== this) {
-    swapPiecesInDOM(draggedPiece, this);
+  const targetPiece = this;
+  if (draggedElement && draggedElement !== targetPiece) {
+    swapPieces(draggedElement, targetPiece);
   }
-  if (draggedPiece) draggedPiece.style.opacity = "";
-  draggedPiece = null;
+  draggedElement = null;
 }
 
-// Touch handlers for mobile
+// ----- TOUCH HANDLERS (mobile native swap) -----
+let touchStartTarget = null;
+let touchMovedFlag = false;
+
 function handleTouchStart(e) {
   if (!gameActive) {
     e.preventDefault();
     return;
   }
-  e.preventDefault();
-  touchStartElement = this;
-  touchCurrentTarget = null;
-  touchStarted = true;
-  this.style.opacity = "0.7";
+  e.preventDefault();        // prevent scrolling while dragging puzzle
+  const touch = e.touches[0];
+  touchStartTarget = this;
+  touchMovedFlag = false;
+  // optional visual feedback
+  this.style.opacity = "0.8";
 }
 
 function handleTouchMove(e) {
-  if (!touchStarted || !gameActive) return;
-  e.preventDefault();
+  if (!gameActive || !touchStartTarget) return;
+  e.preventDefault();        // prevent page scroll
+  touchMovedFlag = true;
+  // we will not apply heavy transforms, just track movement will trigger swap on end
+  // but we also need to identify element under finger on touchend.
   const touch = e.touches[0];
   const elemUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
   if (elemUnderTouch && elemUnderTouch.classList && elemUnderTouch.classList.contains("piece")) {
-    if (elemUnderTouch !== touchStartElement) {
-      touchCurrentTarget = elemUnderTouch;
+    // store potential target for swapping in touchend (optional)
+    if (elemUnderTouch !== touchStartTarget) {
+      // we can't swap instantly because we need to avoid flicker, but we'll swap on touchend
+      // storing pending target
+      window.pendingTouchSwapTarget = elemUnderTouch;
+    } else {
+      window.pendingTouchSwapTarget = null;
     }
+  } else {
+    window.pendingTouchSwapTarget = null;
   }
 }
 
 function handleTouchEnd(e) {
-  if (!touchStarted || !gameActive) {
-    if (touchStartElement) touchStartElement.style.opacity = "";
-    touchStarted = false;
-    touchStartElement = null;
-    touchCurrentTarget = null;
+  if (!gameActive || !touchStartTarget) {
+    if (touchStartTarget) touchStartTarget.style.opacity = "";
+    touchStartTarget = null;
     return;
   }
   e.preventDefault();
-  if (touchStartElement && touchCurrentTarget && touchStartElement !== touchCurrentTarget) {
-    swapPiecesInDOM(touchStartElement, touchCurrentTarget);
+  touchStartTarget.style.opacity = "";
+  
+  let targetElement = window.pendingTouchSwapTarget || null;
+  // Also re-check element under final touch point using changedTouches
+  if (!targetElement && e.changedTouches.length > 0) {
+    const endTouch = e.changedTouches[0];
+    const endElem = document.elementFromPoint(endTouch.clientX, endTouch.clientY);
+    if (endElem && endElem.classList && endElem.classList.contains("piece") && endElem !== touchStartTarget) {
+      targetElement = endElem;
+    }
   }
-  if (touchStartElement) touchStartElement.style.opacity = "";
-  touchStarted = false;
-  touchStartElement = null;
-  touchCurrentTarget = null;
+  
+  if (targetElement && touchStartTarget && targetElement !== touchStartTarget) {
+    swapPieces(touchStartTarget, targetElement);
+  }
+  
+  touchStartTarget = null;
+  window.pendingTouchSwapTarget = null;
+  touchMovedFlag = false;
 }
 
-// Check win: each piece's data-correct-index should match its current position index
-function checkWin() {
+// ----- create new puzzle (full rebuild with current image) -----
+function createNewPuzzle() {
+  // remove old event listeners? easier: rebuild from scratch
+  piecesArray = buildPieces();
+  // shuffle on create (random)
+  piecesArray = shufflePuzzleArray(piecesArray);
+  renderPuzzle(piecesArray);
+}
+
+// ----- Change Image (cycle image, rebuild puzzle while keeping level/score) -----
+function changeImage() {
   if (!gameActive) return;
-  const children = [...puzzleContainer.children];
-  let isCorrect = true;
+  currentImageIndex = (currentImageIndex + 1) % imageLevels.length;
+  // rebuild pieces (keeps shuffled state but with new background)
+  const newPieces = buildPieces();
+  piecesArray = shufflePuzzleArray(newPieces);
+  renderPuzzle(piecesArray);
+  // timer continues, score unchanged, just image changed.
+}
+
+// ----- CHECK WIN (Submit) -----
+function checkWin() {
+  if (!gameActive) {
+    showPopup("⏸️ Game Paused", "Game already ended. Restart to play!");
+    return;
+  }
   
-  for (let i = 0; i < children.length; i++) {
-    const piece = children[i];
-    const correctIdx = parseInt(piece.getAttribute("data-correct-index"));
-    if (correctIdx !== i) {
+  // verify ordering: each piece's original dataset.index should match its current position index
+  const currentOrder = [...puzzleContainer.children];
+  let isCorrect = true;
+  for (let i = 0; i < currentOrder.length; i++) {
+    const piece = currentOrder[i];
+    const originalIdx = parseInt(piece.dataset.index);
+    if (originalIdx !== i) {
       isCorrect = false;
       break;
     }
   }
   
   if (isCorrect) {
-    // WIN!
+    // WIN!! level completed
     if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
     gameActive = false;
     
+    // increase score & level
     score += 100;
     level++;
     scoreDisplay.textContent = score;
     levelDisplay.textContent = level;
     
-    // Move to next image
-    currentImageIndex = (currentImageIndex + 1) % imageList.length;
+    // next level: change image index automatically
+    currentImageIndex = (currentImageIndex + 1) % imageLevels.length;
     
-    showPopup("🎉 LEVEL COMPLETE!", `✨ +100 points! ✨\nReached level ${level}\nNew image loading!`);
+    showPopup("🎉 LEVEL COMPLETE!", `Great! +100 pts\nNext Level: ${level}`);
   } else {
-    showPopup("❌ NOT SOLVED YET", "The puzzle arrangement is incorrect.\nKeep shuffling or swapping tiles!");
+    showPopup("❌ NOT SOLVED", "The tiles are not in correct order.\nKeep swapping & submit again!");
   }
 }
 
-// Change image while preserving game state
-function changeImage() {
-  if (!gameActive) return;
-  currentImageIndex = (currentImageIndex + 1) % imageList.length;
-  const newImageUrl = imageList[currentImageIndex];
-  
-  // Update background of every piece based on its data-correct-index
-  const pieces = [...puzzleContainer.children];
-  pieces.forEach(piece => {
-    const correctIdx = parseInt(piece.getAttribute("data-correct-index"));
-    updatePieceBackground(piece, newImageUrl, correctIdx);
-  });
-}
-
-// Timer
-function startCountdown(resetTime = true) {
+// Timer control
+function startCountdown() {
   if (timerInterval) clearInterval(timerInterval);
-  if (resetTime) {
-    timeLeft = 60;
-    timerDisplay.textContent = timeLeft;
-  }
+  timeLeft = 60;
+  timerDisplay.textContent = timeLeft;
+  gameActive = true;
   
   timerInterval = setInterval(() => {
-    if (!gameActive) return;
+    if (!gameActive) return; // if game finished by win, do nothing
     if (timeLeft <= 1) {
       clearInterval(timerInterval);
+      timerInterval = null;
       timeLeft = 0;
       timerDisplay.textContent = "0";
       gameActive = false;
-      showPopup("💀 GAME OVER", "Time ran out!\nPress restart to try again.");
+      showPopup("💀 GAME OVER", "Time's up! Better luck next round.");
     } else {
       timeLeft--;
       timerDisplay.textContent = timeLeft;
@@ -486,88 +572,93 @@ function startCountdown(resetTime = true) {
   }, 1000);
 }
 
-// Show popup
+// ----- Popup handling and restart logic -----
 function showPopup(title, text) {
-  popupTitleSpan.innerText = title;
-  popupTextSpan.innerText = text;
-  resultPopupDiv.classList.remove("hidden");
-  gameActive = false;
-  if (timerInterval) clearInterval(timerInterval);
-}
-
-// Restart game after popup
-function restartGame() {
-  resultPopupDiv.classList.add("hidden");
-  const title = popupTitleSpan.innerText;
-  
-  if (title.includes("GAME OVER") || title.includes("TIME'S UP")) {
-    // Full reset
-    score = 0;
-    level = 1;
-    currentImageIndex = 0;
-    scoreDisplay.textContent = score;
-    levelDisplay.textContent = level;
-    gameActive = true;
-    
-    // Rebuild everything
-    const newPieces = createFreshPieces();
-    renderOrderedPieces(newPieces);
-    shufflePuzzle();
-    startCountdown(true);
-  } else {
-    // Level completed: continue with increased level & score already set, just restart timer and activate
-    gameActive = true;
-    // Ensure all pieces have correct image for current index
-    const currentUrl = imageList[currentImageIndex % imageList.length];
-    const pieces = [...puzzleContainer.children];
-    pieces.forEach(piece => {
-      const correctIdx = parseInt(piece.getAttribute("data-correct-index"));
-      updatePieceBackground(piece, currentUrl, correctIdx);
-    });
-    startCountdown(true);
+  if (!gameActive && title.includes("LEVEL COMPLETE")) {
+    // allowed to show after win
+  } else if (!gameActive && title.includes("GAME OVER")) {
+    // fine
+  } else if (!gameActive && !title.includes("LEVEL COMPLETE") && !title.includes("GAME OVER")) {
+    // block errors if inactive but ensure restart works
   }
+  popupTitle.innerText = title;
+  popupText.innerText = text;
+  resultPopup.classList.remove("hidden");
 }
 
-// Start game from beginning
-function startGame() {
-  startPopupDiv.classList.add("hidden");
+// Restart game fully (also after popup)
+function restartGame() {
+  resultPopup.classList.add("hidden");
+  // reset all global variables
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  // reset stats
+  score = 0;
+  level = 1;
+  currentImageIndex = 0;   // fresh start from first image
+  scoreDisplay.textContent = score;
+  levelDisplay.textContent = level;
   gameActive = true;
+  
+  // rebuild fresh puzzle
+  piecesArray = buildPieces();
+  piecesArray = shufflePuzzleArray(piecesArray);
+  renderPuzzle(piecesArray);
+  
+  // start fresh timer
+  startCountdown();
+}
+
+// Start game from initial start popup
+function startGame() {
+  startPopup.classList.add("hidden");
+  // init state completely
+  if (timerInterval) clearInterval(timerInterval);
   score = 0;
   level = 1;
   currentImageIndex = 0;
   scoreDisplay.textContent = score;
   levelDisplay.textContent = level;
+  gameActive = true;
   
-  const freshPieces = createFreshPieces();
-  renderOrderedPieces(freshPieces);
-  shufflePuzzle();
-  startCountdown(true);
+  piecesArray = buildPieces();
+  piecesArray = shufflePuzzleArray(piecesArray);
+  renderPuzzle(piecesArray);
+  startCountdown();
 }
 
-// Expose functions globally
-window.shufflePuzzle = () => { if (gameActive) shufflePuzzle(); };
-window.changeImage = () => { if (gameActive) changeImage(); };
-window.checkWin = checkWin;
-window.startGame = startGame;
+// Add a reset mechanism if someone loses, Restart triggers restartGame anyway.
+// But ensure that Submit does not double restart
 window.restartGame = restartGame;
+window.startGame = startGame;
+window.shufflePuzzle = shufflePuzzle;
+window.changeImage = changeImage;
+window.checkWin = checkWin;
 
-// Initial setup but game not active until start
-let initialPieces = createFreshPieces();
-renderOrderedPieces(initialPieces);
-gameActive = false;
-
-// Ensure background sizing is perfect on all devices
-window.addEventListener('load', () => {
-  // Force all pieces to have correct background sizing
-  const style = document.createElement('style');
-  style.textContent = `
-    .piece {
-      background-size: 300% 300% !important;
-      background-repeat: no-repeat !important;
-    }
-  `;
-  document.head.appendChild(style);
+// Mobile CSS fix for draggable images and long press context menu
+document.querySelectorAll('.piece').forEach(p => {
+  p.style.webkitTouchCallout = 'none';
+  p.style.userSelect = 'none';
 });
+
+// Additional global touch prevention on puzzle container to avoid accidental zoom
+puzzleContainer.addEventListener('touchstart', (e) => {
+  if (e.target.classList && e.target.classList.contains('piece')) {
+    // already handled per piece, but prevent container events
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// initial placeholders (not started, only after start)
+// but need pieces ready on start click only. 
+// make puzzle container empty initially.
+puzzleContainer.innerHTML = "";
+// Ensure null states but start popup blocks.
+// Also assign globally available for methods before start
+piecesArray = [];
+console.log("Ready — tap Start Game to begin");
 </script>
 </body>
 </html>
