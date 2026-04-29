@@ -3,724 +3,701 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Smart Attendance System</title>
+    <title>Attendance Management System</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
         }
-        
+
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
-        
-        /* Header Styles */
+
+        /* Header */
         .header {
             background: white;
-            border-radius: 25px;
+            border-radius: 15px;
             padding: 20px 30px;
             margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             flex-wrap: wrap;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .header-buttons {
+            display: flex;
             gap: 15px;
         }
-        
-        .logo h1 {
-            color: #4a5568;
-            font-size: 1.8rem;
-        }
-        
-        .logo p {
-            color: #718096;
-            font-size: 0.9rem;
-        }
-        
-        .signin-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 28px;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        
-        .signin-btn:hover {
+
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-        
-        /* Table Styles */
-        .attendance-section {
-            background: white;
-            border-radius: 25px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .section-title {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: #2d3748;
-            border-left: 5px solid #667eea;
-            padding-left: 15px;
-        }
-        
-        .stats-bar {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .stat-card {
-            background: #f7fafc;
-            padding: 10px 20px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .table-wrapper {
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        th {
-            background: #f7fafc;
-            padding: 15px 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-            color: #2d3748;
-        }
-        
-        tr:hover {
-            background: #f7fafc;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        
-        .status-checkedin {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-        
-        .status-checkedout {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        
-        .signout-btn {
-            background: #e53e3e;
+
+        .btn-secondary {
+            background: #48bb78;
             color: white;
             border: none;
-            padding: 6px 15px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.2s;
+            font-size: 14px;
         }
-        
-        .signout-btn:hover:not(:disabled) {
-            background: #c53030;
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
         }
-        
-        .signout-btn:disabled {
-            background: #a0aec0;
+
+        .btn-danger:disabled {
+            background: #ccc;
             cursor: not-allowed;
         }
-        
+
         /* Modal/Popup Styles */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
+            z-index: 1000;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
         }
-        
+
         .modal-content {
-            background: white;
-            border-radius: 30px;
-            max-width: 500px;
-            width: 90%;
+            background-color: white;
+            margin: 10% auto;
             padding: 30px;
-            position: relative;
-            animation: slideIn 0.3s ease;
-            max-height: 90vh;
-            overflow-y: auto;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s;
         }
-        
-        @keyframes slideIn {
-            from { transform: translateY(-30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #a0aec0;
-            transition: color 0.2s;
-        }
-        
-        .close-modal:hover {
-            color: #4a5568;
-        }
-        
-        .modal h3 {
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: bold;
             margin-bottom: 20px;
-            color: #2d3748;
-            font-size: 1.4rem;
+            color: #667eea;
         }
-        
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
         .option-buttons {
             display: flex;
             gap: 15px;
-            justify-content: center;
-            margin: 25px 0;
-            flex-wrap: wrap;
+            margin-top: 10px;
         }
-        
+
         .option-btn {
-            background: #edf2f7;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 50px;
-            font-size: 1rem;
+            flex: 1;
+            padding: 12px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .option-btn:hover {
-            background: #e2e8f0;
-            transform: scale(1.02);
-        }
-        
-        .member-option {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #667eea;
             color: white;
-        }
-        
-        .form-group {
-            margin-bottom: 18px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: #4a5568;
-        }
-        
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            outline: none;
-            transition: border 0.2s;
-        }
-        
-        .form-group input:focus {
             border-color: #667eea;
         }
-        
-        .submit-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+
+        /* Check-in List */
+        .checkins-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .checkins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .checkin-card {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #48bb78;
+        }
+
+        .checkin-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .checkin-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .checkin-details {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .checkin-time {
+            font-size: 12px;
+            color: #48bb78;
+            margin-bottom: 15px;
+        }
+
+        .signout-btn {
+            width: 100%;
+            padding: 10px;
+            background: #f56565;
             color: white;
             border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: bold;
+            border-radius: 6px;
             cursor: pointer;
-            margin-top: 10px;
-            transition: transform 0.2s;
+            font-size: 14px;
+            transition: background 0.2s;
         }
-        
-        .submit-btn:hover {
-            transform: translateY(-1px);
+
+        .signout-btn:hover:not(:disabled) {
+            background: #e53e3e;
         }
-        
-        .back-btn {
-            background: #cbd5e0;
-            color: #4a5568;
+
+        .signout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
-        
-        .message {
-            margin-top: 15px;
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .badge-member {
+            background: #4299e1;
+            color: white;
+        }
+
+        .badge-guest {
+            background: #ed8936;
+            color: white;
+        }
+
+        /* Loading and Messages */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
             padding: 12px;
-            border-radius: 12px;
-            display: none;
-            animation: fadeIn 0.3s;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
-        
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+            font-size: 16px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        
-        .message.success {
-            background: #c6f6d5;
-            color: #22543d;
-            display: block;
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
-        
-        .message.error {
-            background: #fed7d7;
-            color: #742a2a;
-            display: block;
-        }
-        
-        .message.info {
-            background: #bee3f8;
-            color: #2c5282;
-            display: block;
-        }
-        
-        .member-details {
-            background: #f7fafc;
-            border-radius: 15px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-        
-        .member-details p {
-            margin: 8px 0;
-        }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #e2e8f0;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
+
         @media (max-width: 768px) {
-            th, td { padding: 8px; font-size: 0.75rem; }
-            .logo h1 { font-size: 1.2rem; }
-            .logo p { font-size: 0.7rem; }
-            .header { padding: 15px 20px; }
-            .section-title { font-size: 1.2rem; }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .modal-content {
+                margin: 20% auto;
+                padding: 20px;
+            }
+            .checkins-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <div class="logo">
-            <h1>📋 Smart Attendance Tracker</h1>
-            <p>Secure Check-in / Check-out System</p>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Attendance Management System</h1>
+            <div class="header-buttons">
+                <button class="btn-primary" onclick="showMemberGuestPopup()">➕ Check In</button>
+                <button class="btn-secondary" onclick="refreshCheckins()">🔄 Refresh</button>
+            </div>
         </div>
-        <button class="signin-btn" id="signinBtn">➕ Sign In / Check In</button>
-    </div>
 
-    <div class="attendance-section">
-        <div class="section-title">📌 Today's Attendance</div>
-        <div class="stats-bar" id="statsBar">
-            <div class="stat-card">👥 Total: <span class="stat-number" id="totalCount">0</span></div>
-            <div class="stat-card">✅ Checked In: <span class="stat-number" id="checkedInCount">0</span></div>
-            <div class="stat-card">❌ Checked Out: <span class="stat-number" id="checkedOutCount">0</span></div>
-        </div>
-        <div class="table-wrapper">
-            <table id="attendanceTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Phone</th>
-                        <th>Reg No</th>
-                        <th>Check In</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="attendanceBody">
-                    <tr><td colspan="7" style="text-align:center"><div class="loading-spinner"></div> Loading...</td></tr>
-                </tbody>
-            </table>
+        <!-- Check-ins List -->
+        <div class="checkins-section">
+            <div class="section-title">Currently Checked In</div>
+            <div id="checkinsList">
+                <div class="loading">Loading check-ins...</div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Modal Popup -->
-<div id="modal" class="modal">
-    <div class="modal-content" id="modalContent">
-        <span class="close-modal">&times;</span>
-        <div id="modalDynamic"></div>
+    <!-- Modal Popup -->
+    <div id="modal" class="modal">
+        <div class="modal-content" id="modalContent">
+            <!-- Dynamic content will be inserted here -->
+        </div>
     </div>
-</div>
 
-<script>
-    // ==================== GLOBAL VARIABLES ====================
-    let currentStep = 'initial';
-    let currentMemberData = null;
-    
-    // ==================== INITIALIZATION ====================
-    document.addEventListener('DOMContentLoaded', function() {
-        loadAttendance();
-        setupEventListeners();
-    });
-    
-    function setupEventListeners() {
-        document.getElementById('signinBtn').onclick = function() {
-            currentStep = 'initial';
-            showInitialPopup();
-            modal.style.display = 'flex';
+    <script>
+        // Global variable to store current modal state
+        let currentMemberData = null;
+
+        // Load check-ins on page load
+        window.onload = function() {
+            refreshCheckins();
+            // Auto-refresh every 30 seconds
+            setInterval(refreshCheckins, 30000);
         };
-        
-        document.querySelector('.close-modal').onclick = closeModal;
-        window.onclick = function(e) {
-            if(e.target === modal) closeModal();
-        };
-    }
-    
-    // ==================== ATTENDANCE FUNCTIONS ====================
-    function loadAttendance() {
-        google.script.run.withSuccessHandler(function(attendance) {
-            renderAttendance(attendance);
-            updateStats(attendance);
-        }).withFailureHandler(function(error) {
-            console.error('Error loading attendance:', error);
-            document.getElementById('attendanceBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">❌ Error loading attendance. Please refresh.</td></tr>';
-        }).getTodayAttendance();
-    }
-    
-    function renderAttendance(attendance) {
-        const tbody = document.getElementById('attendanceBody');
-        if (!attendance || attendance.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">✨ No check-ins yet today. Click "Sign In" to get started!</td></tr>';
-            return;
-        }
-        
-        let html = '';
-        attendance.forEach(person => {
-            const isCheckedIn = person.status === 'Checked In';
-            html += `<tr>
-                <td><strong>${escapeHtml(person.name)}</strong></td>
-                <td>${person.type === 'Member' ? '👤 Member' : '🚪 Guest'}</td>
-                <td>${escapeHtml(person.phone || '-')}</td>
-                <td>${escapeHtml(person.regNo || '-')}</td>
-                <td>${person.checkin || '-'}</td>
-                <td><span class="status-badge ${person.status === 'Checked In' ? 'status-checkedin' : 'status-checkedout'}">${person.status}</span></td>
-                <td><button class="signout-btn" onclick="signOut(${person.rowIndex}, '${escapeHtml(person.name).replace(/'/g, "\\'")}')" ${!isCheckedIn ? 'disabled' : ''}>Sign Out</button></td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-    }
-    
-    function updateStats(attendance) {
-        const total = attendance.length;
-        const checkedIn = attendance.filter(p => p.status === 'Checked In').length;
-        const checkedOut = total - checkedIn;
-        
-        document.getElementById('totalCount').textContent = total;
-        document.getElementById('checkedInCount').textContent = checkedIn;
-        document.getElementById('checkedOutCount').textContent = checkedOut;
-    }
-    
-    function escapeHtml(str) {
-        if(!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    // ==================== MODAL FUNCTIONS ====================
-    function closeModal() {
-        modal.style.display = 'none';
-        currentStep = 'initial';
-        currentMemberData = null;
-    }
-    
-    function showMessageInModal(msg, type) {
-        let msgDiv = document.querySelector('#modalDynamic .message');
-        if(!msgDiv) {
-            msgDiv = document.createElement('div');
-            msgDiv.className = 'message';
-            document.getElementById('modalDynamic').appendChild(msgDiv);
-        }
-        msgDiv.textContent = msg;
-        msgDiv.className = `message ${type}`;
-        if(type !== 'info') {
-            setTimeout(() => {
-                if(msgDiv) msgDiv.style.display = 'none';
-            }, 3000);
-        }
-    }
-    
-    function clearModalMessage() {
-        const msgDiv = document.querySelector('#modalDynamic .message');
-        if(msgDiv) msgDiv.style.display = 'none';
-    }
-    
-    // ==================== INITIAL POPUP ====================
-    function showInitialPopup() {
-        clearModalMessage();
-        modalDynamic.innerHTML = `
-            <h3>🔐 Choose Check-in Type</h3>
-            <div class="option-buttons">
-                <button class="option-btn member-option" onclick="selectMember()">👤 Member</button>
-                <button class="option-btn" onclick="selectGuest()">🚪 Guest</button>
-            </div>
-        `;
-    }
-    
-    // ==================== MEMBER FUNCTIONS ====================
-    function selectMember() {
-        currentStep = 'memberOptions';
-        clearModalMessage();
-        modalDynamic.innerHTML = `
-            <h3>👤 Member Check-in</h3>
-            <div class="option-buttons">
-                <button class="option-btn" onclick="memberSearch('name')">📝 Search by Name</button>
-                <button class="option-btn" onclick="memberSearch('regid')">🆔 Search by Reg ID</button>
-                <button class="option-btn" onclick="memberSearch('phone')">📱 Search by Phone</button>
-            </div>
-            <button class="submit-btn back-btn" onclick="showInitialPopup()">← Back</button>
-        `;
-    }
-    
-    function memberSearch(searchType) {
-        const searchLabel = searchType === 'name' ? 'Name' : (searchType === 'regid' ? 'Registration ID' : 'Phone Number');
-        const placeholder = searchType === 'name' ? 'Enter full name' : (searchType === 'regid' ? 'Enter registration number' : 'Enter phone number');
-        
-        clearModalMessage();
-        modalDynamic.innerHTML = `
-            <h3>🔍 Search by ${searchLabel}</h3>
-            <div class="form-group">
-                <label>${searchLabel}</label>
-                <input type="text" id="searchInput" placeholder="${placeholder}" autocomplete="off">
-            </div>
-            <button class="submit-btn" onclick="fetchMember('${searchType}')">🔍 Search & Check-in</button>
-            <button class="submit-btn back-btn" onclick="selectMember()">← Back</button>
-            <div class="message info" style="display:none"></div>
-        `;
-        
-        // Auto-focus the input
-        setTimeout(() => document.getElementById('searchInput')?.focus(), 100);
-    }
-    
-    function fetchMember(searchType) {
-        const searchValue = document.getElementById('searchInput').value.trim();
-        if(!searchValue) {
-            showMessageInModal('Please enter a value to search', 'error');
-            return;
-        }
-        
-        showMessageInModal('🔍 Searching...', 'info');
-        
-        google.script.run
-            .withFailureHandler(function(err) {
-                console.error('Script error:', err);
-                showMessageInModal('Error: ' + (err.message || 'Failed to search. Please try again.'), 'error');
-            })
-            .withSuccessHandler(function(result) {
-                if(!result.success) {
-                    showMessageInModal(result.error || 'Member not found', 'error');
-                    return;
-                }
-                showMemberCheckinUI(result);
-            })
-            .getMemberDetails(searchValue, searchType);
-    }
-    
-    function showMemberCheckinUI(member) {
-        currentMemberData = member;
-        clearModalMessage();
-        modalDynamic.innerHTML = `
-            <h3>✅ Member Found</h3>
-            <div class="member-details">
-                <p><strong>👤 Name:</strong> ${escapeHtml(member.name)}</p>
-                <p><strong>📞 Phone:</strong> ${escapeHtml(member.phone) || 'N/A'}</p>
-                <p><strong>🆔 Reg No:</strong> ${escapeHtml(member.regNo) || 'N/A'}</p>
-                <p><strong>📅 Validity:</strong> ${escapeHtml(member.validity) || 'No Expiry'}</p>
-            </div>
-            <button class="submit-btn" onclick="confirmCheckInMember()">✔ Confirm Check-in</button>
-            <button class="submit-btn back-btn" onclick="selectMember()">← Cancel</button>
-            <div class="message" style="display:none"></div>
-        `;
-    }
-    
-    function confirmCheckInMember() {
-        if(!currentMemberData) {
-            showMessageInModal('Member data not found. Please search again.', 'error');
-            return;
-        }
-        
-        showMessageInModal('Processing check-in...', 'info');
-        
-        google.script.run
-            .withFailureHandler(function(err) {
-                showMessageInModal('Check-in failed: ' + (err.message || 'Unknown error'), 'error');
-            })
-            .withSuccessHandler(function(res) {
-                if(res.success) {
-                    showMessageInModal(res.message, 'success');
-                    setTimeout(() => {
-                        closeModal();
-                        loadAttendance();
-                    }, 1500);
-                } else {
-                    showMessageInModal(res.error, 'error');
-                }
-            })
-            .checkInMember(currentMemberData);
-    }
-    
-    // ==================== GUEST FUNCTIONS ====================
-    function selectGuest() {
-        clearModalMessage();
-        modalDynamic.innerHTML = `
-            <h3>🚪 Guest Check-in</h3>
-            <div class="form-group">
-                <label>Full Name *</label>
-                <input type="text" id="guestName" placeholder="Enter full name" autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label>Phone Number *</label>
-                <input type="tel" id="guestPhone" placeholder="Phone number" autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label>Purpose of Visit *</label>
-                <input type="text" id="guestPurpose" placeholder="Meeting, Tour, Delivery, etc." autocomplete="off">
-            </div>
-            <button class="submit-btn" onclick="submitGuest()">✔ Check-in Guest</button>
-            <button class="submit-btn back-btn" onclick="showInitialPopup()">← Back</button>
-            <div class="message" style="display:none"></div>
-        `;
-        
-        // Auto-focus first input
-        setTimeout(() => document.getElementById('guestName')?.focus(), 100);
-    }
-    
-    function submitGuest() {
-        const name = document.getElementById('guestName').value.trim();
-        const phone = document.getElementById('guestPhone').value.trim();
-        const purpose = document.getElementById('guestPurpose').value.trim();
-        
-        if(!name) {
-            showMessageInModal('Please enter guest name', 'error');
-            document.getElementById('guestName').focus();
-            return;
-        }
-        if(!phone) {
-            showMessageInModal('Please enter phone number', 'error');
-            document.getElementById('guestPhone').focus();
-            return;
-        }
-        if(!purpose) {
-            showMessageInModal('Please enter purpose of visit', 'error');
-            document.getElementById('guestPurpose').focus();
-            return;
-        }
-        
-        showMessageInModal('Processing guest check-in...', 'info');
-        
-        google.script.run
-            .withFailureHandler(function(err) {
-                showMessageInModal('Check-in failed: ' + (err.message || 'Unknown error'), 'error');
-            })
-            .withSuccessHandler(function(res) {
-                if(res.success) {
-                    showMessageInModal(res.message, 'success');
-                    setTimeout(() => {
-                        closeModal();
-                        loadAttendance();
-                    }, 1500);
-                } else {
-                    showMessageInModal(res.error, 'error');
-                }
-            })
-            .checkInGuest({ name: name, phone: phone, purpose: purpose });
-    }
-    
-    // ==================== SIGN OUT FUNCTION ====================
-    function signOut(rowIndex, name) {
-        if(confirm(`Sign out ${name}?`)) {
+
+        // Refresh the check-ins list
+        function refreshCheckins() {
             google.script.run
-                .withFailureHandler(function(err) {
-                    alert('Sign out failed: ' + (err.message || 'Unknown error'));
-                })
-                .withSuccessHandler(function(res) {
-                    if(res.success) {
-                        loadAttendance();
-                        alert(`${name} signed out successfully!`);
+                .withSuccessHandler(displayCheckins)
+                .withFailureHandler(showError)
+                .getTodayCheckins();
+        }
+
+        // Display check-ins
+        function displayCheckins(result) {
+            const container = document.getElementById('checkinsList');
+            
+            if (!result.success) {
+                container.innerHTML = `<div class="error-message">Error: ${result.error}</div>`;
+                return;
+            }
+            
+            const checkins = result.checkins;
+            
+            if (checkins.length === 0) {
+                container.innerHTML = '<div class="empty-state">No one is currently checked in 🤔</div>';
+                return;
+            }
+            
+            let html = '<div class="checkins-grid">';
+            checkins.forEach(checkin => {
+                html += `
+                    <div class="checkin-card">
+                        <div class="checkin-name">${escapeHtml(checkin.name)}</div>
+                        <div class="checkin-details">📞 ${escapeHtml(checkin.phone)}</div>
+                        <div class="checkin-details">
+                            <span class="badge ${checkin.type === 'Member' ? 'badge-member' : 'badge-guest'}">
+                                ${checkin.type}
+                            </span>
+                        </div>
+                        ${checkin.purpose ? `<div class="checkin-details">🎯 Purpose: ${escapeHtml(checkin.purpose)}</div>` : ''}
+                        ${checkin.regNo ? `<div class="checkin-details">🆔 Reg ID: ${escapeHtml(checkin.regNo)}</div>` : ''}
+                        <div class="checkin-time">⏰ Checked in: ${escapeHtml(checkin.checkinTime)}</div>
+                        <button class="signout-btn" onclick="signOut('${escapeHtml(checkin.regNo || '')}', '${escapeHtml(checkin.phone)}', ${checkin.rowIndex})">
+                            🚪 Sign Out
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Show initial Member/Guest popup
+        function showMemberGuestPopup() {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="modal-header">Who is checking in?</div>
+                <div class="option-buttons">
+                    <button class="option-btn" onclick="showMemberOptions()">👤 Member</button>
+                    <button class="option-btn" onclick="showGuestForm()">🚶 Guest</button>
+                </div>
+                <button onclick="closeModal()" style="margin-top: 20px; width: 100%; padding: 10px; background: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Cancel</button>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // Show member options (Name, Reg ID, QR Code)
+        function showMemberOptions() {
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="modal-header">Member Check-in</div>
+                <div class="option-buttons">
+                    <button class="option-btn" onclick="showMemberSearchForm('name')">📝 Search by Name</button>
+                    <button class="option-btn" onclick="showMemberSearchForm('regid')">🆔 Search by Reg ID</button>
+                    <button class="option-btn" onclick="showMemberSearchForm('qrcode')">📱 Scan QR Code</button>
+                </div>
+                <button onclick="showMemberGuestPopup()" style="margin-top: 20px; width: 100%; padding: 10px; background: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Back</button>
+            `;
+        }
+
+        // Show search form for member
+        function showMemberSearchForm(searchType) {
+            const modalContent = document.getElementById('modalContent');
+            let label = '';
+            let placeholder = '';
+            
+            if (searchType === 'name') {
+                label = 'Enter Member Name';
+                placeholder = 'e.g., John Doe';
+            } else if (searchType === 'regid') {
+                label = 'Enter Registration ID';
+                placeholder = 'e.g., MEM12345';
+            } else {
+                label = 'Scan or Enter QR Code Value';
+                placeholder = 'Enter Reg ID from QR code';
+            }
+            
+            modalContent.innerHTML = `
+                <div class="modal-header">${label}</div>
+                <div class="form-group">
+                    <input type="text" id="searchValue" placeholder="${placeholder}" autocomplete="off">
+                </div>
+                <button class="btn-primary" onclick="fetchMember('${searchType}', document.getElementById('searchValue').value)" style="width: 100%;">🔍 Search</button>
+                <button onclick="showMemberOptions()" style="margin-top: 10px; width: 100%; padding: 10px; background: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Back</button>
+            `;
+        }
+
+        // Fetch member details from server
+        function fetchMember(searchType, searchValue) {
+            if (!searchValue) {
+                showError('Please enter a value');
+                return;
+            }
+            
+            showLoading('Searching for member...');
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result.success) {
+                        currentMemberData = result.member;
+                        showMemberCheckinForm(result.member);
                     } else {
-                        alert(res.error);
+                        closeModal();
+                        if (result.activeCheckin) {
+                            showError(result.error);
+                        } else {
+                            showError(result.error);
+                        }
                     }
                 })
-                .checkOut(rowIndex);
+                .withFailureHandler(function(error) {
+                    closeModal();
+                    showError(error.message);
+                })
+                .getMemberDetails(searchType, searchValue);
         }
-    }
-    
-    // Auto-refresh attendance every 30 seconds
-    setInterval(() => {
-        if(!modal.style.display || modal.style.display !== 'flex') {
-            loadAttendance();
+
+        // Show member check-in form with details
+        function showMemberCheckinForm(member) {
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="modal-header">Member Details</div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" value="${escapeHtml(member.name)}" readonly style="background: #f7fafc;">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" value="${escapeHtml(member.phone)}" readonly style="background: #f7fafc;">
+                </div>
+                <div class="form-group">
+                    <label>Registration ID</label>
+                    <input type="text" value="${escapeHtml(member.regNo)}" readonly style="background: #f7fafc;">
+                </div>
+                <div class="form-group">
+                    <label>Validity</label>
+                    <input type="text" value="${escapeHtml(member.validity)}" readonly style="background: #f7fafc;">
+                </div>
+                <button class="btn-primary" onclick="confirmCheckIn('member')" style="width: 100%;">✅ Confirm Check-in</button>
+                <button onclick="showMemberOptions()" style="margin-top: 10px; width: 100%; padding: 10px; background: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Back</button>
+            `;
         }
-    }, 30000);
-</script>
+
+        // Show guest form
+        function showGuestForm() {
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="modal-header">Guest Check-in</div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="guestName" placeholder="Enter full name" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="guestPhone" placeholder="Enter phone number" required>
+                </div>
+                <div class="form-group">
+                    <label>Purpose of Visit *</label>
+                    <input type="text" id="guestPurpose" placeholder="e.g., Meeting, Interview" required>
+                </div>
+                <button class="btn-primary" onclick="validateGuestForm()" style="width: 100%;">Continue</button>
+                <button onclick="showMemberGuestPopup()" style="margin-top: 10px; width: 100%; padding: 10px; background: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Back</button>
+            `;
+        }
+
+        // Validate guest form
+        function validateGuestForm() {
+            const name = document.getElementById('guestName')?.value.trim();
+            const phone = document.getElementById('guestPhone')?.value.trim();
+            const purpose = document.getElementById('guestPurpose')?.value.trim();
+            
+            if (!name || !phone || !purpose) {
+                showError('Please fill all fields');
+                return;
+            }
+            
+            if (!/^\d{10}$/.test(phone)) {
+                showError('Please enter a valid 10-digit phone number');
+                return;
+            }
+            
+            currentMemberData = {
+                name: name,
+                phone: phone,
+                purpose: purpose,
+                type: 'Guest'
+            };
+            
+            confirmCheckIn('guest');
+        }
+
+        // Confirm and process check-in
+        function confirmCheckIn(type) {
+            let data = {};
+            
+            if (type === 'member') {
+                data = {
+                    type: 'Member',
+                    name: currentMemberData.name,
+                    phone: currentMemberData.phone,
+                    regNo: currentMemberData.regNo,
+                    purpose: ''
+                };
+            } else {
+                data = {
+                    type: 'Guest',
+                    name: currentMemberData.name,
+                    phone: currentMemberData.phone,
+                    regNo: '',
+                    purpose: currentMemberData.purpose
+                };
+            }
+            
+            showLoading('Processing check-in...');
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    closeModal();
+                    if (result.success) {
+                        showSuccess(result.message);
+                        refreshCheckins();
+                    } else {
+                        showError(result.error);
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    closeModal();
+                    showError(error.message);
+                })
+                .recordCheckIn(data);
+        }
+
+        // Sign out function
+        function signOut(regNo, phone, rowIndex) {
+            if (!confirm('Are you sure you want to sign out this person?')) {
+                return;
+            }
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result.success) {
+                        showSuccess(result.message);
+                        refreshCheckins();
+                    } else {
+                        showError(result.error);
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showError(error.message);
+                })
+                .recordSignOut(regNo, phone, rowIndex);
+        }
+
+        // Utility functions
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            currentMemberData = null;
+        }
+        
+        function showLoading(message) {
+            const modalContent = document.getElementById('modalContent');
+            if (modalContent) {
+                modalContent.innerHTML = `<div class="loading">${message}</div>`;
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = message;
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '20px';
+            errorDiv.style.right = '20px';
+            errorDiv.style.zIndex = '1001';
+            errorDiv.style.maxWidth = '300px';
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 4000);
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = message;
+            successDiv.style.position = 'fixed';
+            successDiv.style.top = '20px';
+            successDiv.style.right = '20px';
+            successDiv.style.zIndex = '1001';
+            successDiv.style.maxWidth = '300px';
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
 </body>
 </html>
