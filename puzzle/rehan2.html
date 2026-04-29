@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Jigsaw Slide Puzzle · 8 Tiles + 1 Blank</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+h1 {
+  font-size: 1.6rem;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 15px;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 10px 15px;
+  border-radius: 20px;
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  color: #1e293b;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.stat-card span {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #3b82f6;
+  margin-top: 5px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  flex: 1;
+  min-width: 100px;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary {
+  background: #64748b;
+}
+
+.btn-danger {
+  background: #ef4444;
+}
+
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0px;
+  background: #cbd5e1;
+  margin: 15px 0;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tile {
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-size: 300% 300%;
+  background-repeat: no-repeat;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+/* Jigsaw edge effects using pseudo-elements */
+.tile::before,
+.tile::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Top edge jigsaw */
+.tile[data-row="0"]::before {
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: radial-gradient(circle at 50% 100%, transparent 65%, #cbd5e1 65%);
+  background-size: 20px 8px;
+  background-repeat: repeat-x;
+}
+
+/* Bottom edge jigsaw */
+.tile[data-row="2"]::after {
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: radial-gradient(circle at 50% 0%, transparent 65%, #cbd5e1 65%);
+  background-size: 20px 8px;
+  background-repeat: repeat-x;
+}
+
+/* Left edge jigsaw */
+.tile[data-col="0"]::before {
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: radial-gradient(circle at 100% 50%, transparent 65%, #cbd5e1 65%);
+  background-size: 8px 20px;
+  background-repeat: repeat-y;
+}
+
+/* Right edge jigsaw */
+.tile[data-col="2"]::after {
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: radial-gradient(circle at 0% 50%, transparent 65%, #cbd5e1 65%);
+  background-size: 8px 20px;
+  background-repeat: repeat-y;
+}
+
+/* Inner connecting tabs */
+.tile[data-right-tab="true"]::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at 0% 50%, #cbd5e1 50%, transparent 51%);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tile[data-left-tab="true"]::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at 100% 50%, #cbd5e1 50%, transparent 51%);
+  transform: translateY(-50%);
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tile[data-top-tab="true"]::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at 50% 100%, #cbd5e1 50%, transparent 51%);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tile[data-bottom-tab="true"]::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at 50% 0%, #cbd5e1 50%, transparent 51%);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Blank tile special styling */
+.tile.blank {
+  background: #94a3b8 !important;
+  background-image: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.tile.blank::before,
+.tile.blank::after {
+  display: none !important;
+}
+
+.tile.blank {
+  box-shadow: inset 0 0 0 2px #64748b;
+}
+
+.tile:active {
+  transform: scale(0.98);
+  filter: brightness(0.98);
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.popup-content {
+  background: white;
+  padding: 30px;
+  border-radius: 40px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+  animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.popup-content h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
+
+.popup-content p {
+  margin: 15px 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.popup-content button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .stat-card span {
+    font-size: 1.4rem;
+  }
+  
+  .btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    min-width: 80px;
+  }
+  
+  .tile:active {
+    transform: scale(0.97);
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="popup" id="startPopup">
+  <div class="popup-content">
+    <h2>🧩 Jigsaw Slide Puzzle</h2>
+    <p>Tap any tile next to the empty space to slide it!</p>
+    <p>🔗 Interlocking jigsaw edges</p>
+    <p>⏱️ 60 seconds to complete each level</p>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<div class="popup hidden" id="resultPopup">
+  <div class="popup-content">
+    <h2 id="resultTitle"></h2>
+    <p id="resultMessage"></p>
+    <button onclick="closeResultPopup()">Continue</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1>🧩 Jigsaw Puzzle</h1>
+  <div class="sub">Interlocking edges · Tap to slide</div>
+  
+  <div class="stats">
+    <div class="stat-card">⭐ Score<br><span id="score">0</span></div>
+    <div class="stat-card">🏆 Level<br><span id="level">1</span></div>
+    <div class="stat-card">⏰ Time<br><span id="timer">60</span>s</div>
+  </div>
+  
+  <div class="button-group">
+    <button class="btn btn-secondary" onclick="changePicture()">🖼 Change Image</button>
+    <button class="btn" onclick="checkWin()">✅ Submit</button>
+    <button class="btn btn-danger" onclick="restartGame()">🔄 Restart</button>
+  </div>
+  
+  <div class="puzzle-grid" id="puzzleGrid"></div>
+  <div style="font-size: 11px; color: #94a3b8; margin-top: 10px;">💡 Tap tiles adjacent to the empty space</div>
+</div>
+
+<script>
+  // Game configuration
+  const SIZE = 3;
+  const TOTAL_TILES = 9;
+  let board = [];
+  let blankPosition = 8;
+  let score = 0;
+  let level = 1;
+  let timeLeft = 60;
+  let timerInterval = null;
+  let gameActive = false;
+  let currentImageIndex = 0;
+  
+  // Image collection
+  const images = [
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=500&h=500&fit=crop"
+  ];
+  
+  const puzzleGrid = document.getElementById('puzzleGrid');
+  const scoreElement = document.getElementById('score');
+  const levelElement = document.getElementById('level');
+  const timerElement = document.getElementById('timer');
+  const startPopupDiv = document.getElementById('startPopup');
+  const resultPopupDiv = document.getElementById('resultPopup');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMessage = document.getElementById('resultMessage');
+  
+  function initSolvedBoard() {
+    const solved = [];
+    for (let i = 0; i < TOTAL_TILES - 1; i++) {
+      solved.push(i);
+    }
+    solved.push(-1);
+    return solved;
+  }
+  
+  function getAdjacentToBlank(blankPos) {
+    const row = Math.floor(blankPos / SIZE);
+    const col = blankPos % SIZE;
+    const adjacent = [];
+    
+    if (row > 0) adjacent.push(blankPos - SIZE);
+    if (row < SIZE - 1) adjacent.push(blankPos + SIZE);
+    if (col > 0) adjacent.push(blankPos - 1);
+    if (col < SIZE - 1) adjacent.push(blankPos + 1);
+    
+    return adjacent;
+  }
+  
+  function moveTile(position) {
+    if (!gameActive) return false;
+    
+    const adjacent = getAdjacentToBlank(blankPosition);
+    
+    if (adjacent.includes(position)) {
+      const temp = board[position];
+      board[position] = board[blankPosition];
+      board[blankPosition] = temp;
+      blankPosition = position;
+      renderBoard();
+      return true;
+    }
+    return false;
+  }
+  
+  function shuffleBoard(moves = 150) {
+    for (let i = 0; i < moves; i++) {
+      const adjacent = getAdjacentToBlank(blankPosition);
+      if (adjacent.length > 0) {
+        const randomIndex = Math.floor(Math.random() * adjacent.length);
+        const randomPos = adjacent[randomIndex];
+        const temp = board[randomPos];
+        board[randomPos] = board[blankPosition];
+        board[blankPosition] = temp;
+        blankPosition = randomPos;
+      }
+    }
+    renderBoard();
+  }
+  
+  function isSolved() {
+    for (let i = 0; i < TOTAL_TILES - 1; i++) {
+      if (board[i] !== i) return false;
+    }
+    return board[8] === -1;
+  }
+  
+  function checkWin() {
+    if (!gameActive) {
+      showResult("⏸️ Game Inactive", "Please start a new game!");
+      return;
+    }
+    
+    if (isSolved()) {
+      clearTimer();
+      gameActive = false;
+      
+      score += 100;
+      level++;
+      scoreElement.textContent = score;
+      levelElement.textContent = level;
+      
+      currentImageIndex = (currentImageIndex + 1) % images.length;
+      
+      showResult("🎉 Puzzle Solved!", `+100 points! Moving to Level ${level}`);
+    } else {
+      showResult("❌ Not Solved Yet", "Keep sliding the jigsaw pieces!");
+    }
+  }
+  
+  function nextLevel() {
+    board = initSolvedBoard();
+    blankPosition = 8;
+    shuffleBoard(130);
+    gameActive = true;
+    startCountdown();
+    renderBoard();
+  }
+  
+  function changePicture() {
+    if (!gameActive) return;
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    renderBoard();
+  }
+  
+  function restartGame() {
+    clearTimer();
+    
+    score = 0;
+    level = 1;
+    currentImageIndex = 0;
+    scoreElement.textContent = score;
+    levelElement.textContent = level;
+    
+    board = initSolvedBoard();
+    blankPosition = 8;
+    shuffleBoard(150);
+    gameActive = true;
+    startCountdown();
+    renderBoard();
+    
+    resultPopupDiv.classList.add('hidden');
+  }
+  
+  function renderBoard() {
+    puzzleGrid.innerHTML = '';
+    const currentImage = images[currentImageIndex];
+    
+    for (let i = 0; i < TOTAL_TILES; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      
+      const row = Math.floor(i / SIZE);
+      const col = i % SIZE;
+      tile.setAttribute('data-row', row);
+      tile.setAttribute('data-col', col);
+      
+      // Add jigsaw tab indicators based on position
+      // Top tab (connects to piece above)
+      if (row > 0 && board[i] !== -1 && board[i - SIZE] !== -1) {
+        tile.setAttribute('data-top-tab', 'true');
+      }
+      // Bottom tab (connects to piece below)
+      if (row < SIZE - 1 && board[i] !== -1 && board[i + SIZE] !== -1) {
+        tile.setAttribute('data-bottom-tab', 'true');
+      }
+      // Left tab (connects to piece left)
+      if (col > 0 && board[i] !== -1 && board[i - 1] !== -1) {
+        tile.setAttribute('data-left-tab', 'true');
+      }
+      // Right tab (connects to piece right)
+      if (col < SIZE - 1 && board[i] !== -1 && board[i + 1] !== -1) {
+        tile.setAttribute('data-right-tab', 'true');
+      }
+      
+      if (board[i] === -1) {
+        tile.classList.add('blank');
+        tile.style.backgroundImage = 'none';
+      } else {
+        const pieceNumber = board[i];
+        const correctRow = Math.floor(pieceNumber / SIZE);
+        const correctCol = pieceNumber % SIZE;
+        
+        tile.style.backgroundImage = `url('${currentImage}')`;
+        tile.style.backgroundSize = `${SIZE * 100}% ${SIZE * 100}%`;
+        tile.style.backgroundPosition = `${correctCol * 50}% ${correctRow * 50}%`;
+      }
+      
+      tile.addEventListener('click', (function(pos) {
+        return function() { moveTile(pos); };
+      })(i));
+      
+      tile.addEventListener('touchstart', (function(pos) {
+        return function(e) { 
+          e.preventDefault();
+          moveTile(pos); 
+        };
+      })(i), { passive: false });
+      
+      puzzleGrid.appendChild(tile);
+    }
+  }
+  
+  function startCountdown() {
+    clearTimer();
+    timeLeft = 60;
+    timerElement.textContent = timeLeft;
+    
+    timerInterval = setInterval(() => {
+      if (!gameActive) return;
+      
+      if (timeLeft <= 1) {
+        clearTimer();
+        timerElement.textContent = '0';
+        gameActive = false;
+        showResult("💀 Time's Up!", "You ran out of time! Press Continue to try again.");
+      } else {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+      }
+    }, 1000);
+  }
+  
+  function clearTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+  
+  function showResult(title, message) {
+    resultTitle.textContent = title;
+    resultMessage.textContent = message;
+    resultPopupDiv.classList.remove('hidden');
+  }
+  
+  function closeResultPopup() {
+    resultPopupDiv.classList.add('hidden');
+    
+    if (!gameActive) {
+      restartGame();
+    } else if (isSolved()) {
+      nextLevel();
+    }
+  }
+  
+  function startGame() {
+    startPopupDiv.classList.add('hidden');
+    restartGame();
+  }
+  
+  window.startGame = startGame;
+  window.changePicture = changePicture;
+  window.checkWin = checkWin;
+  window.closeResultPopup = closeResultPopup;
+  window.restartGame = restartGame;
+  
+  // Initial render with shuffle
+  board = initSolvedBoard();
+  blankPosition = 8;
+  shuffleBoard(150);
+  renderBoard();
+  gameActive = false;
+</script>
+</body>
+</html>
