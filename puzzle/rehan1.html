@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Slide Puzzle · 8 Tiles + 1 Blank</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+h1 {
+  font-size: 1.6rem;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 15px;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 10px 15px;
+  border-radius: 20px;
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  color: #1e293b;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.stat-card span {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #3b82f6;
+  margin-top: 5px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary {
+  background: #64748b;
+}
+
+.btn-danger {
+  background: #ef4444;
+}
+
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: #cbd5e1;
+  padding: 8px;
+  border-radius: 24px;
+  margin: 15px 0;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  box-shadow: inset 0 0 0 2px #94a3b8, 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.tile {
+  background: #f8fafc;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-size: 300% 300%;
+  background-repeat: no-repeat;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.tile:active {
+  transform: scale(0.96);
+}
+
+.tile.blank {
+  background: #e2e8f0 !important;
+  background-image: none !important;
+  box-shadow: inset 0 0 0 2px #94a3b8;
+  cursor: pointer;
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.popup-content {
+  background: white;
+  padding: 30px;
+  border-radius: 40px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+  animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.popup-content h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
+
+.popup-content p {
+  margin: 15px 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.popup-content button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .stat-card span {
+    font-size: 1.4rem;
+  }
+  
+  .btn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .tile {
+    border-radius: 12px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="popup" id="startPopup">
+  <div class="popup-content">
+    <h2>🧩 Slide Puzzle</h2>
+    <p>Tap any tile next to the empty space to slide it!</p>
+    <p>⏱️ 60 seconds to complete each level</p>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+</div>
+
+<div class="popup hidden" id="resultPopup">
+  <div class="popup-content">
+    <h2 id="resultTitle"></h2>
+    <p id="resultMessage"></p>
+    <button onclick="closeResultPopup()">Continue</button>
+  </div>
+</div>
+
+<div class="container">
+  <h1>✨ 8-Tile Puzzle</h1>
+  <div class="sub">Tap tile → slides into empty space</div>
+  
+  <div class="stats">
+    <div class="stat-card">⭐ Score<br><span id="score">0</span></div>
+    <div class="stat-card">🏆 Level<br><span id="level">1</span></div>
+    <div class="stat-card">⏰ Time<br><span id="timer">60</span>s</div>
+  </div>
+  
+  <div class="button-group">
+    <button class="btn" onclick="shuffleBoard()">🔀 Shuffle</button>
+    <button class="btn btn-secondary" onclick="changePicture()">🖼 Change Image</button>
+    <button class="btn btn-danger" onclick="checkWin()">✅ Submit</button>
+  </div>
+  
+  <div class="puzzle-grid" id="puzzleGrid"></div>
+  <div style="font-size: 11px; color: #94a3b8; margin-top: 10px;">💡 Tip: Tap tiles adjacent to the empty spot</div>
+</div>
+
+<script>
+  // Game configuration
+  const SIZE = 3;
+  const TOTAL_TILES = 9;
+  let board = [];           // Stores which piece (0-7) is at each position, -1 for blank
+  let blankPosition = 8;    // Index of blank tile (starts at bottom-right)
+  let score = 0;
+  let level = 1;
+  let timeLeft = 60;
+  let timerInterval = null;
+  let gameActive = false;
+  let currentImageIndex = 0;
+  
+  // Image collection (high-quality puzzle images)
+  const images = [
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=500&h=500&fit=crop",
+    "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=500&h=500&fit=crop"
+  ];
+  
+  // DOM elements
+  const puzzleGrid = document.getElementById('puzzleGrid');
+  const scoreElement = document.getElementById('score');
+  const levelElement = document.getElementById('level');
+  const timerElement = document.getElementById('timer');
+  const startPopupDiv = document.getElementById('startPopup');
+  const resultPopupDiv = document.getElementById('resultPopup');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultMessage = document.getElementById('resultMessage');
+  
+  // Initialize solved board (correct order)
+  function initSolvedBoard() {
+    const solved = [];
+    for (let i = 0; i < TOTAL_TILES - 1; i++) {
+      solved.push(i);
+    }
+    solved.push(-1); // blank at the end
+    return solved;
+  }
+  
+  // Get adjacent indices to blank
+  function getAdjacentToBlank(blankPos) {
+    const row = Math.floor(blankPos / SIZE);
+    const col = blankPos % SIZE;
+    const adjacent = [];
+    
+    if (row > 0) adjacent.push(blankPos - SIZE); // up
+    if (row < SIZE - 1) adjacent.push(blankPos + SIZE); // down
+    if (col > 0) adjacent.push(blankPos - 1); // left
+    if (col < SIZE - 1) adjacent.push(blankPos + 1); // right
+    
+    return adjacent;
+  }
+  
+  // Move tile at given position (if adjacent to blank)
+  function moveTile(position) {
+    if (!gameActive) return false;
+    
+    const adjacent = getAdjacentToBlank(blankPosition);
+    
+    if (adjacent.includes(position)) {
+      // Swap the clicked tile with blank
+      const temp = board[position];
+      board[position] = board[blankPosition];
+      board[blankPosition] = temp;
+      blankPosition = position;
+      renderBoard();
+      return true;
+    }
+    return false;
+  }
+  
+  // Shuffle by making random moves (ensures solvable puzzle)
+  function shuffleBoard(moves = 150) {
+    if (!gameActive) return;
+    
+    for (let i = 0; i < moves; i++) {
+      const adjacent = getAdjacentToBlank(blankPosition);
+      if (adjacent.length > 0) {
+        const randomIndex = Math.floor(Math.random() * adjacent.length);
+        const randomPos = adjacent[randomIndex];
+        // swap
+        const temp = board[randomPos];
+        board[randomPos] = board[blankPosition];
+        board[blankPosition] = temp;
+        blankPosition = randomPos;
+      }
+    }
+    renderBoard();
+  }
+  
+  // Check if puzzle is solved
+  function isSolved() {
+    for (let i = 0; i < TOTAL_TILES - 1; i++) {
+      if (board[i] !== i) return false;
+    }
+    return board[8] === -1;
+  }
+  
+  // Check win and handle level up
+  function checkWin() {
+    if (!gameActive) {
+      showResult("⏸️ Game Inactive", "Please start a new game!");
+      return;
+    }
+    
+    if (isSolved()) {
+      // Win!
+      clearTimer();
+      gameActive = false;
+      
+      // Update score and level
+      score += 100;
+      level++;
+      scoreElement.textContent = score;
+      levelElement.textContent = level;
+      
+      // Change image for next level
+      currentImageIndex = (currentImageIndex + 1) % images.length;
+      
+      showResult("🎉 Puzzle Solved!", `+100 points! Moving to Level ${level}`);
+    } else {
+      showResult("❌ Not Solved Yet", "Keep sliding the tiles to match the image!");
+    }
+  }
+  
+  // Continue to next level after win
+  function nextLevel() {
+    // Reset board to solved state
+    board = initSolvedBoard();
+    blankPosition = 8;
+    // Shuffle for new level
+    shuffleBoard(130);
+    gameActive = true;
+    startCountdown();
+    renderBoard();
+  }
+  
+  // Change image without resetting progress
+  function changePicture() {
+    if (!gameActive) return;
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    renderBoard();
+  }
+  
+  // Render the puzzle grid - CRITICAL: Shows the current shuffled state visually
+  function renderBoard() {
+    puzzleGrid.innerHTML = '';
+    const currentImage = images[currentImageIndex];
+    
+    for (let i = 0; i < TOTAL_TILES; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      
+      if (board[i] === -1) {
+        tile.classList.add('blank');
+        tile.style.backgroundImage = 'none';
+      } else {
+        const pieceNumber = board[i];
+        // Each piece shows the PART of the image based on its CORRECT position
+        // This ensures that when board is solved, the image is complete
+        const correctRow = Math.floor(pieceNumber / SIZE);
+        const correctCol = pieceNumber % SIZE;
+        
+        tile.style.backgroundImage = `url('${currentImage}')`;
+        tile.style.backgroundSize = `${SIZE * 100}% ${SIZE * 100}%`;
+        // Show the correct slice of the image for this piece number
+        tile.style.backgroundPosition = `${correctCol * 50}% ${correctRow * 50}%`;
+      }
+      
+      tile.addEventListener('click', (function(pos) {
+        return function() { moveTile(pos); };
+      })(i));
+      
+      tile.addEventListener('touchstart', (function(pos) {
+        return function(e) { 
+          e.preventDefault();
+          moveTile(pos); 
+        };
+      })(i), { passive: false });
+      
+      puzzleGrid.appendChild(tile);
+    }
+  }
+  
+  // Timer functions
+  function startCountdown() {
+    clearTimer();
+    timeLeft = 60;
+    timerElement.textContent = timeLeft;
+    
+    timerInterval = setInterval(() => {
+      if (!gameActive) return;
+      
+      if (timeLeft <= 1) {
+        clearTimer();
+        timerElement.textContent = '0';
+        gameActive = false;
+        showResult("💀 Time's Up!", "You ran out of time! Press Continue to try again.");
+      } else {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+      }
+    }, 1000);
+  }
+  
+  function clearTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+  
+  // UI Popup functions
+  function showResult(title, message) {
+    resultTitle.textContent = title;
+    resultMessage.textContent = message;
+    resultPopupDiv.classList.remove('hidden');
+  }
+  
+  function closeResultPopup() {
+    resultPopupDiv.classList.add('hidden');
+    
+    // If game is inactive (game over or win), restart fresh
+    if (!gameActive) {
+      // Reset everything for new game
+      score = 0;
+      level = 1;
+      currentImageIndex = 0;
+      scoreElement.textContent = score;
+      levelElement.textContent = level;
+      
+      board = initSolvedBoard();
+      blankPosition = 8;
+      // CRITICAL: Shuffle at start so pieces are visually mixed
+      shuffleBoard(150);
+      gameActive = true;
+      startCountdown();
+      renderBoard();
+    } else if (isSolved()) {
+      // This is for win condition
+      nextLevel();
+    }
+  }
+  
+  // Start game from main menu
+  function startGame() {
+    startPopupDiv.classList.add('hidden');
+    
+    // Reset all game state
+    score = 0;
+    level = 1;
+    currentImageIndex = 0;
+    scoreElement.textContent = score;
+    levelElement.textContent = level;
+    
+    board = initSolvedBoard();
+    blankPosition = 8;
+    // CRITICAL: Shuffle at the beginning so image is scrambled!
+    shuffleBoard(150);
+    gameActive = true;
+    startCountdown();
+    renderBoard();
+  }
+  
+  // Restart game (called from various places)
+  window.startGame = startGame;
+  window.shuffleBoard = shuffleBoard;
+  window.changePicture = changePicture;
+  window.checkWin = checkWin;
+  window.closeResultPopup = closeResultPopup;
+  
+  // Expose move function globally for debugging
+  window.moveTile = moveTile;
+  
+  // Initial render (blank board until game starts)
+  board = initSolvedBoard();
+  blankPosition = 8;
+  // Shuffle immediately so preview shows scrambled pieces
+  shuffleBoard(150);
+  renderBoard();
+  gameActive = false;
+</script>
+</body>
+</html>
