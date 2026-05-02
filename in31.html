@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Eternal Vows | Wedding Invitations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0e6dc 0%, #e0d0c0 100%);
+            font-family: 'Georgia', 'Times New Roman', 'Segoe UI', serif;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            background: #fffef7;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #b45f3a;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            font-size: 1.6rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.2rem;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            font-family: inherit;
+            transition: all 0.2s;
+            color: #7a5a44;
+        }
+
+        .nav-btn.active {
+            background: #bd7a56;
+            color: white;
+        }
+
+        .nav-btn:hover:not(.active) {
+            background: #e9dbcf;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Home Page */
+        .hero-section {
+            text-align: center;
+            padding: 3rem 1rem 4rem;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            color: #9b5a38;
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #7a5a44;
+            margin-bottom: 2.5rem;
+            font-style: italic;
+        }
+
+        .create-card {
+            background: #fffef7;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            border-radius: 48px;
+            box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .create-card h3 {
+            color: #b45f3a;
+            margin-bottom: 0.8rem;
+            font-size: 1.6rem;
+        }
+
+        .create-card p {
+            color: #8b6e58;
+            margin-bottom: 1.8rem;
+        }
+
+        .create-main-btn {
+            background: linear-gradient(135deg, #bd7a56, #a55a38);
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+        }
+
+        .create-main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Invitation Preview Card (on home) */
+        .preview-section {
+            margin-top: 3rem;
+            background: #fffaf3;
+            border-radius: 36px;
+            padding: 1.5rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .preview-title {
+            text-align: center;
+            color: #a57758;
+            margin-bottom: 1rem;
+        }
+
+        .mini-invite {
+            background: #fffef7;
+            border-radius: 28px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #eedbcb;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fffef7;
+            max-width: 550px;
+            width: 90%;
+            border-radius: 48px;
+            padding: 2rem;
+            text-align: center;
+            animation: modalPop 0.3s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            color: #b45f3a;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .link-container {
+            background: #f5ede4;
+            padding: 1rem;
+            border-radius: 40px;
+            margin: 1.5rem 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .link-url {
+            flex: 1;
+            background: white;
+            padding: 0.6rem 1rem;
+            border-radius: 40px;
+            border: 1px solid #e2cfbe;
+        }
+
+        .copy-btn, .share-btn {
+            background: #bd7a56;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .share-btn {
+            background: #5e7a5c;
+        }
+
+        .copy-btn:hover, .share-btn:hover {
+            opacity: 0.85;
+        }
+
+        .modal-close {
+            background: #d4c4b4;
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 40px;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c2a27;
+            color: #fff2e4;
+            padding: 0.8rem 1.8rem;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            z-index: 1100;
+            animation: fadeUp 0.3s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; bottom: 0; }
+            to { opacity: 1; bottom: 30px; }
+        }
+
+        /* Invitation Page (when viewing a specific invite) */
+        .invitation-card {
+            max-width: 780px;
+            width: 100%;
+            margin: 0 auto;
+            background: #fffef7;
+            border-radius: 56px 28px 56px 28px;
+            box-shadow: 0 35px 55px -18px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #fffaf3;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            border-bottom: 1px solid #eedccb;
+        }
+
+        .home-link {
+            background: #f3e7de;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #8b5a3c;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .letter-wrapper {
+            padding: 2rem;
+        }
+
+        .title-3d-box {
+            background: linear-gradient(115deg, #fcf6ed, #fff6ea);
+            border-radius: 36px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .couple-area {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .names-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.2rem;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #a34128;
+        }
+
+        .request-line {
+            font-style: italic;
+            text-align: center;
+            padding: 0.8rem 0;
+            border-top: 1px solid #f0dbc9;
+            border-bottom: 1px solid #f0dbc9;
+        }
+
+        .datetime-block {
+            background: #fdf5ec;
+            padding: 1.2rem;
+            border-radius: 32px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .main-date { font-size: 1.5rem; font-weight: bold; color: #bc623f; }
+        .time-detail { margin-top: 6px; color: #785e4b; }
+        .location-box { background: #f5ebe2; border-radius: 28px; padding: 0.9rem; text-align: center; margin: 0.8rem 0; }
+        .countdown-container { display: flex; justify-content: center; gap: 1rem; margin: 1.8rem 0; flex-wrap: wrap; }
+        .countdown-box { background: #2e2a24; color: #fff3e0; width: 75px; padding: 0.6rem 0; border-radius: 24px; text-align: center; }
+        .countdown-number { font-size: 1.6rem; font-weight: bold; }
+        .rsvp-area { background: #fcf2e9; border-radius: 48px; padding: 1rem; text-align: center; margin: 1.5rem 0; }
+        .rsvp-buttons { display: flex; justify-content: center; gap: 1.2rem; margin-top: 0.8rem; }
+        .attend-btn { border: none; padding: 0.5rem 1.5rem; border-radius: 60px; cursor: pointer; font-family: inherit; }
+        .attend-yes { background: #bd7a56; color: white; }
+        .attend-no { background: #b2a28f; }
+        footer { text-align: center; font-size: 0.7rem; padding-top: 1rem; color: #b49178; }
+
+        @media (max-width: 600px) {
+            .names-row { font-size: 1.5rem; }
+            .container { padding: 1rem; }
+        }
+
+        .hidden-page { display: none; }
+        .active-page { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="nav-bar">
+    <div class="logo"><span>💍</span> Eternal Vows</div>
+    <div class="nav-links">
+        <button class="nav-btn active" id="navHomeBtn">🏠 Home</button>
+        <button class="nav-btn" id="navCreateBtn">✨ Create Invitation</button>
+    </div>
+</div>
+
+<div class="container">
+    <!-- HOME PAGE -->
+    <div id="homePage" class="active-page">
+        <div class="hero-section">
+            <h1 class="hero-title">Eternal Vows</h1>
+            <p class="hero-subtitle">Beautiful digital wedding invitations, crafted with love</p>
+            <div class="create-card">
+                <h3>✨ Begin Your Journey</h3>
+                <p>Create a personalized wedding invitation in seconds. Share the unique link with your guests.</p>
+                <button class="create-main-btn" id="homeCreateBtn">💖 Create Your Invitation Now</button>
+            </div>
+            <div class="preview-section">
+                <div class="preview-title">🌸 Featured Invitation Preview</div>
+                <div class="mini-invite">
+                    <div style="font-size:1.2rem; color:#b45f3a;">❤️ Raj & Simran ❤️</div>
+                    <div style="font-size:0.8rem; margin-top:5px;">Saturday, 20 December 2026 | 6:30 PM</div>
+                    <div style="font-size:0.7rem; color:#8b6e58;">📍 The Royal Palace, Udaipur</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE PAGE (Form) -->
+    <div id="createPage" class="hidden-page">
+        <div style="max-width: 700px; margin: 0 auto; background: #fffef7; border-radius: 48px; padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1);">
+            <h2 style="color: #b45f3a; text-align: center; margin-bottom: 1.5rem;">✨ Design Your Invitation</h2>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="text" id="formGroom" placeholder="Groom's Name" value="Raj" style="padding: 12px; border-radius: 50px; border: 1px solid #e2cfbe;">
+                <input type="text" id="formBride" placeholder="Bride's Name" value="Simran" style="padding: 12px; border-radius: 50px; border: 1px solid #e2cfbe;">
+                <input type="text" id="formDate" placeholder="Event Date (e.g., Saturday, 20 December 2026)" value="Saturday, 20 December 2026" style="padding: 12px; border-radius: 50px;">
+                <input type="text" id="formTime" placeholder="Event Time (e.g., 6:30 PM)" value="6:30 PM" style="padding: 12px; border-radius: 50px;">
+                <input type="text" id="formCeremony" placeholder="Ceremony Details" value="Haldi: 19 Dec, Wedding: 20 Dec" style="padding: 12px; border-radius: 50px;">
+                <input type="text" id="formLocation" placeholder="Venue Name" value="The Royal Palace, Udaipur" style="padding: 12px; border-radius: 50px;">
+                <button id="submitCreateBtn" style="background: #bd7a56; color: white; border: none; padding: 14px; border-radius: 60px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 1rem;">✨ Generate Invitation Link ✨</button>
+                <div id="createStatus" style="text-align: center; font-size: 0.85rem; color: #6f4e3a; margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INVITATION DISPLAY PAGE (when id is present in URL) -->
+    <div id="invitationDisplayPage" class="hidden-page">
+        <!-- dynamic invitation will be injected here -->
+        <div id="invitationContainer"></div>
+    </div>
+</div>
+
+<!-- MODAL FOR SHOWING GENERATED LINK -->
+<div id="linkModal" class="modal">
+    <div class="modal-content">
+        <h3>✨ Invitation Created! ✨</h3>
+        <p>Your wedding invitation is ready. Share this unique link with your guests:</p>
+        <div class="link-container">
+            <div class="link-url" id="modalLinkUrl">https://...</div>
+            <button class="copy-btn" id="modalCopyBtn">📋 Copy</button>
+            <button class="share-btn" id="modalShareBtn">📤 Share</button>
+        </div>
+        <p style="font-size:0.75rem; color:#8b6e58;">Guests can RSVP directly from the invitation page.</p>
+        <button class="modal-close" id="closeModalBtn">Close</button>
+    </div>
+</div>
+
+<script>
+    // ==================== CONFIGURATION ====================
+    // IMPORTANT: Replace with your actual Google Apps Script URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXotXOppQu8jGsHDttryfMam5XZFw9hwAx4WR689y9d-n-Qtr8tdvuXFnkQC1GJ1h2/exec";
+    
+    // Helper: show toast message
+    function showToast(message) {
+        let toast = document.createElement('div');
+        toast.className = 'toast-msg';
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 3000);
+    }
+
+    // ========== CREATE INVITATION (via POST form to avoid CORS) ==========
+    async function createInvitation(data) {
+        return new Promise((resolve, reject) => {
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = SCRIPT_URL;
+            form.target = 'hiddenFrame' + Date.now();
+            iframe.name = form.target;
+            
+            const fields = {
+                action: 'createInvitation',
+                groom: data.groom,
+                bride: data.bride,
+                eventDate: data.eventDate,
+                eventTime: data.eventTime,
+                religionDate: data.religionDate,
+                location: data.location,
+                colorTheme: '#fae1dd'
+            };
+            
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            
+            let resolved = false;
+            let timeout = setTimeout(() => {
+                if (!resolved) {
+                    document.body.removeChild(form);
+                    document.body.removeChild(iframe);
+                    reject(new Error('Request timed out'));
+                }
+            }, 15000);
+            
+            iframe.onload = () => {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(timeout);
+                document.body.removeChild(form);
+                setTimeout(() => document.body.removeChild(iframe), 500);
+                // Generate a unique local ID (the sheet will store actual record)
+                const generatedId = 'inv_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+                resolve(generatedId);
+            };
+            
+            form.submit();
+        });
+    }
+    
+    // ========== FETCH INVITATION ==========
+    async function fetchInvitation(id) {
+        try {
+            const url = `${SCRIPT_URL}?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+            const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            console.error("Fetch error", err);
+            return null;
+        }
+    }
+    
+    // ========== UPDATE RSVP ==========
+    async function updateRSVP(id, response) {
+        try {
+            const formData = new URLSearchParams();
+            formData.append('action', 'updateRSVP');
+            formData.append('id', id);
+            formData.append('response', response);
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: formData });
+            return true;
+        } catch (err) {
+            return false;
+        }
+    }
+    
+    // ========== RENDER INVITATION UI (from fetched data) ==========
+    let currentInvitationId = null;
+    let countdownInterval = null;
+    
+    function formatDateAndTime(eventDateRaw, eventTimeRaw) {
+        let finalDate = eventDateRaw;
+        let finalTime = eventTimeRaw;
+        try {
+            let dateObj = new Date(eventDateRaw);
+            if (!isNaN(dateObj) && dateObj.getFullYear() > 1900 && dateObj.getFullYear() < 2100) {
+                finalDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+            let timeObj = new Date(`2000-01-01T${eventTimeRaw}`);
+            if (!isNaN(timeObj)) {
+                finalTime = timeObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+        } catch(e) {}
+        return { formattedDate: finalDate, formattedTime: finalTime };
+    }
+    
+    function renderInvitation(data, id) {
+        const container = document.getElementById('invitationContainer');
+        const { formattedDate, formattedTime } = formatDateAndTime(data.eventDate || "25 December 2026", data.eventTime || "6:30 PM");
+        
+        const html = `
+            <div class="invitation-card">
+                <div class="card-header">
+                    <button class="home-link" id="backHomeFromInvite">🏠 Back to Home</button>
+                </div>
+                <div class="letter-wrapper">
+                    <div class="title-3d-box"><h2>✨ Eternal Vows ✨</h2><div class="exclusive-text">humbly invite you</div></div>
+                    <div class="couple-area"><div class="names-row"><span>${escapeHtml(data.groom || 'Groom')}</span><span class="love-symbol">❤️</span><span>${escapeHtml(data.bride || 'Bride')}</span></div></div>
+                    <div class="request-line">request the honor of your presence</div>
+                    <div class="datetime-block"><div class="main-date">${formattedDate}</div><div class="time-detail">${formattedTime}</div></div>
+                    <div class="religion-date" style="background:#e9dbcf; display:inline-block; padding:0.3rem 1rem; border-radius:50px;">🌼 ${escapeHtml(data.religionDate || 'Wedding Ceremony')}</div>
+                    <div class="location-box">📍 ${escapeHtml(data.location || 'Venue Details')}</div>
+                    <div id="countdownWidget" class="countdown-container"></div>
+                    <div class="rsvp-area">
+                        <div>💌 Will you be joining us? 💌</div>
+                        <div class="rsvp-buttons"><button class="attend-btn attend-yes" id="rsvpYesBtn">✔️ Yes</button><button class="attend-btn attend-no" id="rsvpNoBtn">❌ No</button></div>
+                        <div id="rsvpFeedbackMsg" class="status-msg"></div>
+                    </div>
+                    <footer>🌹 With love & blessings</footer>
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+        
+        startCountdownForDate(formattedDate, formattedTime);
+        
+        document.getElementById('rsvpYesBtn').onclick = async () => {
+            const fb = document.getElementById('rsvpFeedbackMsg');
+            fb.innerHTML = '⏳ Recording...';
+            await updateRSVP(id, 'yes');
+            fb.innerHTML = '✅ Thank you! We look forward to celebrating with you! 🎉';
+        };
+        document.getElementById('rsvpNoBtn').onclick = async () => {
+            const fb = document.getElementById('rsvpFeedbackMsg');
+            fb.innerHTML = '⏳ Recording...';
+            await updateRSVP(id, 'no');
+            fb.innerHTML = '💔 We will miss you! Thank you for letting us know.';
+        };
+        
+        const backBtn = document.getElementById('backHomeFromInvite');
+        if (backBtn) backBtn.onclick = () => { window.location.href = window.location.pathname; };
+    }
+    
+    function startCountdownForDate(dateStr, timeStr) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        const widget = document.getElementById('countdownWidget');
+        if (!widget) return;
+        let target = new Date(`${dateStr} ${timeStr}`);
+        if (isNaN(target)) target = new Date(dateStr);
+        if (isNaN(target)) { widget.innerHTML = '<div>✨ Celebration soon ✨</div>'; return; }
+        function update() {
+            const diff = target - new Date();
+            if (diff <= 0) { widget.innerHTML = '<div>🎉 Today is the celebration! 🎉</div>'; clearInterval(countdownInterval); return; }
+            const days = Math.floor(diff / (86400000));
+            const hours = Math.floor((diff % 86400000) / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            widget.innerHTML = `<div class="countdown-box"><div class="countdown-number">${days}</div><div>Days</div></div>
+                                <div class="countdown-box"><div class="countdown-number">${hours}</div><div>Hrs</div></div>
+                                <div class="countdown-box"><div class="countdown-number">${mins}</div><div>Mins</div></div>
+                                <div class="countdown-box"><div class="countdown-number">${secs}</div><div>Secs</div></div>`;
+        }
+        update(); countdownInterval = setInterval(update, 1000);
+    }
+    
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+    
+    // ========== PAGE ROUTING ==========
+    function showPage(pageName) {
+        document.getElementById('homePage').classList.add('hidden-page');
+        document.getElementById('createPage').classList.add('hidden-page');
+        document.getElementById('invitationDisplayPage').classList.add('hidden-page');
+        if (pageName === 'home') document.getElementById('homePage').classList.remove('hidden-page');
+        else if (pageName === 'create') document.getElementById('createPage').classList.remove('hidden-page');
+        else if (pageName === 'invite') document.getElementById('invitationDisplayPage').classList.remove('hidden-page');
+        
+        document.getElementById('navHomeBtn').classList.toggle('active', pageName === 'home');
+        document.getElementById('navCreateBtn').classList.toggle('active', pageName === 'create');
+    }
+    
+    // ========== HANDLE URL PARAM (invitation ID) ==========
+    async function handleInvitationId() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        if (id) {
+            showPage('invite');
+            const container = document.getElementById('invitationContainer');
+            container.innerHTML = '<div style="text-align:center; padding:3rem;">Loading invitation... ✨</div>';
+            const result = await fetchInvitation(id);
+            if (result && result.status === 'success' && result.invitation) {
+                currentInvitationId = id;
+                renderInvitation(result.invitation, id);
+            } else {
+                container.innerHTML = `<div class="invitation-card" style="padding:2rem; text-align:center;"><h3>⚠️ Invitation Not Found</h3><p>The link may be invalid.</p><button id="goHomeFromError" style="margin-top:1rem; background:#bd7a56; color:white; border:none; padding:0.6rem 1.5rem; border-radius:40px;">Go Home</button></div>`;
+                const btn = document.getElementById('goHomeFromError');
+                if (btn) btn.onclick = () => window.location.href = window.location.pathname;
+            }
+        } else {
+            showPage('home');
+        }
+    }
+    
+    // ========== CREATE INVITATION FLOW ==========
+    async function generateInvitation() {
+        const groom = document.getElementById('formGroom').value.trim() || "Groom";
+        const bride = document.getElementById('formBride').value.trim() || "Bride";
+        const eventDate = document.getElementById('formDate').value.trim() || "Saturday, 20 December 2026";
+        const eventTime = document.getElementById('formTime').value.trim() || "6:30 PM";
+        const religionDate = document.getElementById('formCeremony').value.trim() || "Wedding Ceremony";
+        const location = document.getElementById('formLocation').value.trim() || "Venue";
+        
+        const statusDiv = document.getElementById('createStatus');
+        statusDiv.innerHTML = '⏳ Creating your invitation...';
+        const submitBtn = document.getElementById('submitCreateBtn');
+        submitBtn.disabled = true;
+        
+        try {
+            const newId = await createInvitation({ groom, bride, eventDate, eventTime, religionDate, location });
+            const fullLink = `${window.location.origin}${window.location.pathname}?id=${newId}`;
+            // show modal with link
+            const modal = document.getElementById('linkModal');
+            document.getElementById('modalLinkUrl').innerText = fullLink;
+            modal.style.display = 'flex';
+            
+            // store link for share/copy
+            window.currentGeneratedLink = fullLink;
+            statusDiv.innerHTML = '✅ Invitation created! Check the modal to copy link.';
+            // reset create form if needed
+        } catch (err) {
+            statusDiv.innerHTML = '❌ Error: Could not create invitation. Check console.';
+            console.error(err);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+    
+    // Modal copy/share handlers
+    function setupModal() {
+        const modal = document.getElementById('linkModal');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const copyBtn = document.getElementById('modalCopyBtn');
+        const shareBtn = document.getElementById('modalShareBtn');
+        
+        closeBtn.onclick = () => { modal.style.display = 'none'; };
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+        
+        copyBtn.onclick = () => {
+            if (window.currentGeneratedLink) {
+                navigator.clipboard.writeText(window.currentGeneratedLink);
+                showToast('📋 Link copied to clipboard!');
+            }
+        };
+        shareBtn.onclick = () => {
+            if (window.currentGeneratedLink && navigator.share) {
+                navigator.share({ title: 'Wedding Invitation', url: window.currentGeneratedLink }).catch(()=>{});
+            } else if (window.currentGeneratedLink) {
+                navigator.clipboard.writeText(window.currentGeneratedLink);
+                showToast('Link copied (share unavailable)');
+            }
+        };
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('navHomeBtn').onclick = () => { window.location.href = window.location.pathname; };
+    document.getElementById('navCreateBtn').onclick = () => { showPage('create'); };
+    document.getElementById('homeCreateBtn').onclick = () => { showPage('create'); };
+    document.getElementById('submitCreateBtn').onclick = generateInvitation;
+    
+    setupModal();
+    handleInvitationId();
+</script>
+</body>
+</html>
