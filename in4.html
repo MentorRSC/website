@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Eternal Vows | Wedding Invitation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e9dfd4 0%, #dccfbf 100%);
+            font-family: 'Georgia', 'Times New Roman', 'Segoe UI', serif;
+            min-height: 100vh;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Professional envelope/card style */
+        .invitation-card {
+            max-width: 780px;
+            width: 100%;
+            margin: 0 auto;
+            background: #fffef7;
+            border-radius: 56px 28px 56px 28px;
+            box-shadow: 0 35px 55px -18px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .invitation-card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Header with home icon */
+        .card-header {
+            background: #fffaf3;
+            padding: 1rem 2rem 0.6rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #eedccb;
+        }
+
+        .home-link {
+            background: #f3e7de;
+            border-radius: 50px;
+            padding: 0.5rem 1rem 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            color: #8b5a3c;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            border: 1px solid #e5d2c2;
+            cursor: pointer;
+        }
+
+        .home-link:hover {
+            background: #e8d5c5;
+            transform: scale(0.98);
+            color: #5e3520;
+        }
+
+        .home-icon {
+            font-size: 1.1rem;
+        }
+
+        .letter-wrapper {
+            padding: 2rem 2rem 1.5rem 2rem;
+            transition: opacity 0.3s ease;
+        }
+
+        /* ========= SKELETON LOADING STYLES ========= */
+        .skeleton-wrapper {
+            padding: 2rem 2rem 1.5rem 2rem;
+        }
+
+        .skeleton-title {
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 36px;
+            height: 100px;
+            margin-bottom: 2rem;
+        }
+
+        .skeleton-names {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.2rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .skeleton-name {
+            width: 120px;
+            height: 48px;
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 40px;
+        }
+
+        .skeleton-heart {
+            width: 40px;
+            height: 40px;
+            background: #e2cfbe;
+            border-radius: 50%;
+        }
+
+        .skeleton-line {
+            height: 28px;
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 30px;
+            margin: 1rem 0;
+        }
+
+        .skeleton-datetime {
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 32px;
+            height: 110px;
+            margin: 1rem 0;
+        }
+
+        .skeleton-location {
+            height: 70px;
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 28px;
+            margin: 0.8rem 0;
+        }
+
+        .skeleton-countdown {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.8rem 0;
+        }
+
+        .skeleton-countdown-item {
+            width: 80px;
+            height: 85px;
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 28px;
+        }
+
+        .skeleton-rsvp {
+            height: 120px;
+            background: linear-gradient(90deg, #e2d5c8 25%, #f2e6db 50%, #e2d5c8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 48px;
+            margin: 1.8rem 0 1rem;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* real content fade */
+        .real-content {
+            animation: fadeInUp 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .title-3d-box {
+            background: linear-gradient(115deg, #fcf6ed, #fff6ea);
+            border-radius: 36px;
+            padding: 1rem 0.8rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 15px 25px -12px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,250,240,0.9);
+            border: 1px solid #eedbcb;
+        }
+
+        .title-3d-box h2 {
+            font-size: 1.6rem;
+            letter-spacing: 3px;
+            color: #b45f3a;
+            font-weight: 500;
+            word-break: keep-all;
+        }
+
+        .exclusive-text {
+            font-size: 0.85rem;
+            background: #ebd9cb;
+            display: inline-block;
+            padding: 0.25rem 1.2rem;
+            border-radius: 50px;
+            color: #5d3a26;
+            margin-top: 9px;
+            font-style: italic;
+        }
+
+        .couple-area {
+            text-align: center;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .names-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #a34128;
+        }
+
+        .love-symbol {
+            font-size: 2.1rem;
+            color: #db8a6b;
+            animation: gentlePulse 2s infinite;
+        }
+
+        @keyframes gentlePulse {
+            0% { transform: scale(1); text-shadow: 0 0 0px #ffb7a7; }
+            50% { transform: scale(1.08); text-shadow: 0 0 4px #ffb7a7; }
+            100% { transform: scale(1); text-shadow: 0 0 0px #ffb7a7; }
+        }
+
+        .request-line {
+            font-style: italic;
+            font-size: 1.1rem;
+            color: #644e3d;
+            margin: 1.2rem 0;
+            border-top: 1px solid #f0dbc9;
+            border-bottom: 1px solid #f0dbc9;
+            padding: 0.8rem 0;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .datetime-block {
+            background: #fdf5ec;
+            padding: 1.2rem;
+            border-radius: 32px;
+            margin: 1rem 0;
+            text-align: center;
+            box-shadow: inset 0 1px 3px #00000008, 0 5px 10px rgba(0,0,0,0.02);
+        }
+
+        .main-date {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #bc623f;
+        }
+
+        .time-detail {
+            font-size: 1.1rem;
+            margin-top: 6px;
+            color: #785e4b;
+        }
+
+        .religion-date {
+            background: #e9dbcf;
+            display: inline-block;
+            padding: 0.4rem 1.3rem;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            margin: 12px 0;
+            color: #543a28;
+        }
+
+        .location-box {
+            background: #f5ebe2;
+            border-radius: 28px;
+            padding: 0.9rem;
+            margin: 0.8rem 0;
+            text-align: center;
+            border-left: 6px solid #d4a179;
+            font-weight: 500;
+            color: #4d3524;
+        }
+
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1.8rem 0;
+        }
+
+        .countdown-box {
+            background: #2e2a24;
+            color: #fff3e0;
+            width: 80px;
+            padding: 0.8rem 0;
+            text-align: center;
+            border-radius: 28px;
+            box-shadow: 0 7px 0 #181612;
+            transition: transform 0.1s;
+        }
+
+        .countdown-number {
+            font-size: 1.85rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .countdown-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rsvp-area {
+            background: #fcf2e9;
+            margin: 1.8rem 0 1rem;
+            border-radius: 48px;
+            padding: 1rem 1rem 1.2rem;
+            text-align: center;
+        }
+
+        .rsvp-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 0.9rem;
+        }
+
+        .attend-btn {
+            border: none;
+            padding: 0.6rem 1.8rem;
+            border-radius: 80px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .attend-yes {
+            background: #bd7a56;
+            color: white;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+        }
+
+        .attend-yes:hover {
+            background: #a5623f;
+            transform: translateY(-2px);
+        }
+
+        .attend-no {
+            background: #b2a28f;
+            color: #2b2620;
+        }
+
+        .attend-no:hover {
+            background: #9b8c7a;
+        }
+
+        .status-msg {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 0.8rem;
+            color: #567843;
+            font-weight: 500;
+        }
+
+        footer {
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 1rem 0.5rem 0.3rem;
+            color: #b49178;
+            border-top: 1px dashed #ecdacb;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
+
+        /* error state style */
+        .error-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .error-container h3 {
+            color: #b45a3a;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 550px) {
+            .letter-wrapper {
+                padding: 1.2rem;
+            }
+            .names-row {
+                font-size: 1.6rem;
+            }
+            .countdown-box {
+                width: 65px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invitation-card">
+    <div class="card-header">
+        <a href="in41" id="homeIconBtn" class="home-link">
+            <span class="home-icon">🏠</span> 
+        </a>
+    </div>
+    <!-- Dynamic container will be replaced either by skeleton or real content -->
+    <div id="mainContainer"></div>
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // CONFIG: Replace with your EXACT Google Apps Script Web App URL
+    // --------------------------------------------------------------
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXotXOppQu8jGsHDttryfMam5XZFw9hwAx4WR689y9d-n-Qtr8tdvuXFnkQC1GJ1h2/exec";
+
+    // Helper: get invitation ID from URL parameter 'id'
+    function getInvitationId() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+
+    // ---------- FORMAT DATE & TIME FROM RAW ISO / JS DATE STRINGS ----------
+    function parseAndFormatDateAndTime(rawDateStr, rawTimeStr) {
+        let finalDate = rawDateStr;
+        let finalTime = rawTimeStr;
+        
+        const cleanDate = (input) => {
+            if (!input) return null;
+            if (typeof input === 'string' && (input.includes('T') || input.includes('Z') || /^\d{4}-\d{2}-\d{2}/.test(input))) {
+                let dateObj = new Date(input);
+                if (!isNaN(dateObj.getTime()) && dateObj.getFullYear() > 1900 && dateObj.getFullYear() < 2100) {
+                    return dateObj;
+                }
+            }
+            let tentative = new Date(input);
+            if (!isNaN(tentative.getTime()) && tentative.getFullYear() > 1900 && tentative.getFullYear() < 2100) {
+                return tentative;
+            }
+            return null;
+        };
+        
+        const cleanTime = (timeInput) => {
+            if (!timeInput) return null;
+            if (timeInput.includes('T') || timeInput.includes('Z')) {
+                let dt = new Date(timeInput);
+                if (!isNaN(dt.getTime())) {
+                    return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                }
+            }
+            if (timeInput.match(/(\d{1,2}):(\d{2})\s?(AM|PM)/i)) {
+                return timeInput;
+            }
+            let parts = timeInput.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+            if (parts) {
+                let hour = parseInt(parts[1]);
+                let minute = parts[2];
+                let ampm = hour >= 12 ? 'PM' : 'AM';
+                let hour12 = hour % 12 || 12;
+                return `${hour12}:${minute} ${ampm}`;
+            }
+            return timeInput;
+        };
+        
+        let dateObj = cleanDate(rawDateStr);
+        if (dateObj) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            finalDate = dateObj.toLocaleDateString('en-US', options);
+        }
+        
+        let cleanedTime = cleanTime(rawTimeStr);
+        if (cleanedTime) finalTime = cleanedTime;
+        else if (rawTimeStr && (rawTimeStr.includes('T') || rawTimeStr.includes(':'))) {
+            let fallbackDate = new Date(rawTimeStr);
+            if (!isNaN(fallbackDate.getTime())) {
+                finalTime = fallbackDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            } else {
+                finalTime = rawTimeStr;
+            }
+        } else {
+            finalTime = rawTimeStr || "Evening";
+        }
+        
+        if (finalDate.includes('1899') || finalDate.includes('1900') || (typeof finalDate === 'string' && finalDate.match(/1899|1900/))) {
+            finalDate = "Saturday, 25 December 2026";
+        }
+        if (finalTime && finalTime.includes('1899')) finalTime = "6:30 PM";
+        
+        return { formattedDate: finalDate, formattedTime: finalTime };
+    }
+    
+    // ========== FETCH INVITATION FROM APPS SCRIPT ==========
+    async function fetchInvitation(id) {
+        const url = `${SCRIPT_URL}?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        return data;
+    }
+    
+    // ========== UPDATE RSVP (no-cors mode) ==========
+    async function updateRSVP(id, response) {
+        try {
+            const formData = new URLSearchParams();
+            formData.append('action', 'updateRSVP');
+            formData.append('id', id);
+            formData.append('response', response);
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+            return true;
+        } catch (err) {
+            console.warn("RSVP warning:", err);
+            return false;
+        }
+    }
+    
+    // Countdown logic
+    let countdownInterval = null;
+    function startCountdownForEvent(formattedDateStr, formattedTimeStr, eventRawDate, eventRawTime) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        const widget = document.getElementById('countdownWidget');
+        if (!widget) return;
+        
+        let targetDate = null;
+        // try to build date from original raw data first, else from formatted strings
+        let rawCombined = null;
+        if (eventRawDate && eventRawTime) {
+            rawCombined = new Date(`${eventRawDate}T${eventRawTime}`);
+            if (isNaN(rawCombined)) rawCombined = new Date(eventRawDate);
+        }
+        if (!rawCombined || isNaN(rawCombined)) {
+            // fallback: parse formatted strings gently
+            let testDate = new Date(formattedDateStr + " " + formattedTimeStr);
+            if (!isNaN(testDate)) rawCombined = testDate;
+        }
+        if (!rawCombined || isNaN(rawCombined) || rawCombined.getFullYear() < 2000) {
+            // fallback hardcoded Dec 2026
+            rawCombined = new Date(2026, 11, 25, 18, 30, 0);
+        }
+        
+        function updateCounter() {
+            const now = new Date();
+            const diff = rawCombined - now;
+            if (diff <= 0) {
+                widget.innerHTML = '<div class="status-msg">🎉 Today is the celebration! 🎉</div>';
+                if (countdownInterval) clearInterval(countdownInterval);
+                return;
+            }
+            const days = Math.floor(diff / (1000*60*60*24));
+            const hours = Math.floor((diff % (86400000)) / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            widget.innerHTML = `
+                <div class="countdown-box"><div class="countdown-number">${days}</div><div class="countdown-label">Days</div></div>
+                <div class="countdown-box"><div class="countdown-number">${hours}</div><div class="countdown-label">Hours</div></div>
+                <div class="countdown-box"><div class="countdown-number">${mins}</div><div class="countdown-label">Mins</div></div>
+                <div class="countdown-box"><div class="countdown-number">${secs}</div><div class="countdown-label">Secs</div></div>
+            `;
+        }
+        updateCounter();
+        countdownInterval = setInterval(updateCounter, 1000);
+    }
+    
+    // RENDER ACTUAL INVITATION (no guest name displayed)
+    function renderRealContent(data) {
+        // Sanitize data fields
+        const groom = data.groom || "Vikram";
+        const bride = data.bride || "Ananya";
+        const rawEventDate = data.eventDate || "2026-12-25T18:30:00.000Z";
+        const rawEventTime = data.eventTime || "18:30";
+        const religionDate = data.religionDate || "Vedic Ceremony | 6:00 PM";
+        const location = data.location || "Amrit Convention, New Delhi";
+        
+        const { formattedDate, formattedTime } = parseAndFormatDateAndTime(rawEventDate, rawEventTime);
+        
+        // Build HTML structure
+        const realHtml = `
+            <div class="real-content">
+                <div class="title-3d-box">
+                    <h2>✨ 𝐄𝐭𝐞𝐫𝐧𝐚𝐥 𝐕𝐨𝐰𝐬 ✨</h2>
+                    <div class="exclusive-text">humbly invite you to celebrate</div>
+                </div>
+                <div class="couple-area">
+                    <div class="names-row">
+                        <span id="groomName">${escapeHtml(groom)}</span>
+                        <span class="love-symbol">❤️</span>
+                        <span id="brideName">${escapeHtml(bride)}</span>
+                    </div>
+                </div>
+                <div class="request-line">request the honor of your presence at their sacred union</div>
+                <div class="datetime-block">
+                    <div class="main-date" id="eventDate">${escapeHtml(formattedDate)}</div>
+                    <div class="time-detail" id="eventTime">${escapeHtml(formattedTime)}</div>
+                </div>
+                <div class="religion-date" id="religionDate">🌼 ${escapeHtml(religionDate)}</div>
+                <div class="location-box" id="locationText">📍 ${escapeHtml(location)}</div>
+                <div id="countdownWidget" class="countdown-container"></div>
+                <div class="rsvp-area">
+                    <div>💌 note 💌</div>
+                    <div class="rsvp-buttons">
+                        <button class="attend-btn attend-yes" id="rsvpYes">✔️ Joyfully Accept</button>
+                        <button class="attend-btn attend-no" id="rsvpNo">❌ Regretfully Decline</button>
+                    </div>
+                    <div id="rsvpFeedback" class="status-msg"></div>
+                </div>
+                <footer>🌹 With gratitude and blessings 🌹</footer>
+            </div>
+        `;
+        return realHtml;
+    }
+    
+    // simple escape to avoid injection
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+    
+    // Skeleton Loader HTML
+    function getSkeletonHTML() {
+        return `
+            <div class="skeleton-wrapper">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-names">
+                    <div class="skeleton-name"></div>
+                    <div class="skeleton-heart"></div>
+                    <div class="skeleton-name"></div>
+                </div>
+                <div class="skeleton-line" style="width: 80%; margin: 1rem auto;"></div>
+                <div class="skeleton-datetime"></div>
+                <div class="skeleton-line" style="width: 60%; margin: 0.5rem auto;"></div>
+                <div class="skeleton-location"></div>
+                <div class="skeleton-countdown">
+                    <div class="skeleton-countdown-item"></div>
+                    <div class="skeleton-countdown-item"></div>
+                    <div class="skeleton-countdown-item"></div>
+                    <div class="skeleton-countdown-item"></div>
+                </div>
+                <div class="skeleton-rsvp"></div>
+                <div style="height: 30px; width: 100%; background: #f0e5da; border-radius: 20px; margin-top: 1rem;"></div>
+            </div>
+        `;
+    }
+    
+    // Error UI (graceful)
+    function renderErrorUI(message) {
+        return `
+            <div class="letter-wrapper error-container">
+                <div class="title-3d-box">
+                    <h2>✨ Invitation Unavailable ✨</h2>
+                </div>
+                <p style="color: #8b5a3c; margin: 1.5rem 0;">${escapeHtml(message)}</p>
+                <div class="home-link" id="errorHomeBtn" style="display: inline-flex; cursor:pointer;">🏠 Return to Home</div>
+            </div>
+        `;
+    }
+    
+    // global variables
+    let currentId = null;
+    let rsvpButtonsAttached = false;
+    
+    // attach real event handlers after content injected
+    function attachRealEventHandlers(id) {
+        const yesBtn = document.getElementById('rsvpYes');
+        const noBtn = document.getElementById('rsvpNo');
+        const feedbackDiv = document.getElementById('rsvpFeedback');
+        if (yesBtn && noBtn && feedbackDiv) {
+            // remove previous listeners to avoid duplicates
+            const newYes = yesBtn.cloneNode(true);
+            const newNo = noBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYes, yesBtn);
+            noBtn.parentNode.replaceChild(newNo, noBtn);
+            
+            const finalYes = document.getElementById('rsvpYes');
+            const finalNo = document.getElementById('rsvpNo');
+            
+            finalYes.onclick = async () => {
+                if (id) {
+                    feedbackDiv.innerHTML = '⏳ Sending your warm response...';
+                    await updateRSVP(id, 'yes');
+                    feedbackDiv.innerHTML = '✅ We joyfully await your presence! Thank you. 🎉';
+                } else {
+                    feedbackDiv.innerHTML = '💝 Your RSVP is cherished (demo mode)';
+                }
+            };
+            finalNo.onclick = async () => {
+                if (id) {
+                    feedbackDiv.innerHTML = '⏳ Recording ...';
+                    await updateRSVP(id, 'no');
+                    feedbackDiv.innerHTML = '💔 You will be missed. Thank you for informing us.';
+                } else {
+                    feedbackDiv.innerHTML = '📝 Response recorded. We understand.';
+                }
+            };
+        }
+    }
+    
+    // display countdown after real content rendered
+    function initCountdownAfterRender(data) {
+        const rawDate = data.eventDate || "2026-12-25T18:30:00.000Z";
+        const rawTime = data.eventTime || "18:30";
+        const { formattedDate, formattedTime } = parseAndFormatDateAndTime(rawDate, rawTime);
+        startCountdownForEvent(formattedDate, formattedTime, rawDate, rawTime);
+    }
+    
+    // main flow: show skeleton, fetch data, replace with real or error
+    async function init() {
+        const container = document.getElementById('mainContainer');
+        if (!container) return;
+        
+        // Show skeleton immediately to avoid flash of false info
+        container.innerHTML = getSkeletonHTML();
+        
+        const id = getInvitationId();
+        const homeBtn = document.getElementById('homeIconBtn');
+        if (homeBtn) {
+            homeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                redirectHome();
+            });
+        }
+        
+        if (id) {
+            currentId = id;
+            try {
+                const result = await fetchInvitation(id);
+                if (result && result.status === 'success' && result.invitation) {
+                    const invitationData = result.invitation;
+                    const realHtml = renderRealContent(invitationData);
+                    container.innerHTML = realHtml;
+                    // After DOM updated, attach RSVP handlers and countdown
+                    attachRealEventHandlers(currentId);
+                    initCountdownAfterRender(invitationData);
+                } else {
+                    // fallback: invitation not found
+                    container.innerHTML = renderErrorUI("We couldn't locate this invitation. Please verify the link or contact the couple.");
+                    const errorHome = document.getElementById('errorHomeBtn');
+                    if (errorHome) errorHome.addEventListener('click', () => redirectHome());
+                }
+            } catch (err) {
+                console.error("Load error:", err);
+                container.innerHTML = renderErrorUI("Network issue or server unavailable. Please refresh or try again later.");
+                const errorHome = document.getElementById('errorHomeBtn');
+                if (errorHome) errorHome.addEventListener('click', () => redirectHome());
+            }
+        } else {
+            // No ID in URL: show demo/default invitation with polished data (no skeleton needed, but already skeleton is replaced quickly)
+            // we still want to display default beautiful invitation
+            const defaultData = {
+                groom: "Vikram",
+                bride: "Ananya",
+                eventDate: "2026-12-25T18:30:00.000Z",
+                eventTime: "18:30",
+                religionDate: "Vedic Ceremony | 6:00 PM",
+                location: "Amrit Convention, New Delhi"
+            };
+            const realHtml = renderRealContent(defaultData);
+            container.innerHTML = realHtml;
+            attachRealEventHandlers(null); // no id for demo
+            initCountdownAfterRender(defaultData);
+        }
+    }
+    
+    function redirectHome() {
+        const baseUrl = window.location.origin + window.location.pathname;
+        window.location.href = baseUrl;
+    }
+    
+    // start application
+    init();
+</script>
+</body>
+</html>
