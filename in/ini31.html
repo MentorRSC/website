@@ -187,7 +187,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(44,33,24,0.9);
+            background: rgba(44,33,24,0.95);
             backdrop-filter: blur(8px);
             z-index: 1000;
             justify-content: center;
@@ -223,6 +223,31 @@
             to { transform: scale(1); opacity: 1; }
         }
 
+        /* Close Icon Styles */
+        .close-icon {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--gold-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .close-icon:hover {
+            color: var(--ink);
+            background: var(--gold-light);
+            transform: rotate(90deg);
+        }
+
         .modal-container h3 {
             font-family: 'Cinzel', serif;
             color: var(--gold-dark);
@@ -230,6 +255,7 @@
             margin-bottom: 0.5rem;
             text-align: center;
             font-weight: 400;
+            padding-right: 20px;
         }
 
         .modal-container h4 {
@@ -462,11 +488,11 @@
 <!-- CREATE INVITATION MODAL (with email field) -->
 <div id="formModal" class="modal-overlay">
     <div class="modal-container">
+        <span class="close-icon" id="closeFormModalIcon">&times;</span>
         <h3>✦ Sacred Union ✦</h3>
         <h4>fill the vows of celebration</h4>
         <div class="form-group"><input type="text" id="formGroom" placeholder="Groom's name" value="Vikram"></div>
         <div class="form-group"><input type="text" id="formBride" placeholder="Bride's name" value="Ananya"></div>
-        <!-- NEW: Email field -->
         <div class="form-group">
             <input type="email" id="formEmail" placeholder="Couple's contact email (for records)" value="hello@eternalvows.com">
             <div class="email-hint">✧ The invitation will be linked to this email for updates ✧</div>
@@ -486,6 +512,7 @@
 <!-- SUCCESS MODAL -->
 <div id="successModal" class="modal-overlay">
     <div class="modal-container">
+        <span class="close-icon" id="closeSuccessModalIcon">&times;</span>
         <h3>🎉 Invitation Blessed 🎉</h3>
         <p style="text-align:center; font-style:italic;">Your unique link is ready to share</p>
         <div class="link-container">
@@ -502,7 +529,7 @@
 
 <script>
     // ==================== CONFIGURATION ====================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXotXOppQu8jGsHDttryfMam5XZFw9hwAx4WR689y9d-n-Qtr8tdvuXFnkQC1GJ1h2/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9Y7jOAlzUcLBYbJdfRzymOQZAxBGKlB6XHCa0kT8lhvciRfwB7iygX_7z2ymhwUk/exec";
     
     function showToast(message) {
         let toast = document.createElement('div');
@@ -518,7 +545,7 @@
         formData.append('action', 'createInvitation');
         formData.append('groom', data.groom);
         formData.append('bride', data.bride);
-        formData.append('email', data.email);          // <-- NEW email field passed to Apps Script
+        formData.append('email', data.email);
         formData.append('eventDate', data.eventDate);
         formData.append('eventTime', data.eventTime);
         formData.append('religionDate', data.religionDate);
@@ -536,14 +563,13 @@
             return result;
         } catch (err) {
             console.warn("CORS fallback, generating demo ID with email", err);
-            // Mock ID generation, but email is still logged for demo
             const mockId = 'INV_' + Math.random().toString(36).substr(2, 8).toUpperCase();
             console.log(`Mock creation with email: ${data.email}`);
             return { status: "created", newId: mockId };
         }
     }
     
-    // FETCH INVITATION (unchanged)
+    // FETCH INVITATION
     async function fetchInvitation(id) {
         try {
             const url = `${SCRIPT_URL}?id=${encodeURIComponent(id)}&t=${Date.now()}`;
@@ -557,7 +583,7 @@
         }
     }
     
-    // UPDATE RSVP (unchanged)
+    // UPDATE RSVP
     async function updateRSVP(id, response) {
         try {
             const formData = new URLSearchParams();
@@ -569,7 +595,7 @@
         } catch (err) { return false; }
     }
     
-    // RENDER INVITATION (Eternal Vows Theme) - unchanged but note email is not displayed on card, only stored.
+    // RENDER INVITATION
     let countdownInterval = null;
     function formatDateDisplay(rawDate, rawTime) {
         let finalDate = rawDate, finalTime = rawTime;
@@ -687,12 +713,22 @@
         }
     }
     
-    // MODAL LOGIC
+    // MODAL LOGIC - Prevent closing on overlay click
     const formModal = document.getElementById('formModal');
     const successModal = document.getElementById('successModal');
-    function openFormModal() { formModal.style.display = 'flex'; document.getElementById('formStatusMsg').innerHTML = ''; }
-    function closeFormModal() { formModal.style.display = 'none'; }
-    function closeSuccessModal() { successModal.style.display = 'none'; }
+    
+    function openFormModal() { 
+        formModal.style.display = 'flex'; 
+        document.getElementById('formStatusMsg').innerHTML = ''; 
+    }
+    
+    function closeFormModal() { 
+        formModal.style.display = 'none'; 
+    }
+    
+    function closeSuccessModal() { 
+        successModal.style.display = 'none'; 
+    }
     
     async function handleFormSubmit() {
         const groom = document.getElementById('formGroom').value.trim() || "Vikram";
@@ -703,7 +739,6 @@
         const religionDate = document.getElementById('formCeremony').value.trim() || "Vedic Ceremony";
         const location = document.getElementById('formLocation').value.trim() || "Amrit Convention, New Delhi";
         
-        // Basic email validation (optional but polite)
         const emailPattern = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
         if (email && !emailPattern.test(email)) {
             const statusDiv = document.getElementById('formStatusMsg');
@@ -739,7 +774,7 @@
         }
     }
     
-    // EVENT LISTENERS (including new email field support)
+    // EVENT LISTENERS
     document.getElementById('openFormModalBtn').onclick = openFormModal;
     document.getElementById('cancelFormBtn').onclick = closeFormModal;
     document.getElementById('submitFormBtn').onclick = handleFormSubmit;
@@ -747,7 +782,13 @@
     document.getElementById('homeNavBtn').onclick = () => { window.location.href = window.location.pathname; };
     document.getElementById('successCopyBtn').onclick = () => { if(window.currentCreatedLink) { navigator.clipboard.writeText(window.currentCreatedLink); showToast('📋 Invitation link copied'); } };
     document.getElementById('successShareBtn').onclick = () => { if(window.currentCreatedLink && navigator.share) navigator.share({ title: 'Eternal Vows', text: 'You are invited', url: window.currentCreatedLink }); else if(window.currentCreatedLink) { navigator.clipboard.writeText(window.currentCreatedLink); showToast('Link copied (share unavailable)'); } };
-    window.onclick = (e) => { if (e.target === formModal) closeFormModal(); if (e.target === successModal) closeSuccessModal(); };
+    
+    // Close icons
+    document.getElementById('closeFormModalIcon').onclick = closeFormModal;
+    document.getElementById('closeSuccessModalIcon').onclick = closeSuccessModal;
+    
+    // REMOVED: window.onclick to prevent closing on overlay click
+    // Modals will ONLY close via Cancel button, Close button, or X icon
     
     handleInvitationId();
 </script>
