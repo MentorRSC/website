@@ -249,4 +249,168 @@
         <div class="loader show" id="loader">
             <div class="spinner"></div>
         </div>
-        <div id
+        <div id="content" style="display:none;"></div>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        const guestId = urlParams.get('guestId');
+        const thankyou = urlParams.get('thankyou');
+
+        if (thankyou === '1') {
+            document.getElementById('invitationCard').innerHTML = `
+                <div class="content">
+                    <div class="ornament">✦ ✦ ✦</div>
+                    <h1>Thank You!</h1>
+                    <div class="divider"></div>
+                    <p style="font-size:1.2rem; margin: 2rem 0;">Your response has been recorded.</p>
+                    <p>We look forward to celebrating with you! ❤️</p>
+                    <footer>With gratitude and blessings</footer>
+                </div>
+            `;
+        } else if (userId && guestId) {
+            loadInvitation();
+        } else {
+            document.getElementById('invitationCard').innerHTML = `
+                <div class="content">
+                    <div class="ornament">✦ ✦ ✦</div>
+                    <h1>Invalid Link</h1>
+                    <div class="divider"></div>
+                    <p style="margin: 2rem 0;">This invitation link appears to be invalid.</p>
+                    <p>Please check the link or contact the host.</p>
+                </div>
+            `;
+        }
+
+        async function loadInvitation() {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?userId=${userId}&guestId=${guestId}`, {
+                    method: 'GET'
+                });
+                const html = await response.text();
+                
+                // Extract invitation data from the HTML response
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Alternatively, we can call the API to get JSON data
+                const jsonResponse = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        action: 'getGuestInfo', 
+                        userId: userId, 
+                        guestId: guestId 
+                    })
+                });
+                const data = await jsonResponse.json();
+                
+                if (data.status === 'success') {
+                    renderInvitation(data);
+                } else {
+                    showError();
+                }
+            } catch (error) {
+                console.error('Error loading invitation:', error);
+                showError();
+            }
+        }
+
+        function renderInvitation(data) {
+            const guest = data.guest;
+            const user = data.user;
+            
+            document.getElementById('loader').classList.remove('show');
+            document.getElementById('content').style.display = 'block';
+            
+            document.getElementById('content').innerHTML = `
+                <div class="content">
+                    <div class="ornament">✦ ✦ ✦</div>
+                    <h1>You're Invited</h1>
+                    <div class="couple">
+                        <span>${escapeHtml(user.username)}</span> & <span>❤️</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="guest-name">Dear ${escapeHtml(guest.guestName)}</div>
+                    <div class="details">
+                        <div class="date">${escapeHtml(user.eventDate || 'Saturday, 14 June 2026')}</div>
+                        <div class="time">${escapeHtml(user.eventTime || '5:30 PM')}</div>
+                        <div class="location">${escapeHtml(user.location || 'Grand Venue')}</div>
+                    </div>
+                    <div class="rsvp-section">
+                        <h3>Kindly Respond</h3>
+                        <div class="rsvp-buttons">
+                            <button class="btn btn-yes" onclick="submitRSVP('attending')">🎉 Joyfully Accept</button>
+                            <button class="btn btn-no" onclick="submitRSVP('declined')">💔 Regretfully Decline</button>
+                        </div>
+                        <div id="messageContainer" class="message"></div>
+                    </div>
+                    <footer>With gratitude and blessings</footer>
+                </div>
+            `;
+        }
+
+        async function submitRSVP(response) {
+            const messageDiv = document.getElementById('messageContainer');
+            const buttons = document.querySelectorAll('.btn');
+            
+            buttons.forEach(btn => btn.disabled = true);
+            messageDiv.className = 'message';
+            messageDiv.textContent = 'Submitting your response...';
+            messageDiv.style.display = 'block';
+            
+            try {
+                const result = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'guestRSVP',
+                        userId: userId,
+                        guestId: guestId,
+                        response: response
+                    })
+                });
+                const data = await result.json();
+                
+                if (data.status === 'updated') {
+                    messageDiv.textContent = '✓ Thank you! Your response has been recorded.';
+                    messageDiv.className = 'message success';
+                    setTimeout(() => {
+                        window.location.href = window.location.pathname + `?userId=${userId}&guestId=${guestId}&thankyou=1`;
+                    }, 2000);
+                } else {
+                    messageDiv.textContent = '❌ ' + (data.message || 'Something went wrong');
+                    messageDiv.className = 'message error';
+                    buttons.forEach(btn => btn.disabled = false);
+                }
+            } catch (error) {
+                messageDiv.textContent = '❌ Network error. Please try again.';
+                messageDiv.className = 'message error';
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+        }
+
+        function showError() {
+            document.getElementById('loader').classList.remove('show');
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('content').innerHTML = `
+                <div class="content">
+                    <div class="ornament">✦ ✦ ✦</div>
+                    <h1>Invitation Not Found</h1>
+                    <div class="divider"></div>
+                    <p style="margin: 2rem 0;">We couldn't find this invitation.</p>
+                    <p>Please check the link or contact the host.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
