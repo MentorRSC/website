@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Eternal Vows - Wedding Invitation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .invitation-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header-decoration { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); height: 8px; }
+        .content { padding: 40px 30px; }
+        .guest-name-section { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
+        .guest-label { font-size: 14px; letter-spacing: 3px; color: #999; margin-bottom: 10px; }
+        .guest-name { font-size: 28px; color: #333; font-weight: bold; font-family: 'Playfair Display', 'Georgia', serif; }
+        .title { text-align: center; margin-bottom: 30px; }
+        .exclusive { font-size: 12px; letter-spacing: 3px; color: #f5576c; margin-bottom: 15px; }
+        h1 { font-size: 48px; color: #333; margin: 10px 0; font-family: 'Playfair Display', 'Georgia', serif; }
+        .couple-names { font-size: 32px; color: #764ba2; margin: 20px 0; font-weight: bold; }
+        .invitation-text { font-size: 16px; line-height: 1.8; color: #666; text-align: center; margin: 30px 0; font-style: italic; }
+        .date-time { text-align: center; margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 15px; }
+        .date { font-size: 24px; color: #f5576c; font-weight: bold; }
+        .time { font-size: 18px; color: #764ba2; margin-top: 10px; }
+        .countdown { display: flex; justify-content: space-around; margin: 30px 0; text-align: center; }
+        .countdown-item { flex: 1; }
+        .countdown-number { font-size: 36px; font-weight: bold; color: #f5576c; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .countdown-label { font-size: 12px; color: #999; margin-top: 5px; text-transform: uppercase; }
+        .rsvp-section { margin: 30px 0; }
+        .rsvp-buttons { display: flex; gap: 15px; margin-bottom: 20px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; font-family: 'Georgia', serif; }
+        .btn-attending { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-attending:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .btn-not-attending { background: #f0f0f0; color: #666; }
+        .btn-not-attending:hover { background: #e0e0e0; }
+        .guest-count-section { display: none; margin: 20px 0; padding: 20px; background: #f9f9f9; border-radius: 10px; text-align: center; }
+        .guest-count-control { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 20px 0; }
+        .count-btn { width: 40px; height: 40px; border: none; background: white; font-size: 20px; cursor: pointer; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .guest-count { font-size: 24px; font-weight: bold; min-width: 50px; }
+        .confirm-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 25px; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        .sorry-message { display: none; text-align: center; padding: 20px; background: #fff3f3; border-radius: 10px; margin: 20px 0; }
+        .sorry-message p { color: #f5576c; margin-bottom: 15px; }
+        .loading { text-align: center; padding: 50px; color: white; font-size: 18px; }
+        .message-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 25px; font-size: 14px; z-index: 1000; display: none; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">Loading your invitation...</div>
+    
+    <div id="invitationCard" class="invitation-card" style="display: none;">
+        <div class="header-decoration"></div>
+        <div class="content">
+            <div class="guest-name-section">
+                <div class="guest-label">✦ EXCLUSIVE INVITATION FOR ✦</div>
+                <div class="guest-name" id="guestNameDisplay">Loading...</div>
+            </div>
+
+            <div class="title">
+                <div class="exclusive" id="occasionDisplay">Wedding Ceremony</div>
+                <div class="couple-names" id="coupleNames">Loading...</div>
+                <div class="invitation-text" id="invitationText">
+                    together with their families<br>
+                    request the honour of your presence at their sacred union
+                </div>
+            </div>
+
+            <div class="date-time">
+                <div class="date" id="eventDate">Loading...</div>
+                <div class="time" id="eventTime">Loading...</div>
+                <div id="ceremonyDetails" style="font-size: 14px; color: #999; margin-top: 10px;"></div>
+            </div>
+
+            <div class="countdown" id="countdown">
+                <div class="countdown-item"><div class="countdown-number" id="days">0</div><div class="countdown-label">Days</div></div>
+                <div class="countdown-item"><div class="countdown-number" id="hours">0</div><div class="countdown-label">Hrs</div></div>
+                <div class="countdown-item"><div class="countdown-number" id="minutes">0</div><div class="countdown-label">Min</div></div>
+                <div class="countdown-item"><div class="countdown-number" id="seconds">0</div><div class="countdown-label">Sec</div></div>
+            </div>
+
+            <div class="location" id="locationDisplay" style="text-align: center; color: #666; margin: 10px 0;"></div>
+
+            <div class="rsvp-section">
+                <div class="rsvp-buttons">
+                    <button class="btn btn-attending" id="attendingBtn">✨ Joyful Acceptance ✨</button>
+                    <button class="btn btn-not-attending" id="notAttendingBtn">🌸 With Warm Understanding 🌸</button>
+                </div>
+
+                <div id="guestCountSection" class="guest-count-section">
+                    <p>Number of guests attending (including yourself)</p>
+                    <div class="guest-count-control">
+                        <button class="count-btn" id="decrementBtn">−</button>
+                        <span class="guest-count" id="guestCount">1</span>
+                        <button class="count-btn" id="incrementBtn">+</button>
+                    </div>
+                    <button class="confirm-btn" id="confirmBtn">Confirm →</button>
+                </div>
+
+                <div id="sorryMessage" class="sorry-message">
+                    <p>We are truly sorry to hear that you cannot make it.</p>
+                    <p>You will be dearly missed. Thank you for letting us know.</p>
+                    <button class="confirm-btn" id="acknowledgeBtn">Acknowledged</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastMessage" class="message-toast"></div>
+
+    <script>
+        // ============ CONFIGURATION ============
+        // THIS SHOULD BE YOUR GOOGLE APPS SCRIPT WEB APP URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+        
+        // Global variables
+        let invitationId = null;
+        let guestId = null;
+        let invitationData = null;
+        let currentGuestCount = 1;
+        let currentStatus = null;
+        
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toastMessage');
+            toast.textContent = message;
+            toast.style.backgroundColor = isError ? '#f5576c' : '#333';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+        
+        function updateCountdown(targetDate) {
+            if (!targetDate) return;
+            const now = new Date();
+            const target = new Date(targetDate);
+            const diff = target - now;
+            
+            if (diff <= 0) {
+                document.getElementById('days').textContent = '0';
+                document.getElementById('hours').textContent = '0';
+                document.getElementById('minutes').textContent = '0';
+                document.getElementById('seconds').textContent = '0';
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
+        }
+        
+        // ============ API FUNCTIONS FOR YOUR BACKEND ============
+        
+        async function fetchInvitation(id, guestIdParam = null, guestNameFromUrl = null) {
+            // Build URL according to your doGet structure
+            let url = `${SCRIPT_URL}?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+            if (guestIdParam) url += `&guest=${encodeURIComponent(guestIdParam)}`;
+            
+            console.log('Fetching from URL:', url);
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.invitation) {
+                    // Override guest name if provided in URL
+                    if (guestNameFromUrl) {
+                        data.invitation.guestName = guestNameFromUrl;
+                    }
+                    return data.invitation;
+                } else if (data.status === 'not_found') {
+                    throw new Error('Invitation not found');
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+        
+        async function updateRSVP(status, guestCount = null) {
+            if (!invitationId) {
+                showToast('Invitation ID missing', true);
+                return false;
+            }
+            
+            // Using your backend's expected format (action: 'updateRSVP')
+            const payload = {
+                action: 'updateRSVP',
+                id: invitationId,
+                response: status // 'yes' or 'no'
+            };
+            
+            // Also update guest-specific sheet if guestId exists
+            if (guestId && guestId !== invitationId) {
+                // Also update the guest sheet using your guest management system
+                const guestPayload = {
+                    action: 'updateGuestRSVP',
+                    userId: invitationId,
+                    guestId: guestId,
+                    status: status
+                };
+                
+                // Update guest RSVP status
+                try {
+                    const guestResponse = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(guestPayload)
+                    });
+                    const guestResult = await guestResponse.json();
+                    console.log('Guest RSVP update:', guestResult);
+                    
+                    // If attending and count provided, update people count
+                    if (status === 'yes' && guestCount !== null) {
+                        const countPayload = {
+                            action: 'updateGuestPeopleCount',
+                            userId: invitationId,
+                            guestId: guestId,
+                            count: guestCount
+                        };
+                        await fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(countPayload)
+                        });
+                    }
+                } catch (guestError) {
+                    console.error('Guest update error:', guestError);
+                }
+            }
+            
+            // Update main RSVP
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+                console.log('Update result:', result);
+                
+                if (result.status === 'updated') {
+                    showToast(`Thank you! Your response has been recorded.`);
+                    return true;
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showToast(`Failed to update: ${error.message}`, true);
+                return false;
+            }
+        }
+        
+        async function fetchGuestRSVPStatus() {
+            if (!guestId || guestId === invitationId) return null;
+            
+            try {
+                // Get guests list to check status
+                const payload = {
+                    action: 'getGuests',
+                    userId: invitationId
+                };
+                
+                const response = await fetch(`${SCRIPT_URL}?action=getGuests&userId=${encodeURIComponent(invitationId)}`);
+                const result = await response.json();
+                
+                if (result.status === 'success' && result.guests) {
+                    const guest = result.guests.find(g => g.guestId === guestId);
+                    return guest ? guest.rsvpStatus : null;
+                }
+                return null;
+            } catch (error) {
+                console.error('Error fetching guest status:', error);
+                return null;
+            }
+        }
+        
+        // ============ UI FUNCTIONS ============
+        function showAttendingUI() {
+            document.getElementById('guestCountSection').style.display = 'block';
+            document.getElementById('sorryMessage').style.display = 'none';
+            currentStatus = 'attending';
+        }
+        
+        function showNotAttendingUI() {
+            document.getElementById('guestCountSection').style.display = 'none';
+            document.getElementById('sorryMessage').style.display = 'block';
+            currentStatus = 'not_attending';
+        }
+        
+        // ============ EVENT HANDLERS ============
+        function handleAttending() {
+            if (currentStatus === 'attending') return;
+            showAttendingUI();
+        }
+        
+        function handleNotAttending() {
+            if (currentStatus === 'not_attending') return;
+            showNotAttendingUI();
+        }
+        
+        async function handleConfirm() {
+            if (currentStatus !== 'attending') {
+                showToast('Please select "Joyful Acceptance" first', true);
+                return;
+            }
+            
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Updating...';
+            
+            const success = await updateRSVP('yes', currentGuestCount);
+            
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm →';
+            
+            if (success) {
+                document.getElementById('attendingBtn').disabled = true;
+                document.getElementById('notAttendingBtn').disabled = true;
+                document.getElementById('confirmBtn').disabled = true;
+            }
+        }
+        
+        async function handleAcknowledge() {
+            if (currentStatus !== 'not_attending') {
+                showToast('Please select "With Warm Understanding" first', true);
+                return;
+            }
+            
+            const ackBtn = document.getElementById('acknowledgeBtn');
+            ackBtn.disabled = true;
+            ackBtn.textContent = 'Updating...';
+            
+            const success = await updateRSVP('no');
+            
+            ackBtn.disabled = false;
+            ackBtn.textContent = 'Acknowledged';
+            
+            if (success) {
+                document.getElementById('attendingBtn').disabled = true;
+                document.getElementById('notAttendingBtn').disabled = true;
+                document.getElementById('acknowledgeBtn').disabled = true;
+            }
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'Date to be announced';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        // ============ INITIALIZATION ============
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            
+            if (!params.has('id')) {
+                document.getElementById('loading').innerHTML = '<div style="color: white; text-align: center;">Error: No invitation ID provided.<br>Please check your invitation link.</div>';
+                return;
+            }
+            
+            try {
+                const id = params.get('id');
+                const guestParam = params.get('guest');
+                let guestNameFromUrl = null;
+                
+                if (params.has('name')) {
+                    guestNameFromUrl = decodeURIComponent(params.get('name'));
+                }
+                
+                invitationId = id;
+                guestId = guestParam || id;
+                
+                // Fetch invitation data
+                const result = await fetchInvitation(id, guestParam, guestNameFromUrl);
+                invitationData = result;
+                
+                // Update UI with invitation details
+                const guestNameElement = document.getElementById('guestNameDisplay');
+                if (result.guestName) {
+                    guestNameElement.textContent = result.guestName;
+                } else if (guestNameFromUrl) {
+                    guestNameElement.textContent = guestNameFromUrl;
+                } else {
+                    guestNameElement.textContent = 'Valued Guest';
+                }
+                
+                // Display couple names
+                const groom = result.groom || result.name1 || '';
+                const bride = result.bride || result.name2 || '';
+                document.getElementById('coupleNames').innerHTML = `${groom} & ${bride}`;
+                
+                // Display occasion
+                if (result.occasion) {
+                    document.getElementById('occasionDisplay').textContent = result.occasion;
+                }
+                
+                // Display event details
+                document.getElementById('eventDate').textContent = formatDate(result.eventDate);
+                document.getElementById('eventTime').textContent = result.eventTime || '';
+                document.getElementById('ceremonyDetails').textContent = result.ceremonyDetails || result.religionDate || '';
+                document.getElementById('locationDisplay').innerHTML = `📍 ${result.location || 'Venue to be announced'}`;
+                
+                // Set color theme
+                if (result.colorTheme) {
+                    document.querySelector('.header-decoration').style.backgroundColor = result.colorTheme;
+                }
+                
+                // Start countdown if date exists
+                if (result.eventDate) {
+                    updateCountdown(result.eventDate);
+                    setInterval(() => updateCountdown(result.eventDate), 1000);
+                }
+                
+                // Check if already RSVP'd
+                const existingStatus = await fetchGuestRSVPStatus();
+                if (existingStatus === 'yes') {
+                    showToast('You have already confirmed your attendance. Thank you!');
+                    document.getElementById('attendingBtn').disabled = true;
+                    document.getElementById('notAttendingBtn').disabled = true;
+                } else if (existingStatus === 'no') {
+                    showToast('You have already responded. We understand.');
+                    document.getElementById('attendingBtn').disabled = true;
+                    document.getElementById('notAttendingBtn').disabled = true;
+                }
+                
+                // Show the invitation card
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('invitationCard').style.display = 'block';
+                
+                // Setup event listeners
+                document.getElementById('attendingBtn').addEventListener('click', handleAttending);
+                document.getElementById('notAttendingBtn').addEventListener('click', handleNotAttending);
+                document.getElementById('confirmBtn').addEventListener('click', handleConfirm);
+                document.getElementById('acknowledgeBtn').addEventListener('click', handleAcknowledge);
+                
+                // Guest count controls
+                document.getElementById('incrementBtn').addEventListener('click', () => {
+                    if (currentGuestCount < 10) {
+                        currentGuestCount++;
+                        document.getElementById('guestCount').textContent = currentGuestCount;
+                    }
+                });
+                
+                document.getElementById('decrementBtn').addEventListener('click', () => {
+                    if (currentGuestCount > 1) {
+                        currentGuestCount--;
+                        document.getElementById('guestCount').textContent = currentGuestCount;
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Init error:', error);
+                document.getElementById('loading').innerHTML = `<div style="color: white; text-align: center;">Error loading invitation: ${error.message}<br>Please try again later.</div>`;
+            }
+        }
+        
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
