@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Login Section */
+        .login-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            margin: 100px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .login-section input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .login-section button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Dashboard Content */
+        .dashboard-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Invitation Preview */
+        .preview-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .preview-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Guest Table */
+        .guest-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .guest-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .add-guest-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .share-btn, .delete-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 3px;
+        }
+
+        .share-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .guest-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginSection" class="login-section">
+            <h2>🎫 Wedding Dashboard Login</h2>
+            <p style="color: #666; margin-bottom: 20px;">Enter your invitation ID to access your dashboard</p>
+            <input type="text" id="userId" placeholder="Enter your Invitation ID" />
+            <button onclick="login()">Access Dashboard</button>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" class="dashboard-content">
+            <div class="header">
+                <h1>💒 Wedding Dashboard</h1>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="number" id="totalGuest">0</div>
+                    <div class="label">Total Guests Invited</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="responded">0</div>
+                    <div class="label">Responded</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="attending">0</div>
+                    <div class="label">Attending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="notAttending">0</div>
+                    <div class="label">Not Attending</div>
+                </div>
+            </div>
+
+            <!-- Invitation Preview Button -->
+            <div class="preview-section">
+                <button class="preview-btn" onclick="previewInvitation()">📖 Preview Invitation Card</button>
+            </div>
+
+            <!-- Guest Management -->
+            <div class="guest-section">
+                <div class="guest-header">
+                    <h2>👥 Guest List</h2>
+                    <button class="add-guest-btn" onclick="showAddGuestModal()">+ Add Guest</button>
+                </div>
+                <div id="guestTableContainer">
+                    <div class="loading">Loading guests...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Guest Modal -->
+    <div id="guestModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Guest</h3>
+            <input type="text" id="guestName" placeholder="Guest Name *" required />
+            <input type="email" id="guestEmail" placeholder="Email Address" />
+            <input type="tel" id="guestWhatsapp" placeholder="WhatsApp Number" />
+            <div class="modal-buttons">
+                <button class="save-btn" onclick="saveGuest()">Save</button>
+                <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUserId = '';
+        let guestsData = [];
+
+        // Login function
+        function login() {
+            const userId = document.getElementById('userId').value.trim();
+            if (!userId) {
+                alert('Please enter your Invitation ID');
+                return;
+            }
+            
+            currentUserId = userId;
+            loadDashboard();
+        }
+
+        // Load dashboard data
+        function loadDashboard() {
+            google.script.run.withSuccessHandler(function(result) {
+                if (result.status === 'success') {
+                    // Show dashboard
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('dashboardContent').style.display = 'block';
+                    
+                    // Load invitation details
+                    loadInvitationDetails();
+                    
+                    // Load guests
+                    loadGuests();
+                } else {
+                    alert('Invalid Invitation ID. Please check and try again.');
+                    console.error(result.message);
+                }
+            }).withFailureHandler(function(error) {
+                alert('Error loading dashboard: ' + error.message);
+            }).validateUser(currentUserId);
+        }
+
+        // Load invitation basic details
+        function loadInvitationDetails() {
+            google.script.run.withSuccessHandler(function(invitation) {
+                // Store invitation data globally
+                window.invitationData = invitation;
+                
+                // You can display couple names or other details if needed
+                document.querySelector('.header h1').innerHTML = `💒 ${invitation.groom} & ${invitation.bride}'s Dashboard`;
+            }).withFailureHandler(function(error) {
+                console.error('Error loading invitation details:', error);
+            }).getInvitationDetails(currentUserId);
+        }
+
+        // Load guests list
+        function loadGuests() {
+            google.script.run.withSuccessHandler(function(result) {
+                if (result.status === 'success') {
+                    guestsData = result.guests;
+                    updateStats();
+                    renderGuestTable();
+                } else {
+                    document.getElementById('guestTableContainer').innerHTML = '<div class="error">Error loading guests</div>';
+                }
+            }).withFailureHandler(function(error) {
+                document.getElementById('guestTableContainer').innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+            }).getGuests(currentUserId);
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = guestsData.length;
+            const responded = guestsData.filter(g => g.rsvpStatus && g.rsvpStatus !== '').length;
+            const attending = guestsData.filter(g => g.rsvpStatus === 'attending').length;
+            const notAttending = guestsData.filter(g => g.rsvpStatus === 'not attending').length;
+            
+            document.getElementById('totalGuest').innerText = total;
+            document.getElementById('responded').innerText = responded;
+            document.getElementById('attending').innerText = attending;
+            document.getElementById('notAttending').innerText = notAttending;
+        }
+
+        // Render guest table
+        function renderGuestTable() {
+            if (!guestsData || guestsData.length === 0) {
+                document.getElementById('guestTableContainer').innerHTML = '<div class="loading">No guests added yet. Click "Add Guest" to invite people!</div>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sl No</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>WhatsApp</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                            <th>People</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            guestsData.forEach((guest, index) => {
+                const guestId = guest.guestId || `G${index + 1}`;
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapeHtml(guest.name)}</td>
+                        <td>${escapeHtml(guest.email || '-')}</td>
+                        <td>${escapeHtml(guest.whatsapp || '-')}</td>
+                        <td>
+                            <button class="share-btn" onclick="shareInvitation('${guest.guestId}', '${escapeHtml(guest.name)}')">Share</button>
+                        </td>
+                        <td>
+                            <select onchange="updateRSVP('${guest.guestId}', this.value)">
+                                <option value="">Pending</option>
+                                <option value="attending" ${guest.rsvpStatus === 'attending' ? 'selected' : ''}>Attending</option>
+                                <option value="not attending" ${guest.rsvpStatus === 'not attending' ? 'selected' : ''}>Not Attending</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" min="1" max="10" value="${guest.numberOfPeople || 1}" 
+                                   onchange="updatePeopleCount('${guest.guestId}', this.value)" 
+                                   style="width: 60px; padding: 5px;">
+                        </td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteGuest('${guest.guestId}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('guestTableContainer').innerHTML = html;
+        }
+
+        // Show add guest modal
+        function showAddGuestModal() {
+            document.getElementById('guestModal').style.display = 'flex';
+            document.getElementById('guestName').value = '';
+            document.getElementById('guestEmail').value = '';
+            document.getElementById('guestWhatsapp').value = '';
+        }
+
+        // Save guest
+        function saveGuest() {
+            const name = document.getElementById('guestName').value.trim();
+            const email = document.getElementById('guestEmail').value.trim();
+            const whatsapp = document.getElementById('guestWhatsapp').value.trim();
+            
+            if (!name) {
+                alert('Please enter guest name');
+                return;
+            }
+            
+            const guestData = {
+                userId: currentUserId,
+                name: name,
+                email: email,
+                whatsapp: whatsapp
+            };
+            
+            google.script.run.withSuccessHandler(function(result) {
+                if (result.status === 'success') {
+                    closeModal();
+                    loadGuests(); // Reload guests list
+                } else {
+                    alert('Error adding guest: ' + result.message);
+                }
+            }).withFailureHandler(function(error) {
+                alert('Error: ' + error.message);
+            }).addGuest(guestData);
+        }
+
+        // Share invitation for specific guest
+        function shareInvitation(guestId, guestName) {
+            google.script.run.withSuccessHandler(function(result) {
+                if (result.status === 'success') {
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(result.invitationLink).then(function() {
+                        alert(`Invitation link for ${guestName} has been copied to clipboard!\n\nLink: ${result.invitationLink}`);
+                    });
+                } else {
+                    alert('Error generating invitation: ' + result.message);
+                }
+            }).generateGuestInvitationLink(currentUserId, guestId, guestName);
+        }
+
+        // Update RSVP status
+        function updateRSVP(guestId, status) {
+            google.script.run.withSuccessHandler(function() {
+                loadGuests(); // Reload to update stats
+            }).updateGuestRSVP(currentUserId, guestId, status);
+        }
+
+        // Update people count
+        function updatePeopleCount(guestId, count) {
+            google.script.run.withSuccessHandler(function() {
+                loadGuests();
+            }).updateGuestPeopleCount(currentUserId, guestId, parseInt(count));
+        }
+
+        // Delete guest
+        function deleteGuest(guestId) {
+            if (confirm('Are you sure you want to delete this guest?')) {
+                google.script.run.withSuccessHandler(function() {
+                    loadGuests();
+                }).deleteGuest(currentUserId, guestId);
+            }
+        }
+
+        // Preview invitation
+        function previewInvitation() {
+            if (window.invitationData) {
+                const url = `${ScriptApp.getUrl()}?id=${currentUserId}&preview=true`;
+                window.open(url, '_blank');
+            } else {
+                alert('Loading invitation details...');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('guestModal').style.display = 'none';
+        }
+
+        // Logout
+        function logout() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('dashboardContent').style.display = 'none';
+            currentUserId = '';
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
