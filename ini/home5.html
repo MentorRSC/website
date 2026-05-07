@@ -373,6 +373,45 @@
                 font-size: 32px;
             }
         }
+        /* Preview Modal */
+.preview-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+}
+
+.preview-modal-content {
+    background: white;
+    width: 90%;
+    max-width: 800px;
+    height: 80%;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.preview-modal-content iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.preview-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--gold);
+    z-index: 1;
+}
     </style>
 </head>
 <body>
@@ -565,7 +604,13 @@
         <div class="spinner"></div>
         <div class="loading-text">Loading... Please wait</div>
     </div>
-
+<!-- Preview Modal -->
+<div id="previewModal" class="preview-modal">
+    <div class="preview-modal-content">
+        <span class="preview-modal-close" onclick="closePreviewModal()">&times;</span>
+        <iframe id="previewIframe" src=""></iframe>
+    </div>
+</div>
     <script>
         // AppScript URL - Replace with your actual URL
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5m387CSpu_Z-8AwWoI5SD12L6BDPu2F9--NNdAYlTcLHy4r_1Ep25CGS9GqbDBfsz/exec';
@@ -927,14 +972,19 @@
             }
         }
 
-        function previewInvitationCard() {
+function previewInvitationCard() {
     if (currentUserId) {
-        // Open in a modal/popup instead of new tab
         const previewUrl = `https://innovationhub.pages.dev/ini/sample2.html?id=${currentUserId}`;
-        window.open(previewUrl, 'Invitation Preview', 'width=800,height=600,scrollbars=yes,resizable=yes');
+        document.getElementById('previewIframe').src = previewUrl;
+        document.getElementById('previewModal').style.display = 'flex';
     } else {
         alert('Please login first');
     }
+}
+
+function closePreviewModal() {
+    document.getElementById('previewModal').style.display = 'none';
+    document.getElementById('previewIframe').src = '';
 }
 
         function openTemplatePreview(type = 'wedding') {
