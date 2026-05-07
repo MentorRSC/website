@@ -627,60 +627,79 @@
             document.getElementById('createModal').style.display = 'none';
         }
 
-        async function createInvitation() {
-            const eventType = document.getElementById('eventType').value;
-            let name1 = '', name2 = '', occasion = '';
-            
-            if (eventType === 'marriage') {
-                name1 = document.getElementById('groomName').value.trim();
-                name2 = document.getElementById('brideName').value.trim();
-                occasion = 'Wedding Ceremony';
-            } else if (eventType === 'anniversary') {
-                name1 = document.getElementById('husbandName').value.trim();
-                name2 = document.getElementById('wifeName').value.trim();
-                occasion = 'Wedding Anniversary';
-            } else if (eventType === 'birthday') {
-                name1 = document.getElementById('birthdayPerson').value.trim();
-                occasion = 'Birthday Celebration';
-            } else {
-                name1 = document.getElementById('partyTitle').value.trim();
-                occasion = 'Party / Event';
-            }
-            
-            const email = document.getElementById('organizerEmail').value.trim();
-            const mobile = document.getElementById('mobileNumber').value.trim();
-            
-            if (!name1 || (eventType === 'marriage' && !name2) || (eventType === 'anniversary' && !name2) || !email || !mobile) {
-                alert('Please fill in all required fields');
-                return;
-            }
+       async function createInvitation() {
+    const eventType = document.getElementById('eventType').value;
+    let groom = '', bride = '', occasion = '';
+    
+    if (eventType === 'marriage') {
+        groom = document.getElementById('groomName').value.trim();
+        bride = document.getElementById('brideName').value.trim();
+        occasion = 'Wedding Ceremony';
+    } else if (eventType === 'anniversary') {
+        groom = document.getElementById('husbandName').value.trim();
+        bride = document.getElementById('wifeName').value.trim();
+        occasion = 'Wedding Anniversary';
+    } else if (eventType === 'birthday') {
+        groom = document.getElementById('birthdayPerson').value.trim();
+        bride = '';
+        occasion = 'Birthday Celebration';
+    } else {
+        groom = document.getElementById('partyTitle').value.trim();
+        bride = '';
+        occasion = 'Party / Event';
+    }
+    
+    const email = document.getElementById('organizerEmail').value.trim();
+    const mobile = document.getElementById('mobileNumber').value.trim();
+    
+    if (!groom || (eventType === 'marriage' && !bride) || (eventType === 'anniversary' && !bride) || !email || !mobile) {
+        alert('Please fill in all required fields');
+        return;
+    }
 
-            showLoading();
-            
-            const formData = new URLSearchParams();
-            formData.append('action', 'createInvitation');
-            formData.append('eventType', eventType);
-            formData.append('name1', name1);
-            formData.append('name2', name2);
-            formData.append('occasion', occasion);
-            formData.append('organizerEmail', email);
-            formData.append('mobileNumber', mobile);
-            formData.append('eventDate', document.getElementById('eventDate').value);
-            formData.append('eventTime', document.getElementById('eventTime').value);
-            formData.append('ceremonyDetails', document.getElementById('ceremonyDetails').value);
-            formData.append('location', document.getElementById('location').value);
+    showLoading();
+    
+    const formData = new URLSearchParams();
+    formData.append('action', 'createInvitation');
+    formData.append('eventType', eventType);
+    formData.append('groom', groom);      // Changed from name1
+    formData.append('bride', bride);      // Changed from name2
+    formData.append('occasion', occasion);
+    formData.append('organizerEmail', email);
+    formData.append('mobileNumber', mobile);
+    formData.append('eventDate', document.getElementById('eventDate').value);
+    formData.append('eventTime', document.getElementById('eventTime').value);
+    formData.append('religionDate', document.getElementById('ceremonyDetails').value);  // Changed
+    formData.append('location', document.getElementById('location').value);
+    formData.append('colorTheme', '#fae1dd');
 
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                showToast('✅ Invitation created! Check your email.');
-                closeCreateModal();
-                hideLoading();
-            } catch (error) {
-                hideLoading();
-                alert('Error creating invitation: ' + error.message);
-            }
-        }
-
+    try {
+        const response = await fetch(SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: formData 
+        });
+        showToast('✅ Invitation created! Check your email.');
+        closeCreateModal();
+        // Reset form
+        document.getElementById('groomName').value = '';
+        document.getElementById('brideName').value = '';
+        document.getElementById('husbandName').value = '';
+        document.getElementById('wifeName').value = '';
+        document.getElementById('birthdayPerson').value = '';
+        document.getElementById('partyTitle').value = '';
+        document.getElementById('organizerEmail').value = '';
+        document.getElementById('mobileNumber').value = '';
+        document.getElementById('eventDate').value = '';
+        document.getElementById('eventTime').value = '';
+        document.getElementById('ceremonyDetails').value = '';
+        document.getElementById('location').value = '';
+        hideLoading();
+    } catch (error) {
+        hideLoading();
+        alert('Error creating invitation: ' + error.message);
+    }
+}
         async function loginToDashboard() {
             const userId = document.getElementById('userId').value.trim();
             if (!userId) {
