@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitalInvite | Wedding Invitation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Cinzel:wght@400;500&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #c9a96e;
+            --gold-light: #e8d5a3;
+            --gold-dark: #9a7040;
+            --cream: #faf6ef;
+            --cream-deep: #f2ead9;
+            --ink: #2c2118;
+            --ink-mid: #5a4030;
+            --ink-light: #8b6f5a;
+            --rose: #c9796a;
+            --card-bg: #fffdf8;
+            --border: rgba(201,169,110,0.25);
+        }
+
+        body {
+            background: var(--cream-deep);
+            font-family: 'Cormorant Garamond', 'Georgia', serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .invitation-card {
+            max-width: 700px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.07), inset 0 0 0 1px rgba(201,169,110,0.18);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .letter-wrapper {
+            padding: clamp(2rem, 6vw, 4rem) clamp(1.5rem, 6vw, 4rem);
+        }
+
+        .header-badge {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .exclusive-tag {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold-dark);
+            margin-bottom: 0.8rem;
+        }
+
+        .guest-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            font-weight: 500;
+            color: var(--ink);
+            margin: 0.2rem 0 0.25rem;
+        }
+
+        .families-line {
+            font-family: 'EB Garamond', serif;
+            font-style: italic;
+            font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+            color: var(--ink-light);
+            margin-top: 0.3rem;
+        }
+
+        .couple-area {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .names-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(0.8rem, 3vw, 1.8rem);
+            flex-wrap: wrap;
+        }
+
+        .names-row span {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2rem, 8vw, 3.4rem);
+            font-weight: 300;
+            color: var(--ink);
+        }
+
+        .request-line {
+            font-family: 'EB Garamond', serif;
+            font-style: italic;
+            text-align: center;
+            margin: 1.5rem 0;
+            color: var(--ink-light);
+        }
+
+        .datetime-block {
+            text-align: center;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .main-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.3rem, 4.5vw, 1.9rem);
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .time-detail, .religion-date {
+            font-family: 'EB Garamond', serif;
+            font-style: italic;
+            color: var(--ink-mid);
+            margin-top: 0.5rem;
+        }
+
+        .location-box {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            font-family: 'Cinzel', serif;
+            font-size: clamp(0.75rem, 2.2vw, 0.9rem);
+        }
+
+        .rsvp-area {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .rsvp-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .attend-btn {
+            padding: 0.75rem 2rem;
+            font-family: 'Cinzel', serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .attend-yes {
+            background: var(--ink);
+            color: var(--gold-light);
+            border: none;
+        }
+
+        .attend-no {
+            background: transparent;
+            color: var(--ink-light);
+            border: 1px solid var(--border);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem 0;
+            color: var(--gold-dark);
+            font-style: italic;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--gold-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="invitation-card" id="invitationCard">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading invitation...</p>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_APPS_SCRIPT_URL/exec';
+        
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                id: params.get('id'),
+                guest: params.get('guest'),
+                name: params.get('name'),
+                preview: params.get('preview'),
+                type: params.get('type')
+            };
+        }
+
+        async function fetchInvitation(id, guestId = null) {
+            let url = `${SCRIPT_URL}?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+            if (guestId) url += `&guest=${guestId}`;
+            const response = await fetch(url);
+            return await response.json();
+        }
+
+        function getSampleData(type) {
+            const samples = {
+                wedding: {
+                    name1: "Vikram",
+                    name2: "Ananya",
+                    eventDate: "Saturday, 14 June 2026",
+                    eventTime: "5:30 PM",
+                    ceremonyDetails: "Wedding Ceremony",
+                    location: "Grand Venue, New Delhi",
+                    occasion: "Wedding Ceremony"
+                },
+                anniversary: {
+                    name1: "Rajesh",
+                    name2: "Priya",
+                    eventDate: "Sunday, 20 December 2026",
+                    eventTime: "6:00 PM",
+                    ceremonyDetails: "25th Wedding Anniversary",
+                    location: "Celebration Hall, Mumbai",
+                    occasion: "Wedding Anniversary"
+                },
+                birthday: {
+                    name1: "Aarav",
+                    name2: "",
+                    eventDate: "Friday, 10 July 2026",
+                    eventTime: "7:00 PM",
+                    ceremonyDetails: "Birthday Celebration",
+                    location: "Party Hall, Bangalore",
+                    occasion: "Birthday Party"
+                },
+                party: {
+                    name1: "Corporate Gala",
+                    name2: "",
+                    eventDate: "Saturday, 1 August 2026",
+                    eventTime: "8:00 PM",
+                    ceremonyDetails: "Annual Party",
+                    location: "Convention Center, Pune",
+                    occasion: "Party"
+                }
+            };
+            return samples[type] || samples.wedding;
+        }
+
+        function renderInvitation(data, guestName = null) {
+            const displayGuest = guestName || data.guestName || "Beloved Guest";
+            const name1 = data.name1 || data.groom || "Groom";
+            const name2 = data.name2 || data.bride || "Bride";
+            
+            return `
+                <div class="letter-wrapper">
+                    <div class="header-badge">
+                        <div class="exclusive-tag">✨ EXCLUSIVE INVITATION FOR ✨</div>
+                        <div class="guest-name">${escapeHtml(displayGuest)}</div>
+                        <div class="families-line">together with their families</div>
+                    </div>
+
+                    <div class="couple-area">
+                        <div class="names-row">
+                            <span>${escapeHtml(name1)}</span>
+                            <span>✦</span>
+                            <span>${escapeHtml(name2 || '')}</span>
+                        </div>
+                    </div>
+
+                    <div class="request-line">request the honour of your presence at their ${escapeHtml(data.occasion || 'celebration')}</div>
+
+                    <div class="datetime-block">
+                        <div class="main-date">${escapeHtml(data.eventDate || "Saturday, 14 June 2026")}</div>
+                        <div class="time-detail">${escapeHtml(data.eventTime || "5:30 PM")}</div>
+                    </div>
+
+                    <div class="religion-date">${escapeHtml(data.ceremonyDetails || data.religionDate || "Sacred Ceremony")}</div>
+
+                    <div class="location-box">
+                        <span>📍 ${escapeHtml(data.location || "Grand Venue")}</span>
+                    </div>
+
+                    <div class="rsvp-area">
+                        <div class="rsvp-heading" style="font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.2em;">KINDLY REPLY</div>
+                        <div class="rsvp-buttons">
+                            <button class="attend-btn attend-yes" onclick="submitRSVP('yes')">Joyfully Accept</button>
+                            <button class="attend-btn attend-no" onclick="submitRSVP('no')">Regretfully Decline</button>
+                        </div>
+                        <div id="rsvpMessage" style="margin-top: 1rem; font-style: italic;"></div>
+                    </div>
+
+                    <footer>With gratitude and blessings</footer>
+                </div>
+            `;
+        }
+
+        async function submitRSVP(response) {
+            const params = getUrlParams();
+            if (!params.id) return;
+            
+            const messageDiv = document.getElementById('rsvpMessage');
+            messageDiv.innerHTML = 'Sending your response...';
+            
+            const formData = new URLSearchParams();
+            formData.append('action', 'updateRSVP');
+            formData.append('id', params.id);
+            formData.append('response', response);
+            if (params.guest) formData.append('guestId', params.guest);
+            
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: formData });
+                messageDiv.innerHTML = response === 'yes' 
+                    ? '✨ Thank you! We look forward to celebrating with you! ✨' 
+                    : '🌸 Thank you for letting us know. You will be missed. 🌸';
+            } catch (error) {
+                messageDiv.innerHTML = 'Error submitting response. Please try again.';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+
+        async function init() {
+            const params = getUrlParams();
+            const container = document.getElementById('invitationCard');
+            
+            // Preview mode - show sample
+            if (params.preview) {
+                const sampleData = getSampleData(params.type);
+                container.innerHTML = renderInvitation(sampleData, "Sample Guest");
+                return;
+            }
+            
+            // Normal mode - fetch from server
+            if (params.id) {
+                try {
+                    const result = await fetchInvitation(params.id, params.guest);
+                    if (result && result.status === 'success') {
+                        const guestName = params.name ? decodeURIComponent(params.name) : result.invitation.guestName;
+                        container.innerHTML = renderInvitation(result.invitation, guestName);
+                    } else {
+                        container.innerHTML = '<div class="letter-wrapper"><div class="error">Invitation not found</div></div>';
+                    }
+                } catch (error) {
+                    container.innerHTML = '<div class="letter-wrapper"><div class="error">Error loading invitation</div></div>';
+                }
+            } else {
+                // Default sample
+                const sampleData = getSampleData('wedding');
+                container.innerHTML = renderInvitation(sampleData, "Welcome Guest");
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>
