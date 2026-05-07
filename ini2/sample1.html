@@ -1,0 +1,28 @@
+async function fetchInvitation(id, guestId = null, guestNameFromUrl = null) {
+    let url = `${SCRIPT_URL}?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+    if (guestId) url += `&guest=${guestId}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    // If guest name was passed in URL, use it
+    if (guestNameFromUrl) {
+        data.guestName = guestNameFromUrl;
+    }
+    return data;
+}
+
+// In init() function:
+if (params.id) {
+    try {
+        let guestNameFromUrl = null;
+        if (params.name) {
+            guestNameFromUrl = decodeURIComponent(params.name);
+        } else if (params.guest) {
+            // If you want to use guest ID to lookup name, keep as is
+            // Otherwise, pass the guest ID as second param
+        }
+        
+        const result = await fetchInvitation(params.id, params.guest, guestNameFromUrl);
+        // ... rest same
+    }
+}
