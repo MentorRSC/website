@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Wedding Invitation Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Cinzel:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #c9a96e;
+            --gold-light: #e8d5a3;
+            --gold-dark: #9a7040;
+            --cream: #faf6ef;
+            --cream-deep: #f2ead9;
+            --ink: #2c2118;
+            --ink-mid: #5a4030;
+            --ink-light: #8b6f5a;
+            --rose: #c9796a;
+            --card-bg: #fffdf8;
+            --border: rgba(201,169,110,0.25);
+            --success: #2e7d64;
+            --error: #c94f4f;
+        }
+
+        body {
+            background: var(--cream-deep);
+            font-family: 'Inter', 'Cormorant Garamond', serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .header-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--ink);
+            margin-bottom: 0.5rem;
+        }
+
+        .event-details {
+            color: var(--ink-mid);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-number {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 500;
+            color: var(--gold-dark);
+        }
+
+        .stat-label {
+            color: var(--ink-light);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--ink-light);
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--gold-dark);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Guest Table */
+        .guest-table-wrapper {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        .guest-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .guest-table th,
+        .guest-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .guest-table th {
+            background: var(--cream);
+            font-family: 'Cinzel', serif;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .guest-table tr:hover {
+            background: rgba(201,169,110,0.05);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-yes {
+            background: #2e7d6420;
+            color: #2e7d64;
+        }
+
+        .status-no {
+            background: #c94f4f20;
+            color: #c94f4f;
+        }
+
+        .status-pending {
+            background: #c9a96e20;
+            color: #9a7040;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--gold-light);
+        }
+
+        .btn-primary:hover {
+            background: var(--gold-dark);
+        }
+
+        .btn-secondary {
+            background: var(--cream);
+            color: var(--ink);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: #c94f4f20;
+            color: #c94f4f;
+        }
+
+        .add-guest-btn {
+            background: var(--gold);
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--ink);
+            font-size: 0.85rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gold-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Invitation Link */
+        .invitation-link-box {
+            background: var(--cream);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .invitation-link-box input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: white;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--ink);
+            color: var(--gold-light);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container" id="dashboard">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Add Guest Modal -->
+    <div id="addGuestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">➕ Add New Guest</div>
+            <form id="addGuestForm">
+                <div class="form-group">
+                    <label>Guest Name *</label>
+                    <input type="text" id="guestName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="guestEmail">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp Number</label>
+                    <input type="text" id="guestWhatsapp">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Add Guest</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwexqybbC18QjTeCZDsaFRuSfOc68BYmf8EL2X9NVdEWUU6Ydi1Ec0OIFwiyac3cjl8/exec';
+        let userId = null;
+        let invitationData = null;
+        let guests = [];
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = isError ? 'var(--error)' : 'var(--ink)';
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        async function fetchAPI(action, params = {}) {
+            const formData = new URLSearchParams();
+            formData.append('action', action);
+            Object.keys(params).forEach(key => formData.append(key, params[key]));
+            
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: formData
+                });
+                return { success: true };
+            } catch (error) {
+                console.error(`API Error (${action}):`, error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function fetchGET(action, userId) {
+            const url = `${SCRIPT_URL}?action=${action}&userId=${userId}&t=${Date.now()}`;
+            try {
+                const response = await fetch(url);
+                return await response.json();
+            } catch (error) {
+                console.error(`GET Error (${action}):`, error);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        async function loadDashboard() {
+            const params = new URLSearchParams(window.location.search);
+            userId = params.get('id');
+            
+            if (!userId) {
+                document.getElementById('dashboard').innerHTML = `
+                    <div class="dashboard-header" style="text-align: center;">
+                        <h2>❌ No User ID Provided</h2>
+                        <p>Please use: ?id=YOUR_INVITATION_ID</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Validate user
+            const validateUrl = `${SCRIPT_URL}?action=validateUser&userId=${userId}&t=${Date.now()}`;
+            const validateResponse = await fetch(validateUrl);
+            const validateData = await validateResponse.json();
+            
+            if (validateData.status !== 'success') {
+                document.getElementById('dashboard').innerHTML = `
+                    <div class="dashboard-header" style="text-align: center;">
+                        <h2>❌ Invalid Invitation</h2>
+                        <p>No invitation found with ID: ${userId}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Load invitation details
+            const inviteData = await fetchGET('getInvitationDetails', userId);
+            if (inviteData.status === 'success') {
+                invitationData = inviteData.invitation;
+            }
+            
+            // Load guests
+            const guestsData = await fetchGET('getGuests', userId);
+            if (guestsData.status === 'success') {
+                guests = guestsData.guests || [];
+            }
+            
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const confirmed = guests.filter(g => g.rsvpStatus === 'yes').length;
+            const declined = guests.filter(g => g.rsvpStatus === 'no').length;
+            const pending = guests.filter(g => !g.rsvpStatus || g.rsvpStatus === '').length;
+            const totalPeople = guests.reduce((sum, g) => sum + (g.rsvpStatus === 'yes' ? (g.numberOfPeople || 1) : 0), 0);
+            
+            const invitationLink = `https://innovationhub.pages.dev/ini/sample2.html?id=${userId}`;
+            
+            const html = `
+                <div class="dashboard-header">
+                    <div class="header-title">✨ ${invitationData?.name1 || 'Couple'} & ${invitationData?.name2 || ''} ✨</div>
+                    <div>Invitation Dashboard</div>
+                    <div class="event-details">
+                        📅 ${invitationData?.eventDate || 'Date TBD'} | ⏰ ${invitationData?.eventTime || 'Time TBD'}<br>
+                        📍 ${invitationData?.location || 'Venue TBD'}
+                    </div>
+                    <div class="invitation-link-box">
+                        <input type="text" value="${invitationLink}" id="inviteLink" readonly>
+                        <button class="btn btn-secondary" onclick="copyInvitationLink()">📋 Copy Link</button>
+                        <button class="btn btn-primary" onclick="sendBulkInvitations()">📧 Send to All Guests</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${guests.length}</div>
+                        <div class="stat-label">Total Guests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #2e7d64;">${confirmed}</div>
+                        <div class="stat-label">Confirmed (Yes)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #c94f4f;">${declined}</div>
+                        <div class="stat-label">Declined (No)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #9a7040;">${pending}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${totalPeople}</div>
+                        <div class="stat-label">Total People Coming</div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('guests')">👥 Guest List</button>
+                    <button class="tab-btn" onclick="switchTab('manage')">⚙️ Manage Guests</button>
+                </div>
+
+                <div id="guestsTab" class="tab-content active">
+                    ${renderGuestTable()}
+                </div>
+
+                <div id="manageTab" class="tab-content">
+                    <button class="btn btn-primary add-guest-btn" onclick="openAddGuestModal()">➕ Add New Guest</button>
+                    ${renderManageTable()}
+                </div>
+            `;
+            
+            document.getElementById('dashboard').innerHTML = html;
+        }
+
+        function renderGuestTable() {
+            if (guests.length === 0) {
+                return '<div style="text-align: center; padding: 2rem;">No guests added yet. Add guests from the Manage tab.</div>';
+            }
+            
+            return `
+                <div class="guest-table-wrapper">
+                    <table class="guest-table">
+                        <thead>
+                            <tr><th>Guest Name</th><th>Email/WhatsApp</th><th>RSVP Status</th><th>People</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            ${guests.map(guest => `
+                                <tr>
+                                    <td>${escapeHtml(guest.name)}</td>
+                                    <td>${guest.email || guest.whatsapp || '—'}</td>
+                                    <td>${getStatusBadge(guest.rsvpStatus)}</td>
+                                    <td>${guest.rsvpStatus === 'yes' ? (guest.numberOfPeople || 1) : '—'}</td>
+                                    <td>
+                                        <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="resendGuestInvitation('${guest.guestId}', '${escapeHtml(guest.name)}', '${guest.email}')">📧</button>
+                                        <button class="btn btn-danger" style="padding: 0.25rem 0.5rem;" onclick="deleteGuestFromList('${guest.guestId}')">🗑️</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderManageTable() {
+            if (guests.length === 0) {
+                return '<div style="text-align: center; padding: 2rem;">No guests yet. Click "Add New Guest" to get started.</div>';
+            }
+            
+            return `
+                <div class="guest-table-wrapper">
+                    <table class="guest-table">
+                        <thead>
+                            <tr><th>Guest Name</th><th>Email</th><th>WhatsApp</th><th>Status</th><th>Invitation Sent</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            ${guests.map(guest => `
+                                <tr>
+                                    <td>${escapeHtml(guest.name)}</td>
+                                    <td>${guest.email || '—'}</td>
+                                    <td>${guest.whatsapp || '—'}</td>
+                                    <td>${getStatusBadge(guest.rsvpStatus)}</td>
+                                    <td>${guest.invitationSent ? '✅ Sent' : '⏳ Pending'}</td>
+                                    <td>
+                                        <button class="btn btn-secondary" onclick="editGuest('${guest.guestId}')">✏️</button>
+                                        <button class="btn btn-danger" onclick="deleteGuestFromList('${guest.guestId}')">🗑️</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'yes') return '<span class="status-badge status-yes">✓ Confirmed</span>';
+            if (status === 'no') return '<span class="status-badge status-no">✗ Declined</span>';
+            return '<span class="status-badge status-pending">⏳ Pending</span>';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'guests') {
+                document.querySelector('.tab-btn').classList.add('active');
+                document.getElementById('guestsTab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('manageTab').classList.add('active');
+            }
+        }
+
+        function openAddGuestModal() {
+            document.getElementById('addGuestModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('addGuestModal').style.display = 'none';
+            document.getElementById('addGuestForm').reset();
+        }
+
+        document.getElementById('addGuestForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('guestName').value;
+            const email = document.getElementById('guestEmail').value;
+            const whatsapp = document.getElementById('guestWhatsapp').value;
+            
+            const result = await fetchAPI('addGuest', {
+                userId: userId,
+                name: name,
+                email: email,
+                whatsapp: whatsapp
+            });
+            
+            if (result.success) {
+                showToast(`✅ Guest "${name}" added successfully!`);
+                closeModal();
+                loadDashboard();
+            } else {
+                showToast('❌ Failed to add guest', true);
+            }
+        });
+
+        async function deleteGuestFromList(guestId) {
+            if (confirm('Are you sure you want to delete this guest?')) {
+                const result = await fetchAPI('deleteGuest', {
+                    userId: userId,
+                    guestId: guestId
+                });
+                
+                if (result.success) {
+                    showToast('✅ Guest deleted');
+                    loadDashboard();
+                } else {
+                    showToast('❌ Failed to delete', true);
+                }
+            }
+        }
+
+        async function resendGuestInvitation(guestId, guestName, guestEmail) {
+            if (!guestEmail || guestEmail === '') {
+                showToast('❌ No email address for this guest', true);
+                return;
+            }
+            
+            showToast(`📧 Sending invitation to ${guestName}...`);
+            
+            const result = await fetchAPI('sendGuestEmail', {
+                userId: userId,
+                guestId: guestId,
+                guestName: guestName,
+                guestEmail: guestEmail
+            });
+            
+            if (result.success) {
+                showToast(`✅ Invitation sent to ${guestName}!`);
+                loadDashboard();
+            } else {
+                showToast(`❌ Failed to send to ${guestName}`, true);
+            }
+        }
+
+        async function sendBulkInvitations() {
+            const guestsWithEmail = guests.filter(g => g.email && g.email.trim() !== '');
+            
+            if (guestsWithEmail.length === 0) {
+                showToast('❌ No guests with email addresses found', true);
+                return;
+            }
+            
+            showToast(`📧 Sending to ${guestsWithEmail.length} guests...`);
+            
+            let successCount = 0;
+            for (const guest of guestsWithEmail) {
+                const result = await fetchAPI('sendGuestEmail', {
+                    userId: userId,
+                    guestId: guest.guestId,
+                    guestName: guest.name,
+                    guestEmail: guest.email
+                });
+                if (result.success) successCount++;
+                await new Promise(r => setTimeout(r, 500));
+            }
+            
+            showToast(`✅ Sent to ${successCount}/${guestsWithEmail.length} guests!`);
+            loadDashboard();
+        }
+
+        function copyInvitationLink() {
+            const linkInput = document.getElementById('inviteLink');
+            linkInput.select();
+            document.execCommand('copy');
+            showToast('📋 Invitation link copied!');
+        }
+
+        function editGuest(guestId) {
+            showToast('✏️ Edit feature coming soon', true);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
