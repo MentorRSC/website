@@ -211,9 +211,9 @@
         }
 
         .calendar-day.booked {
-            background: #fff1f0;
-            border-color: #fecaca;
-            box-shadow: inset 0 0 0 1px #fecaca;
+            background: #fee2e2;
+            border-color: #fca5a5;
+            box-shadow: inset 0 0 0 1px #f87171;
         }
 
         .calendar-day.empty-month {
@@ -289,6 +289,14 @@
             border-top: 1px solid #e2edf7;
             color: #4b6b8f;
         }
+        
+        .debug-info {
+            font-size: 0.7rem;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 16px;
+            color: #475569;
+        }
     </style>
 </head>
 <body>
@@ -306,7 +314,7 @@
     </div>
     <div class="calendar-section" id="calendarContainer">
         <div class="calendar-title">
-            📆 Booking Calendar <small>🔴 Red = Booked · White = Available</small>
+            📆 Booking Calendar <small>🔴 Red Background = Booked · White = Available</small>
         </div>
         <div id="calendarGrid"></div>
     </div>
@@ -319,37 +327,58 @@
             <div class="loading">Loading booking data from sheet...</div>
         </div>
     </div>
-    <footer>Data source: RSC&P Auditorium Booking Register (Google Sheets) — real-time fetch | Month rows merged as per original structure</footer>
+    <footer>Data source: RSC&P Auditorium Booking Register · 🔴 Red dates = Fully booked days</footer>
 </div>
 
 <script>
-    // Google Sheet CSV export URL (public view access)
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1ByjW8gwekUvomwKhTx5sFv3Oel8Wx-7Ud_u0pQOc6x8/export?format=csv&gid=0";
 
-    let rawRows = [];         // store all parsed rows from CSV
-    let monthGroups = new Map(); // key: "Month Year" -> { bookings: [], monthStartIndex, monthRowSpan }
+    let monthGroups = new Map();
     let availableMonthKeys = [];
 
-    // Helper: parse date from "DATE OF BOOKING REQUIRED" column
-    function parseBookingDate(dateStr) {
+    // Enhanced date parser that handles multiple Indian/Excel formats
+    function parseDateRobust(dateStr) {
         if (!dateStr || dateStr.trim() === "") return null;
-        // try to parse common formats: "DD/MM/YYYY" or "DD-MM-YYYY" or "MM/DD/YYYY"? but likely Indian format
-        let cleaned = dateStr.trim();
-        let parts = cleaned.split(/[\/\-]/);
+        
+        const cleaned = dateStr.trim();
+        
+        // Try DD/MM/YYYY or DD-MM-YYYY (Indian standard)
+        let parts = cleaned.split(/[\/\-\.]/);
         if (parts.length === 3) {
             let day = parseInt(parts[0], 10);
             let month = parseInt(parts[1], 10) - 1;
             let year = parseInt(parts[2], 10);
-            if (!isNaN(day) && !isNaN(month) && !isNaN(year) && year > 1900) {
+            
+            // Handle 2-digit year (e.g., 24 -> 2024)
+            if (year < 100) {
+                year = 2000 + year;
+            }
+            
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day >= 1 && day <= 31 && month >= 0 && month <= 11 && year > 2000) {
                 return new Date(year, month, day);
             }
         }
-        // fallback: try native date
-        let d = new Date(cleaned);
-        return isNaN(d.getTime()) ? null : d;
+        
+        // Try MM/DD/YYYY (if first part > 12)
+        if (parts.length === 3) {
+            let month = parseInt(parts[0], 10) - 1;
+            let day = parseInt(parts[1], 10);
+            let year = parseInt(parts[2], 10);
+            if (year < 100) year = 2000 + year;
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 0 && month <= 11 && day >= 1 && day <= 31 && year > 2000) {
+                return new Date(year, month, day);
+            }
+        }
+        
+        // Try native Date parsing as fallback
+        const nativeDate = new Date(cleaned);
+        if (!isNaN(nativeDate.getTime()) && nativeDate.getFullYear() > 2000) {
+            return nativeDate;
+        }
+        
+        return null;
     }
 
-    // extract month/year from a merged month cell like "February 2024" or "March 2025"
     function parseMonthYearFromString(monthCellText) {
         if (!monthCellText) return null;
         const match = monthCellText.match(/([A-Za-z]+)\s+(\d{4})/);
@@ -363,78 +392,72 @@
         return null;
     }
 
-    // Process raw CSV: detect month header rows (merged cell with month name)
-    // Sheet structure: SL.NO | NAME OF INSTITUTION/Program | DATE OF BOOKING REQUIRED | FULL DAY / HALF DAY | AMOUNT PAID | DATE OF PAYMENT & RECEIPT NO. | CONTACT NUMBER
-    // And rows where SL.NO is empty but first column has merged month text (e.g., "February 2024") spanning 7 columns.
     async function fetchAndProcessSheet() {
         try {
             const response = await fetch(SHEET_CSV_URL);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const csvText = await response.text();
             
-            // Parse CSV (basic handling)
             const rows = [];
             const lines = csvText.split(/\r?\n/);
             if (lines.length === 0) throw new Error("Empty CSV");
             
-            // Determine delimiter: semicolon or comma?
             let delimiter = ",";
             if (lines[0].includes(';')) delimiter = ';';
+            else if (lines[0].includes('\t')) delimiter = '\t';
             
             for (let line of lines) {
                 if (line.trim() === "") continue;
                 const cells = line.split(delimiter);
-                // trim each cell and handle quotes (very simple)
-                const trimmedCells = cells.map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+                const trimmedCells = cells.map(c => c.trim().replace(/^"(.*)"$/, '$1').replace(/""/g, '"'));
                 rows.push(trimmedCells);
             }
             
             if (rows.length < 2) throw new Error("Not enough data");
             
-            // Identify header row (first row that contains "SL.NO" or similar)
+            // Find header row (contains SL.NO or similar)
             let headerIndex = -1;
-            for (let i = 0; i < Math.min(10, rows.length); i++) {
-                if (rows[i][0] && (rows[i][0].toUpperCase().includes("SL.NO") || rows[i][0].toUpperCase().includes("SL NO"))) {
+            for (let i = 0; i < Math.min(15, rows.length); i++) {
+                const firstCell = rows[i][0] ? rows[i][0].toUpperCase() : "";
+                if (firstCell.includes("SL.NO") || firstCell.includes("SL NO") || firstCell.includes("SLNO")) {
                     headerIndex = i;
                     break;
                 }
             }
-            if (headerIndex === -1) throw new Error("Could not locate header row");
+            if (headerIndex === -1) throw new Error("Could not locate header row with SL.NO");
             
-            const headers = rows[headerIndex];
-            // expected columns: 0:SL.NO, 1:INSTITUTION, 2:BOOKING DATE, 3:FULL/HALF, 4:AMOUNT, 5:PAYMENT & RECEIPT, 6:CONTACT
             const dataRows = rows.slice(headerIndex + 1);
             
-            // Parse months and booking entries
-            const allEntries = []; // { monthKey, slno, institution, bookingDateObj, fullHalf, amount, paymentReceipt, contact, rowIndex }
+            // Parse months and booking entries (handles descending order)
+            const allEntries = [];
             let currentMonthKey = null;
             let currentMonthLabel = null;
             
-            // Because order is descending (latest month first), we need to detect month blocks
             for (let idx = 0; idx < dataRows.length; idx++) {
                 const row = dataRows[idx];
-                const firstCol = row[0] ? row[0].trim() : "";
-                const secondCol = row[1] ? row[1].trim() : "";
+                if (!row || row.length === 0) continue;
                 
-                // Detect month header: first column contains month name and year, and the following 6 columns are empty or merged (usually empty)
+                const firstCol = row[0] ? row[0].trim() : "";
+                
+                // Check if this row is a month header (merged cell with month name)
                 const monthParse = parseMonthYearFromString(firstCol);
-                if (monthParse && (row[1] === "" || row[1] === undefined || row[1] === " ")) {
-                    // This is a month header row (merged)
+                if (monthParse && (row.length < 2 || (row[1] || "").trim() === "" || row[1] === undefined)) {
                     currentMonthKey = `${monthParse.year}-${monthParse.month}`;
                     currentMonthLabel = monthParse.label;
                     continue;
                 }
                 
-                // Otherwise it's a booking entry if SL.NO is numeric (or starts with number)
-                let slnoVal = firstCol;
-                if (slnoVal && !isNaN(parseFloat(slnoVal)) && currentMonthKey !== null) {
+                // Check if first column is a number (SL.NO) - indicating booking row
+                const slnoNum = parseInt(firstCol, 10);
+                if (!isNaN(slnoNum) && currentMonthKey !== null && firstCol !== "") {
                     const bookingDateRaw = row[2] ? row[2].trim() : "";
-                    const dateObj = parseBookingDate(bookingDateRaw);
+                    const dateObj = parseDateRobust(bookingDateRaw);
+                    
                     allEntries.push({
                         monthKey: currentMonthKey,
                         monthLabel: currentMonthLabel,
-                        slno: slnoVal,
-                        institution: secondCol,
+                        slno: firstCol,
+                        institution: row[1] ? row[1].trim() : "",
                         bookingDateRaw: bookingDateRaw,
                         bookingDateObj: dateObj,
                         fullHalf: row[3] ? row[3].trim() : "",
@@ -445,8 +468,8 @@
                 }
             }
             
-            // Group entries by monthKey
-            const monthMap = new Map(); // monthKey -> { label, bookings: [] }
+            // Group by month
+            const monthMap = new Map();
             for (let entry of allEntries) {
                 if (!monthMap.has(entry.monthKey)) {
                     monthMap.set(entry.monthKey, { label: entry.monthLabel, bookings: [] });
@@ -454,64 +477,65 @@
                 monthMap.get(entry.monthKey).bookings.push(entry);
             }
             
-            // Sort months descending (latest first) because original sheet is descending
-            const sortedMonths = Array.from(monthMap.keys()).sort((a,b) => b.localeCompare(a));
+            // Sort months in descending order (latest first) as per sheet
+            const sortedMonths = Array.from(monthMap.keys()).sort((a, b) => b.localeCompare(a));
             monthGroups.clear();
             for (let mk of sortedMonths) {
                 const group = monthMap.get(mk);
-                // sort bookings inside month by SL.NO (ascending) to preserve original order
-                group.bookings.sort((x,y) => parseInt(x.slno) - parseInt(y.slno));
+                group.bookings.sort((x, y) => parseInt(x.slno) - parseInt(y.slno));
                 monthGroups.set(mk, { label: group.label, bookings: group.bookings });
             }
+            
             availableMonthKeys = Array.from(monthGroups.keys());
             
             if (availableMonthKeys.length === 0) throw new Error("No valid month data found");
             
-            return { success: true, monthKeys: availableMonthKeys, monthGroups };
+            return { success: true };
         } catch (err) {
-            console.error(err);
+            console.error("Fetch error:", err);
             return { success: false, error: err.message };
         }
     }
     
-    // Get a set of booked dates (YYYY-MM-DD) for a specific month (year, monthIndex)
-    function getBookedDatesForMonth(year, monthIndex, monthKey) {
+    // Get booked dates for a specific month/year
+    function getBookedDaysForMonth(year, monthIndex, monthKey) {
         const group = monthGroups.get(monthKey);
         if (!group) return new Set();
-        const bookedSet = new Set();
+        
+        const bookedDays = new Set(); // store day numbers (1-31)
+        
         for (let booking of group.bookings) {
             if (booking.bookingDateObj && !isNaN(booking.bookingDateObj.getTime())) {
                 const d = booking.bookingDateObj;
                 if (d.getFullYear() === year && d.getMonth() === monthIndex) {
-                    const dateStr = `${year}-${monthIndex+1}-${d.getDate()}`;
-                    bookedSet.add(dateStr);
+                    bookedDays.add(d.getDate());
                 }
             }
         }
-        return bookedSet;
+        
+        return bookedDays;
     }
     
-    // Render calendar
     function renderCalendar(year, month, monthKey) {
         const firstDayOfMonth = new Date(year, month, 1);
-        const startWeekday = firstDayOfMonth.getDay(); // 0 = Sunday
+        let startWeekday = firstDayOfMonth.getDay();
+        // Adjust to Monday first? Keep Sunday first (0 = Sunday) to match standard calendar
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        const bookedDates = getBookedDatesForMonth(year, month, monthKey);
+        const bookedDays = getBookedDaysForMonth(year, month, monthKey);
         
         const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
         let calendarHtml = `<div class="calendar-grid">`;
         weekdays.forEach(day => calendarHtml += `<div class="weekday">${day}</div>`);
         
-        let dayCounter = 1;
-        // empty cells for days before month starts
+        // Empty cells for days before month starts
         for (let i = 0; i < startWeekday; i++) {
             calendarHtml += `<div class="calendar-day empty-month"></div>`;
         }
         
+        // Render each day of the month
         for (let d = 1; d <= daysInMonth; d++) {
-            const dateKey = `${year}-${month+1}-${d}`;
-            const isBooked = bookedDates.has(dateKey);
+            const isBooked = bookedDays.has(d);
             const bookedClass = isBooked ? "booked" : "";
             let badgeHtml = "";
             if (isBooked) {
@@ -523,33 +547,33 @@
                     ${badgeHtml}
                 </div>
             `;
-            dayCounter++;
         }
         
-        const remaining = (startWeekday + daysInMonth) % 7;
-        if (remaining !== 0) {
-            for (let i = 0; i < 7 - remaining; i++) {
+        // Fill remaining cells
+        const totalCells = startWeekday + daysInMonth;
+        const remainingCells = 7 - (totalCells % 7);
+        if (remainingCells !== 7) {
+            for (let i = 0; i < remainingCells; i++) {
                 calendarHtml += `<div class="calendar-day empty-month"></div>`;
             }
         }
-        calendarHtml += `</div>`;
         
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        calendarHtml += `</div>`;
         document.getElementById("calendarGrid").innerHTML = calendarHtml;
+        
+        // Update title
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const titleDiv = document.querySelector(".calendar-title");
         if (titleDiv) {
-            const titleSpan = titleDiv.querySelector("small") || document.createElement("small");
-            if (!titleDiv.querySelector("small")) {
-                const smallEl = document.createElement("small");
-                smallEl.innerText = `${monthNames[month]} ${year}`;
+            let smallEl = titleDiv.querySelector("small");
+            if (!smallEl) {
+                smallEl = document.createElement("small");
                 titleDiv.appendChild(smallEl);
-            } else {
-                titleDiv.querySelector("small").innerText = `${monthNames[month]} ${year}`;
             }
+            smallEl.innerText = `${monthNames[month]} ${year}  |  ${bookedDays.size} day(s) booked`;
         }
     }
     
-    // Render monthly bookings table with month header merging (SL.NO resets per month)
     function renderBookingTable(selectedMonthKey) {
         const group = monthGroups.get(selectedMonthKey);
         if (!group || !group.bookings.length) {
@@ -561,35 +585,61 @@
         let tableHtml = `<table>
             <thead>
                 <tr><th>SL.NO</th><th>NAME OF INSTITUTION/Program</th><th>DATE OF BOOKING REQUIRED</th><th>FULL DAY / HALF DAY</th><th>AMOUNT PAID</th><th>RECEIPT NO. / DATE OF PAYMENT</th><th>CONTACT NUMBER</th></tr>
-            </thead><tbody>`;
+            </thead>
+            <tbody>`;
         
-        // show month label as merged row (as per original sheet style)
-        tableHtml += `<tr class="month-header-row"><td colspan="7" style="text-align:center; font-weight:bold;">📌 ${group.label}</td></tr>`;
+        tableHtml += `<tr class="month-header-row"><td colspan="7" style="text-align:center; font-weight:bold; background:#e0f2fe;">📌 ${group.label} (${bookings.length} bookings)</td></tr>`;
         
         for (let b of bookings) {
             tableHtml += `<tr>
                 <td>${escapeHtml(b.slno)}</td>
                 <td>${escapeHtml(b.institution || '-')}</td>
-                <td>${escapeHtml(b.bookingDateRaw || '-')}</td>
+                <td style="font-weight:500;">${escapeHtml(b.bookingDateRaw || '-')}</td>
                 <td>${escapeHtml(b.fullHalf || '-')}</td>
                 <td>${escapeHtml(b.amount || '-')}</td>
                 <td>${escapeHtml(b.paymentReceipt || '-')}</td>
                 <td>${escapeHtml(b.contact || '-')}</td>
             </tr>`;
         }
-        tableHtml += `</tbody></table>`;
+        tableHtml += `</tbody>�`;
         document.getElementById("tableWrapper").innerHTML = tableHtml;
     }
     
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;});}
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    async function loadMonthData(monthKey) {
+        const group = monthGroups.get(monthKey);
+        if (!group) return;
+        
+        const labelParts = group.label.split(" ");
+        const monthName = labelParts[0];
+        const year = parseInt(labelParts[1]);
+        const monthIndex = ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(monthName);
+        
+        if (monthIndex !== -1 && !isNaN(year)) {
+            renderCalendar(year, monthIndex, monthKey);
+            renderBookingTable(monthKey);
+        } else {
+            document.getElementById("calendarGrid").innerHTML = `<div class="no-data">Invalid month format: ${group.label}</div>`;
+        }
+    }
     
     async function populateMonthDropdownAndLoad(selectedKey = null) {
         const selectEl = document.getElementById("monthSelect");
-        selectEl.innerHTML = '<option value="">Loading months...</option>';
+        selectEl.innerHTML = '<option>Loading months...</option>';
+        
         const result = await fetchAndProcessSheet();
         if (!result.success) {
-            document.getElementById("calendarGrid").innerHTML = `<div class="no-data">⚠️ Error loading sheet: ${result.error}. Make sure sheet is public.</div>`;
-            document.getElementById("tableWrapper").innerHTML = `<div class="no-data">Data fetch error</div>`;
+            document.getElementById("calendarGrid").innerHTML = `<div class="no-data">⚠️ Error: ${result.error}. Make sure sheet is public (view permission).</div>`;
+            document.getElementById("tableWrapper").innerHTML = `<div class="no-data">Please check sheet access</div>`;
             selectEl.innerHTML = '<option>Error loading</option>';
             return;
         }
@@ -602,30 +652,16 @@
                 const option = document.createElement("option");
                 option.value = mk;
                 option.textContent = group.label;
-                if (selectedKey === mk || (i === 0 && !selectedKey)) option.selected = true;
+                if (selectedKey === mk || (i === 0 && !selectedKey)) {
+                    option.selected = true;
+                }
                 selectEl.appendChild(option);
             }
         }
         
         let firstMonthKey = selectEl.value || availableMonthKeys[0];
-        if (!firstMonthKey && availableMonthKeys.length) firstMonthKey = availableMonthKeys[0];
         if (firstMonthKey) {
             await loadMonthData(firstMonthKey);
-        }
-    }
-    
-    async function loadMonthData(monthKey) {
-        const group = monthGroups.get(monthKey);
-        if (!group) return;
-        const labelParts = group.label.split(" ");
-        const monthName = labelParts[0];
-        const year = parseInt(labelParts[1]);
-        const monthIndex = ["January","February","March","April","May","June","July","August","September","October","November","December"].indexOf(monthName);
-        if (monthIndex !== -1 && !isNaN(year)) {
-            renderCalendar(year, monthIndex, monthKey);
-            renderBookingTable(monthKey);
-        } else {
-            document.getElementById("calendarGrid").innerHTML = `<div class="no-data">Invalid month format</div>`;
         }
     }
     
@@ -633,13 +669,14 @@
     document.getElementById("monthSelect").addEventListener("change", (e) => {
         if (e.target.value) loadMonthData(e.target.value);
     });
+    
     document.getElementById("refreshBtn").addEventListener("click", async () => {
         const currentSelect = document.getElementById("monthSelect");
         const previousValue = currentSelect.value;
         await populateMonthDropdownAndLoad(previousValue);
     });
     
-    // initial load
+    // Initialize
     populateMonthDropdownAndLoad();
 </script>
 </body>
