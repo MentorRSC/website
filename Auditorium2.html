@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSC&P Calicut — Auditorium Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0b1f3a;
+    --navy-mid: #162d50;
+    --navy-light: #1e3d6b;
+    --gold: #c8972b;
+    --gold-light: #e8b84d;
+    --gold-pale: #fdf6e7;
+    --cream: #fafaf8;
+    --border: #dce4f0;
+    --text-main: #0f1e30;
+    --text-muted: #5a6e87;
+    --text-dim: #8fa0b4;
+    --red-bg: #fff0f0;
+    --red-border: #f8c0c0;
+    --red-text: #c0392b;
+    --available-bg: #f0faf4;
+    --available-border: #b8e8ca;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #e8edf5;
+    background-image: radial-gradient(circle at 20% 0%, #d0dbec 0%, transparent 50%),
+                      radial-gradient(circle at 80% 100%, #d5dce8 0%, transparent 50%);
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  @media (min-width: 640px) { body { padding: 2rem; } }
+
+  .shell {
+    max-width: 960px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(11,31,58,0.18), 0 4px 12px rgba(11,31,58,0.08);
+    background: var(--cream);
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: var(--navy);
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,255,255,0.018) 18px, rgba(255,255,255,0.018) 19px),
+      repeating-linear-gradient(-45deg, transparent, transparent 18px, rgba(255,255,255,0.018) 18px, rgba(255,255,255,0.018) 19px);
+    pointer-events: none;
+  }
+
+  .header-top-bar {
+    background: var(--gold);
+    height: 4px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.2rem;
+    padding: 1.5rem 1.5rem 1.4rem;
+    position: relative;
+  }
+
+  @media (min-width: 640px) { .header-inner { padding: 2rem 2rem 1.8rem; gap: 1.5rem; } }
+
+  .header-seal {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(200,151,43,0.12);
+    border: 1.5px solid rgba(200,151,43,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin-top: 2px;
+  }
+
+  @media (min-width: 640px) { .header-seal { width: 68px; height: 68px; font-size: 32px; } }
+
+  .header-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.2px;
+    line-height: 1.2;
+  }
+
+  @media (min-width: 640px) { .header-text h1 { font-size: 1.7rem; } }
+
+  .header-text .sub {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.55);
+    margin-top: 4px;
+    font-weight: 300;
+    letter-spacing: 0.3px;
+  }
+
+  @media (min-width: 640px) { .header-text .sub { font-size: 0.85rem; } }
+
+  .header-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hbadge {
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .hbadge-gold {
+    background: rgba(200,151,43,0.18);
+    color: var(--gold-light);
+    border: 1px solid rgba(200,151,43,0.3);
+  }
+
+  .hbadge-dim {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.45);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .header-bottom {
+    padding: 0 1.5rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 0.8rem;
+  }
+
+  .marquee-text {
+    font-size: 0.73rem;
+    color: rgba(255,255,255,0.38);
+    font-weight: 300;
+    letter-spacing: 0.4px;
+  }
+
+  .gold-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+
+  /* ─── CONTROLS ─── */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .controls-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ctrl-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .month-select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--navy);
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 32px 8px 12px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6e87' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s;
+  }
+
+  .month-select:focus { border-color: var(--gold); }
+
+  .refresh-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--navy-mid);
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    white-space: nowrap;
+  }
+
+  .refresh-btn:hover { background: #f0f4fb; border-color: #b0c0d8; }
+  .refresh-btn:active { transform: scale(0.97); }
+  .refresh-btn svg { transition: transform 0.5s; }
+  .refresh-btn.spinning svg { transform: rotate(360deg); }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .stats-bar.visible { opacity: 1; transform: translateY(0); }
+
+  .stat-card {
+    padding: 1rem;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+
+  .stat-card:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── CALENDAR ─── */
+  .cal-section {
+    padding: 1.5rem;
+    background: var(--cream);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s 0.1s ease, transform 0.5s 0.1s ease;
+  }
+
+  .cal-section.visible { opacity: 1; transform: translateY(0); }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .section-title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .section-icon svg { width: 16px; height: 16px; color: #fff; }
+
+  .section-title h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  .cal-legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .legend-dot.booked { background: var(--red-text); }
+  .legend-dot.free { background: #2ecc71; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+
+  @media (min-width: 480px) { .cal-grid { gap: 7px; } }
+
+  .weekday-hdr {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    padding: 6px 2px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .cal-day {
+    border-radius: 8px;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 6px 3px 4px;
+    gap: 3px;
+    background: #fff;
+    border: 1.5px solid #edf1f7;
+    cursor: default;
+    transition: transform 0.15s;
+    animation: dayFadeIn 0.3s ease both;
+  }
+
+  @media (min-width: 480px) { .cal-day { min-height: 64px; padding: 8px 4px 6px; } }
+
+  @keyframes dayFadeIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+
+  .cal-day.booked {
+    background: var(--red-bg);
+    border-color: var(--red-border);
+  }
+
+  .cal-day.today {
+    border-color: var(--gold);
+    box-shadow: inset 0 0 0 1px rgba(200,151,43,0.3);
+  }
+
+  .cal-day.empty {
+    background: transparent;
+    border-color: transparent;
+    pointer-events: none;
+  }
+
+  .day-num {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-main);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .cal-day.booked .day-num {
+    background: var(--red-text);
+    color: #fff;
+    font-size: 0.75rem;
+  }
+
+  .cal-day.today .day-num {
+    background: var(--gold);
+    color: #fff;
+  }
+
+  .day-badge {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: var(--red-text);
+    letter-spacing: 0.3px;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  @media (min-width: 480px) { .day-badge { font-size: 0.6rem; } }
+
+  /* ─── TABLE SECTION ─── */
+  .table-section {
+    padding: 0 1.5rem 1.5rem;
+    background: var(--cream);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s 0.2s ease, transform 0.5s 0.2s ease;
+  }
+
+  .table-section.visible { opacity: 1; transform: translateY(0); }
+
+  .table-toggle-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .table-toggle-btn:hover { background: #f5f8ff; border-color: #c0d0e8; }
+
+  .table-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toggle-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .toggle-count {
+    font-size: 0.72rem;
+    font-weight: 500;
+    background: var(--navy);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  .toggle-chevron {
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    color: var(--text-muted);
+  }
+
+  .toggle-chevron.open { transform: rotate(180deg); }
+
+  .table-body-wrap {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .table-body-wrap.open { max-height: 2000px; }
+
+  .table-inner {
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .register-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    min-width: 600px;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .register-table th {
+    background: var(--navy);
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    letter-spacing: 0.3px;
+  }
+
+  .register-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f4f8;
+    color: var(--text-main);
+    vertical-align: top;
+  }
+
+  .register-table tr:last-child td { border-bottom: none; }
+
+  .register-table tr:hover td { background: #f8fbff; }
+
+  .month-sep-row td {
+    background: var(--gold-pale) !important;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: #7a5210;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0d99a !important;
+    letter-spacing: 0.2px;
+  }
+
+  .sl-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--navy);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.68rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* ─── SKELETON ─── */
+  .skeleton-wrap { padding: 1.5rem; }
+
+  .sk {
+    background: linear-gradient(90deg, #edf0f5 25%, #e0e5ed 50%, #edf0f5 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+  }
+
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  .sk-title { height: 20px; width: 45%; margin-bottom: 16px; }
+
+  .sk-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+
+  .sk-day { height: 52px; border-radius: 8px; }
+
+  @media (min-width: 480px) { .sk-day { height: 64px; } }
+
+  .sk-row {
+    height: 14px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    font-size: 0.7rem;
+    padding: 1rem;
+    letter-spacing: 0.3px;
+    font-weight: 300;
+  }
+
+  footer span { color: var(--gold); }
+
+  /* ─── DIVIDER ─── */
+  .gold-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+    opacity: 0.25;
+    margin: 0 1.5rem;
+  }
+
+  /* ─── ERROR / EMPTY ─── */
+  .info-box {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .info-box .big { font-size: 2rem; margin-bottom: 8px; }
+  .info-box strong { color: var(--text-main); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top-bar"></div>
+    <div class="header-inner">
+      <div class="header-seal">🎭</div>
+      <div class="header-text">
+        <h1>RSC&P, Calicut<br>Auditorium Booking</h1>
+        <div class="sub">Regional Sports Centre &amp; Polytechnic · Kozhikode, Kerala</div>
+        <div class="header-badge-row">
+          <span class="hbadge hbadge-gold">Official Register</span>
+          <span class="hbadge hbadge-dim">Public Access</span>
+          <span class="hbadge hbadge-dim">Govt. of Kerala</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-bottom">
+      <div class="gold-dot"></div>
+      <span class="marquee-text">Auditorium availability is updated periodically. For urgent enquiries, contact the administrative office.</span>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="controls-left">
+      <span class="ctrl-label">Month</span>
+      <select class="month-select" id="monthSelect">
+        <option>Loading…</option>
+      </select>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">
+      <svg id="refreshIcon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+        <path d="M1 9a8 8 0 1 0 1.2-4.2"/><path d="M1 3v3h3"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">—</div>
+      <div class="stat-label">Total Days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statBooked" style="color:#c0392b;">—</div>
+      <div class="stat-label">Booked</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statFree" style="color:#1a9e5a;">—</div>
+      <div class="stat-label">Available</div>
+    </div>
+  </div>
+
+  <!-- CALENDAR SECTION -->
+  <div class="cal-section" id="calSection">
+    <div class="section-title">
+      <div class="section-title-left">
+        <div class="section-icon">
+          <svg viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="16" height="15" rx="2.5"/>
+            <path d="M6 1v3M14 1v3M2 8h16"/>
+          </svg>
+        </div>
+        <h2 id="calMonthLabel">Booking Calendar</h2>
+      </div>
+      <div class="cal-legend">
+        <div class="legend-item"><div class="legend-dot booked"></div>Booked</div>
+        <div class="legend-item"><div class="legend-dot free"></div>Free</div>
+      </div>
+    </div>
+    <div id="calContent">
+      <!-- Skeleton -->
+      <div class="sk-cal-grid" id="calSkeleton">
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+        <div class="sk weekday-hdr" style="height:18px;"></div>
+      </div>
+      <div class="sk-cal-grid" style="margin-top:6px;" id="calSkeletonDays">
+      </div>
+    </div>
+    <div id="calGrid" style="display:none;"></div>
+  </div>
+
+  <div class="gold-divider"></div>
+
+  <!-- TABLE SECTION -->
+  <div class="table-section" id="tableSection">
+    <button class="table-toggle-btn" id="tableToggleBtn" aria-expanded="false">
+      <div class="table-toggle-left">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
+          <rect x="1" y="3" width="16" height="12" rx="2"/>
+          <path d="M1 7h16M7 7v8"/>
+        </svg>
+        <span class="toggle-label">Monthly Booking Register</span>
+        <span class="toggle-count" id="toggleCount">…</span>
+      </div>
+      <svg class="toggle-chevron" id="toggleChevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+        <path d="M3 6l5 5 5-5"/>
+      </svg>
+    </button>
+    <div class="table-body-wrap" id="tableBodyWrap">
+      <div class="table-inner">
+        <div class="table-scroll">
+          <table class="register-table" id="registerTable">
+            <thead>
+              <tr>
+                <th>SL</th>
+                <th>Institution / Programme</th>
+                <th>Date</th>
+                <th>Duration</th>
+                <th>Amount</th>
+                <th>Receipt / Payment</th>
+                <th>Contact</th>
+              </tr>
+            </thead>
+            <tbody id="registerBody">
+              <tr><td colspan="7"><div class="info-box"><div class="big">📋</div>Select a month to load entries.</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Data source: RSC&amp;P Auditorium Booking Register, Kozhikode &nbsp;·&nbsp; <span>Red dates indicate booked days</span> &nbsp;·&nbsp; Contact office for block bookings
+  </footer>
+
+</div>
+
+<script>
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1ByjW8gwekUvomwKhTx5sFv3Oel8Wx-7Ud_u0pQOc6x8/export?format=csv&gid=0";
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const WEEK_DAYS = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+
+let monthGroups = new Map();
+let availableKeys = [];
+
+// ── Build skeleton rows
+(function buildCalSkeleton() {
+  const g = document.getElementById("calSkeletonDays");
+  for (let i = 0; i < 35; i++) {
+    const d = document.createElement("div");
+    d.className = "sk sk-day";
+    d.style.animationDelay = (i * 18) + "ms";
+    g.appendChild(d);
+  }
+})();
+
+function parseDateRobust(s) {
+  if (!s || !s.trim()) return null;
+  const c = s.trim();
+  const p = c.split(/[\/\-\.]/);
+  if (p.length === 3) {
+    let d = parseInt(p[0],10), m = parseInt(p[1],10)-1, y = parseInt(p[2],10);
+    if (y < 100) y += 2000;
+    if (!isNaN(d) && !isNaN(m) && !isNaN(y) && d>=1&&d<=31&&m>=0&&m<=11&&y>2000)
+      return new Date(y,m,d);
+  }
+  const n = new Date(c);
+  if (!isNaN(n.getTime()) && n.getFullYear()>2000) return n;
+  return null;
+}
+
+function parseMonthYearLabel(text) {
+  if (!text) return null;
+  const mt = text.match(/([A-Za-z]+)\s+(\d{4})/);
+  if (!mt) return null;
+  const mi = MONTH_NAMES.findIndex(m => m.toLowerCase() === mt[1].toLowerCase());
+  if (mi === -1) return null;
+  return { year: parseInt(mt[2]), month: mi, label: MONTH_NAMES[mi] + " " + mt[2] };
+}
+
+async function fetchSheet() {
+  const resp = await fetch(SHEET_URL);
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  const csv = await resp.text();
+
+  const lines = csv.split(/\r?\n/).filter(l => l.trim());
+  let delim = ",";
+  if (lines[0].includes(";")) delim = ";";
+  else if (lines[0].includes("\t")) delim = "\t";
+
+  const rows = lines.map(l =>
+    l.split(delim).map(c => c.trim().replace(/^"(.*)"$/,"$1").replace(/""/g,'"'))
+  );
+
+  let hi = -1;
+  for (let i=0;i<Math.min(15,rows.length);i++) {
+    const f = (rows[i][0]||"").toUpperCase();
+    if (f.includes("SL.NO")||f.includes("SL NO")||f.includes("SLNO")) { hi=i; break; }
+  }
+  if (hi===-1) throw new Error("Header row not found");
+
+  const data = rows.slice(hi+1);
+  const entries = [];
+  let curKey = null, curLabel = null;
+
+  for (const row of data) {
+    if (!row.length) continue;
+    const f = row[0]||"";
+    const mp = parseMonthYearLabel(f);
+    if (mp && (!row[1]||!row[1].trim())) {
+      curKey = mp.year+"-"+mp.month;
+      curLabel = mp.label;
+      continue;
+    }
+    const sl = parseInt(f,10);
+    if (!isNaN(sl) && curKey && f) {
+      const raw = row[2]||"";
+      entries.push({
+        monthKey: curKey, monthLabel: curLabel,
+        slno: f,
+        institution: row[1]||"",
+        dateRaw: raw,
+        dateObj: parseDateRobust(raw),
+        duration: row[3]||"",
+        amount: row[4]||"",
+        receipt: row[5]||"",
+        contact: row[6]||""
+      });
+    }
+  }
+
+  const map = new Map();
+  for (const e of entries) {
+    if (!map.has(e.monthKey)) map.set(e.monthKey,{label:e.monthLabel,bookings:[]});
+    map.get(e.monthKey).bookings.push(e);
+  }
+
+  const sorted = [...map.keys()].sort((a,b)=>b.localeCompare(a));
+  monthGroups.clear();
+  for (const k of sorted) {
+    const g = map.get(k);
+    g.bookings.sort((a,b)=>parseInt(a.slno)-parseInt(b.slno));
+    monthGroups.set(k,g);
+  }
+  availableKeys = [...monthGroups.keys()];
+  if (!availableKeys.length) throw new Error("No monthly data found");
+}
+
+function getBookedDays(year, month, key) {
+  const g = monthGroups.get(key);
+  if (!g) return new Set();
+  const s = new Set();
+  for (const b of g.bookings) {
+    if (b.dateObj && b.dateObj.getFullYear()===year && b.dateObj.getMonth()===month)
+      s.add(b.dateObj.getDate());
+  }
+  return s;
+}
+
+function renderCalendar(year, month, key) {
+  const booked = getBookedDays(year, month, key);
+  const total = new Date(year, month+1, 0).getDate();
+  const startDay = new Date(year, month, 1).getDay();
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear()===year && today.getMonth()===month;
+
+  // Stats
+  document.getElementById("statTotal").textContent = total;
+  document.getElementById("statBooked").textContent = booked.size;
+  document.getElementById("statFree").textContent = total - booked.size;
+  document.getElementById("statsBar").classList.add("visible");
+
+  document.getElementById("calMonthLabel").textContent = MONTH_NAMES[month]+" "+year;
+
+  let html = '<div class="cal-grid">';
+  WEEK_DAYS.forEach(d => html+=`<div class="weekday-hdr">${d}</div>`);
+  for (let i=0;i<startDay;i++) html+=`<div class="cal-day empty"></div>`;
+
+  for (let d=1;d<=total;d++) {
+    const isBooked = booked.has(d);
+    const isToday = isCurrentMonth && today.getDate()===d;
+    let cls = "cal-day";
+    if (isBooked) cls += " booked";
+    if (isToday) cls += " today";
+    const delay = ((startDay+d-1)*15)+"ms";
+    html += `<div class="${cls}" style="animation-delay:${delay}">
+      <div class="day-num">${d}</div>
+      ${isBooked?'<div class="day-badge">BOOKED</div>':''}
+    </div>`;
+  }
+
+  const totalCells = startDay + total;
+  const remain = (7 - totalCells % 7) % 7;
+  for (let i=0;i<remain;i++) html+=`<div class="cal-day empty"></div>`;
+  html+='</div>';
+
+  const calGrid = document.getElementById("calGrid");
+  calGrid.innerHTML = html;
+  calGrid.style.display = "";
+  document.getElementById("calSkeleton").style.display = "none";
+  document.getElementById("calSkeletonDays").style.display = "none";
+}
+
+function esc(s) {
+  return (s||"").replace(/[&<>]/g,c=>c==="&"?"&amp;":c==="<"?"&lt;":"&gt;");
+}
+
+function renderTable(key) {
+  const g = monthGroups.get(key);
+  const body = document.getElementById("registerBody");
+  const countEl = document.getElementById("toggleCount");
+
+  if (!g||!g.bookings.length) {
+    body.innerHTML = `<tr><td colspan="7"><div class="info-box"><div class="big">📭</div><strong>No bookings found</strong> for this month.</div></td></tr>`;
+    countEl.textContent = "0";
+    return;
+  }
+
+  countEl.textContent = g.bookings.length;
+  let html = `<tr class="month-sep-row"><td colspan="7">📌 ${esc(g.label)} — ${g.bookings.length} booking${g.bookings.length!==1?"s":""}</td></tr>`;
+  for (const b of g.bookings) {
+    html += `<tr>
+      <td><span class="sl-badge">${esc(b.slno)}</span></td>
+      <td style="font-weight:500;max-width:180px;">${esc(b.institution)||"—"}</td>
+      <td style="white-space:nowrap;font-weight:500;color:#0b1f3a;">${esc(b.dateRaw)||"—"}</td>
+      <td>${esc(b.duration)||"—"}</td>
+      <td>${esc(b.amount)||"—"}</td>
+      <td style="max-width:140px;">${esc(b.receipt)||"—"}</td>
+      <td>${esc(b.contact)||"—"}</td>
+    </tr>`;
+  }
+  body.innerHTML = html;
+}
+
+async function loadMonth(key) {
+  const g = monthGroups.get(key);
+  if (!g) return;
+  const parts = g.label.split(" ");
+  const mi = MONTH_NAMES.indexOf(parts[0]);
+  const yr = parseInt(parts[1]);
+  if (mi!==-1 && !isNaN(yr)) {
+    renderCalendar(yr, mi, key);
+    renderTable(key);
+    document.getElementById("calSection").classList.add("visible");
+    document.getElementById("tableSection").classList.add("visible");
+  }
+}
+
+function populateSelect(preferred) {
+  const sel = document.getElementById("monthSelect");
+  sel.innerHTML = "";
+  for (let i=0;i<availableKeys.length;i++) {
+    const k = availableKeys[i];
+    const g = monthGroups.get(k);
+    if (!g||!g.label) continue;
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = g.label;
+    if (k===preferred || (!preferred && i===0)) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+async function init(preferred) {
+  // Show skeleton
+  document.getElementById("calSkeleton").style.display = "";
+  document.getElementById("calSkeletonDays").style.display = "";
+  document.getElementById("calGrid").style.display = "none";
+
+  try {
+    await fetchSheet();
+    populateSelect(preferred);
+    const key = document.getElementById("monthSelect").value || availableKeys[0];
+    if (key) await loadMonth(key);
+  } catch(e) {
+    document.getElementById("calGrid").innerHTML = `<div class="info-box"><div class="big">⚠️</div><strong>Could not load data.</strong><br>${e.message}<br><br>Ensure the Google Sheet is publicly viewable.</div>`;
+    document.getElementById("calGrid").style.display = "";
+    document.getElementById("calSkeleton").style.display = "none";
+    document.getElementById("calSkeletonDays").style.display = "none";
+    document.getElementById("monthSelect").innerHTML = '<option>Error</option>';
+  }
+}
+
+// ── Events
+document.getElementById("monthSelect").addEventListener("change", e => {
+  if (e.target.value) loadMonth(e.target.value);
+});
+
+document.getElementById("refreshBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("refreshBtn");
+  const icon = document.getElementById("refreshIcon");
+  btn.disabled = true;
+  icon.style.transition = "transform 0.7s";
+  icon.style.transform = "rotate(360deg)";
+  const prev = document.getElementById("monthSelect").value;
+  await init(prev);
+  setTimeout(()=>{ icon.style.transition="transform 0.01s"; icon.style.transform="rotate(0deg)"; btn.disabled=false; }, 700);
+});
+
+document.getElementById("tableToggleBtn").addEventListener("click", () => {
+  const wrap = document.getElementById("tableBodyWrap");
+  const chev = document.getElementById("toggleChevron");
+  const btn = document.getElementById("tableToggleBtn");
+  const open = wrap.classList.toggle("open");
+  chev.classList.toggle("open", open);
+  btn.setAttribute("aria-expanded", open);
+});
+
+// ── Init
+init();
+</script>
+</body>
+</html>
