@@ -233,8 +233,57 @@
             border-color: #eef2ff;
         }
 
+        /* Table Section with Expand/Collapse */
         .table-section {
             padding: 0.5rem 1rem 1.5rem 1rem;
+        }
+
+        .expand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: #f1f6fe;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .expand-header:hover {
+            background: #e6edfa;
+        }
+
+        .expand-header h3 {
+            color: #0f2b4d;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .expand-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 6px 14px;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #1e4a6e;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .expand-btn:hover {
+            background: #eef2ff;
+            transform: scale(0.98);
         }
 
         .table-wrapper {
@@ -244,6 +293,11 @@
             background: white;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             -webkit-overflow-scrolling: touch;
+            transition: all 0.25s ease-in-out;
+        }
+
+        .table-wrapper.collapsed {
+            display: none;
         }
 
         table {
@@ -305,14 +359,6 @@
             color: #4b6b8f;
         }
         
-        .debug-info {
-            font-size: 0.7rem;
-            background: #f1f5f9;
-            padding: 4px 10px;
-            border-radius: 16px;
-            color: #475569;
-        }
-
         /* Mobile-specific improvements */
         @media (max-width: 640px) {
             body {
@@ -393,6 +439,19 @@
                 padding: 0.5rem 0.8rem 1rem 0.8rem;
             }
             
+            .expand-header {
+                padding: 6px 10px;
+            }
+            
+            .expand-header h3 {
+                font-size: 0.9rem;
+            }
+            
+            .expand-btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+            
             th, td {
                 padding: 8px 5px;
                 font-size: 0.7rem;
@@ -405,12 +464,11 @@
 
         /* Touch optimization */
         @media (hover: none) and (pointer: coarse) {
-            select, .refresh-btn {
+            select, .refresh-btn, .expand-btn {
                 min-height: 40px;
             }
             
-            .refresh-btn:active {
-                background: #d9e6ff;
+            .refresh-btn:active, .expand-btn:active {
                 transform: scale(0.97);
             }
         }
@@ -420,7 +478,7 @@
 <div class="dashboard-container">
     <div class="header">
         <h1>🎭 RSC&P, CALICUT <span>AUDITORIUM BOOKING</span></h1>
-        <div class="subhead"></div>
+        <div class="subhead">Regional Sports Centre & Polytechnic · Auditorium Availability & Monthly Register</div>
     </div>
     <div class="controls">
         <div class="month-picker">
@@ -435,15 +493,23 @@
         </div>
         <div id="calendarGrid"></div>
     </div>
+    
+    <!-- Table Section with Expand/Collapse Button -->
     <div class="table-section">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
-            <h3 style="color:#0f2b4d; font-size: 1rem;">📋 Monthly Booking Register</h3>
-            <span style="font-size:0.65rem; background:#eef2ff; padding:3px 10px; border-radius:20px;">SL.NO resets each month</span>
+        <div class="expand-header" id="expandHeader">
+            <h3>
+                📋 Monthly Booking Register
+                <span style="font-size:0.65rem; background:#e2e8f0; padding:2px 8px; border-radius:20px; font-weight:normal;">SL.NO resets each month</span>
+            </h3>
+            <button class="expand-btn" id="expandTableBtn">
+                <span id="expandIcon">▶</span> <span id="expandText">Show Register</span>
+            </button>
         </div>
-        <div class="table-wrapper" id="tableWrapper">
+        <div class="table-wrapper collapsed" id="tableWrapper">
             <div class="loading">Loading booking data from sheet...</div>
         </div>
     </div>
+    
     <footer>Data source: RSC&P Auditorium Booking Register · 🔴 Red dates = Fully booked days</footer>
 </div>
 
@@ -452,6 +518,7 @@
 
     let monthGroups = new Map();
     let availableMonthKeys = [];
+    let currentTableMonthKey = null; // track which month is currently rendered in table
 
     // Enhanced date parser that handles multiple Indian/Excel formats (unchanged logic)
     function parseDateRobust(dateStr) {
@@ -636,7 +703,6 @@
     function renderCalendar(year, month, monthKey) {
         const firstDayOfMonth = new Date(year, month, 1);
         let startWeekday = firstDayOfMonth.getDay();
-        // Adjust to Monday first? Keep Sunday first (0 = Sunday) to match standard calendar
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
         const bookedDays = getBookedDaysForMonth(year, month, monthKey);
@@ -692,6 +758,7 @@
     }
     
     function renderBookingTable(selectedMonthKey) {
+        currentTableMonthKey = selectedMonthKey;
         const group = monthGroups.get(selectedMonthKey);
         if (!group || !group.bookings.length) {
             document.getElementById("tableWrapper").innerHTML = `<div class="no-data">📭 No booking entries found for this month.</div>`;
@@ -701,7 +768,7 @@
         const bookings = group.bookings;
         let tableHtml = `<table>
             <thead>
-                <tr><th>SL.NO</th><th>NAME OF INSTITUTION/Program</th><th>DATE OF BOOKING REQUIRED</th><th>FULL DAY / HALF DAY</th><th>AMOUNT PAID</th><th>RECEIPT NO. / DATE OF PAYMENT</th><th>CONTACT NUMBER</th></tr>
+                <tr><th>SL.NO</th><th>NAME OF INSTITUTION/Program</th><th>DATE OF BOOKING REQUIRED</th><th>FULL DAY / HALF DAY</th><th>AMOUNT PAID</th><th>RECEIPT NO. / DATE OF PAYMENT</th><th>CONTACT NUMBER</th></td>
             </thead>
             <tbody>`;
         
@@ -718,7 +785,7 @@
                 <td>${escapeHtml(b.contact || '-')}</td>
             </tr>`;
         }
-        tableHtml += `</tbody></table>`;
+        tableHtml += `</tbody>�</table>`;
         document.getElementById("tableWrapper").innerHTML = tableHtml;
     }
     
@@ -743,7 +810,12 @@
         
         if (monthIndex !== -1 && !isNaN(year)) {
             renderCalendar(year, monthIndex, monthKey);
+            // Store current month key for table, but only update table content if it's currently expanded
+            // However for better UX, we update the content silently so when expanded it shows correct month
             renderBookingTable(monthKey);
+            
+            // If table is collapsed, we just updated its content; when expanded it will show the new month's data
+            // No extra action needed
         } else {
             document.getElementById("calendarGrid").innerHTML = `<div class="no-data">Invalid month format: ${group.label}</div>`;
         }
@@ -782,6 +854,56 @@
         }
     }
     
+    // Expand/Collapse functionality with dynamic icon & text
+    function setupExpandCollapse() {
+        const tableWrapper = document.getElementById("tableWrapper");
+        const expandBtn = document.getElementById("expandTableBtn");
+        const expandIcon = document.getElementById("expandIcon");
+        const expandText = document.getElementById("expandText");
+        
+        let isExpanded = false;
+        
+        function toggleTable() {
+            if (isExpanded) {
+                // Collapse
+                tableWrapper.classList.add("collapsed");
+                expandIcon.textContent = "▶";
+                expandText.textContent = "Show Register";
+                isExpanded = false;
+            } else {
+                // Expand
+                tableWrapper.classList.remove("collapsed");
+                expandIcon.textContent = "▼";
+                expandText.textContent = "Hide Register";
+                isExpanded = true;
+                
+                // Smooth scroll to table header for better UX on mobile
+                setTimeout(() => {
+                    const header = document.getElementById("expandHeader");
+                    if (header && window.innerWidth <= 640) {
+                        header.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
+            }
+        }
+        
+        expandBtn.addEventListener("click", toggleTable);
+        // Also make the whole header clickable for easier access
+        const expandHeader = document.getElementById("expandHeader");
+        expandHeader.addEventListener("click", (e) => {
+            // Prevent double trigger if button was clicked directly
+            if (e.target !== expandBtn && !expandBtn.contains(e.target)) {
+                toggleTable();
+            }
+        });
+        
+        // Initially collapsed - set correct state
+        tableWrapper.classList.add("collapsed");
+        expandIcon.textContent = "▶";
+        expandText.textContent = "Show Register";
+        isExpanded = false;
+    }
+    
     // Event listeners
     document.getElementById("monthSelect").addEventListener("change", (e) => {
         if (e.target.value) loadMonthData(e.target.value);
@@ -791,10 +913,20 @@
         const currentSelect = document.getElementById("monthSelect");
         const previousValue = currentSelect.value;
         await populateMonthDropdownAndLoad(previousValue);
+        // After refresh, ensure table stays collapsed (user preference preserved)
+        const tableWrapper = document.getElementById("tableWrapper");
+        const expandIcon = document.getElementById("expandIcon");
+        const expandText = document.getElementById("expandText");
+        if (tableWrapper && !tableWrapper.classList.contains("collapsed")) {
+            // If it was expanded, keep expanded? But to be consistent after data reload we keep same UI state
+            // However, we don't want to force collapse; but the toggle logic might reset? We'll keep existing state
+            // But table content is updated, so no need to change visibility
+        }
     });
     
-    // Initialize
+    // Initialize and setup expand/collapse
     populateMonthDropdownAndLoad();
+    setupExpandCollapse();
 </script>
 </body>
 </html>
