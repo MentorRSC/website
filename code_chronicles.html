@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Code Chronicles — NOVA's Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0b0e1a;
+  --surface:#111627;
+  --surface2:#1a2035;
+  --amber:#f5a623;
+  --amber2:#ffd17a;
+  --teal:#00c9a7;
+  --teal2:#5ffce0;
+  --coral:#ff6b6b;
+  --purple:#9b6dff;
+  --text:#e8eaf0;
+  --muted:#7a8099;
+  --border:#2a3050;
+  --code-bg:#0d1117;
+}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden}
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle 3s infinite alternate}
+@keyframes twinkle{0%{opacity:.2;transform:scale(1)}100%{opacity:.8;transform:scale(1.3)}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(11,14,26,.95);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(12px)}
+.nav-title{font-family:'Orbitron',monospace;font-size:13px;color:var(--amber);letter-spacing:2px;text-transform:uppercase}
+.nav-chapters{display:flex;gap:6px}
+.nav-ch{background:none;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;transition:all .2s;letter-spacing:1px}
+.nav-ch:hover{border-color:var(--teal);color:var(--teal)}
+.nav-ch.active{border-color:var(--amber);color:var(--amber);background:rgba(245,166,35,.08)}
+.nav-ch.unlocked{opacity:1}
+.nav-ch.locked{opacity:.35;cursor:not-allowed}
+.progress-bar{height:2px;background:var(--border);position:fixed;top:51px;left:0;right:0;z-index:99}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--amber));transition:width .6s ease}
+
+/* SCREENS */
+.screen{position:relative;z-index:1;min-height:100vh;padding:80px 24px 60px;display:none;max-width:860px;margin:0 auto}
+.screen.active{display:block;animation:fadeIn .5s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* LANDING */
+#s0{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:100vh;padding:80px 24px}
+.logo-orbit{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:5px;color:var(--teal);text-transform:uppercase;margin-bottom:20px;animation:pulse 2s infinite alternate}
+@keyframes pulse{from{opacity:.6}to{opacity:1}}
+.main-title{font-family:'Orbitron',monospace;font-size:clamp(28px,5vw,54px);font-weight:900;line-height:1.1;background:linear-gradient(135deg,var(--amber) 0%,var(--teal2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px}
+.sub-title{font-family:'Crimson Pro',serif;font-size:22px;color:var(--muted);margin-bottom:40px;font-style:italic}
+.hero-robot{font-size:90px;margin-bottom:30px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.tag-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:50px}
+.tag{background:var(--surface2);border:1px solid var(--border);padding:6px 16px;border-radius:20px;font-size:12px;color:var(--muted);letter-spacing:1px}
+.tag.highlight{border-color:var(--teal);color:var(--teal)}
+.btn-start{background:var(--amber);color:#0b0e1a;border:none;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;padding:16px 48px;border-radius:6px;cursor:pointer;letter-spacing:2px;transition:all .2s;text-transform:uppercase}
+.btn-start:hover{background:var(--amber2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(245,166,35,.4)}
+
+/* CHAPTER CONTENT */
+.chapter-badge{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:11px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px}
+.chapter-title{font-family:'Orbitron',monospace;font-size:clamp(22px,3.5vw,36px);font-weight:700;line-height:1.2;margin-bottom:8px;color:var(--text)}
+.chapter-sub{font-family:'Crimson Pro',serif;font-size:18px;color:var(--muted);font-style:italic;margin-bottom:40px}
+
+/* STORY PANEL */
+.story-panel{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:8px;padding:28px 32px;margin-bottom:28px;position:relative;overflow:hidden}
+.story-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--amber),transparent)}
+.speaker{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.speaker-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid var(--border)}
+.speaker-name{font-size:12px;color:var(--amber);letter-spacing:1px;text-transform:uppercase}
+.story-text{font-family:'Crimson Pro',serif;font-size:18px;line-height:1.8;color:var(--text)}
+.story-text em{color:var(--teal2);font-style:italic}
+.story-text strong{color:var(--amber);font-style:normal}
+
+/* CONCEPT CARDS */
+.concepts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:28px}
+.concept-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;transition:all .2s;cursor:default}
+.concept-card:hover{border-color:var(--teal);transform:translateY(-2px)}
+.concept-icon{font-size:28px;margin-bottom:10px}
+.concept-name{font-family:'Orbitron',monospace;font-size:11px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.concept-desc{font-family:'Crimson Pro',serif;font-size:16px;color:var(--muted);line-height:1.6}
+
+/* CODE BLOCK */
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:28px;overflow-x:auto;position:relative}
+.code-label{position:absolute;top:10px;right:14px;font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.code-block pre{font-family:'Space Mono',monospace;font-size:13px;line-height:1.8;color:#abb2bf;white-space:pre}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.cm{color:#5c6370;font-style:italic}.num{color:#d19a66}.var{color:#e06c75}.op{color:#56b6c2}
+
+/* QUIZ */
+.quiz-box{background:var(--surface);border:1px solid var(--purple);border-radius:10px;padding:28px;margin-bottom:28px}
+.quiz-label{font-size:11px;color:var(--purple);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.quiz-q{font-family:'Crimson Pro',serif;font-size:20px;color:var(--text);margin-bottom:20px;line-height:1.5}
+.quiz-options{display:grid;gap:10px}
+.quiz-opt{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:13px 18px;border-radius:6px;cursor:pointer;text-align:left;transition:all .2s;line-height:1.5}
+.quiz-opt:hover:not(:disabled){border-color:var(--purple);background:rgba(155,109,255,.08)}
+.quiz-opt.correct{border-color:var(--teal)!important;background:rgba(0,201,167,.12)!important;color:var(--teal2)}
+.quiz-opt.wrong{border-color:var(--coral)!important;background:rgba(255,107,107,.08)!important;color:var(--coral)}
+.quiz-result{margin-top:16px;padding:14px 18px;border-radius:6px;font-family:'Crimson Pro',serif;font-size:17px;line-height:1.6;display:none}
+.quiz-result.show{display:block}
+.quiz-result.ok{background:rgba(0,201,167,.1);border:1px solid var(--teal);color:var(--teal2)}
+.quiz-result.bad{background:rgba(255,107,107,.08);border:1px solid var(--coral);color:var(--coral)}
+
+/* REAL-WORLD EXAMPLES */
+.examples-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+.example-pill{background:var(--surface2);border:1px solid var(--border);border-radius:24px;padding:10px 18px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);transition:all .2s}
+.example-pill:hover{border-color:var(--amber);color:var(--amber)}
+.example-pill .icon{font-size:20px}
+
+/* NEXT BUTTON */
+.btn-next{background:none;border:1.5px solid var(--teal);color:var(--teal);font-family:'Orbitron',monospace;font-size:12px;padding:13px 32px;border-radius:6px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all .2s;display:flex;align-items:center;gap:10px;margin-top:16px}
+.btn-next:hover{background:var(--teal);color:#0b0e1a;box-shadow:0 4px 24px rgba(0,201,167,.35)}
+.btn-next .arrow{transition:transform .2s}
+.btn-next:hover .arrow{transform:translateX(4px)}
+
+/* CHAPTER COMPLETE */
+.complete-box{text-align:center;padding:48px 32px;background:var(--surface);border:1px solid var(--border);border-radius:12px;position:relative;overflow:hidden;margin-top:32px}
+.complete-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--teal),var(--amber),var(--teal))}
+.complete-icon{font-size:64px;margin-bottom:16px;animation:bounce .6s ease}
+@keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.complete-title{font-family:'Orbitron',monospace;font-size:20px;color:var(--amber);margin-bottom:12px}
+.complete-text{font-family:'Crimson Pro',serif;font-size:18px;color:var(--muted);margin-bottom:28px}
+.xp-badge{display:inline-block;background:rgba(245,166,35,.15);border:1px solid var(--amber);border-radius:20px;padding:8px 20px;font-size:13px;color:var(--amber);margin-bottom:28px;letter-spacing:1px}
+
+/* FINAL SCREEN */
+.final-glow{font-family:'Orbitron',monospace;font-size:clamp(24px,4vw,44px);font-weight:900;background:linear-gradient(135deg,var(--teal),var(--amber2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:16px}
+.final-desc{font-family:'Crimson Pro',serif;font-size:20px;color:var(--muted);text-align:center;margin-bottom:40px}
+.roadmap{display:grid;gap:14px;margin-bottom:40px}
+.roadmap-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px}
+.roadmap-num{font-family:'Orbitron',monospace;font-size:11px;color:var(--teal);background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.3);border-radius:4px;padding:4px 10px;flex-shrink:0;margin-top:2px}
+.roadmap-text strong{display:block;color:var(--text);margin-bottom:4px;font-size:14px}
+.roadmap-text span{color:var(--muted);font-size:13px;font-family:'Crimson Pro',serif}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:32px 0;position:relative}
+.divider::after{content:'◆';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg);color:var(--border);padding:0 12px;font-size:12px}
+
+/* SCORE */
+.score-bar{position:fixed;top:51px;right:0;z-index:98;background:var(--surface);border-left:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 14px;font-size:11px;color:var(--amber);letter-spacing:1px;border-radius:0 0 0 8px;display:flex;align-items:center;gap:6px}
+
+/* TYPEWRITER */
+.typewriter{overflow:hidden;border-right:2px solid var(--amber);white-space:nowrap;animation:typing 2.5s steps(50,end),blink .7s step-end infinite alternate;max-width:fit-content}
+@keyframes typing{from{width:0}to{width:100%}}
+@keyframes blink{50%{border-color:transparent}}
+
+/* TOOLTIP */
+.glossary-word{border-bottom:1px dashed var(--teal);color:var(--teal2);cursor:help}
+
+/* Section label */
+.section-label{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+</style>
+</head>
+<body>
+
+<!-- Stars background -->
+<canvas class="stars" id="starCanvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-title">⚡ Code Chronicles</div>
+  <div class="nav-chapters" id="navChapters">
+    <button class="nav-ch active unlocked" onclick="goTo(0)">Intro</button>
+    <button class="nav-ch locked" id="nav1" onclick="goToLocked(1)">Ch.1 · AI</button>
+    <button class="nav-ch locked" id="nav2" onclick="goToLocked(2)">Ch.2 · Python</button>
+    <button class="nav-ch locked" id="nav3" onclick="goToLocked(3)">Ch.3 · Apps</button>
+    <button class="nav-ch locked" id="nav4" onclick="goToLocked(4)">Ch.4 · Build</button>
+    <button class="nav-ch locked" id="nav5" onclick="goToLocked(5)">🏆 End</button>
+  </div>
+</nav>
+<div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+<div class="score-bar" id="scoreBar">⭐ XP: <span id="xpCount">0</span></div>
+
+<!-- SCREEN 0: LANDING -->
+<div class="screen active" id="s0">
+  <div class="logo-orbit">// a learning adventure //</div>
+  <div class="hero-robot">🤖</div>
+  <div class="main-title">The Code Chronicles</div>
+  <div class="sub-title">NOVA's Journey into AI & Python</div>
+  <div class="tag-row">
+    <div class="tag highlight">🧠 Artificial Intelligence</div>
+    <div class="tag highlight">🐍 Python</div>
+    <div class="tag">📱 AI Applications</div>
+    <div class="tag">🌍 Real-World Coding</div>
+    <div class="tag">🎯 Story-Based Learning</div>
+  </div>
+  <div class="story-panel" style="max-width:600px;text-align:left">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">📖</div>
+      <div class="speaker-name">The Narrator</div>
+    </div>
+    <p class="story-text">
+      Somewhere between the last school bell and the first line of code, 
+      there lived a curious student named <strong>NOVA</strong>. 
+      One rainy afternoon, she discovered a glowing terminal in the school lab — 
+      and inside it, a blinking cursor that seemed to be… <em>waiting for her</em>.
+      <br><br>
+      Follow NOVA as she unlocks the secrets of <strong>Artificial Intelligence</strong> 
+      and learns to speak the <strong>language of Python</strong>. 
+      The future is made of code — and your adventure starts now.
+    </p>
+  </div>
+  <button class="btn-start" onclick="beginJourney()">BEGIN JOURNEY →</button>
+</div>
+
+<!-- SCREEN 1: CHAPTER 1 — WHAT IS AI? -->
+<div class="screen" id="s1">
+  <div class="chapter-badge">🤖 Chapter One</div>
+  <h1 class="chapter-title">The Awakening</h1>
+  <p class="chapter-sub">What is Artificial Intelligence?</p>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">🤖</div>
+      <div class="speaker-name">PY — The AI Guide</div>
+    </div>
+    <p class="story-text">
+      "Hello, NOVA!" the glowing robot said. "I am <strong>PY</strong> — your Artificial Intelligence companion. 
+      You look confused. Let me guess: you've heard the words <em>AI</em> and <em>Machine Learning</em> 
+      a hundred times but nobody explained them clearly?"<br><br>
+      NOVA nodded. "Exactly. Everyone talks about AI like it's magic."<br><br>
+      PY smiled — or at least, its screen-face showed a ":)" symbol. 
+      "It's not magic. It's <strong>mathematics, data, and clever programming</strong>. 
+      Let me show you."
+    </p>
+  </div>
+
+  <div class="section-label">Core Concepts</div>
+  <div class="concepts-grid">
+    <div class="concept-card">
+      <div class="concept-icon">🧠</div>
+      <div class="concept-name">Artificial Intelligence</div>
+      <div class="concept-desc">When computers perform tasks that normally need human thinking — like recognising faces, translating languages, or making decisions.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">📚</div>
+      <div class="concept-name">Machine Learning</div>
+      <div class="concept-desc">A type of AI where computers <em>learn from data</em> instead of being programmed with every rule. The more data, the smarter they become.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🕸️</div>
+      <div class="concept-name">Neural Networks</div>
+      <div class="concept-desc">Computer systems loosely inspired by the human brain — layers of connected "neurons" that process and recognise patterns in data.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">💬</div>
+      <div class="concept-name">Natural Language Processing</div>
+      <div class="concept-desc">AI that understands and generates human language. Used in chatbots, translators, and voice assistants like Siri and Alexa.</div>
+    </div>
+  </div>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(245,166,35,.15);border-color:var(--amber)">📖</div>
+      <div class="speaker-name">The Narrator</div>
+    </div>
+    <p class="story-text">
+      PY drew a simple diagram in the air with a laser-finger:<br><br>
+      <strong>Data → Algorithm → Model → Prediction</strong><br><br>
+      "Imagine you show 10,000 pictures of cats and dogs to a computer," PY explained. 
+      "Each time it guesses wrong, it adjusts itself. After millions of guesses — 
+      it gets <em>very, very good</em> at telling cats from dogs. That is Machine Learning."
+    </p>
+  </div>
+
+  <div class="section-label">How AI Learns — Step by Step</div>
+  <div style="display:grid;gap:10px;margin-bottom:28px">
+    <div style="display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
+      <div style="background:rgba(0,201,167,.15);color:var(--teal);font-family:'Orbitron',monospace;font-size:12px;padding:5px 12px;border-radius:4px;flex-shrink:0">01</div>
+      <div><strong style="color:var(--text);display:block;margin-bottom:4px">Collect Data</strong><span style="color:var(--muted);font-size:14px">Gather thousands (or millions) of examples. Photos, text, numbers — any information relevant to the problem.</span></div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
+      <div style="background:rgba(245,166,35,.15);color:var(--amber);font-family:'Orbitron',monospace;font-size:12px;padding:5px 12px;border-radius:4px;flex-shrink:0">02</div>
+      <div><strong style="color:var(--text);display:block;margin-bottom:4px">Train the Model</strong><span style="color:var(--muted);font-size:14px">Feed the data to an algorithm. It makes predictions and corrects itself thousands of times.</span></div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
+      <div style="background:rgba(155,109,255,.15);color:var(--purple);font-family:'Orbitron',monospace;font-size:12px;padding:5px 12px;border-radius:4px;flex-shrink:0">03</div>
+      <div><strong style="color:var(--text);display:block;margin-bottom:4px">Test & Evaluate</strong><span style="color:var(--muted);font-size:14px">Show it new data it has never seen before. Measure how accurate its predictions are.</span></div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
+      <div style="background:rgba(0,201,167,.15);color:var(--teal);font-family:'Orbitron',monospace;font-size:12px;padding:5px 12px;border-radius:4px;flex-shrink:0">04</div>
+      <div><strong style="color:var(--text);display:block;margin-bottom:4px">Deploy</strong><span style="color:var(--muted);font-size:14px">The trained model is now ready to be used in a real app — your phone, website, or product.</span></div>
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-label">🎯 Quest Check — Chapter 1</div>
+    <div class="quiz-q">What does Machine Learning mean?</div>
+    <div class="quiz-options" id="q1opts">
+      <button class="quiz-opt" onclick="answer(1,0,false)">A computer that follows only fixed rules written by a programmer</button>
+      <button class="quiz-opt" onclick="answer(1,1,true)">A computer that learns patterns from data and improves over time</button>
+      <button class="quiz-opt" onclick="answer(1,2,false)">A robot that physically moves and learns by walking</button>
+      <button class="quiz-opt" onclick="answer(1,3,false)">Software that only works with internet connection</button>
+    </div>
+    <div class="quiz-result" id="q1res"></div>
+  </div>
+
+  <button class="btn-next" id="ch1next" style="display:none" onclick="nextChapter(2)">
+    Chapter 2: The Language of Python <span class="arrow">→</span>
+  </button>
+</div>
+
+<!-- SCREEN 2: CHAPTER 2 — PYTHON -->
+<div class="screen" id="s2">
+  <div class="chapter-badge">🐍 Chapter Two</div>
+  <h1 class="chapter-title">The Secret Language</h1>
+  <p class="chapter-sub">Learning Python — The Language of AI</p>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">🤖</div>
+      <div class="speaker-name">PY — The AI Guide</div>
+    </div>
+    <p class="story-text">
+      "Now that you understand AI, NOVA, it's time to learn how to <em>speak</em> to computers," 
+      said PY. "The most popular language for AI is called <strong>Python</strong>."<br><br>
+      "Why Python? Is it slippery?" NOVA joked.<br><br>
+      PY blinked. "Named after the comedy show Monty Python — not the snake! But it is 
+      <strong>simple, powerful, and everywhere</strong>. NASA uses it. Google uses it. 
+      And today, <em>you</em> will use it."
+    </p>
+  </div>
+
+  <div class="section-label">Python Fundamentals</div>
+  
+  <div class="code-block">
+    <div class="code-label">Python · Basics</div>
+    <pre><span class="cm"># 1. PRINTING — Say hello to the world!</span>
+<span class="fn">print</span>(<span class="str">"Hello, NOVA! Welcome to Python."</span>)
+
+<span class="cm"># 2. VARIABLES — Store information</span>
+<span class="var">name</span> = <span class="str">"NOVA"</span>
+<span class="var">age</span> = <span class="num">15</span>
+<span class="var">is_curious</span> = <span class="kw">True</span>
+
+<span class="fn">print</span>(<span class="str">f"My name is {name} and I am {age} years old."</span>)
+
+<span class="cm"># 3. LISTS — Collections of items</span>
+<span class="var">subjects</span> = [<span class="str">"AI"</span>, <span class="str">"Python"</span>, <span class="str">"Maths"</span>, <span class="str">"Science"</span>]
+<span class="fn">print</span>(<span class="str">f"I study {subjects[0]} and {subjects[1]}"</span>)
+
+<span class="cm"># 4. LOOPS — Repeat actions</span>
+<span class="kw">for</span> <span class="var">subject</span> <span class="kw">in</span> <span class="var">subjects</span>:
+    <span class="fn">print</span>(<span class="str">f"📚 Learning: {subject}"</span>)</pre>
+  </div>
+
+  <div class="concepts-grid">
+    <div class="concept-card">
+      <div class="concept-icon">📦</div>
+      <div class="concept-name">Variables</div>
+      <div class="concept-desc">Containers that store data. Like labelled boxes — <code style="color:var(--teal2)">name = "NOVA"</code> puts "NOVA" in a box labelled "name".</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🔁</div>
+      <div class="concept-name">Loops</div>
+      <div class="concept-desc">Tell the computer to repeat a task. <code style="color:var(--teal2)">for</code> and <code style="color:var(--teal2)">while</code> loops save you from writing the same code 100 times.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🔀</div>
+      <div class="concept-name">Conditionals</div>
+      <div class="concept-desc">Make decisions with <code style="color:var(--teal2)">if/else</code>. "If it's raining, use umbrella. Else, wear sunglasses."</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">⚙️</div>
+      <div class="concept-name">Functions</div>
+      <div class="concept-desc">Reusable blocks of code. Define once with <code style="color:var(--teal2)">def</code>, call anywhere. Like a recipe you can cook again and again.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">Python · Functions & Conditionals</div>
+    <pre><span class="cm"># A function that checks if a number is even or odd</span>
+<span class="kw">def</span> <span class="fn">check_number</span>(<span class="var">number</span>):
+    <span class="kw">if</span> <span class="var">number</span> <span class="op">%</span> <span class="num">2</span> <span class="op">==</span> <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">f"{number} is EVEN 🟢"</span>)
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">f"{number} is ODD 🔴"</span>)
+
+<span class="cm"># Call the function with different numbers</span>
+<span class="fn">check_number</span>(<span class="num">10</span>)   <span class="cm"># → 10 is EVEN</span>
+<span class="fn">check_number</span>(<span class="num">7</span>)    <span class="cm"># → 7 is ODD</span>
+
+<span class="cm"># A function that greets a student</span>
+<span class="kw">def</span> <span class="fn">greet_student</span>(<span class="var">name</span>, <span class="var">score</span>):
+    <span class="kw">if</span> <span class="var">score</span> <span class="op">&gt;=</span> <span class="num">90</span>:
+        <span class="fn">print</span>(<span class="str">f"🏆 Amazing, {name}! You scored {score}!"</span>)
+    <span class="kw">elif</span> <span class="var">score</span> <span class="op">&gt;=</span> <span class="num">60</span>:
+        <span class="fn">print</span>(<span class="str">f"👍 Good job, {name}! Score: {score}"</span>)
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="str">f"📖 Keep practising, {name}!"</span>)
+
+<span class="fn">greet_student</span>(<span class="str">"NOVA"</span>, <span class="num">95</span>)  <span class="cm"># → 🏆 Amazing, NOVA!</span></pre>
+  </div>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">🤖</div>
+      <div class="speaker-name">PY — The AI Guide</div>
+    </div>
+    <p class="story-text">
+      "Python also has powerful <strong>libraries</strong> — collections of pre-built tools," 
+      PY said, pulling up a holographic shelf of glowing boxes.<br><br>
+      "For AI, we use:<br>
+      🧮 <strong>NumPy</strong> — for mathematics and numbers<br>
+      📊 <strong>Pandas</strong> — for handling data like spreadsheets<br>
+      📈 <strong>Matplotlib</strong> — for drawing charts and graphs<br>
+      🤖 <strong>Scikit-learn</strong> — for building Machine Learning models<br>
+      🧠 <strong>TensorFlow / PyTorch</strong> — for deep neural networks"
+    </p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-label">Python · Using Libraries (AI Preview)</div>
+    <pre><span class="cm"># Import a library</span>
+<span class="kw">import</span> <span class="fn">numpy</span> <span class="kw">as</span> <span class="var">np</span>
+
+<span class="cm"># Create an array of student scores</span>
+<span class="var">scores</span> = <span class="fn">np.array</span>([<span class="num">85</span>, <span class="num">92</span>, <span class="num">78</span>, <span class="num">95</span>, <span class="num">88</span>, <span class="num">72</span>])
+
+<span class="cm"># Calculate statistics instantly</span>
+<span class="fn">print</span>(<span class="str">f"Average score: {np.mean(scores):.1f}"</span>)   <span class="cm"># 85.0</span>
+<span class="fn">print</span>(<span class="str">f"Highest score: {np.max(scores)}"</span>)         <span class="cm"># 95</span>
+<span class="fn">print</span>(<span class="str">f"Lowest score:  {np.min(scores)}"</span>)         <span class="cm"># 72</span>
+
+<span class="cm"># Pandas: work with data like a spreadsheet</span>
+<span class="kw">import</span> <span class="fn">pandas</span> <span class="kw">as</span> <span class="var">pd</span>
+
+<span class="var">data</span> = {<span class="str">"Name"</span>: [<span class="str">"NOVA"</span>, <span class="str">"Arjun"</span>, <span class="str">"Zara"</span>],
+        <span class="str">"Score"</span>: [<span class="num">95</span>, <span class="num">88</span>, <span class="num">92</span>]}
+<span class="var">df</span> = <span class="fn">pd.DataFrame</span>(<span class="var">data</span>)
+<span class="fn">print</span>(<span class="var">df</span>)</pre>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-label">🎯 Quest Check — Chapter 2</div>
+    <div class="quiz-q">What does the <code style="color:var(--teal2)">def</code> keyword do in Python?</div>
+    <div class="quiz-options" id="q2opts">
+      <button class="quiz-opt" onclick="answer(2,0,false)">It defines a variable that stores a number</button>
+      <button class="quiz-opt" onclick="answer(2,1,false)">It imports an external library into your program</button>
+      <button class="quiz-opt" onclick="answer(2,2,true)">It creates a reusable function that you can call later</button>
+      <button class="quiz-opt" onclick="answer(2,3,false)">It deletes a line of code from memory</button>
+    </div>
+    <div class="quiz-result" id="q2res"></div>
+  </div>
+
+  <button class="btn-next" id="ch2next" style="display:none" onclick="nextChapter(3)">
+    Chapter 3: AI in the Real World <span class="arrow">→</span>
+  </button>
+</div>
+
+<!-- SCREEN 3: CHAPTER 3 — AI APPLICATIONS -->
+<div class="screen" id="s3">
+  <div class="chapter-badge">📱 Chapter Three</div>
+  <h1 class="chapter-title">AI in the Wild</h1>
+  <p class="chapter-sub">How AI Powers the World Around You</p>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">🤖</div>
+      <div class="speaker-name">PY — The AI Guide</div>
+    </div>
+    <p class="story-text">
+      PY opened a holographic window showing a city — its lights twinkling. 
+      "You already interact with AI <em>dozens of times a day</em>, NOVA," PY said. 
+      "You just didn't know it had a name."<br><br>
+      "When YouTube suggests your next video — that's AI. 
+      When Google Maps finds the fastest route — that's AI. 
+      When your phone recognises your face — that is <strong>AI with your photograph as data</strong>."
+    </p>
+  </div>
+
+  <div class="section-label">AI Applications Everywhere</div>
+  <div class="examples-row">
+    <div class="example-pill"><span class="icon">🎵</span>Music Recommendations</div>
+    <div class="example-pill"><span class="icon">🗺️</span>GPS Navigation</div>
+    <div class="example-pill"><span class="icon">📸</span>Face Unlock</div>
+    <div class="example-pill"><span class="icon">🎬</span>Netflix Suggestions</div>
+    <div class="example-pill"><span class="icon">💬</span>ChatGPT & Chatbots</div>
+    <div class="example-pill"><span class="icon">🏥</span>Medical Diagnosis</div>
+    <div class="example-pill"><span class="icon">🚗</span>Self-Driving Cars</div>
+    <div class="example-pill"><span class="icon">🛍️</span>Shopping Suggestions</div>
+    <div class="example-pill"><span class="icon">🌐</span>Language Translation</div>
+    <div class="example-pill"><span class="icon">🎮</span>Game AI (NPCs)</div>
+    <div class="example-pill"><span class="icon">🤳</span>Filters & Photo Editing</div>
+    <div class="example-pill"><span class="icon">🔒</span>Fraud Detection</div>
+  </div>
+
+  <div class="concepts-grid">
+    <div class="concept-card">
+      <div class="concept-icon">👁️</div>
+      <div class="concept-name">Computer Vision</div>
+      <div class="concept-desc">AI that interprets images and video. Powers face recognition, self-driving cars, medical X-ray analysis, and Instagram filters.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🗣️</div>
+      <div class="concept-name">Voice AI</div>
+      <div class="concept-desc">Siri, Alexa, Google Assistant — AI that understands speech and responds naturally. Speech-to-text and text-to-speech technology.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🎯</div>
+      <div class="concept-name">Recommendation Systems</div>
+      <div class="concept-desc">AI that predicts what you'll like based on your past behaviour. Netflix, YouTube, Spotify, Amazon all use these.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">✍️</div>
+      <div class="concept-name">Generative AI</div>
+      <div class="concept-desc">AI that creates new content — text (ChatGPT), images (Midjourney), music, code. It learns patterns and generates new examples.</div>
+    </div>
+  </div>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(245,166,35,.15);border-color:var(--amber)">📖</div>
+      <div class="speaker-name">The Narrator</div>
+    </div>
+    <p class="story-text">
+      "But PY," said NOVA, "can AI be dangerous?"<br><br>
+      PY paused — a rare moment of seriousness. "Yes. That is why we study <strong>AI Ethics</strong>. 
+      AI can be biased if trained on unfair data. It can be used to spread misinformation. 
+      Jobs can change because of automation."<br><br>
+      "The goal," PY continued, "is not to fear AI — but to 
+      <em>understand it, guide it, and use it responsibly</em>. 
+      That is exactly why <strong>you</strong> are learning this today."
+    </p>
+  </div>
+
+  <div class="section-label">AI Career Paths</div>
+  <div class="roadmap" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;border-top:3px solid var(--teal)">
+      <div style="font-size:24px;margin-bottom:8px">🔬</div>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--teal);margin-bottom:6px">AI RESEARCHER</div>
+      <div style="color:var(--muted);font-size:13px">Creates new AI algorithms. Studies at top universities. Uses Python, maths, and deep curiosity.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;border-top:3px solid var(--amber)">
+      <div style="font-size:24px;margin-bottom:8px">💻</div>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--amber);margin-bottom:6px">ML ENGINEER</div>
+      <div style="color:var(--muted);font-size:13px">Builds and deploys AI models for companies. Bridges research and real products. High demand worldwide.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;border-top:3px solid var(--purple)">
+      <div style="font-size:24px;margin-bottom:8px">📊</div>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--purple);margin-bottom:6px">DATA SCIENTIST</div>
+      <div style="color:var(--muted);font-size:13px">Analyses data to find patterns and insights. Uses Python, statistics, and data visualisation every day.</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;border-top:3px solid var(--coral)">
+      <div style="font-size:24px;margin-bottom:8px">🎨</div>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;color:var(--coral);margin-bottom:6px">AI PRODUCT DESIGNER</div>
+      <div style="color:var(--muted);font-size:13px">Designs user experiences for AI products. Where technology meets human needs and creativity.</div>
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-label">🎯 Quest Check — Chapter 3</div>
+    <div class="quiz-q">Which of these is an example of <strong>Computer Vision</strong>?</div>
+    <div class="quiz-options" id="q3opts">
+      <button class="quiz-opt" onclick="answer(3,0,false)">Spotify recommending a new playlist based on your listening history</button>
+      <button class="quiz-opt" onclick="answer(3,1,true)">Your phone unlocking when it recognises your face</button>
+      <button class="quiz-opt" onclick="answer(3,2,false)">Google Translate converting English to Malayalam</button>
+      <button class="quiz-opt" onclick="answer(3,3,false)">A chatbot answering your customer service questions</button>
+    </div>
+    <div class="quiz-result" id="q3res"></div>
+  </div>
+
+  <button class="btn-next" id="ch3next" style="display:none" onclick="nextChapter(4)">
+    Chapter 4: Build With Python <span class="arrow">→</span>
+  </button>
+</div>
+
+<!-- SCREEN 4: CHAPTER 4 — BUILD -->
+<div class="screen" id="s4">
+  <div class="chapter-badge">🔨 Chapter Four</div>
+  <h1 class="chapter-title">The Final Quest</h1>
+  <p class="chapter-sub">Build a Mini AI Project with Python</p>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">🤖</div>
+      <div class="speaker-name">PY — The AI Guide</div>
+    </div>
+    <p class="story-text">
+      "NOVA, you have learned <em>what AI is</em>, <em>how Python works</em>, and 
+      <em>where AI lives in the real world</em>. Now comes the most exciting part:" 
+      PY's screen glowed brighter than ever.<br><br>
+      <strong>"You will BUILD something."</strong><br><br>
+      "Today we'll make a simple <strong>Spam Detector</strong> — 
+      a tiny AI that reads a message and decides if it's spam or not. 
+      This is real Machine Learning, and you can do it with just a few lines of Python."
+    </p>
+  </div>
+
+  <div class="section-label">Project: Simple Spam Detector</div>
+  <div class="code-block">
+    <div class="code-label">Python · Machine Learning Project</div>
+    <pre><span class="cm"># Step 1: Import tools (libraries)</span>
+<span class="kw">from</span> <span class="fn">sklearn.feature_extraction.text</span> <span class="kw">import</span> <span class="var">CountVectorizer</span>
+<span class="kw">from</span> <span class="fn">sklearn.naive_bayes</span> <span class="kw">import</span> <span class="var">MultinomialNB</span>
+<span class="kw">from</span> <span class="fn">sklearn.pipeline</span> <span class="kw">import</span> <span class="var">Pipeline</span>
+
+<span class="cm"># Step 2: Training data (messages + labels)</span>
+<span class="var">messages</span> = [
+    <span class="str">"Win a FREE iPhone now! Click here!"</span>,       <span class="cm"># spam</span>
+    <span class="str">"Congratulations! You won $1000 prize!"</span>,     <span class="cm"># spam</span>
+    <span class="str">"URGENT: Your bank account needs action!"</span>,   <span class="cm"># spam</span>
+    <span class="str">"Hey, are you coming to class tomorrow?"</span>,    <span class="cm"># not spam</span>
+    <span class="str">"The homework is due on Friday morning."</span>,    <span class="cm"># not spam</span>
+    <span class="str">"Can you help me with the Python project?"</span>,  <span class="cm"># not spam</span>
+]
+<span class="var">labels</span> = [<span class="str">"spam"</span>, <span class="str">"spam"</span>, <span class="str">"spam"</span>, <span class="str">"not spam"</span>, <span class="str">"not spam"</span>, <span class="str">"not spam"</span>]
+
+<span class="cm"># Step 3: Create and train the AI model</span>
+<span class="var">model</span> = <span class="fn">Pipeline</span>([
+    (<span class="str">'vectorizer'</span>, <span class="var">CountVectorizer</span>()),  <span class="cm"># converts text to numbers</span>
+    (<span class="str">'classifier'</span>, <span class="var">MultinomialNB</span>())     <span class="cm"># the learning algorithm</span>
+])
+<span class="var">model</span>.<span class="fn">fit</span>(<span class="var">messages</span>, <span class="var">labels</span>)
+
+<span class="cm"># Step 4: Test the model on NEW messages</span>
+<span class="var">test_messages</span> = [
+    <span class="str">"CLICK NOW to claim your free reward!"</span>,
+    <span class="str">"See you at school on Monday!"</span>
+]
+<span class="var">predictions</span> = <span class="var">model</span>.<span class="fn">predict</span>(<span class="var">test_messages</span>)
+
+<span class="kw">for</span> <span class="var">msg</span>, <span class="var">pred</span> <span class="kw">in</span> <span class="fn">zip</span>(<span class="var">test_messages</span>, <span class="var">predictions</span>):
+    <span class="var">icon</span> = <span class="str">"🚫"</span> <span class="kw">if</span> <span class="var">pred</span> <span class="op">==</span> <span class="str">"spam"</span> <span class="kw">else</span> <span class="str">"✅"</span>
+    <span class="fn">print</span>(<span class="str">f"{icon} '{msg}' → {pred}"</span>)</pre>
+  </div>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(245,166,35,.15);border-color:var(--amber)">📖</div>
+      <div class="speaker-name">The Narrator</div>
+    </div>
+    <p class="story-text">
+      NOVA stared at the code for a long moment, then slowly typed it out herself. 
+      She pressed Enter. The terminal blinked.<br><br>
+      <strong>🚫 'CLICK NOW to claim your free reward!' → spam</strong><br>
+      <strong>✅ 'See you at school on Monday!' → not spam</strong><br><br>
+      "It… worked," she whispered. PY gave a digital thumbs up. 
+      "You just built your first AI, NOVA. This is exactly how Gmail filters 
+      your inbox, how social media removes fake accounts. 
+      <em>The principle is the same.</em>"
+    </p>
+  </div>
+
+  <div class="section-label">What You Just Learned</div>
+  <div class="concepts-grid">
+    <div class="concept-card">
+      <div class="concept-icon">🔢</div>
+      <div class="concept-name">Vectorisation</div>
+      <div class="concept-desc">Converting words into numbers so a computer can process them. Every word becomes a column; every message becomes a row of counts.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🧮</div>
+      <div class="concept-name">Naive Bayes</div>
+      <div class="concept-desc">A simple but powerful classification algorithm based on probability. Very effective for text classification like spam detection.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🏗️</div>
+      <div class="concept-name">Pipeline</div>
+      <div class="concept-desc">Chaining multiple steps together so data flows through them automatically. Clean, professional, real-world ML code.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🎓</div>
+      <div class="concept-name">Supervised Learning</div>
+      <div class="concept-desc">You gave the model examples <em>with answers</em> (labelled data). It learned the pattern and can now predict on new, unseen examples.</div>
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-label">🎯 Final Quest Check — Chapter 4</div>
+    <div class="quiz-q">In the spam detector, why do we <strong>label</strong> our training messages as "spam" or "not spam"?</div>
+    <div class="quiz-options" id="q4opts">
+      <button class="quiz-opt" onclick="answer(4,0,false)">So that the messages are displayed in colour on screen</button>
+      <button class="quiz-opt" onclick="answer(4,1,true)">So the algorithm can learn the pattern between word choices and whether a message is spam</button>
+      <button class="quiz-opt" onclick="answer(4,2,false)">Because Python requires all text to have a category name</button>
+      <button class="quiz-opt" onclick="answer(4,3,false)">To help the library import itself correctly</button>
+    </div>
+    <div class="quiz-result" id="q4res"></div>
+  </div>
+
+  <button class="btn-next" id="ch4next" style="display:none" onclick="nextChapter(5)">
+    See Your Journey Complete 🏆 <span class="arrow">→</span>
+  </button>
+</div>
+
+<!-- SCREEN 5: FINALE -->
+<div class="screen" id="s5">
+  <div style="text-align:center;padding:20px 0 40px">
+    <div style="font-size:80px;animation:float 3s ease-in-out infinite;display:inline-block">🏆</div>
+  </div>
+  <div class="final-glow">Journey Complete!</div>
+  <p class="final-desc">NOVA stepped out of the lab into the night sky. The stars looked different now — like millions of data points waiting to be understood.</p>
+
+  <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:40px" id="finalStats">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 32px;text-align:center">
+      <div style="font-family:'Orbitron',monospace;font-size:32px;color:var(--amber)" id="finalXP">0</div>
+      <div style="font-size:12px;color:var(--muted);letter-spacing:1px;margin-top:4px">XP EARNED</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 32px;text-align:center">
+      <div style="font-family:'Orbitron',monospace;font-size:32px;color:var(--teal)" id="finalQ">0/4</div>
+      <div style="font-size:12px;color:var(--muted);letter-spacing:1px;margin-top:4px">QUESTS PASSED</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 32px;text-align:center">
+      <div style="font-family:'Orbitron',monospace;font-size:32px;color:var(--purple)">4</div>
+      <div style="font-size:12px;color:var(--muted);letter-spacing:1px;margin-top:4px">CHAPTERS READ</div>
+    </div>
+  </div>
+
+  <div class="section-label">Your Learning Roadmap — What's Next</div>
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="roadmap-num">Week 1–4</div>
+      <div class="roadmap-text"><strong>Python Foundations</strong><span>Practice daily on platforms like Replit, CS50, or Codecademy. Master variables, loops, functions, lists, and dictionaries.</span></div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-num">Month 2</div>
+      <div class="roadmap-text"><strong>Data & Libraries</strong><span>Learn NumPy and Pandas. Work with real datasets from Kaggle. Visualise data with Matplotlib.</span></div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-num">Month 3</div>
+      <div class="roadmap-text"><strong>Machine Learning Basics</strong><span>Study Scikit-learn. Build classifiers, regression models, and clustering. Do the Google ML Crash Course (free!).</span></div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-num">Month 4–6</div>
+      <div class="roadmap-text"><strong>Deep Learning & Projects</strong><span>Learn TensorFlow or PyTorch. Build a digit recogniser (MNIST). Create your own AI project for your portfolio.</span></div>
+    </div>
+    <div class="roadmap-item">
+      <div class="roadmap-num">Ongoing</div>
+      <div class="roadmap-text"><strong>Build, Share, Repeat</strong><span>Join Kaggle competitions. Put projects on GitHub. Follow AI researchers. The field changes every week — stay curious like NOVA.</span></div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin:32px 0;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">🐍</div>
+    <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--teal);letter-spacing:2px;margin-bottom:12px">FREE RESOURCES TO START TODAY</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text)">🌐 python.org</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text)">📚 cs50.harvard.edu</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text)">🏋️ kaggle.com</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text)">▶️ replit.com</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text)">🤖 fast.ai</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:13px;color:var(--text)">📓 colab.google.com</div>
+    </div>
+  </div>
+
+  <div class="story-panel">
+    <div class="speaker">
+      <div class="speaker-avatar" style="background:rgba(0,201,167,.15);border-color:var(--teal)">🤖</div>
+      <div class="speaker-name">PY — The AI Guide</div>
+    </div>
+    <p class="story-text">
+      "And so, NOVA's adventure was not over. It was just beginning."<br><br>
+      PY's screen flickered warmly. "The world needs people who understand AI 
+      <em>and</em> know how to build with it. People who ask questions, 
+      challenge assumptions, and code with <strong>purpose and ethics</strong>."<br><br>
+      "You've taken your first steps. The terminal is yours now."<br><br>
+      <strong style="color:var(--teal2)">— end of chapter one —</strong>
+    </p>
+  </div>
+
+  <div style="text-align:center;margin-top:32px">
+    <button class="btn-start" onclick="goTo(0)">↺ Read Again</button>
+  </div>
+</div>
+
+<script>
+const totalScreens = 6;
+let xp = 0;
+let questsPassed = 0;
+let unlocked = [true, false, false, false, false, false];
+const answers = [null, null, null, null];
+
+function generateStars(){
+  const c=document.getElementById('starCanvas');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const ctx=c.getContext('2d');
+  for(let i=0;i<200;i++){
+    const x=Math.random()*c.width,y=Math.random()*c.height,r=Math.random()*1.5;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+(Math.random()*.7+.1)+')';ctx.fill();
+  }
+}
+generateStars();
+window.addEventListener('resize',generateStars);
+
+function goTo(n){
+  if(!unlocked[n]&&n!==0)return;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  document.querySelectorAll('.nav-ch').forEach((b,i)=>{b.classList.remove('active');if(i===n)b.classList.add('active')});
+  const pct=n===0?0:Math.round((n/5)*100);
+  document.getElementById('progFill').style.width=pct+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goToLocked(n){
+  if(unlocked[n])goTo(n);
+}
+
+function beginJourney(){
+  unlocked[1]=true;
+  document.getElementById('nav1').classList.remove('locked');
+  document.getElementById('nav1').classList.add('unlocked');
+  goTo(1);
+}
+
+function nextChapter(n){
+  unlocked[n]=true;
+  document.getElementById('nav'+n).classList.remove('locked');
+  document.getElementById('nav'+n).classList.add('unlocked');
+  goTo(n);
+}
+
+function answer(chap,idx,correct){
+  if(answers[chap-1]!==null)return;
+  answers[chap-1]=idx;
+  const opts=document.querySelectorAll('#q'+chap+'opts .quiz-opt');
+  const res=document.getElementById('q'+chap+'res');
+  opts.forEach(b=>b.disabled=true);
+  opts[idx].classList.add(correct?'correct':'wrong');
+  if(correct){
+    xp+=50;questsPassed++;
+    res.className='quiz-result show ok';
+    res.innerHTML='✅ Correct! Well done, NOVA. +50 XP earned.';
+    if(chap===1)res.innerHTML+=' Machine Learning is indeed about learning from data, not hand-coded rules.';
+    if(chap===2)res.innerHTML+=' <code>def</code> defines a reusable function — the building block of all programs.';
+    if(chap===3)res.innerHTML+=' Face recognition is a classic Computer Vision problem using image data.';
+    if(chap===4)res.innerHTML+=' Labels are essential for supervised learning — they tell the algorithm what "correct" looks like.';
+  } else {
+    res.className='quiz-result show bad';
+    if(chap===1)res.innerHTML='❌ Not quite. Machine Learning means the computer learns patterns from data and improves automatically. Try re-reading the concepts above.';
+    if(chap===2)res.innerHTML='❌ Not quite. <code>def</code> creates a function — a reusable block of code you can call multiple times.';
+    if(chap===3)res.innerHTML='❌ Not quite. Computer Vision deals with images. Face recognition analyses a photo to identify a person — that\'s Computer Vision!';
+    if(chap===4)res.innerHTML='❌ Not quite. Labels (spam/not spam) teach the model what pattern corresponds to what result — that\'s the core of supervised learning.';
+  }
+  document.getElementById('xpCount').textContent=xp;
+  // Highlight correct answer if wrong
+  if(!correct){
+    opts.forEach(b=>{
+      if(b.getAttribute('onclick').includes('true'))b.classList.add('correct');
+    });
+  }
+  document.getElementById('ch'+chap+'next').style.display='flex';
+}
+
+const _origNext=nextChapter;
+function nextChapter(n){
+  unlocked[n]=true;
+  document.getElementById('nav'+n).classList.remove('locked');
+  document.getElementById('nav'+n).classList.add('unlocked');
+  if(n===5){
+    document.getElementById('finalXP').textContent=xp;
+    document.getElementById('finalQ').textContent=questsPassed+'/4';
+  }
+  goTo(n);
+}
+</script>
+</body>
+</html>
