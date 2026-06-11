@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SGX Nifty Live - Central Value Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        /* Light theme default (gradient: soft dawn) */
+        body.light {
+            background: linear-gradient(135deg, #f5f0ff 0%, #e9defa 100%);
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --text-primary: #1a1f2e;
+            --text-secondary: #2d3a4b;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --border-light: rgba(255, 255, 255, 0.6);
+            --shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.2);
+            --value-color: #0f172a;
+            --change-positive: #10b981;
+            --change-negative: #ef4444;
+            --badge-bg: rgba(255,255,240,0.6);
+        }
+
+        /* Dark theme gradient: midnight aurora */
+        body.dark {
+            background: linear-gradient(145deg, #0a0f1e 0%, #10172b 100%);
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e6;
+            --accent-glow: rgba(56, 189, 248, 0.25);
+            --border-light: rgba(71, 85, 105, 0.6);
+            --shadow: 0 30px 50px -15px rgba(0, 0, 0, 0.6);
+            --value-color: #e2e8f0;
+            --change-positive: #34d399;
+            --change-negative: #f87171;
+            --badge-bg: rgba(30, 41, 59, 0.7);
+        }
+
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border-radius: 3.5rem;
+            padding: 2rem 2.2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-light);
+            width: 90%;
+            max-width: 650px;
+            text-align: center;
+            transition: transform 0.2s ease, background 0.3s;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--badge-bg);
+            border-radius: 100px;
+            padding: 6px 16px;
+            margin-bottom: 1.8rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            color: var(--text-secondary);
+            backdrop-filter: blur(4px);
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 1.5s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .nifty-value {
+            font-size: 5.8rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            color: var(--value-color);
+            margin: 0.5rem 0 0.25rem;
+            line-height: 1.1;
+            word-break: break-word;
+            transition: all 0.2s;
+            text-shadow: 0 2px 5px var(--accent-glow);
+        }
+
+        .change-box {
+            display: inline-block;
+            margin-top: 0.75rem;
+            font-size: 1.7rem;
+            font-weight: 600;
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            background: rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(4px);
+        }
+
+        .positive {
+            color: var(--change-positive);
+        }
+
+        .negative {
+            color: var(--change-negative);
+        }
+
+        .sub-details {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 0.7rem 1.2rem;
+            min-width: 100px;
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 28px;
+            right: 28px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-light);
+            border-radius: 60px;
+            padding: 10px 18px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            z-index: 200;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+            transition: 0.2s;
+        }
+
+        .theme-toggle span {
+            pointer-events: none;
+        }
+
+        .refresh-note {
+            font-size: 0.7rem;
+            margin-top: 2rem;
+            opacity: 0.7;
+            color: var(--text-secondary);
+        }
+
+        .error-message {
+            color: #f97316;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 2rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            animation: fadeBlink 1.2s infinite;
+        }
+
+        @keyframes fadeBlink {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        footer {
+            position: absolute;
+            bottom: 18px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        @media (max-width: 550px) {
+            .glass-panel {
+                padding: 1.5rem;
+            }
+            .nifty-value {
+                font-size: 3.5rem;
+                letter-spacing: -1px;
+            }
+            .change-box {
+                font-size: 1.2rem;
+            }
+            .sub-details {
+                gap: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body class="light">
+    <div class="theme-toggle" id="themeToggleBtn">
+        <span>🌞</span> <span style="font-weight:400">/</span> <span>🌙</span>
+        <span style="margin-left: 6px; font-size:0.8rem;">Theme</span>
+    </div>
+
+    <div class="glass-panel">
+        <div class="live-indicator">
+            <span class="pulse-dot"></span>
+            <span>SGX Nifty LIVE · Real-Time</span>
+        </div>
+
+        <!-- main value container -->
+        <div id="mainValueArea">
+            <div class="loading">⟳ loading...</div>
+        </div>
+
+        <div class="sub-details" id="extraStats">
+            <!-- will be filled dynamically -->
+        </div>
+        <div class="refresh-note" id="timestampNote">
+            fetching latest from SGX Nifty source
+        </div>
+    </div>
+    <footer>
+        📈 Data reflects SGX Nifty futures | Updates on page load & every 60 sec
+    </footer>
+
+    <script>
+        // CORS-friendly proxy approach: we need to fetch the HTML from sgxnifty.org and parse the numeric value.
+        // Since direct fetch might face CORS restrictions but the website is static html, we can use a minimal CORS proxy?
+        // For reliability and to avoid proxy complexity, I'll implement fetch via AllOrigins (free public CORS proxy) 
+        // because sgxnifty.org does not set CORS headers. For a standalone HTML that works anywhere, using a public CORS proxy is safe.
+        // Alternatively, we can try to fetch with 'no-cors' but then we cannot read the response. So we use a lightweight proxy.
+        // I'll use "corsproxy.io" or "api.allorigins.win" – both are reliable for demo.
+        // The goal: extract "Last Trade" numeric value (e.g., 23,202.5) and also the change % info.
+        
+        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+        const TARGET_URL = 'https://sgxnifty.org/';
+        
+        let currentTheme = 'light';
+        let autoRefreshInterval = null;
+
+        // Helper: parse HTML text and extract SGX Nifty values
+        function parseSGXData(htmlText) {
+            // We need to extract the "Last Trade" numeric value (first big number)
+            // The structure: In the table: "Last Trade | Change | Change in %" then values like "23,202.5", "-100.5", "-0.43%"
+            // Also we want the High/Low/Open for extra stats.
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            // Try to find the main data rows: there is a table-like structure, but easier: regex on the text content.
+            // The page has a block with Last Trade etc. Let's use robust regex to capture the main metrics.
+            const bodyText = doc.body.innerText;
+            
+            // Pattern: Last Trade\s+[\d,]+\.?\d*  (capture the last trade)
+            const lastTradeMatch = bodyText.match(/Last\s*Trade\s*[\n\r\t\s]*([\d,]+\.?\d*)/i);
+            let lastTrade = null;
+            if (lastTradeMatch && lastTradeMatch[1]) {
+                lastTrade = parseFloat(lastTradeMatch[1].replace(/,/g, ''));
+            } else {
+                // fallback: find first big number after "Last Trade"
+                const altMatch = bodyText.match(/Last Trade[\s\S]*?([\d,]+\.?\d+)/i);
+                if (altMatch) lastTrade = parseFloat(altMatch[1].replace(/,/g, ''));
+            }
+            
+            // Change value & change percent
+            let changeValue = null;
+            let changePercent = null;
+            // pattern: "-100.5" and "-0.43%" near change block
+            const changeMatch = bodyText.match(/Change\s*[\n\r\t\s]*([+-]?[\d,]+\.?\d*)\s*\n\s*Change\s*in\s*%\s*([+-]?[\d,]+\.?\d*%)/i);
+            if (changeMatch) {
+                changeValue = parseFloat(changeMatch[1].replace(/,/g, ''));
+                changePercent = changeMatch[2];
+            } else {
+                // secondary pattern: just look after "Change | Change in %"
+                const lines = bodyText.split(/\r?\n/);
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].includes('Last Trade') && lines[i+1]) {
+                        const parts = lines[i+1].trim().split(/\s+/);
+                        if (parts.length >= 2) {
+                            const possibleChange = parts[0] || parts[1];
+                            if (possibleChange && !isNaN(parseFloat(possibleChange))) {
+                                changeValue = parseFloat(possibleChange);
+                            }
+                            const possiblePercent = parts[1] || parts[2];
+                            if (possiblePercent && possiblePercent.includes('%')) changePercent = possiblePercent;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // extract High, Low, Open values
+            let highVal = null, lowVal = null, openVal = null;
+            const highMatch = bodyText.match(/High\s*[\n\r\t\s]*([\d,]+\.?\d*)/i);
+            if (highMatch) highVal = parseFloat(highMatch[1].replace(/,/g, ''));
+            const lowMatch = bodyText.match(/Low\s*[\n\r\t\s]*([\d,]+\.?\d*)/i);
+            if (lowMatch) lowVal = parseFloat(lowMatch[1].replace(/,/g, ''));
+            const openMatch = bodyText.match(/Open\s*[\n\r\t\s]*([\d,]+\.?\d*)/i);
+            if (openMatch) openVal = parseFloat(openMatch[1].replace(/,/g, ''));
+            
+            // fallback: try to extract from the second data block 
+            if (!highVal || !lowVal) {
+                // sometimes the values appear in a row: "High Low Open"
+                const rowPattern = /High\s*\|?\s*Low\s*\|?\s*Open\s*[\n\r]+([\d,.]+)\s+([\d,.]+)\s+([\d,.]+)/i;
+                const rowMatch = bodyText.match(rowPattern);
+                if (rowMatch) {
+                    if (!highVal) highVal = parseFloat(rowMatch[1].replace(/,/g, ''));
+                    if (!lowVal) lowVal = parseFloat(rowMatch[2].replace(/,/g, ''));
+                    if (!openVal) openVal = parseFloat(rowMatch[3].replace(/,/g, ''));
+                }
+            }
+            
+            // edge: if changeValue exists but percent might be missing, derive sign from changeValue.
+            return {
+                lastTrade: lastTrade,
+                change: changeValue,
+                changePercent: changePercent,
+                high: highVal,
+                low: lowVal,
+                open: openVal
+            };
+        }
+        
+        // format number with commas
+        function formatNumber(value) {
+            if (value === null || isNaN(value)) return '--';
+            return value.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        }
+        
+        // update DOM
+        function updateUI(data) {
+            const mainContainer = document.getElementById('mainValueArea');
+            const extraContainer = document.getElementById('extraStats');
+            const timestampSpan = document.getElementById('timestampNote');
+            
+            if (!data.lastTrade && data.lastTrade !== 0) {
+                // error state or no data
+                mainContainer.innerHTML = `<div class="error-message">⚠️ Unable to fetch live value. Retrying...<br><span style="font-size:0.8rem;">Check connection or proxy</span></div>`;
+                extraContainer.innerHTML = '';
+                if (timestampSpan) timestampSpan.innerText = `last attempt: ${new Date().toLocaleTimeString()} | error fetching`;
+                return;
+            }
+            
+            const isPositive = (data.change && data.change > 0) || (data.changePercent && data.changePercent.startsWith('+'));
+            const changeNumber = data.change !== null ? data.change : 0;
+            const changeClass = (isPositive || changeNumber > 0) ? 'positive' : (changeNumber < 0 ? 'negative' : '');
+            const changeSymbol = (changeNumber > 0 ? '+' : (changeNumber < 0 ? '' : ''));
+            const changePercentText = data.changePercent || (data.change ? `${((data.change / data.lastTrade)*100).toFixed(2)}%` : '0.00%');
+            
+            // main big value + change
+            const mainHtml = `
+                <div class="nifty-value">${formatNumber(data.lastTrade)}</div>
+                <div class="change-box ${changeClass}">
+                    ${changeSymbol}${formatNumber(changeNumber)} (${changePercentText.replace('%', '')}%)
+                </div>
+            `;
+            
+            // extra stats (High, Low, Open)
+            const extraHtml = `
+                <div class="info-card">
+                    <div class="info-label">HIGH</div>
+                    <div class="info-value">${data.high ? formatNumber(data.high) : '--'}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">LOW</div>
+                    <div class="info-value">${data.low ? formatNumber(data.low) : '--'}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">OPEN</div>
+                    <div class="info-value">${data.open ? formatNumber(data.open) : '--'}</div>
+                </div>
+            `;
+            
+            mainContainer.innerHTML = mainHtml;
+            extraContainer.innerHTML = extraHtml;
+            if (timestampSpan) {
+                timestampSpan.innerHTML = `🕒 updated: ${new Date().toLocaleTimeString()} | SGX Nifty live feed`;
+            }
+        }
+        
+        async function fetchSGXNifty() {
+            try {
+                // Show loading indicator but keep prior value? We'll show loading only if no previous data or first load
+                const mainArea = document.getElementById('mainValueArea');
+                const currentContent = mainArea.innerHTML;
+                if (!currentContent.includes('nifty-value') && !currentContent.includes('error')) {
+                    mainArea.innerHTML = `<div class="loading">⟳ fetching latest...</div>`;
+                }
+                
+                const fullUrl = PROXY_URL + encodeURIComponent(TARGET_URL);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const response = await fetch(fullUrl, { 
+                    signal: controller.signal,
+                    headers: { 'Accept': 'text/html' }
+                });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const html = await response.text();
+                const parsed = parseSGXData(html);
+                
+                if (parsed.lastTrade === null || isNaN(parsed.lastTrade)) {
+                    throw new Error('Could not extract SGX Nifty value from page');
+                }
+                
+                updateUI(parsed);
+                return parsed;
+            } catch (err) {
+                console.warn('Fetch error:', err);
+                const mainArea = document.getElementById('mainValueArea');
+                const errorDiv = `
+                    <div class="error-message">
+                        ⚡ data connection issue<br>
+                        <span style="font-size:0.75rem;">${err.message || 'Please retry or check network'}</span>
+                        <button id="retryFetchBtn" style="margin-top:12px; background:rgba(255,255,255,0.2); border:none; border-radius:32px; padding:5px 14px; cursor:pointer; font-weight:500;">↻ Retry Now</button>
+                    </div>
+                `;
+                mainArea.innerHTML = errorDiv;
+                document.getElementById('retryFetchBtn')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    fetchSGXNifty();
+                });
+                const extraContainer = document.getElementById('extraStats');
+                extraContainer.innerHTML = `<div class="info-card" style="width:100%"><div class="info-label">⚠️ offline</div><div class="info-value">retrying...</div></div>`;
+                return null;
+            }
+        }
+        
+        // apply theme function
+        function setTheme(theme) {
+            const body = document.body;
+            if (theme === 'dark') {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                localStorage.setItem('sgx_theme', 'dark');
+                currentTheme = 'dark';
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                localStorage.setItem('sgx_theme', 'light');
+                currentTheme = 'light';
+            }
+        }
+        
+        function toggleTheme() {
+            if (currentTheme === 'light') {
+                setTheme('dark');
+            } else {
+                setTheme('light');
+            }
+        }
+        
+        // initialize auto refresh (every 60 seconds)
+             // initialize auto refresh (every 60 seconds)
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                fetchSGXNifty();
+            }, 60000);
+        }
+        
+        // initial load and refresh setup
+        async function init() {
+            // load saved theme
+            const savedTheme = localStorage.getItem('sgx_theme');
+            if (savedTheme === 'dark') {
+                setTheme('dark');
+            } else if (savedTheme === 'light') {
+                setTheme('light');
+            } else {
+                // default light but respect system preference? we keep light as graceful
+                setTheme('light');
+            }
+            
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', toggleTheme);
+            }
+            
+            await fetchSGXNifty();
+            startAutoRefresh();
+            
+            // optional: expose manual refresh on theme or also if needed 
+            window.addEventListener('online', () => {
+                fetchSGXNifty();
+            });
+        }
+        
+        init();
+    </script>
+</body>
+</html>
