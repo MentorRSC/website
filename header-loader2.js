@@ -1,45 +1,16 @@
-   document.addEventListener("DOMContentLoaded", () => {
-        const headerElement = document.querySelector("site-header");
+document.addEventListener("DOMContentLoaded", () => {
+    const header = document.querySelector("site-header");
 
-        if (headerElement) {
-            // Directly inject the header HTML as provided (with all links, icons, and structure).
-            // This matches the original "header.html" content, with proper classes.
-            const headerMarkup = `
-    <header>
-        <div class="container header-container">
-            <a href="index.html" class="logo">
-                <i class="fas fa-lightbulb"></i>
-                <h1>Innovation<span>Hub</span></h1>
-            </a>
-            <div class="mobile-menu">
-                <i class="fas fa-bars"></i>
-            </div>
-            <nav class="nav-menu">
-                <ul class="hover-code-css">
-                    <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Home</span></a></li>
-                    <li><a href="resources.html"><i class="fa-solid fa-book"></i> <span>Resources</span></a></li>
-                    <li><a href="projects.html"><i class="fa-solid fa-code-branch"></i> <span>Projects</span></a></li>
-                    <li><a href="puzzles.html"><i class="fa-solid fa-puzzle-piece"></i> <span>Puzzles</span></a></li>
-                    <li><a href="members.html"><i class="fa-solid fa-users"></i> <span>Members</span></a></li>
-                    <li><a href="funding.html"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Investment</span></a></li>
-                    <li><a href="linktree.html"><i class="fa-solid fa-share-nodes"></i> <span>Social Media</span></a></li>
-                    <li><a href="joiningform.html" class="cta-button">Join Now</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-            `;
-            headerElement.innerHTML = headerMarkup;
-            
-            // After injection, setup mobile menu functionality (as defined)
-            setupMobileMenu();
-            
-            // Additionally, ensure that any navigation link closes mobile menu on click (good UX)
-            addAutoCloseOnNavClick();
-        } else {
-            console.error("site-header element missing — ensure <site-header> exists.");
-        }
-    });
+    if (header) {
+        fetch("header.html")
+            .then(res => res.text())
+            .then(data => {
+                header.innerHTML = data;
+                setupMobileMenu(); // Add this line
+            })
+            .catch(error => console.error("Error loading header:", error));
+    }
+});
 
     // --- Mobile menu core functions (based on user script) ---
     function setupMobileMenu() {
