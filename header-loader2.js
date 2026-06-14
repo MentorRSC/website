@@ -1,28 +1,43 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const header = document.querySelector("site-header");
+// header-loader2.js
+// Dynamic header injection with mobile menu functionality
 
-    if (header) {
-        fetch("header.html")
-            .then(res => res.text())
-            .then(data => {
-                header.innerHTML = data;
-                setupMobileMenu(); // Add this line
-            })
-            .catch(error => console.error("Error loading header:", error));
-    }
-});
+(function() {
+    // Header HTML markup
+    const headerMarkup = `
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-lightbulb"></i>
+                <h1>Innovation<span>Hub</span></h1>
+            </a>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu">
+                <ul class="hover-code-css">
+                    <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Home</span></a></li>
+                    <li><a href="resources.html"><i class="fa-solid fa-book"></i> <span>Resources</span></a></li>
+                    <li><a href="projects.html"><i class="fa-solid fa-code-branch"></i> <span>Projects</span></a></li>
+                    <li><a href="puzzles.html"><i class="fa-solid fa-puzzle-piece"></i> <span>Puzzles</span></a></li>
+                    <li><a href="members.html"><i class="fa-solid fa-users"></i> <span>Members</span></a></li>
+                    <li><a href="funding.html"><i class="fa-solid fa-hand-holding-dollar"></i> <span>Investment</span></a></li>
+                    <li><a href="linktree.html"><i class="fa-solid fa-share-nodes"></i> <span>Social Media</span></a></li>
+                    <li><a href="joiningform.html" class="cta-button">Join Now</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    `;
 
-    // --- Mobile menu core functions (based on user script) ---
+    // Mobile menu setup function
     function setupMobileMenu() {
         const menuBtn = document.querySelector(".mobile-menu");
         const navMenu = document.querySelector(".nav-menu");
         
         if (menuBtn && navMenu) {
-            // Remove previous listener to avoid duplicates
             menuBtn.removeEventListener("click", toggleMenu);
             menuBtn.addEventListener("click", toggleMenu);
             
-            // Also close menu if window resizes to desktop viewport (optional but friendly)
             window.addEventListener("resize", function handleResize() {
                 if (window.innerWidth > 900) {
                     if (navMenu.classList.contains("active")) {
@@ -35,13 +50,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
             });
-            console.log("Mobile menu initialized with toggle");
-        } else {
-            console.error("Mobile menu elements not found — check header HTML classes");
         }
     }
 
-    // Toggle function: toggles 'active' class and changes icon between bars/times
+    // Toggle function
     function toggleMenu() {
         const navMenu = document.querySelector(".nav-menu");
         const menuBtn = document.querySelector(".mobile-menu");
@@ -62,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Auto close mobile menu when any nav link is clicked (great for SPA-like navigation)
+    // Auto close mobile menu on nav click
     function addAutoCloseOnNavClick() {
         const navLinks = document.querySelectorAll(".nav-menu a");
         const menuBtn = document.querySelector(".mobile-menu");
@@ -75,8 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
         
-        function closeMobileMenuHandler(e) {
-            // If menu is open, close it smoothly
+        function closeMobileMenuHandler() {
             if (navMenu && navMenu.classList.contains("active")) {
                 navMenu.classList.remove("active");
                 const icon = menuBtn?.querySelector("i");
@@ -87,24 +98,40 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
-    
-    // Optional: Click outside to close (for better mobile experience)
-    document.addEventListener("click", function(e) {
-        const navMenu = document.querySelector(".nav-menu");
-        const menuBtn = document.querySelector(".mobile-menu");
-        if (!navMenu || !menuBtn) return;
-        const isMobile = window.innerWidth <= 900;
-        if (!isMobile) return;
-        
-        if (navMenu.classList.contains("active")) {
-            // if clicked element is not inside nav menu and not the menu button itself
-            if (!navMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-                navMenu.classList.remove("active");
-                const icon = menuBtn.querySelector("i");
-                if (icon && icon.classList.contains("fa-times")) {
-                    icon.classList.remove("fa-times");
-                    icon.classList.add("fa-bars");
+
+    // Click outside to close
+    function addOutsideClickClose() {
+        document.addEventListener("click", function(e) {
+            const navMenu = document.querySelector(".nav-menu");
+            const menuBtn = document.querySelector(".mobile-menu");
+            if (!navMenu || !menuBtn) return;
+            const isMobile = window.innerWidth <= 900;
+            if (!isMobile) return;
+            
+            if (navMenu.classList.contains("active")) {
+                if (!navMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+                    navMenu.classList.remove("active");
+                    const icon = menuBtn.querySelector("i");
+                    if (icon && icon.classList.contains("fa-times")) {
+                        icon.classList.remove("fa-times");
+                        icon.classList.add("fa-bars");
+                    }
                 }
             }
+        });
+    }
+
+    // Initialize header injection
+    document.addEventListener("DOMContentLoaded", () => {
+        const headerElement = document.querySelector("site-header");
+
+        if (headerElement) {
+            headerElement.innerHTML = headerMarkup;
+            setupMobileMenu();
+            addAutoCloseOnNavClick();
+            addOutsideClickClose();
+        } else {
+            console.error("site-header element not found");
         }
     });
+})();
