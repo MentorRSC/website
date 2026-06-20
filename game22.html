@@ -2,744 +2,607 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🧩 Pinch Puzzle · 9 pieces</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Skeleton + Camera View</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
         body {
-            background: #0a0c10;
-            min-height: 100vh;
+            background: #0b0b0b;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            touch-action: none;
-            overflow: hidden;
-            width: 100%;
+        }
+        .app-container {
+            position: relative;
+            width: 100vw;
             height: 100vh;
-            position: relative;
-        }
-        #app {
-            width: 100%;
-            height: 100%;
-            max-width: 500px;
-            max-height: 900px;
-            position: relative;
-            background: #141a24;
-            border-radius: 0;
+            background: #1a1a1a;
             overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.8);
-            margin: 0 auto;
         }
-        /* FULLSCREEN CAMERA VIEW */
-        #cameraView {
+
+        /* Camera feed – full screen */
+        #camera-view {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            z-index: 10;
-        }
-        #cameraView video {
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
-            background: #111;
+            background: #222;
+            z-index: 1;
         }
-        .camera-overlay {
+
+        /* Canvas for skeleton overlay (hybrid) */
+        #skeleton-canvas {
             position: absolute;
-            bottom: 30px;
+            top: 0;
             left: 0;
-            right: 0;
-            text-align: center;
-            pointer-events: none;
-            font-size: 1.6rem;
-            font-weight: 700;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.9);
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(6px);
-            padding: 16px 0;
-            margin: 0 20px;
-            border-radius: 80px;
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #fff;
-            letter-spacing: 0.5px;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;  /* allow clicks to pass to buttons */
         }
-        .camera-overlay span {
-            display: inline-block;
-        }
-        .timer-badge {
+
+        /* ----- SETTINGS BUTTON (top right) ----- */
+        .settings-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.7);
+            z-index: 10;
+            background: rgba(20, 20, 30, 0.75);
             backdrop-filter: blur(8px);
-            padding: 10px 22px;
-            border-radius: 60px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            border: 1px solid #ffbb33;
-            color: #ffbb33;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-            letter-spacing: 1px;
-            pointer-events: none;
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 48px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f0f0f0;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: 0.25s ease;
+            border: 1px solid rgba(255,215,0,0.2);
         }
-        /* skeleton overlay (finger detection) */
-        #skeletonCanvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 15;
-            opacity: 0.7;
+        .settings-btn i {
+            font-size: 1.2rem;
+            color: #ffd966;
         }
-        /* PUZZLE VIEW (9 pieces) */
-        #puzzleView {
+        .settings-btn:hover {
+            background: rgba(40, 40, 60, 0.9);
+            border-color: rgba(255,215,0,0.5);
+            transform: scale(1.02);
+        }
+
+        /* ---- DROPDOWN (settings menu) ---- */
+        .settings-dropdown {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #141a24;
+            top: 80px;
+            right: 20px;
+            z-index: 20;
+            background: rgba(16, 16, 24, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 12px 6px;
+            min-width: 200px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.08);
             display: none;
             flex-direction: column;
-            z-index: 20;
-            padding: 8px;
-        }
-        .puzzle-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
             gap: 4px;
+            transform-origin: top right;
+            transition: 0.2s ease;
+        }
+        .settings-dropdown.open {
+            display: flex;
+        }
+        .dropdown-item {
+            background: transparent;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 16px;
+            color: #eaeef5;
+            font-size: 0.95rem;
+            font-weight: 450;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: 0.15s;
+            width: 100%;
+            letter-spacing: 0.2px;
+            border-left: 3px solid transparent;
+        }
+        .dropdown-item i {
+            width: 22px;
+            color: #aab;
+            font-size: 1.1rem;
+        }
+        .dropdown-item:hover {
+            background: rgba(255, 215, 0, 0.08);
+            border-left-color: #ffd966;
+            color: #fff;
+        }
+        .dropdown-item.active {
+            background: rgba(255, 215, 0, 0.12);
+            border-left-color: #ffd966;
+            color: #ffea9e;
+        }
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 4px 12px;
+        }
+
+        /* permission overlay */
+        .permission-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: #1e2635;
-            border-radius: 24px;
-            padding: 4px;
-            box-shadow: inset 0 0 0 1px #3d455a;
-            touch-action: none;
-            position: relative;
-        }
-        .puzzle-piece {
-            background: #2f384b;
-            background-size: cover;
-            background-position: center;
-            border-radius: 10px;
-            touch-action: none;
-            cursor: grab;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-            border: 2px solid #4d5670;
-            transition: border 0.1s;
-            will-change: transform;
-            position: relative;
-        }
-        .puzzle-piece:active {
-            cursor: grabbing;
-        }
-        .puzzle-piece.dragging {
-            z-index: 30;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.9);
-            transform: scale(1.02);
-            border-color: #ffbb33;
-        }
-        .puzzle-piece.pinched {
-            border-color: #ff6b6b;
-            box-shadow: 0 0 0 3px #ff6b6b, 0 8px 20px rgba(255,0,0,0.4);
-        }
-        .puzzle-controls {
+            background: rgba(8, 8, 16, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             display: flex;
-            gap: 10px;
-            padding: 12px 6px 6px 6px;
-            background: #141a24;
-        }
-        .puzzle-controls button {
-            flex: 1;
-            background: #2b3548;
-            border: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
             color: white;
-            font-weight: 700;
-            padding: 14px 0;
-            border-radius: 60px;
-            font-size: 1.2rem;
-            box-shadow: 0 6px 0 #141a24;
-            transition: all 0.08s ease;
-            border: 1px solid #4d5a72;
-            touch-action: manipulation;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-        }
-        .puzzle-controls button:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #141a24;
-        }
-        .puzzle-controls .btn-primary {
-            background: #ffbb33;
-            color: #0b0e14;
-            border-color: #ffd966;
-            box-shadow: 0 6px 0 #b17f1a;
-        }
-        #puzzleMessage {
-            background: #1e2533;
-            border-radius: 40px;
-            padding: 14px 12px;
-            margin: 4px 0 0 0;
             text-align: center;
-            border: 1px solid #4a536b;
-            font-size: 1.2rem;
+            padding: 2rem;
+        }
+        .permission-overlay.hidden {
+            display: none;
+        }
+        .permission-box {
+            background: rgba(30, 30, 44, 0.7);
+            backdrop-filter: blur(4px);
+            padding: 2.4rem 2.8rem;
+            border-radius: 48px;
+            border: 1px solid rgba(255,215,0,0.15);
+            max-width: 380px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+        .permission-box i {
+            font-size: 3.6rem;
+            color: #ffd966;
+            margin-bottom: 16px;
+        }
+        .permission-box h2 {
+            font-weight: 400;
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+        .permission-box p {
+            opacity: 0.7;
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background: #ffd966;
+            border: none;
+            color: #12121c;
             font-weight: 600;
-            color: #eee;
-        }
-        .message-congrats {
-            background: #1f3a2a;
-            border-color: #5fbb7a;
-            color: #b3ffcc;
-        }
-        .message-sorry {
-            background: #3a2020;
-            border-color: #bb5f5f;
-            color: #ffb3b3;
-        }
-        .hidden {
-            display: none !important;
-        }
-        /* reset button on camera */
-        #resetCameraBtn {
-            position: absolute;
-            bottom: 100px;
-            left: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(8px);
-            border: 1px solid #ffbb33;
-            color: #ffbb33;
-            font-weight: 700;
-            padding: 16px;
-            border-radius: 80px;
-            font-size: 1.3rem;
-            letter-spacing: 0.5px;
+            padding: 14px 38px;
+            border-radius: 60px;
+            font-size: 1rem;
             cursor: pointer;
-            z-index: 20;
-            transition: 0.1s;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            transition: 0.2s;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);
         }
-        #resetCameraBtn:active {
-            transform: scale(0.96);
+        .btn-primary:hover {
+            background: #ffe088;
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #ccc;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,215,0,0.3);
+        }
+        .status-badge {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #ddd;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.06);
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* responsiveness */
+        @media (max-width: 480px) {
+            .settings-btn span { display: none; }
+            .settings-btn { padding: 12px 16px; }
+            .settings-dropdown { min-width: 170px; right: 10px; top: 72px; }
         }
     </style>
 </head>
 <body>
-<div id="app">
-    <!-- CAMERA VIEW (full screen) -->
-    <div id="cameraView">
-        <video id="video" autoplay playsinline muted></video>
-        <canvas id="skeletonCanvas"></canvas>
-        <div class="camera-overlay" id="statusOverlay">
-            <span id="statusText">✋ Show open hand</span>
+    <div class="app-container" id="app">
+
+        <!-- Camera feed (full screen) -->
+        <video id="camera-view" autoplay playsinline muted></video>
+
+        <!-- Skeleton canvas overlay -->
+        <canvas id="skeleton-canvas"></canvas>
+
+        <!-- Settings button (top right) -->
+        <button class="settings-btn" id="settingsToggle">
+            <i class="fas fa-sliders-h"></i>
+            <span>Settings</span>
+        </button>
+
+        <!-- Dropdown menu -->
+        <div class="settings-dropdown" id="settingsDropdown">
+            <button class="dropdown-item" data-mode="camera"><i class="fas fa-video"></i> Camera view</button>
+            <button class="dropdown-item" data-mode="skeleton"><i class="fas fa-robot"></i> Skeleton view</button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" data-mode="hybrid"><i class="fas fa-layer-group"></i> Hybrid mode</button>
         </div>
-        <div class="timer-badge" id="timerBadge">⏳ 0s</div>
-        <button id="resetCameraBtn">⟳ Restart</button>
+
+        <!-- Permission overlay (shown first) -->
+        <div class="permission-overlay" id="permissionOverlay">
+            <div class="permission-box">
+                <i class="fas fa-camera-retro"></i>
+                <h2>Camera access</h2>
+                <p>This app uses your camera to show a live view with an optional hand skeleton overlay.</p>
+                <button class="btn-primary" id="requestPermissionBtn">
+                    <i class="fas fa-check-circle" style="margin-right: 10px;"></i> Enable camera
+                </button>
+                <button class="btn-secondary" id="openSettingsBtn">
+                    <i class="fas fa-cog" style="margin-right: 8px;"></i> Open settings
+                </button>
+                <div style="margin-top: 16px; font-size: 0.75rem; opacity: 0.4;">you can change mode anytime</div>
+            </div>
+        </div>
+
+        <!-- small status -->
+        <div class="status-badge" id="modeStatus">⚙️ camera view</div>
     </div>
 
-    <!-- PUZZLE VIEW (9 pieces) -->
-    <div id="puzzleView">
-        <div class="puzzle-grid" id="puzzleGrid"></div>
-        <div id="puzzleMessage">⏳ 30s · pinch & drag pieces</div>
-        <div class="puzzle-controls">
-            <button id="backToCameraBtn">📷 Camera</button>
-            <button id="shuffleBtn" class="btn-primary">🔀 Shuffle</button>
-        </div>
-    </div>
-</div>
+    <script>
+        (function() {
+            "use strict";
 
-<script>
-    (function() {
-        // ----- DOM refs -----
-        const video = document.getElementById('video');
-        const skeletonCanvas = document.getElementById('skeletonCanvas');
-        const ctx = skeletonCanvas.getContext('2d');
-        const statusText = document.getElementById('statusText');
-        const timerBadge = document.getElementById('timerBadge');
-        const cameraView = document.getElementById('cameraView');
-        const puzzleView = document.getElementById('puzzleView');
-        const puzzleGrid = document.getElementById('puzzleGrid');
-        const puzzleMessage = document.getElementById('puzzleMessage');
-        const backToCameraBtn = document.getElementById('backToCameraBtn');
-        const shuffleBtn = document.getElementById('shuffleBtn');
-        const resetCameraBtn = document.getElementById('resetCameraBtn');
+            // ---------- DOM refs ----------
+            const video = document.getElementById('camera-view');
+            const canvas = document.getElementById('skeleton-canvas');
+            const ctx = canvas.getContext('2d');
+            const permissionOverlay = document.getElementById('permissionOverlay');
+            const requestBtn = document.getElementById('requestPermissionBtn');
+            const openSettingsBtn = document.getElementById('openSettingsBtn');
+            const settingsToggle = document.getElementById('settingsToggle');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            const modeStatus = document.getElementById('modeStatus');
 
-        // ----- state -----
-        let stream = null;
-        let photoDataURL = null;
-        let pieces = [];                 // { id, row, col, currentIndex, dataURL }
-        let dragState = null;            // { element, index, offsetX, offsetY, startX, startY, pinchActive }
-        let puzzleTimer = null;
-        let countdownTimer = null;
-        let gameActive = false;
-        let handConfirmed = false;
-        let handDetectInterval = null;
-        let puzzleSolved = false;
+            // mode state
+            let currentMode = 'camera';   // 'camera' , 'skeleton' , 'hybrid'
+            let cameraActive = false;
+            let cameraStream = null;
+            let animationFrame = null;
 
-        // ----- sizing -----
-        function resizeCanvas() {
-            const rect = cameraView.getBoundingClientRect();
-            skeletonCanvas.width = rect.width || 400;
-            skeletonCanvas.height = rect.height || 600;
-        }
-        window.addEventListener('resize', resizeCanvas);
-
-        // ----- finger skeleton drawing (mock) -----
-        function drawSkeleton(openHand = false) {
-            const w = skeletonCanvas.width, h = skeletonCanvas.height;
-            ctx.clearRect(0, 0, w, h);
-            if (!openHand) {
-                // draw closed fist or nothing
-                ctx.fillStyle = 'rgba(255,255,0,0.2)';
-                ctx.beginPath();
-                ctx.arc(w/2, h/2, 40, 0, Math.PI*2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,200,0,0.6)';
-                ctx.lineWidth = 4;
-                ctx.stroke();
-                return;
+            // ---------- canvas sizing ----------
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
             }
-            // draw open hand skeleton (5 fingers)
-            const cx = w/2, cy = h/2 - 20;
-            const fingerLength = 80;
-            const spread = 0.9;
-            ctx.strokeStyle = '#00ffcc';
-            ctx.lineWidth = 6;
-            ctx.shadowColor = '#00ffcc';
-            ctx.shadowBlur = 12;
-            // palm
-            ctx.beginPath();
-            ctx.ellipse(cx, cy+20, 40, 30, 0, 0, Math.PI*2);
-            ctx.stroke();
-
-            // fingers
-            const angles = [-1.2, -0.6, 0, 0.6, 1.2];
-            for (let i = 0; i < 5; i++) {
-                const angle = angles[i];
-                const x1 = cx + Math.sin(angle) * 30;
-                const y1 = cy + 10 + Math.cos(angle) * 10;
-                const x2 = cx + Math.sin(angle) * (30 + fingerLength);
-                const y2 = cy + 10 + Math.cos(angle) * (10 + fingerLength);
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.stroke();
-                // fingertip
-                ctx.beginPath();
-                ctx.arc(x2, y2, 10, 0, Math.PI*2);
-                ctx.fillStyle = '#00ffcc';
-                ctx.fill();
-                ctx.stroke();
-            }
-            // thumb
-            ctx.beginPath();
-            ctx.moveTo(cx-20, cy+30);
-            ctx.lineTo(cx-60, cy+70);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx-60, cy+70, 10, 0, Math.PI*2);
-            ctx.fillStyle = '#00ffcc';
-            ctx.fill();
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-
-        // ----- hand detection (mock with brightness + motion) -----
-        let lastAvg = 0;
-        function detectHand() {
-            if (video.readyState < 2) return false;
-            const canvas = document.createElement('canvas');
-            canvas.width = 32; canvas.height = 24;
-            const c = canvas.getContext('2d');
-            c.drawImage(video, 0, 0, 32, 24);
-            const data = c.getImageData(0, 0, 32, 24).data;
-            let sum = 0, count = 0;
-            for (let i = 0; i < data.length; i += 4) {
-                sum += data[i] + data[i+1] + data[i+2];
-                count += 3;
-            }
-            const avg = sum / count;
-            const motion = Math.abs(avg - lastAvg) > 5;
-            lastAvg = avg;
-            // heuristic: open hand if avg brightness in range and motion
-            return (avg > 90 && avg < 210 && motion);
-        }
-
-        function startHandDetection() {
-            if (handDetectInterval) clearInterval(handDetectInterval);
-            handDetectInterval = setInterval(() => {
-                if (puzzleSolved) return;
-                const isOpen = detectHand();
-                drawSkeleton(isOpen);
-                if (isOpen && !handConfirmed) {
-                    handConfirmed = true;
-                    startCountdown();
-                } else if (!isOpen) {
-                    handConfirmed = false;
-                    if (countdownTimer) {
-                        clearInterval(countdownTimer);
-                        countdownTimer = null;
-                        statusText.innerText = '✋ Show open hand';
-                        timerBadge.innerText = '⏳ 0s';
-                    }
-                }
-                if (!handConfirmed) {
-                    statusText.innerText = '✋ Show open hand';
-                }
-            }, 250);
-        }
-
-        // ----- countdown & capture -----
-        function startCountdown() {
-            if (countdownTimer) clearInterval(countdownTimer);
-            let sec = 3;
-            statusText.innerText = `⏳ ${sec}s`;
-            timerBadge.innerText = `⏳ ${sec}s`;
-            countdownTimer = setInterval(() => {
-                sec--;
-                if (sec <= 0) {
-                    clearInterval(countdownTimer);
-                    countdownTimer = null;
-                    statusText.innerText = '📸 Capture!';
-                    timerBadge.innerText = '📸';
-                    capturePhotoAndStartPuzzle();
-                } else {
-                    statusText.innerText = `⏳ ${sec}s`;
-                    timerBadge.innerText = `⏳ ${sec}s`;
-                }
-            }, 1000);
-        }
-
-        function capturePhotoAndStartPuzzle() {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            const c = canvas.getContext('2d');
-            c.drawImage(video, 0, 0, canvas.width, canvas.height);
-            photoDataURL = canvas.toDataURL('image/jpeg', 0.9);
-            buildPuzzle(photoDataURL);
-            cameraView.style.display = 'none';
-            puzzleView.style.display = 'flex';
-            if (handDetectInterval) clearInterval(handDetectInterval);
-            handDetectInterval = null;
-            startPuzzleTimer();
-            gameActive = true;
-            puzzleSolved = false;
-        }
-
-        // ----- build 9-piece puzzle -----
-        function buildPuzzle(imageSrc) {
-            const img = new Image();
-            img.onload = function() {
-                const cols = 3, rows = 3;
-                const pw = img.width / cols, ph = img.height / rows;
-                puzzleGrid.innerHTML = '';
-                pieces = [];
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = pw; canvas.height = ph;
-                        const ctx2 = canvas.getContext('2d');
-                        ctx2.drawImage(img, c * pw, r * ph, pw, ph, 0, 0, pw, ph);
-                        const dataURL = canvas.toDataURL('image/jpeg');
-                        pieces.push({
-                            id: r * cols + c,
-                            row: r, col: c,
-                            dataURL: dataURL,
-                            currentIndex: r * cols + c
-                        });
-                    }
-                }
-                shufflePieces();
-                renderPuzzle();
-            };
-            img.src = imageSrc;
-        }
-
-        function shufflePieces() {
-            const indices = pieces.map((_, i) => i);
-            for (let i = indices.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [indices[i], indices[j]] = [indices[j], indices[i]];
-            }
-            pieces.forEach((p, i) => p.currentIndex = indices[i]);
-        }
-
-        function renderPuzzle() {
-            const sorted = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
-            puzzleGrid.innerHTML = '';
-            for (let p of sorted) {
-                const div = document.createElement('div');
-                div.className = 'puzzle-piece';
-                div.style.backgroundImage = `url(${p.dataURL})`;
-                div.style.backgroundSize = 'cover';
-                div.dataset.id = p.id;
-                div.dataset.index = p.currentIndex;
-                // pointer + touch events
-                div.addEventListener('pointerdown', onPiecePointerDown);
-                div.addEventListener('touchstart', onPieceTouchStart, { passive: false });
-                puzzleGrid.appendChild(div);
-            }
-            checkWin();
-        }
-
-        // ----- drag & pinch (gesture) -----
-        function onPiecePointerDown(e) { e.preventDefault(); startDrag(e.currentTarget, e.clientX, e.clientY); }
-        function onPieceTouchStart(e) { e.preventDefault(); const t = e.touches[0]; startDrag(e.currentTarget, t.clientX, t.clientY); }
-
-        function startDrag(el, cx, cy) {
-            if (!gameActive || puzzleSolved) return;
-            const rect = el.getBoundingClientRect();
-            const gridRect = puzzleGrid.getBoundingClientRect();
-            const offsetX = cx - rect.left;
-            const offsetY = cy - rect.top;
-            const idx = parseInt(el.dataset.index);
-            dragState = {
-                element: el,
-                index: idx,
-                offsetX: offsetX,
-                offsetY: offsetY,
-                startX: cx, startY: cy,
-                pinchActive: false,
-                snapIndex: null
-            };
-            el.classList.add('dragging');
-            el.style.zIndex = 30;
-
-            window.addEventListener('pointermove', onPointerMove);
-            window.addEventListener('pointerup', onPointerUp);
-            window.addEventListener('touchmove', onTouchMove, { passive: false });
-            window.addEventListener('touchend', onTouchEnd, { passive: false });
-            // also listen for pinch (two finger) via touch events
-            window.addEventListener('touchmove', onPinchMove, { passive: false });
-            window.addEventListener('touchend', onPinchEnd, { passive: false });
-        }
-
-        function onPointerMove(e) { e.preventDefault(); moveDrag(e.clientX, e.clientY); }
-        function onTouchMove(e) { e.preventDefault(); const t = e.touches[0]; if (t) moveDrag(t.clientX, t.clientY); }
-
-        function moveDrag(cx, cy) {
-            if (!dragState) return;
-            const el = dragState.element;
-            const gridRect = puzzleGrid.getBoundingClientRect();
-            const x = cx - gridRect.left - dragState.offsetX;
-            const y = cy - gridRect.top - dragState.offsetY;
-            el.style.transform = `translate(${x}px, ${y}px)`;
-            el.style.position = 'relative';
-            el.style.left = '0px'; el.style.top = '0px';
-
-            // snap detection
-            const all = puzzleGrid.querySelectorAll('.puzzle-piece');
-            let target = null;
-            const centerX = cx - gridRect.left;
-            const centerY = cy - gridRect.top;
-            for (let child of all) {
-                if (child === el) continue;
-                const r = child.getBoundingClientRect();
-                const cx2 = r.left + r.width/2 - gridRect.left;
-                const cy2 = r.top + r.height/2 - gridRect.top;
-                if (Math.hypot(centerX - cx2, centerY - cy2) < 45) {
-                    target = parseInt(child.dataset.index);
-                    break;
-                }
-            }
-            dragState.snapIndex = target;
-            el.style.borderColor = target !== null ? '#ffbb33' : '#4d5670';
-        }
-
-        // pinch gesture: when two fingers on same piece -> swap with adjacent?
-        let pinchTouchIds = [];
-        function onPinchMove(e) {
-            if (!dragState || e.touches.length < 2) return;
-            const el = dragState.element;
-            // highlight as pinched
-            el.classList.add('pinched');
-            // if pinched, we swap with the piece under the second finger?
-            const touch1 = e.touches[0], touch2 = e.touches[1];
-            // get center of two fingers
-            const cx = (touch1.clientX + touch2.clientX)/2;
-            const cy = (touch1.clientY + touch2.clientY)/2;
-            // find piece at center
-            const gridRect = puzzleGrid.getBoundingClientRect();
-            const all = puzzleGrid.querySelectorAll('.puzzle-piece');
-            let targetEl = null;
-            for (let child of all) {
-                if (child === el) continue;
-                const r = child.getBoundingClientRect();
-                if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
-                    targetEl = child;
-                    break;
-                }
-            }
-            if (targetEl) {
-                const targetIdx = parseInt(targetEl.dataset.index);
-                const currentIdx = parseInt(el.dataset.index);
-                // swap
-                const p1 = pieces.find(p => p.currentIndex === currentIdx);
-                const p2 = pieces.find(p => p.currentIndex === targetIdx);
-                if (p1 && p2) {
-                    const temp = p1.currentIndex;
-                    p1.currentIndex = p2.currentIndex;
-                    p2.currentIndex = temp;
-                    renderPuzzle();
-                    // reset drag state
-                    endDragClean();
-                }
-            }
-        }
-
-        function onPinchEnd(e) {
-            if (dragState && dragState.element) {
-                dragState.element.classList.remove('pinched');
-            }
-        }
-
-        function onPointerUp(e) { e.preventDefault(); endDrag(); }
-        function onTouchEnd(e) { e.preventDefault(); endDrag(); }
-
-        function endDrag() {
-            if (!dragState) return;
-            const el = dragState.element;
-            el.classList.remove('dragging');
-            el.style.zIndex = '';
-            el.style.transform = '';
-            el.style.borderColor = '#4d5670';
-            el.classList.remove('pinched');
-
-            const snap = dragState.snapIndex;
-            if (snap !== undefined && snap !== null) {
-                const currentIdx = parseInt(el.dataset.index);
-                const targetPiece = pieces.find(p => p.currentIndex === snap);
-                const currentPiece = pieces.find(p => p.currentIndex === currentIdx);
-                if (targetPiece && currentPiece) {
-                    const temp = currentPiece.currentIndex;
-                    currentPiece.currentIndex = targetPiece.currentIndex;
-                    targetPiece.currentIndex = temp;
-                    renderPuzzle();
-                }
-            }
-            endDragClean();
-        }
-
-        function endDragClean() {
-            window.removeEventListener('pointermove', onPointerMove);
-            window.removeEventListener('pointerup', onPointerUp);
-            window.removeEventListener('touchmove', onTouchMove);
-            window.removeEventListener('touchend', onTouchEnd);
-            window.removeEventListener('touchmove', onPinchMove);
-            window.removeEventListener('touchend', onPinchEnd);
-            if (dragState) {
-                if (dragState.element) {
-                    dragState.element.classList.remove('dragging');
-                    dragState.element.classList.remove('pinched');
-                    dragState.element.style.transform = '';
-                    dragState.element.style.borderColor = '#4d5670';
-                }
-                dragState = null;
-            }
-        }
-
-        // ----- win check -----
-        function checkWin() {
-            if (!gameActive) return;
-            const sorted = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
-            let win = true;
-            for (let i = 0; i < sorted.length; i++) {
-                if (sorted[i].id !== i) { win = false; break; }
-            }
-            if (win && !puzzleSolved) {
-                puzzleSolved = true;
-                gameActive = false;
-                if (puzzleTimer) clearInterval(puzzleTimer);
-                puzzleMessage.className = 'message-congrats';
-                puzzleMessage.innerHTML = '🎉 CONGRATULATIONS! 🎉';
-                timerBadge.innerText = '🏆';
-            }
-        }
-
-        // ----- timer 30s -----
-        function startPuzzleTimer() {
-            let seconds = 30;
-            timerBadge.innerText = `⏳ ${seconds}s`;
-            puzzleMessage.innerText = `⏳ ${seconds}s · pinch & drag`;
-            if (puzzleTimer) clearInterval(puzzleTimer);
-            puzzleTimer = setInterval(() => {
-                seconds--;
-                timerBadge.innerText = `⏳ ${seconds}s`;
-                puzzleMessage.innerText = `⏳ ${seconds}s · pinch & drag`;
-                if (seconds <= 0 && !puzzleSolved) {
-                    clearInterval(puzzleTimer);
-                    puzzleTimer = null;
-                    gameActive = false;
-                    puzzleMessage.className = 'message-sorry';
-                    puzzleMessage.innerHTML = '😞 SORRY! Try again.';
-                    timerBadge.innerText = '⏰';
-                }
-            }, 1000);
-        }
-
-        // ----- reset to camera -----
-        function resetToCamera() {
-            if (handDetectInterval) clearInterval(handDetectInterval);
-            if (countdownTimer) clearInterval(countdownTimer);
-            if (puzzleTimer) clearInterval(puzzleTimer);
-            puzzleTimer = null;
-            countdownTimer = null;
-            handDetectInterval = null;
-            gameActive = false;
-            handConfirmed = false;
-            puzzleSolved = false;
-            cameraView.style.display = 'flex';
-            puzzleView.style.display = 'none';
-            statusText.innerText = '✋ Show open hand';
-            timerBadge.innerText = '⏳ 0s';
-            puzzleMessage.className = '';
-            puzzleMessage.innerHTML = '⏳ 30s · pinch & drag';
-            if (!stream) startCamera();
-            startHandDetection();
+            window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
-        }
 
-        // ----- camera init -----
-        async function startCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+            // ---------- draw skeleton (hand & finger) ----------
+            // draws a stylized skeleton hand + forearm (mock)
+            function drawSkeleton() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // if skeleton or hybrid, draw; else skip (camera mode)
+                if (currentMode === 'camera') return;
+
+                const w = canvas.width;
+                const h = canvas.height;
+
+                // Map hand to roughly center-right (like a hand in view)
+                const baseX = w * 0.6;
+                const baseY = h * 0.55;
+                const scale = Math.min(w, h) / 480;
+
+                // ----- draw arm (forearm) -----
+                ctx.beginPath();
+                ctx.moveTo(baseX - 60 * scale, baseY + 120 * scale);
+                ctx.lineTo(baseX - 20 * scale, baseY + 40 * scale);
+                ctx.strokeStyle = '#7fc9ff';
+                ctx.lineWidth = 12 * scale;
+                ctx.shadowColor = 'rgba(100, 200, 255, 0.3)';
+                ctx.shadowBlur = 14;
+                ctx.stroke();
+
+                // ----- hand palm (skeleton) -----
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.ellipse(baseX, baseY, 40 * scale, 50 * scale, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(80, 180, 255, 0.20)';
+                ctx.fill();
+                ctx.strokeStyle = '#7fc9ff';
+                ctx.lineWidth = 3 * scale;
+                ctx.stroke();
+
+                // --- fingers (skeleton lines) ---
+                const fingers = [
+                    { angle: -0.45, len: 80, label: 'thumb' },
+                    { angle: -0.15, len: 90, label: 'index' },
+                    { angle: 0.05, len: 85, label: 'middle' },
+                    { angle: 0.25, len: 80, label: 'ring' },
+                    { angle: 0.45, len: 70, label: 'pinky' }
+                ];
+
+                ctx.shadowBlur = 8;
+                ctx.lineWidth = 4 * scale;
+                ctx.strokeStyle = '#6bc3ff';
+
+                fingers.forEach((f, idx) => {
+                    const angle = f.angle + (idx * 0.02);
+                    const endX = baseX + Math.sin(angle) * f.len * scale;
+                    const endY = baseY - Math.cos(angle) * f.len * scale;
+
+                    // draw finger bone (proximal)
+                    ctx.beginPath();
+                    ctx.moveTo(baseX, baseY);
+                    const midX = baseX + Math.sin(angle) * (f.len * 0.55) * scale;
+                    const midY = baseY - Math.cos(angle) * (f.len * 0.55) * scale;
+                    ctx.lineTo(midX, midY);
+                    ctx.stroke();
+
+                    // distal (tip)
+                    ctx.beginPath();
+                    ctx.moveTo(midX, midY);
+                    ctx.lineTo(endX, endY);
+                    ctx.strokeStyle = '#4fa8ff';
+                    ctx.stroke();
+
+                    // small joint circles
+                    ctx.beginPath();
+                    ctx.arc(midX, midY, 5 * scale, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#b0daff';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(endX, endY, 4 * scale, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#7fc9ff';
+                    ctx.fill();
                 });
-                video.srcObject = stream;
-                await video.play();
-                resizeCanvas();
-            } catch (err) {
-                statusText.innerText = '⚠️ Camera permission denied';
-                console.warn('camera error', err);
-            }
-        }
 
-        // ----- init -----
-        async function init() {
-            await startCamera();
-            startHandDetection();
-            resetCameraBtn.addEventListener('click', resetToCamera);
-            backToCameraBtn.addEventListener('click', resetToCamera);
-            shuffleBtn.addEventListener('click', function() {
-                if (photoDataURL && !puzzleSolved) {
-                    shufflePieces();
-                    renderPuzzle();
+                // wrist joint
+                ctx.beginPath();
+                ctx.arc(baseX - 10 * scale, baseY + 18 * scale, 8 * scale, 0, 2 * Math.PI);
+                ctx.fillStyle = '#5aa9dd';
+                ctx.shadowBlur = 12;
+                ctx.fill();
+
+                // add some 'finger dots' 
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#cce8ff';
+                for (let i = 0; i < 5; i++) {
+                    const a = -0.35 + i * 0.2;
+                    const dx = baseX + Math.sin(a) * 60 * scale;
+                    const dy = baseY - Math.cos(a) * 65 * scale;
+                    ctx.beginPath();
+                    ctx.arc(dx, dy, 3 * scale, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                // label
+                ctx.shadowBlur = 0;
+                ctx.font = `${14 * scale}px 'Segoe UI', sans-serif`;
+                ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
+                ctx.fillText('✋ skeleton hand', baseX - 40 * scale, baseY + 90 * scale);
+            }
+
+            // ---------- render loop (hybrid/camera/skeleton) ----------
+            function renderFrame() {
+                if (!cameraActive) {
+                    // if camera not active, still draw skeleton if needed
+                    if (currentMode === 'skeleton' || currentMode === 'hybrid') {
+                        drawSkeleton();
+                    } else {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                    animationFrame = requestAnimationFrame(renderFrame);
+                    return;
+                }
+
+                // camera is active: draw skeleton overlay if hybrid or skeleton only
+                if (currentMode === 'hybrid') {
+                    // draw skeleton on top of camera (camera is background)
+                    drawSkeleton();
+                } else if (currentMode === 'skeleton') {
+                    // camera feed still visible? we want full skeleton view (hide camera)
+                    // we set video opacity 0? but we want full skeleton: we keep video but overlay skeleton
+                    // we make skeleton dominant: we draw full skeleton but we also show camera blurred? 
+                    // For skeleton mode we want to hide camera feed - but we keep it for simplicity
+                    // we set video to be visible but we draw skeleton fully opaque, so it's 'skeleton view'
+                    // we could also clear canvas and draw skeleton only.
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawSkeleton(); 
+                } else {
+                    // camera mode: clear skeleton canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+
+                animationFrame = requestAnimationFrame(renderFrame);
+            }
+
+            // ---------- apply mode ----------
+            function setMode(mode) {
+                currentMode = mode;
+                // update status badge
+                const modeNames = {
+                    camera: '📷 camera view',
+                    skeleton: '🦴 skeleton view',
+                    hybrid: '🌀 hybrid mode'
+                };
+                modeStatus.textContent = modeNames[mode] || 'camera view';
+
+                // update active class in dropdown
+                document.querySelectorAll('.dropdown-item').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.mode === mode) btn.classList.add('active');
+                });
+
+                // close dropdown
+                settingsDropdown.classList.remove('open');
+
+                // if mode is skeleton, we might want to show skeleton instantly
+                // render loop will handle it
+            }
+
+            // ---------- camera start ----------
+            async function startCamera() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false 
+                    });
+                    video.srcObject = stream;
+                    cameraStream = stream;
+                    cameraActive = true;
+                    await video.play();
+                    // hide permission overlay
+                    permissionOverlay.classList.add('hidden');
+                    // start render loop if not started
+                    if (!animationFrame) {
+                        renderFrame();
+                    }
+                } catch (err) {
+                    console.warn('Camera permission denied or error:', err);
+                    // show permission overlay again with hint
+                    permissionOverlay.classList.remove('hidden');
+                    // change button text
+                    requestBtn.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-right:10px;"></i> Retry';
+                    cameraActive = false;
+                }
+            }
+
+            // ---------- permission request ----------
+            function requestPermission() {
+                startCamera();
+            }
+
+            // ---------- open settings (fallback) ----------
+            function openSettings() {
+                // just toggle dropdown, simulate settings
+                settingsDropdown.classList.toggle('open');
+            }
+
+            // ---------- event listeners ----------
+            requestBtn.addEventListener('click', requestPermission);
+            openSettingsBtn.addEventListener('click', function() {
+                // if permission denied, we can open settings 
+                // but we also show dropdown as "settings"
+                settingsDropdown.classList.toggle('open');
+                permissionOverlay.classList.add('hidden'); // hide overlay
+                // if no camera active, we just show skeleton mock
+                if (!cameraActive) {
+                    // start render loop for skeleton view even without camera
+                    if (!animationFrame) {
+                        renderFrame();
+                    }
+                    // set mode skeleton as default when no camera
+                    setMode('skeleton');
                 }
             });
-            // resize canvas on show
-            resizeCanvas();
-        }
-        init();
-    })();
-</script>
+
+            // settings toggle button
+            settingsToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                settingsDropdown.classList.toggle('open');
+            });
+
+            // dropdown item clicks
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const mode = this.dataset.mode;
+                    if (mode) {
+                        setMode(mode);
+                        // if camera not active and mode is camera, try to request camera
+                        if (mode === 'camera' && !cameraActive) {
+                            requestPermission();
+                        } else if (mode === 'skeleton' && !cameraActive) {
+                            // start render if not started
+                            if (!animationFrame) renderFrame();
+                        } else if (mode === 'hybrid' && !cameraActive) {
+                            // hybrid needs camera + skeleton; request camera
+                            requestPermission();
+                            // but we also show skeleton mock if camera fails
+                            if (!animationFrame) renderFrame();
+                        }
+                    }
+                });
+            });
+
+            // close dropdown on outside click
+            document.addEventListener('click', function(e) {
+                if (!settingsDropdown.contains(e.target) && e.target !== settingsToggle) {
+                    settingsDropdown.classList.remove('open');
+                }
+            });
+
+            // ---------- init: show permission overlay ----------
+            permissionOverlay.classList.remove('hidden');
+            // start render loop (background) so skeleton can show even without camera
+            renderFrame();
+
+            // if we have no camera, but user clicks "open settings" we can show skeleton
+            // auto set skeleton as default mock
+            setMode('skeleton');
+
+            // handle window resize for canvas
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+            });
+
+            // stop stream on page unload
+            window.addEventListener('beforeunload', function() {
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+            });
+
+        })();
+    </script>
 </body>
 </html>
