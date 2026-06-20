@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Translate & Speak</title>
+<style>
+body{font-family:Arial;margin:0;background:#f4f4f4}
+.header{padding:10px;background:#fff;display:flex;justify-content:flex-end;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+#settings{position:fixed;top:0;right:-340px;width:320px;height:100%;background:#fff;overflow:auto;padding:15px;transition:.3s}
+#settings.open{right:0}
+textarea{width:95%;height:250px;margin:15px;padding:12px}
+.btn{display:block;width:95%;margin:10px auto;padding:14px;border:none;color:#fff;border-radius:10px}
+.eng{background:#2563eb}.mal{background:#16a34a}.hin{background:#dc2626}
+.drawer{position:fixed;bottom:0;width:100%;height:20vh;background:#fff;padding:10px}
+.drawer textarea{height:70%;margin:0;width:100%}
+select,input[type=range]{width:100%}
+</style>
+</head>
+<body>
+
+<div class="header">
+<button onclick="toggle()">⚙️</button>
+</div>
+
+<textarea id="inputText" placeholder="Type English text"></textarea>
+
+<button class="btn eng" onclick="speakEnglish()">Speak English</button>
+<button class="btn mal" onclick="speakMalayalam()">Speak Malayalam</button>
+<button class="btn hin" onclick="speakHindi()">Speak Hindi</button>
+
+<div id="settings">
+<h3>Settings</h3>
+
+<label>English Voice</label>
+<select id="engVoice"></select>
+
+<label>Malayalam Voice</label>
+<select id="malVoice"></select>
+
+<label>Hindi Voice</label>
+<select id="hinVoice"></select>
+
+<label>Pitch</label>
+<input id="pitch" type="range" min="0" max="2" step="0.1" value="1">
+
+<label>Speed</label>
+<input id="speed" type="range" min="0.5" max="2" step="0.1" value="1">
+
+<button onclick="testVoice('en')">Test English</button>
+<button onclick="testVoice('ml')">Test Malayalam</button>
+<button onclick="testVoice('hi')">Test Hindi</button>
+</div>
+
+<div class="drawer">
+<div>Translated Text</div>
+<textarea id="translatedText" readonly></textarea>
+</div>
+
+<script>
+function toggle(){document.getElementById('settings').classList.toggle('open')}
+
+function saveSettings(){
+ localStorage.setItem('engVoice',engVoice.value);
+ localStorage.setItem('malVoice',malVoice.value);
+ localStorage.setItem('hinVoice',hinVoice.value);
+ localStorage.setItem('pitch',pitch.value);
+ localStorage.setItem('speed',speed.value);
+}
+
+function populate(selectId, filter){
+ const sel=document.getElementById(selectId);
+ sel.innerHTML='';
+ let voices=speechSynthesis.getVoices().filter(filter);
+ if(voices.length===0) voices=speechSynthesis.getVoices();
+ voices.forEach(v=>sel.add(new Option(v.name+' ('+v.lang+')',v.name)));
+}
+
+function loadVoices(){
+ const oldEng=localStorage.getItem('engVoice');
+ const oldMal=localStorage.getItem('malVoice');
+ const oldHin=localStorage.getItem('hinVoice');
+
+ populate('engVoice',v=>v.lang.startsWith('en'));
+ populate('malVoice',v=>v.lang.startsWith('ml'));
+ populate('hinVoice',v=>v.lang.startsWith('hi'));
+
+ if(oldEng) engVoice.value=oldEng;
+ if(oldMal) malVoice.value=oldMal;
+ if(oldHin) hinVoice.value=oldHin;
+}
+
+speechSynthesis.onvoiceschanged=loadVoices;
+loadVoices();
+
+pitch.value=localStorage.getItem('pitch')||1;
+speed.value=localStorage.getItem('speed')||1;
+
+['engVoice','malVoice','hinVoice','pitch','speed'].forEach(id=>{
+ document.getElementById(id).addEventListener('change',saveSettings);
+});
+
+async function translate(text,target){
+ const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${target}`);
+ const d=await r.json();
+ return d.responseData.translatedText;
+}
+
+function speak(text,voiceName,lang){
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang=lang;
+ u.pitch=parseFloat(pitch.value);
+ u.rate=parseFloat(speed.value);
+ const v=speechSynthesis.getVoices().find(x=>x.name===voiceName);
+ if(v) u.voice=v;
+ speechSynthesis.cancel();
+ speechSynthesis.speak(u);
+}
+
+function speakEnglish(){
+ speak(inputText.value,engVoice.value,'en-IN');
+}
+
+async function speakMalayalam(){
+ const t=await translate(inputText.value,'ml');
+ translatedText.value=t;
+ speak(t,malVoice.value,'ml-IN');
+}
+
+async function speakHindi(){
+ const t=await translate(inputText.value,'hi');
+ translatedText.value=t;
+ speak(t,hinVoice.value,'hi-IN');
+}
+
+function testVoice(type){
+ if(type==='en') speak('Hello this is a test',engVoice.value,'en-IN');
+ if(type==='ml') speak('ഹലോ ഇത് ഒരു ടെസ്റ്റ് ആണ്',malVoice.value,'ml-IN');
+ if(type==='hi') speak('नमस्ते यह परीक्षण है',hinVoice.value,'hi-IN');
+}
+</script>
+</body>
+</html>
