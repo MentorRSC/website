@@ -33,9 +33,7 @@
             background: #1a1a1a;
             z-index: 1;
             transform: scaleX(-1);
-            display: none;
         }
-        #camera-view.active { display: block; }
         #skeleton-canvas {
             position: absolute;
             top: 0;
@@ -74,6 +72,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.8);
             position: relative;
+            z-index: 11;
         }
         .puzzle-piece {
             background-size: cover;
@@ -534,7 +533,7 @@
     function drawSkeletonOnCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (currentMode === 'camera') return;
-        if (currentMode === 'skeleton') {
+        if (currentMode === 'skeleton' || puzzleActive) {
             ctx.fillStyle = '#0a0a12';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
@@ -691,8 +690,8 @@
             puzzleContainer.appendChild(div);
         });
         
-        // Hide camera for puzzle game
-        video.classList.remove('active');
+        // Hide camera for puzzle game - show only skeleton
+        video.style.display = 'none';
     }
 
     function checkPuzzleSolved() {
@@ -727,6 +726,7 @@
         puzzleStatus.style.color = '#fff';
         puzzleStatus.textContent = '✋ Show open hand to start';
         timerDisplay.textContent = gameDuration;
+        video.style.display = 'block';
         video.classList.add('active');
     }
 
@@ -762,7 +762,7 @@
             } else {
                 clearInterval(countdownTimer);
                 countdownActive = false;
-                video.classList.remove('active');
+                video.style.display = 'none';
                 captureAndCreatePuzzle();
                 gameInProgress = true;
                 isPuzzleSolved = false;
@@ -830,8 +830,10 @@
         if ((mode === 'camera' || mode === 'hybrid') && !cameraActive) requestPermission();
         if (!animationFrame) renderFrame();
         if (mode === 'hybrid') {
+            video.style.display = 'block';
             video.classList.add('active');
         } else if (mode === 'skeleton') {
+            video.style.display = 'none';
             video.classList.remove('active');
         }
     }
