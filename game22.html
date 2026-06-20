@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🧩 Hand Puzzle · Camera Jigsaw</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0b0e14;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            touch-action: pan-y;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 12px;
+            position: relative;
+        }
+        /* camera / preview wrapper */
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #1a1f2a;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid #3a4050;
+        }
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: #222;
+        }
+        #canvas-preview {
+            display: none;
+        }
+        .overlay-status {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            pointer-events: none;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(4px);
+            padding: 10px 0;
+            margin: 0 16px;
+            border-radius: 60px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .overlay-status span {
+            display: inline-block;
+            padding: 0 12px;
+        }
+        .timer-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            border: 1px solid #ffbb33;
+            color: #ffbb33;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        }
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #212734;
+            border-radius: 28px;
+            overflow: hidden;
+            padding: 3px;
+            box-shadow: inset 0 0 0 1px #3d455a;
+            touch-action: none;
+        }
+        .puzzle-piece {
+            background: #2f384b;
+            background-size: cover;
+            background-position: center;
+            border-radius: 6px;
+            transition: transform 0.08s, box-shadow 0.1s;
+            cursor: grab;
+            touch-action: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            will-change: transform;
+            border: 1px solid #4d5670;
+        }
+        .puzzle-piece:active {
+            cursor: grabbing;
+        }
+        .puzzle-piece.dragging {
+            z-index: 10;
+            box-shadow: 0 16px 30px rgba(0,0,0,0.8);
+            transform: scale(1.02);
+            border-color: #ffbb33;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn {
+            background: #2b3548;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            margin: 12px 0;
+            width: 100%;
+            box-shadow: 0 8px 0 #141a24;
+            transition: all 0.08s ease;
+            border: 1px solid #4d5a72;
+            touch-action: manipulation;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #141a24;
+        }
+        .btn-primary {
+            background: #ffbb33;
+            color: #0b0e14;
+            border-color: #ffd966;
+            box-shadow: 0 8px 0 #b17f1a;
+            font-weight: 700;
+        }
+        .message-box {
+            background: #1e2533;
+            border-radius: 40px;
+            padding: 18px 12px;
+            margin-top: 18px;
+            text-align: center;
+            border: 1px solid #4a536b;
+            font-size: 1.2rem;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .flex-row .btn {
+            flex: 1;
+        }
+        .mt-2 { margin-top: 14px; }
+        .text-center { text-align: center; }
+        .emoji-big { font-size: 2.2rem; vertical-align: middle; }
+        .status-pulse {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        .congrats {
+            background: #1f3a2a;
+            border-color: #5fbb7a;
+            color: #b3ffcc;
+        }
+        .sorry {
+            background: #3a2020;
+            border-color: #bb5f5f;
+            color: #ffb3b3;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <!-- CAMERA VIEW (initial) -->
+    <div id="cameraView">
+        <div class="camera-wrapper">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="overlay-status" id="statusOverlay">
+                <span id="statusText">✋ Show open hand</span>
+            </div>
+            <div class="timer-badge" id="timerBadge">⏳ 0s</div>
+        </div>
+        <button class="btn btn-primary" id="resetBtn">⟳ Restart</button>
+        <div class="message-box" id="infoBox">
+            👆 Open hand → 3s countdown → photo → puzzle
+        </div>
+    </div>
+
+    <!-- PUZZLE VIEW (hidden initially) -->
+    <div id="puzzleView" class="hidden">
+        <div class="puzzle-grid" id="puzzleGrid"></div>
+        <div class="flex-row mt-2">
+            <button class="btn" id="backToCameraBtn">📷 Camera</button>
+            <button class="btn btn-primary" id="shuffleBtn">🔀 Shuffle</button>
+        </div>
+        <div id="puzzleMessage" class="message-box">⏳ 30s · arrange pieces</div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- DOM refs -----
+        const video = document.getElementById('video');
+        const statusText = document.getElementById('statusText');
+        const timerBadge = document.getElementById('timerBadge');
+        const cameraView = document.getElementById('cameraView');
+        const puzzleView = document.getElementById('puzzleView');
+        const puzzleGrid = document.getElementById('puzzleGrid');
+        const puzzleMessage = document.getElementById('puzzleMessage');
+        const backToCameraBtn = document.getElementById('backToCameraBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // ----- state -----
+        let stream = null;
+        let photoDataURL = null;          // full image data
+        let pieces = [];                 // array of { id, row, col, currentIndex }
+        let dragState = null;            // { element, index, offsetX, offsetY, startX, startY }
+        let puzzleTimer = null;
+        let countdownTimer = null;
+        let gameActive = false;
+        let countdownSeconds = 0;
+
+        // ----- helper functions -----
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // ----- camera & hand detection (mock hand detection using motion / simple logic) -----
+        // We simulate "open hand" detection via a combination of motion & brightness.
+        // In a real app you'd use MediaPipe or TensorFlow. Here we use a lightweight heuristic:
+        // If the average brightness > threshold and motion > threshold => "open hand"
+        // For demo we also allow a manual trigger with a button (but we want auto)
+        // We'll use a simple interval that checks video frames.
+        let handDetectInterval = null;
+        let lastFrameData = null;
+        let handConfirmed = false;
+
+        function startHandDetection() {
+            if (handDetectInterval) clearInterval(handDetectInterval);
+            // Every 300ms sample frame
+            handDetectInterval = setInterval(() => {
+                if (video.readyState < 2) return;
+                const canvas = document.createElement('canvas');
+                canvas.width = 64; canvas.height = 48;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, 64, 48);
+                const imageData = ctx.getImageData(0, 0, 64, 48);
+                const data = imageData.data;
+                let sum = 0, count = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    sum += data[i] + data[i+1] + data[i+2];
+                    count += 3;
+                }
+                const avg = sum / count;
+                // simple motion: compare with previous frame (but we skip for simplicity)
+                // heuristic: if avg brightness > 100 => open hand (light skin / background)
+                const isOpen = avg > 110 && avg < 220; // rough range
+                if (isOpen && !handConfirmed) {
+                    // start 3 second countdown
+                    handConfirmed = true;
+                    startCountdown();
+                } else if (!isOpen) {
+                    handConfirmed = false;
+                    // reset countdown if any
+                    if (countdownTimer) {
+                        clearInterval(countdownTimer);
+                        countdownTimer = null;
+                        statusText.innerText = '✋ Show open hand';
+                        timerBadge.innerText = '⏳ 0s';
+                    }
+                }
+                // update status
+                if (!handConfirmed) {
+                    statusText.innerText = '✋ Show open hand';
+                }
+            }, 350);
+        }
+
+        // ----- countdown & photo capture -----
+        function startCountdown() {
+            if (countdownTimer) clearInterval(countdownTimer);
+            let sec = 3;
+            statusText.innerText = `⏳ ${sec}s`;
+            timerBadge.innerText = `⏳ ${sec}s`;
+            countdownTimer = setInterval(() => {
+                sec--;
+                if (sec <= 0) {
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                    statusText.innerText = '📸 Capture!';
+                    timerBadge.innerText = '📸';
+                    capturePhotoAndStartPuzzle();
+                } else {
+                    statusText.innerText = `⏳ ${sec}s`;
+                    timerBadge.innerText = `⏳ ${sec}s`;
+                }
+            }, 1000);
+        }
+
+        function capturePhotoAndStartPuzzle() {
+            // capture from video
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            photoDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            // build puzzle
+            buildPuzzle(photoDataURL);
+            // switch view
+            cameraView.classList.add('hidden');
+            puzzleView.classList.remove('hidden');
+            // stop hand detection
+            if (handDetectInterval) clearInterval(handDetectInterval);
+            handDetectInterval = null;
+            // start puzzle timer 30s
+            startPuzzleTimer();
+            gameActive = true;
+        }
+
+        // ----- puzzle build (12 pieces) -----
+        function buildPuzzle(imageSrc) {
+            const img = new Image();
+            img.onload = function() {
+                const cols = 4, rows = 3; // 12 pieces
+                const pieceWidth = img.width / cols;
+                const pieceHeight = img.height / rows;
+                const grid = puzzleGrid;
+                grid.innerHTML = '';
+                pieces = [];
+                // create piece data
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = pieceWidth;
+                        canvas.height = pieceHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, c * pieceWidth, r * pieceHeight, pieceWidth, pieceHeight, 0, 0, pieceWidth, pieceHeight);
+                        const dataURL = canvas.toDataURL('image/jpeg');
+                        const pieceObj = {
+                            id: r * cols + c,
+                            row: r,
+                            col: c,
+                            dataURL: dataURL,
+                            currentIndex: r * cols + c // initially correct
+                        };
+                        pieces.push(pieceObj);
+                    }
+                }
+                // shuffle
+                shufflePieces();
+                renderPuzzle();
+            };
+            img.src = imageSrc;
+        }
+
+        function shufflePieces() {
+            const indices = pieces.map((_, i) => i);
+            shuffleArray(indices);
+            pieces.forEach((p, i) => {
+                p.currentIndex = indices[i];
+            });
+        }
+
+        function renderPuzzle() {
+            const grid = puzzleGrid;
+            grid.innerHTML = '';
+            // sort by currentIndex
+            const sorted = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
+            for (let p of sorted) {
+                const div = document.createElement('div');
+                div.className = 'puzzle-piece';
+                div.style.backgroundImage = `url(${p.dataURL})`;
+                div.style.backgroundSize = 'cover';
+                div.dataset.id = p.id;
+                div.dataset.index = p.currentIndex;
+                // attach pinch / drag events
+                div.addEventListener('pointerdown', onPiecePointerDown);
+                div.addEventListener('touchstart', onPieceTouchStart, { passive: false });
+                grid.appendChild(div);
+            }
+            // check win condition
+            checkWin();
+        }
+
+        // ----- drag & drop (pinch gesture simulated via drag) -----
+        function onPiecePointerDown(e) {
+            e.preventDefault();
+            const el = e.currentTarget;
+            startDrag(el, e.clientX, e.clientY);
+        }
+
+        function onPieceTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const el = e.currentTarget;
+            startDrag(el, touch.clientX, touch.clientY);
+        }
+
+        function startDrag(el, clientX, clientY) {
+            if (!gameActive) return;
+            const rect = el.getBoundingClientRect();
+            const offsetX = clientX - rect.left;
+            const offsetY = clientY - rect.top;
+            const index = parseInt(el.dataset.index);
+            dragState = {
+                element: el,
+                index: index,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                startX: clientX,
+                startY: clientY
+            };
+            el.classList.add('dragging');
+            el.style.zIndex = 100;
+
+            // global listeners
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
+            window.addEventListener('touchend', onTouchEnd, { passive: false });
+        }
+
+        function onPointerMove(e) { e.preventDefault(); moveDrag(e.clientX, e.clientY); }
+        function onTouchMove(e) { e.preventDefault(); const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }
+
+        function moveDrag(clientX, clientY) {
+            if (!dragState) return;
+            const el = dragState.element;
+            const gridRect = puzzleGrid.getBoundingClientRect();
+            // compute new position (free movement)
+            const x = clientX - gridRect.left - dragState.offsetX;
+            const y = clientY - gridRect.top - dragState.offsetY;
+            el.style.transform = `translate(${x}px, ${y}px)`;
+            el.style.position = 'relative';
+            el.style.left = '0px';
+            el.style.top = '0px';
+            // snap detection: find nearest piece
+            const allPieces = puzzleGrid.querySelectorAll('.puzzle-piece');
+            let targetIndex = null;
+            const centerX = clientX - gridRect.left;
+            const centerY = clientY - gridRect.top;
+            for (let child of allPieces) {
+                if (child === el) continue;
+                const r = child.getBoundingClientRect();
+                const cx = r.left + r.width/2 - gridRect.left;
+                const cy = r.top + r.height/2 - gridRect.top;
+                const dist = Math.hypot(centerX - cx, centerY - cy);
+                if (dist < 50) {
+                    targetIndex = parseInt(child.dataset.index);
+                    break;
+                }
+            }
+            if (targetIndex !== null) {
+                // highlight
+                el.style.borderColor = '#ffbb33';
+            } else {
+                el.style.borderColor = '#4d5670';
+            }
+            // store target for drop
+            dragState.snapIndex = targetIndex;
+        }
+
+        function onPointerUp(e) { e.preventDefault(); endDrag(); }
+        function onTouchEnd(e) { e.preventDefault(); endDrag(); }
+
+        function endDrag() {
+            if (!dragState) return;
+            const el = dragState.element;
+            el.classList.remove('dragging');
+            el.style.zIndex = '';
+            el.style.transform = '';
+            el.style.borderColor = '#4d5670';
+
+            // swap if snap
+            const snapIdx = dragState.snapIndex;
+            if (snapIdx !== undefined && snapIdx !== null) {
+                const currentIdx = parseInt(el.dataset.index);
+                // find piece with snapIdx
+                const targetPiece = pieces.find(p => p.currentIndex === snapIdx);
+                const currentPiece = pieces.find(p => p.currentIndex === currentIdx);
+                if (targetPiece && currentPiece) {
+                    // swap indices
+                    const temp = currentPiece.currentIndex;
+                    currentPiece.currentIndex = targetPiece.currentIndex;
+                    targetPiece.currentIndex = temp;
+                    renderPuzzle();
+                }
+            }
+            // clean
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('touchmove', onTouchMove);
+            window.removeEventListener('touchend', onTouchEnd);
+            dragState = null;
+            // re-render to avoid glitch
+            renderPuzzle();
+        }
+
+        // ----- win check -----
+        function checkWin() {
+            if (!gameActive) return;
+            const sorted = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
+            let win = true;
+            for (let i = 0; i < sorted.length; i++) {
+                if (sorted[i].id !== i) {
+                    win = false;
+                    break;
+                }
+            }
+            if (win) {
+                gameActive = false;
+                if (puzzleTimer) clearInterval(puzzleTimer);
+                puzzleMessage.className = 'message-box congrats';
+                puzzleMessage.innerHTML = '🎉 CONGRATULATIONS! You solved it! 🎉';
+                // stop timer
+                timerBadge.innerText = '🎯';
+            }
+        }
+
+        // ----- timer 30s -----
+        function startPuzzleTimer() {
+            let seconds = 30;
+            timerBadge.innerText = `⏳ ${seconds}s`;
+            puzzleMessage.innerText = `⏳ ${seconds}s · arrange pieces`;
+            if (puzzleTimer) clearInterval(puzzleTimer);
+            puzzleTimer = setInterval(() => {
+                seconds--;
+                timerBadge.innerText = `⏳ ${seconds}s`;
+                puzzleMessage.innerText = `⏳ ${seconds}s · arrange pieces`;
+                if (seconds <= 0) {
+                    clearInterval(puzzleTimer);
+                    puzzleTimer = null;
+                    gameActive = false;
+                    puzzleMessage.className = 'message-box sorry';
+                    puzzleMessage.innerHTML = '😞 SORRY! Time is up. Try again.';
+                    timerBadge.innerText = '⏰';
+                }
+            }, 1000);
+        }
+
+        // ----- reset / back to camera -----
+        function resetToCamera() {
+            if (handDetectInterval) clearInterval(handDetectInterval);
+            if (countdownTimer) clearInterval(countdownTimer);
+            if (puzzleTimer) clearInterval(puzzleTimer);
+            puzzleTimer = null;
+            countdownTimer = null;
+            handDetectInterval = null;
+            gameActive = false;
+            handConfirmed = false;
+            cameraView.classList.remove('hidden');
+            puzzleView.classList.add('hidden');
+            statusText.innerText = '✋ Show open hand';
+            timerBadge.innerText = '⏳ 0s';
+            puzzleMessage.className = 'message-box';
+            puzzleMessage.innerHTML = '👆 Open hand → 3s countdown → photo → puzzle';
+            // restart camera if needed
+            if (!stream) {
+                startCamera();
+            }
+            startHandDetection();
+        }
+
+        // ----- camera init -----
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                video.srcObject = stream;
+                await video.play();
+            } catch (err) {
+                statusText.innerText = '⚠️ Camera permission denied';
+                console.warn('camera error', err);
+            }
+        }
+
+        // ----- init -----
+        async function init() {
+            await startCamera();
+            startHandDetection();
+            // reset button
+            resetBtn.addEventListener('click', resetToCamera);
+            backToCameraBtn.addEventListener('click', resetToCamera);
+            shuffleBtn.addEventListener('click', function() {
+                if (photoDataURL) {
+                    shufflePieces();
+                    renderPuzzle();
+                }
+            });
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>
