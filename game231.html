@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hand Puzzle · MediaPipe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a12;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+        .app-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #111;
+            overflow: hidden;
+        }
+        #camera-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #1a1a1a;
+            z-index: 1;
+            transform: scaleX(-1);
+        }
+        #skeleton-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            transform: scaleX(-1);
+        }
+        /* puzzle overlay */
+        #puzzle-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #puzzle-overlay.active { display: flex; }
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 600px;
+            max-height: 600px;
+            background: #222;
+            padding: 8px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .puzzle-piece {
+            background-size: cover;
+            background-position: center;
+            border-radius: 8px;
+            cursor: grab;
+            transition: transform 0.1s;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .puzzle-piece:active { cursor: grabbing; }
+        .puzzle-piece.empty {
+            background: #1a1a2a !important;
+            border: 2px dashed rgba(255,255,255,0.15);
+        }
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #ffd966;
+            font-size: 2rem;
+            font-weight: 700;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,215,0,0.2);
+            z-index: 15;
+            font-variant-numeric: tabular-nums;
+        }
+        .puzzle-status {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 1.2rem;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 24px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.05);
+            z-index: 15;
+            text-align: center;
+        }
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(16,16,28,0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,215,0,0.15);
+            border-radius: 48px;
+            padding: 10px 18px;
+            color: #f0f0f0;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.25s;
+            z-index: 20;
+        }
+        .settings-btn i { color: #ffd966; margin-right: 8px; }
+        .settings-btn:hover { background: rgba(40,40,60,0.9); transform: scale(1.02); }
+        .settings-dropdown {
+            position: absolute;
+            top: 75px;
+            left: 20px;
+            z-index: 20;
+            background: rgba(12,12,22,0.94);
+            backdrop-filter: blur(14px);
+            border-radius: 24px;
+            padding: 10px 6px;
+            min-width: 180px;
+            box-shadow: 0 20px 56px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.06);
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .settings-dropdown.open { display: flex; }
+        .dropdown-item {
+            background: transparent;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 16px;
+            color: #dce2ec;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: 0.15s;
+            width: 100%;
+            border-left: 3px solid transparent;
+        }
+        .dropdown-item i { width: 22px; color: #9aa8b9; }
+        .dropdown-item:hover { background: rgba(255,215,0,0.06); border-left-color: #ffd966; color: #fff; }
+        .dropdown-item.active { background: rgba(255,215,0,0.10); border-left-color: #ffd966; color: #ffea9e; }
+        .permission-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        .permission-overlay.hidden { display: none; }
+        .permission-box {
+            background: rgba(20,20,38,0.7);
+            backdrop-filter: blur(4px);
+            padding: 2.4rem 2.8rem;
+            border-radius: 48px;
+            border: 1px solid rgba(255,215,0,0.12);
+            max-width: 380px;
+        }
+        .permission-box i { font-size: 3.6rem; color: #ffd966; margin-bottom: 16px; }
+        .permission-box h2 { font-weight: 400; font-size: 1.6rem; margin-bottom: 10px; }
+        .permission-box p { opacity: 0.7; margin-bottom: 28px; }
+        .btn-primary {
+            background: #ffd966;
+            border: none;
+            color: #12121c;
+            font-weight: 600;
+            padding: 14px 38px;
+            border-radius: 60px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 16px rgba(255,215,0,0.2);
+        }
+        .btn-primary:hover { background: #ffe088; transform: scale(1.02); }
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #ccc;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,215,0,0.25); }
+        .status-badge {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px);
+            padding: 6px 20px;
+            border-radius: 40px;
+            color: #d0d8e6;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        @media (max-width: 480px) {
+            .settings-btn span { display: none; }
+            .settings-btn { padding: 10px 14px; }
+            .settings-dropdown { min-width: 160px; left: 10px; top: 70px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+    <video id="camera-view" autoplay playsinline muted></video>
+    <canvas id="skeleton-canvas"></canvas>
+    
+    <button class="settings-btn" id="settingsToggle"><i class="fas fa-sliders-h"></i><span>Settings</span></button>
+    <div class="settings-dropdown" id="settingsDropdown">
+        <button class="dropdown-item" data-mode="camera"><i class="fas fa-video"></i> Camera view</button>
+        <button class="dropdown-item" data-mode="skeleton"><i class="fas fa-robot"></i> Skeleton view</button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" data-mode="hybrid"><i class="fas fa-layer-group"></i> Hybrid mode</button>
+    </div>
+
+    <div class="permission-overlay" id="permissionOverlay">
+        <div class="permission-box">
+            <i class="fas fa-camera-retro"></i>
+            <h2>Camera & Hand Detection</h2>
+            <p>Enable camera to detect hands and play the puzzle game.</p>
+            <button class="btn-primary" id="requestPermissionBtn"><i class="fas fa-check-circle" style="margin-right:10px;"></i> Enable camera</button>
+            <button class="btn-secondary" id="openSettingsBtn"><i class="fas fa-cog" style="margin-right:8px;"></i> Open settings</button>
+        </div>
+    </div>
+
+    <div class="status-badge" id="modeStatus">⚙️ camera view</div>
+
+    <!-- Puzzle overlay -->
+    <div id="puzzle-overlay">
+        <div class="timer" id="timerDisplay">30</div>
+        <div class="puzzle-container" id="puzzleContainer"></div>
+        <div class="puzzle-status" id="puzzleStatus">🧩 Arrange the puzzle</div>
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+    const video = document.getElementById('camera-view');
+    const canvas = document.getElementById('skeleton-canvas');
+    const ctx = canvas.getContext('2d');
+    const permissionOverlay = document.getElementById('permissionOverlay');
+    const requestBtn = document.getElementById('requestPermissionBtn');
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsDropdown = document.getElementById('settingsDropdown');
+    const modeStatus = document.getElementById('modeStatus');
+    const puzzleOverlay = document.getElementById('puzzle-overlay');
+    const puzzleContainer = document.getElementById('puzzleContainer');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const puzzleStatus = document.getElementById('puzzleStatus');
+
+    let currentMode = 'hybrid';
+    let cameraActive = false;
+    let cameraStream = null;
+    let animationFrame = null;
+    let handsDetected = [];
+    let puzzleActive = false;
+    let puzzleTimer = null;
+    let timerSeconds = 30;
+    let puzzlePieces = [];
+    let emptyIndex = 8;
+    let isPuzzleSolved = false;
+    let capturedImageData = null;
+    let gameInProgress = false;
+    let countdownActive = false;
+    let countdownTimer = null;
+    let countdownValue = 3;
+
+    // Puzzle state
+    let draggingPiece = null;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let dragStartX = 0, dragStartY = 0;
+    let isDragging = false;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // MediaPipe Hands
+    const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+    hands.setOptions({ maxNumHands: 4, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
+    hands.onResults((results) => { handsDetected = results.multiHandLandmarks || []; });
+
+    function initCamera() {
+        if (!video) return;
+        const camera = new Camera(video, {
+            onFrame: async () => { await hands.send({ image: video }); },
+            width: 640, height: 480
+        });
+        camera.start();
+    }
+
+    // Drawing skeleton
+    function drawSkeletonOnCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (currentMode === 'camera') return;
+        if (currentMode === 'skeleton') {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        if (!handsDetected || handsDetected.length === 0) {
+            if (currentMode === 'skeleton' || currentMode === 'hybrid') {
+                ctx.font = '20px "Segoe UI", sans-serif';
+                ctx.fillStyle = 'rgba(180,200,230,0.5)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('✋ show your hands', canvas.width/2, canvas.height/2 - 12);
+            }
+            return;
+        }
+        for (let handIdx = 0; handIdx < handsDetected.length; handIdx++) {
+            const landmarks = handsDetected[handIdx];
+            if (!landmarks) continue;
+            const pts = landmarks.map(lm => ({ x: lm.x * canvas.width, y: lm.y * canvas.height }));
+            const hue = (handIdx * 40 + 200) % 360;
+            const color = `hsl(${hue}, 85%, 60%)`;
+            const colorDim = `hsl(${hue}, 70%, 40%)`;
+            const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+            ctx.shadowColor = `hsla(${hue}, 90%, 65%, 0.2)`;
+            ctx.shadowBlur = 20;
+            ctx.lineWidth = 4;
+            for (let [i, j] of connections) {
+                if (i < pts.length && j < pts.length) {
+                    ctx.beginPath();
+                    ctx.moveTo(pts[i].x, pts[i].y);
+                    ctx.lineTo(pts[j].x, pts[j].y);
+                    ctx.strokeStyle = color;
+                    ctx.stroke();
+                }
+            }
+            ctx.shadowBlur = 15;
+            for (let k = 0; k < pts.length; k++) {
+                const p = pts[k];
+                const isFingertip = (k === 4 || k === 8 || k === 12 || k === 16 || k === 20);
+                const radius = isFingertip ? 8 : 5;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = isFingertip ? '#ffdb7c' : colorDim;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+        }
+    }
+
+    function renderFrame() {
+        if (currentMode === 'camera') {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        } else {
+            drawSkeletonOnCanvas();
+        }
+        animationFrame = requestAnimationFrame(renderFrame);
+    }
+
+    // ----- PUZZLE LOGIC -----
+    function captureAndCreatePuzzle() {
+        // Capture from video
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = video.videoWidth || 640;
+        tempCanvas.height = video.videoHeight || 480;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+        capturedImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Create puzzle pieces
+        const containerSize = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600);
+        const pieceSize = containerSize / 3 - 4;
+        puzzleContainer.innerHTML = '';
+        puzzleContainer.style.width = containerSize + 'px';
+        puzzleContainer.style.height = containerSize + 'px';
+        
+        const pieceOrder = [0,1,2,3,4,5,6,7,8];
+        // Shuffle
+        for (let i = pieceOrder.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pieceOrder[i], pieceOrder[j]] = [pieceOrder[j], pieceOrder[i]];
+        }
+        // Ensure not solved
+        if (pieceOrder.join(',') === '0,1,2,3,4,5,6,7,8') {
+            [pieceOrder[0], pieceOrder[1]] = [pieceOrder[1], pieceOrder[0]];
+        }
+        emptyIndex = pieceOrder.indexOf(8);
+        puzzlePieces = pieceOrder;
+
+        pieceOrder.forEach((originalIndex, pos) => {
+            const div = document.createElement('div');
+            div.className = 'puzzle-piece';
+            if (originalIndex === 8) {
+                div.classList.add('empty');
+                div.dataset.empty = 'true';
+            } else {
+                const row = Math.floor(originalIndex / 3);
+                const col = originalIndex % 3;
+                const sx = col * (tempCanvas.width / 3);
+                const sy = row * (tempCanvas.height / 3);
+                const sw = tempCanvas.width / 3;
+                const sh = tempCanvas.height / 3;
+                const pieceCanvas = document.createElement('canvas');
+                pieceCanvas.width = sw;
+                pieceCanvas.height = sh;
+                const pCtx = pieceCanvas.getContext('2d');
+                pCtx.drawImage(tempCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+                div.style.backgroundImage = `url(${pieceCanvas.toDataURL()})`;
+                div.style.backgroundSize = 'cover';
+                div.dataset.originalIndex = originalIndex;
+                div.dataset.pos = pos;
+            }
+            div.dataset.index = pos;
+            div.style.width = pieceSize + 'px';
+            div.style.height = pieceSize + 'px';
+            puzzleContainer.appendChild(div);
+        });
+        
+        // Drag events
+        puzzleContainer.querySelectorAll('.puzzle-piece:not(.empty)').forEach(piece => {
+            piece.addEventListener('mousedown', onDragStart);
+            piece.addEventListener('touchstart', onDragStart, {passive: false});
+        });
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+        document.addEventListener('touchmove', onDragMove, {passive: false});
+        document.addEventListener('touchend', onDragEnd);
+    }
+
+    function onDragStart(e) {
+        if (isPuzzleSolved || !gameInProgress) return;
+        e.preventDefault();
+        const piece = e.currentTarget;
+        if (piece.dataset.empty === 'true') return;
+        const rect = piece.getBoundingClientRect();
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        dragOffsetX = clientX - rect.left;
+        dragOffsetY = clientY - rect.top;
+        dragStartX = rect.left;
+        dragStartY = rect.top;
+        draggingPiece = piece;
+        isDragging = true;
+        piece.style.zIndex = 100;
+        piece.style.transform = 'scale(1.05)';
+        piece.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+    }
+
+    function onDragMove(e) {
+        if (!isDragging || !draggingPiece || isPuzzleSolved) return;
+        e.preventDefault();
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        const containerRect = puzzleContainer.getBoundingClientRect();
+        const pieceSize = puzzleContainer.children[0]?.offsetWidth || 0;
+        const gap = 4;
+        const x = clientX - containerRect.left - dragOffsetX;
+        const y = clientY - containerRect.top - dragOffsetY;
+        const col = Math.round(x / (pieceSize + gap));
+        const row = Math.round(y / (pieceSize + gap));
+        const maxCol = 2, maxRow = 2;
+        if (col >= 0 && col <= maxCol && row >= 0 && row <= maxRow) {
+            const targetIndex = row * 3 + col;
+            const targetPiece = puzzleContainer.children[targetIndex];
+            if (targetPiece && targetPiece.dataset.empty === 'true') {
+                // Swap
+                const currentIndex = parseInt(draggingPiece.dataset.index);
+                const emptyIndex = parseInt(targetPiece.dataset.index);
+                // Update data
+                const tempOriginal = draggingPiece.dataset.originalIndex;
+                draggingPiece.dataset.originalIndex = targetPiece.dataset.originalIndex;
+                targetPiece.dataset.originalIndex = tempOriginal;
+                // Swap visual
+                const tempBg = draggingPiece.style.backgroundImage;
+                const tempEmpty = draggingPiece.dataset.empty;
+                draggingPiece.style.backgroundImage = targetPiece.style.backgroundImage;
+                draggingPiece.dataset.empty = targetPiece.dataset.empty;
+                targetPiece.style.backgroundImage = tempBg;
+                targetPiece.dataset.empty = tempEmpty;
+                if (tempEmpty === 'true') {
+                    draggingPiece.classList.add('empty');
+                } else {
+                    draggingPiece.classList.remove('empty');
+                }
+                if (targetPiece.dataset.empty === 'true') {
+                    targetPiece.classList.add('empty');
+                } else {
+                    targetPiece.classList.remove('empty');
+                }
+                // Update indices
+                const tempIndex = draggingPiece.dataset.index;
+                draggingPiece.dataset.index = targetPiece.dataset.index;
+                targetPiece.dataset.index = tempIndex;
+                // Reorder DOM
+                if (targetIndex < currentIndex) {
+                    puzzleContainer.insertBefore(draggingPiece, targetPiece);
+                } else {
+                    puzzleContainer.insertBefore(targetPiece, draggingPiece);
+                }
+                // Update puzzlePieces array
+                const p1 = parseInt(draggingPiece.dataset.index);
+                const p2 = parseInt(targetPiece.dataset.index);
+                const temp = puzzlePieces[p1];
+                puzzlePieces[p1] = puzzlePieces[p2];
+                puzzlePieces[p2] = temp;
+                // Reset drag
+                isDragging = false;
+                draggingPiece.style.zIndex = 1;
+                draggingPiece.style.transform = '';
+                draggingPiece.style.boxShadow = '';
+                draggingPiece = null;
+                checkPuzzleSolved();
+                return;
+            }
+        }
+        // Move piece visually
+        draggingPiece.style.left = (clientX - containerRect.left - dragOffsetX) + 'px';
+        draggingPiece.style.top = (clientY - containerRect.top - dragOffsetY) + 'px';
+        draggingPiece.style.position = 'relative';
+    }
+
+    function onDragEnd(e) {
+        if (draggingPiece) {
+            draggingPiece.style.zIndex = 1;
+            draggingPiece.style.transform = '';
+            draggingPiece.style.boxShadow = '';
+            draggingPiece.style.left = '';
+            draggingPiece.style.top = '';
+            draggingPiece.style.position = '';
+            draggingPiece = null;
+        }
+        isDragging = false;
+    }
+
+    function checkPuzzleSolved() {
+        const pieces = puzzleContainer.querySelectorAll('.puzzle-piece');
+        let solved = true;
+        for (let i = 0; i < pieces.length; i++) {
+            const orig = parseInt(pieces[i].dataset.originalIndex);
+            if (orig !== i) { solved = false; break; }
+        }
+        if (solved && gameInProgress) {
+            isPuzzleSolved = true;
+            gameInProgress = false;
+            clearInterval(puzzleTimer);
+            puzzleStatus.textContent = '🎉 Congratulations! You solved it! 🎉';
+            puzzleStatus.style.color = '#ffd966';
+            setTimeout(() => {
+                resetPuzzle();
+            }, 3000);
+        }
+    }
+
+    function resetPuzzle() {
+        clearInterval(puzzleTimer);
+        clearTimeout(countdownTimer);
+        puzzleOverlay.classList.remove('active');
+        puzzleActive = false;
+        gameInProgress = false;
+        isPuzzleSolved = false;
+        puzzleStatus.style.color = '#fff';
+        puzzleStatus.textContent = '🧩 Arrange the puzzle';
+        timerDisplay.textContent = '30';
+    }
+
+    function startPuzzleGame() {
+        if (puzzleActive) return;
+        // Check if hand detected (open hand)
+        if (!handsDetected || handsDetected.length === 0) {
+            puzzleStatus.textContent = '✋ Show your hand to start';
+            return;
+        }
+        // Check for open hand (all fingertips extended)
+        const landmarks = handsDetected[0];
+        if (!landmarks) return;
+        // Simple open hand detection: thumb tip, index, middle, ring, pinky tips
+        const tipIndices = [4, 8, 12, 16, 20];
+        const wrist = landmarks[0];
+        let open = true;
+        for (let idx of tipIndices) {
+            if (landmarks[idx].y > wrist.y + 0.1) { open = false; break; }
+        }
+        if (!open) {
+            puzzleStatus.textContent = '✋ Open your hand to start';
+            return;
+        }
+        
+        // Start countdown
+        puzzleStatus.textContent = '⏳ 3';
+        countdownValue = 3;
+        puzzleOverlay.classList.add('active');
+        puzzleActive = true;
+        countdownActive = true;
+        
+        countdownTimer = setInterval(() => {
+            countdownValue--;
+            if (countdownValue > 0) {
+                puzzleStatus.textContent = `⏳ ${countdownValue}`;
+            } else {
+                clearInterval(countdownTimer);
+                countdownActive = false;
+                // Capture and start puzzle
+                captureAndCreatePuzzle();
+                gameInProgress = true;
+                isPuzzleSolved = false;
+                timerSeconds = 30;
+                timerDisplay.textContent = '30';
+                puzzleStatus.textContent = '🧩 Arrange the puzzle';
+                puzzleStatus.style.color = '#fff';
+                puzzleTimer = setInterval(() => {
+                    timerSeconds--;
+                    timerDisplay.textContent = timerSeconds;
+                    if (timerSeconds <= 0) {
+                        clearInterval(puzzleTimer);
+                        gameInProgress = false;
+                        puzzleStatus.textContent = '⏰ Timeout! Restarting...';
+                        puzzleStatus.style.color = '#ff6b6b';
+                        setTimeout(() => {
+                            resetPuzzle();
+                            // Go back to initial state
+                            puzzleStatus.textContent = '✋ Show open hand to start';
+                        }, 2000);
+                    }
+                }, 1000);
+            }
+        }, 1000);
+    }
+
+    // Start camera
+    async function startCameraAndHands() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false
+            });
+            video.srcObject = stream;
+            cameraStream = stream;
+            cameraActive = true;
+            await video.play();
+            initCamera();
+            permissionOverlay.classList.add('hidden');
+            if (!animationFrame) renderFrame();
+            // Start puzzle loop
+            setInterval(() => {
+                if (!puzzleActive && cameraActive && currentMode === 'hybrid') {
+                    startPuzzleGame();
+                }
+            }, 2000);
+        } catch (err) {
+            console.warn('Camera error:', err);
+            permissionOverlay.classList.remove('hidden');
+            requestBtn.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-right:10px;"></i> Retry';
+            cameraActive = false;
+        }
+    }
+
+    function requestPermission() { startCameraAndHands(); }
+
+    function setMode(mode) {
+        currentMode = mode;
+        const modeNames = { camera: '📷 camera view', skeleton: '🦴 skeleton view', hybrid: '🌀 hybrid mode' };
+        modeStatus.textContent = modeNames[mode] || 'camera view';
+        document.querySelectorAll('.dropdown-item').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.mode === mode) btn.classList.add('active');
+        });
+        settingsDropdown.classList.remove('open');
+        if ((mode === 'camera' || mode === 'hybrid') && !cameraActive) requestPermission();
+        if (!animationFrame) renderFrame();
+    }
+
+    // Event listeners
+    requestBtn.addEventListener('click', requestPermission);
+    openSettingsBtn.addEventListener('click', function() {
+        settingsDropdown.classList.toggle('open');
+        permissionOverlay.classList.add('hidden');
+        if (!cameraActive) { if (!animationFrame) renderFrame(); setMode('skeleton'); }
+    });
+    settingsToggle.addEventListener('click', function(e) { e.stopPropagation(); settingsDropdown.classList.toggle('open'); });
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const mode = this.dataset.mode;
+            if (mode) setMode(mode);
+        });
+    });
+    document.addEventListener('click', function(e) {
+        if (!settingsDropdown.contains(e.target) && e.target !== settingsToggle) {
+            settingsDropdown.classList.remove('open');
+        }
+    });
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('beforeunload', function() {
+        if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        clearInterval(puzzleTimer);
+        clearTimeout(countdownTimer);
+    });
+
+    // Init
+    permissionOverlay.classList.remove('hidden');
+    setMode('hybrid');
+    renderFrame();
+    puzzleStatus.textContent = '✋ Show open hand to start puzzle';
+
+})();
+</script>
+</body>
+</html>
