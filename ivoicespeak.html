@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>LinguaVoice · Translate & Speak</title>
+  
+  <!-- Your existing header files -->
+  <link rel="stylesheet" href="styles/common.css">
+  <script src="header-loader.js"></script>
+  <script src="scripts/common.js"></script>
+  
   <style>
     * {
       box-sizing: border-box;
@@ -21,18 +27,17 @@
       color: #0b1e33;
     }
 
-    /* header */
-    .header {
-      height: 60px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+    /* Your custom header will be inserted here via <site-header> */
+    /* We'll keep the settings button inside your header */
+    
+    /* If your header doesn't have the settings button, we'll add it */
+    .custom-header-settings {
       display: flex;
-      justify-content: flex-end;
       align-items: center;
+      justify-content: flex-end;
       padding: 0 16px;
+      height: 60px;
       flex-shrink: 0;
-      border-bottom: 1px solid #e9edf2;
     }
 
     .settings-btn {
@@ -50,6 +55,7 @@
       justify-content: center;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       flex-shrink: 0;
+      margin-left: auto;
     }
 
     .settings-btn:hover {
@@ -373,17 +379,6 @@
         padding: 20px 16px 24px;
         max-width: 96vw;
       }
-
-      .header {
-        height: 56px;
-        padding: 0 12px;
-      }
-
-      .settings-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-      }
     }
 
     @media (max-width: 380px) {
@@ -429,13 +424,37 @@
       background: #cbd5e1;
       border-radius: 20px;
     }
+
+    /* Override any header styles that might conflict */
+    site-header {
+      display: block;
+      flex-shrink: 0;
+    }
+    
+    /* If your custom header doesn't have the settings button, 
+       we'll add it via CSS or you can add it in your header template */
+    .header-with-settings {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
 
-  <div class="header">
+  <!-- Your custom header -->
+  <site-header></site-header>
+
+  <!-- If your header doesn't include the settings button, add it here -->
+  <!-- Option A: If your header has a slot or area for custom buttons -->
+  <div class="custom-header-settings" style="display: none;">
     <button class="settings-btn" onclick="toggleSettings()" aria-label="Open settings">⚙️</button>
   </div>
+
+  <!-- Option B: If your header doesn't have the settings button at all,
+       we'll inject it dynamically after the header loads -->
+  <div id="settings-button-container"></div>
 
   <div class="main">
     <textarea id="inputText" placeholder="Type or paste English text here…"></textarea>
@@ -490,6 +509,137 @@
   <script>
     (function() {
       "use strict";
+
+      // Function to inject settings button into custom header if needed
+      function injectSettingsButton() {
+        // Wait for custom header to load
+        const header = document.querySelector('site-header');
+        if (!header) {
+          // If header not found, create a fallback header
+          createFallbackHeader();
+          return;
+        }
+
+        // Check if header already has a settings button
+        const existingBtn = header.querySelector('.settings-btn');
+        if (existingBtn) {
+          // If exists, just ensure it calls toggleSettings
+          existingBtn.onclick = toggleSettings;
+          return;
+        }
+
+        // If no settings button in header, add one
+        // Try to find a suitable place in the header
+        const headerContent = header.shadowRoot || header;
+        
+        // Create settings button
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'settings-btn';
+        settingsBtn.setAttribute('aria-label', 'Open settings');
+        settingsBtn.innerHTML = '⚙️';
+        settingsBtn.onclick = toggleSettings;
+        
+        // Try to append to header
+        // If header has a container or specific area, you might need to adjust this
+        if (headerContent.querySelector('.header-container') || 
+            headerContent.querySelector('.nav-bar') ||
+            headerContent.querySelector('.header-content')) {
+          // Try to find a container to append to
+          const container = headerContent.querySelector('.header-container') || 
+                           headerContent.querySelector('.nav-bar') ||
+                           headerContent.querySelector('.header-content');
+          container.appendChild(settingsBtn);
+        } else {
+          // Just append to the header itself
+          header.appendChild(settingsBtn);
+        }
+        
+        // Apply styles to make it look right
+        settingsBtn.style.marginLeft = 'auto';
+      }
+
+      // Fallback header if custom header fails to load
+      function createFallbackHeader() {
+        const fallbackHeader = document.createElement('header');
+        fallbackHeader.style.cssText = `
+          height: 60px;
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          padding: 0 16px;
+          flex-shrink: 0;
+          border-bottom: 1px solid #e9edf2;
+        `;
+        
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'settings-btn';
+        settingsBtn.setAttribute('aria-label', 'Open settings');
+        settingsBtn.innerHTML = '⚙️';
+        settingsBtn.onclick = toggleSettings;
+        settingsBtn.style.cssText = `
+          width: 44px;
+          height: 44px;
+          border: none;
+          border-radius: 40px;
+          background: #1e293b;
+          color: white;
+          font-size: 22px;
+          cursor: pointer;
+          transition: 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          flex-shrink: 0;
+        `;
+        
+        fallbackHeader.appendChild(settingsBtn);
+        document.body.insertBefore(fallbackHeader, document.body.firstChild);
+      }
+
+      // Wait for custom header to load
+      function waitForHeader() {
+        return new Promise((resolve) => {
+          // Check if header is already loaded
+          const header = document.querySelector('site-header');
+          if (header && header.innerHTML.trim() !== '') {
+            resolve();
+            return;
+          }
+          
+          // Wait for header to load
+          const observer = new MutationObserver(() => {
+            const header = document.querySelector('site-header');
+            if (header && header.innerHTML.trim() !== '') {
+              observer.disconnect();
+              resolve();
+            }
+          });
+          
+          observer.observe(document.body, { childList: true, subtree: true });
+          
+          // Fallback: resolve after 2 seconds
+          setTimeout(() => {
+            observer.disconnect();
+            resolve();
+          }, 2000);
+        });
+      }
+
+      // Initialize after header loads
+      waitForHeader().then(() => {
+        injectSettingsButton();
+      });
+
+      // Also run after window load
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          injectSettingsButton();
+        }, 100);
+      });
 
       const inputText = document.getElementById('inputText');
       const translatedText = document.getElementById('translatedText');
