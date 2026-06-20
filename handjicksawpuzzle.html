@@ -1,4 +1,4 @@
-https://innovationhub.pages.dev/game232<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -22,11 +22,11 @@ https://innovationhub.pages.dev/game232<!DOCTYPE html>
       --body: 'Inter', system-ui, sans-serif;
     }
     html, body { width: 100%; height: 100%; background: #000; color: var(--paper); font-family: var(--body); overflow: hidden; touch-action: none; -webkit-tap-highlight-color: transparent; }
-    #video { position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); background: #050505; z-index: 0; opacity: 0; pointer-events: none; }
+    #video { position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); background: #050505; z-index: 0; }
     #pinchCursor { position: fixed; top: 0; left: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; border: 2px solid var(--paper); pointer-events: none; z-index: 15; opacity: 0; transition: opacity .15s, background .12s, border-color .12s, transform .05s; background: rgba(255,255,255,0.05); }
     #pinchCursor.visible { opacity: .9; }
     #pinchCursor.pinching { background: var(--gold); border-color: var(--gold); transform: scale(1.3); }
-    #skeletonCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.7; background: #0B0D10; }
+    #skeletonCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.6; }
     .screen { position: fixed; inset: 0; display: none; z-index: 20; }
     .screen.active { display: flex; }
     .modal { align-items: center; justify-content: center; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: radial-gradient(120% 120% at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.65)); }
@@ -44,7 +44,7 @@ https://innovationhub.pages.dev/game232<!DOCTYPE html>
     .error-text { color: var(--coral); font-size: 13px; margin-top: 16px; display: none; }
     .error-text.show { display: block; }
 
-    #screen-camera { pointer-events: none; align-items: flex-end; justify-content: center; background: #0B0D10; }
+    #screen-camera { pointer-events: none; align-items: flex-end; justify-content: center; }
     .hint-pill { margin-bottom: max(46px, env(safe-area-inset-bottom) + 30px); background: var(--glass); backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
     .hint-pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--gold); animation: dotPulse 1.4s ease-in-out infinite; }
     @keyframes dotPulse { 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
@@ -57,7 +57,7 @@ https://innovationhub.pages.dev/game232<!DOCTYPE html>
     #flash.flash-active { animation: flashPop .22s ease-out; }
     @keyframes flashPop { 0%{ opacity:.95; } 100%{ opacity:0; } }
 
-    #screen-puzzle { align-items: flex-start; justify-content: flex-start; background: #0B0D10; }
+    #screen-puzzle { align-items: flex-start; justify-content: flex-start; }
     #slotsLayer, #puzzleLayer { position: absolute; inset: 0; pointer-events: none; }
     .puzzle-slot { position: absolute; border: 1.5px dashed rgba(255,255,255,0.35); border-radius: 6px; background: rgba(255,255,255,0.03); }
     .puzzle-piece { position: absolute; top: 0; left: 0; border-radius: 6px; border: 2px solid rgba(0,0,0,0.35); box-shadow: 0 8px 18px rgba(0,0,0,0.45); transition: box-shadow .15s, border-color .2s; will-change: transform; }
@@ -91,8 +91,6 @@ https://innovationhub.pages.dev/game232<!DOCTYPE html>
     .settings-menu .menu-item { background: none; border: none; color: var(--paper); font-weight: 500; font-size: 14px; padding: 6px 0; text-align: left; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.05); }
     .settings-menu .menu-item:first-of-type { border-top: none; }
     .settings-menu .menu-item:hover { color: var(--gold); }
-    .settings-close { margin-top: 6px; background: rgba(255,255,255,0.08); border-radius: 40px; padding: 8px; text-align: center; font-weight: 600; color: var(--coral); cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
-    .settings-close:hover { background: rgba(255,255,255,0.15); }
 
     @media (max-width: 500px) { .panel { padding: 30px 20px; } .settings-menu { right: 8px; min-width: 160px; } }
   </style>
@@ -110,7 +108,6 @@ https://innovationhub.pages.dev/game232<!DOCTYPE html>
     <label>Grid size <input type="number" id="gridSetting" value="3" min="2" max="5"></label>
     <button class="menu-item" id="restartPuzzleBtn">🔄 Restart puzzle</button>
     <button class="menu-item" id="exitToCameraBtn">📷 Exit to camera</button>
-    <div class="settings-close" id="closeSettings">✕ Close Menu</div>
   </div>
 
   <div id="screen-start" class="screen modal active">
@@ -181,7 +178,6 @@ const timeSetting = document.getElementById('timeSetting');
 const gridSetting = document.getElementById('gridSetting');
 const restartPuzzleBtn = document.getElementById('restartPuzzleBtn');
 const exitToCameraBtn = document.getElementById('exitToCameraBtn');
-const closeSettingsBtn = document.getElementById('closeSettings');
 
 let handLandmarker = null; let lastVideoTime = -1; let latestLandmarks = null;
 let openHandStreak = 0; let isPinching = false; let pinchScreenPoint = null;
@@ -200,8 +196,7 @@ window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
 // ----- settings UI -----
 settingsToggle.addEventListener('click', (e) => { e.stopPropagation(); settingsMenu.classList.toggle('open'); });
-closeSettingsBtn.addEventListener('click', () => { settingsMenu.classList.remove('open'); });
-document.addEventListener('click', (e) => { if (!settingsMenu.contains(e.target) && e.target !== settingsToggle) settingsMenu.classList.remove('open'); });
+document.addEventListener('click', () => settingsMenu.classList.remove('open'));
 timeSetting.value = PUZZLE_SECONDS; gridSetting.value = GRID;
 timeSetting.addEventListener('change', () => { let v = parseInt(timeSetting.value)||30; if(v<10)v=10; if(v>120)v=120; PUZZLE_SECONDS=v; timeSetting.value=v; });
 gridSetting.addEventListener('change', () => { let v = parseInt(gridSetting.value)||3; if(v<2)v=2; if(v>5)v=5; GRID=v; gridSetting.value=v; });
@@ -244,18 +239,15 @@ function detectLoop() {
 
 function drawSkeleton() {
   ctx.clearRect(0,0,skeletonCanvas.width,skeletonCanvas.height);
-  if(!latestLandmarks || (appState!=='camera' && appState!=='puzzle' && appState!=='countdown')) {
-    // show background only
-    return;
-  }
+  if(!latestLandmarks || (appState!=='camera' && appState!=='puzzle')) return;
   const lm = latestLandmarks;
   const pts = lm.map(p => mapNormalizedToScreen(p.x,p.y));
-  ctx.strokeStyle = 'rgba(255,200,87,0.7)'; ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(255,200,87,0.6)'; ctx.lineWidth=2.5;
   const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
   connections.forEach(([i,j]) => { if(pts[i]&&pts[j]) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }});
-  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,5,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fill(); });
-  // thumb & index highlight
-  if(pts[4]&&pts[8]) { ctx.beginPath(); ctx.arc(pts[4].x,pts[4].y,9,0,2*Math.PI); ctx.fillStyle='rgba(255,200,87,0.4)'; ctx.fill(); ctx.beginPath(); ctx.arc(pts[8].x,pts[8].y,9,0,2*Math.PI); ctx.fill(); }
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,5,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fill(); });
+  // thumb & index highlight for pinch
+  if(pts[4]&&pts[8]) { ctx.beginPath(); ctx.arc(pts[4].x,pts[4].y,8,0,2*Math.PI); ctx.fillStyle='rgba(255,200,87,0.4)'; ctx.fill(); ctx.beginPath(); ctx.arc(pts[8].x,pts[8].y,8,0,2*Math.PI); ctx.fill(); }
 }
 
 function mapNormalizedToScreen(nx, ny) {
