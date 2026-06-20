@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hand Puzzle · MediaPipe</title>
+    <title>Hand Puzzle · Pinch Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -33,7 +33,9 @@
             background: #1a1a1a;
             z-index: 1;
             transform: scaleX(-1);
+            display: none;
         }
+        #camera-view.active { display: block; }
         #skeleton-canvas {
             position: absolute;
             top: 0;
@@ -44,7 +46,7 @@
             pointer-events: none;
             transform: scaleX(-1);
         }
-        /* puzzle overlay */
+        /* puzzle overlay - full screen */
         #puzzle-overlay {
             position: absolute;
             top: 0;
@@ -52,8 +54,7 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(6px);
+            background: #0a0a12;
             display: none;
             flex-direction: column;
             align-items: center;
@@ -64,11 +65,11 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 4px;
-            width: 90vmin;
-            height: 90vmin;
-            max-width: 600px;
-            max-height: 600px;
-            background: #222;
+            width: 85vmin;
+            height: 85vmin;
+            max-width: 500px;
+            max-height: 500px;
+            background: #1a1a2a;
             padding: 8px;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.8);
@@ -78,25 +79,27 @@
             background-size: cover;
             background-position: center;
             border-radius: 8px;
-            cursor: grab;
-            transition: transform 0.1s;
             position: relative;
-            border: 2px solid rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.08);
+            transition: transform 0.15s ease;
         }
-        .puzzle-piece:active { cursor: grabbing; }
         .puzzle-piece.empty {
             background: #1a1a2a !important;
-            border: 2px dashed rgba(255,255,255,0.15);
+            border: 2px dashed rgba(255,255,255,0.1);
+        }
+        .puzzle-piece.highlight {
+            border-color: #ffd966;
+            box-shadow: 0 0 20px rgba(255,215,0,0.3);
         }
         .timer {
             position: absolute;
             top: 20px;
             right: 20px;
             color: #ffd966;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 24px;
             border-radius: 40px;
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255,215,0,0.2);
@@ -109,21 +112,22 @@
             left: 50%;
             transform: translateX(-50%);
             color: #fff;
-            font-size: 1.2rem;
-            background: rgba(0,0,0,0.6);
+            font-size: 1.1rem;
+            background: rgba(0,0,0,0.7);
             padding: 10px 24px;
             border-radius: 40px;
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255,255,255,0.05);
             z-index: 15;
             text-align: center;
+            min-width: 200px;
         }
         .settings-btn {
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 10;
-            background: rgba(16,16,28,0.8);
+            z-index: 20;
+            background: rgba(16,16,28,0.85);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,215,0,0.15);
             border-radius: 48px;
@@ -132,7 +136,6 @@
             font-weight: 500;
             cursor: pointer;
             transition: 0.25s;
-            z-index: 20;
         }
         .settings-btn i { color: #ffd966; margin-right: 8px; }
         .settings-btn:hover { background: rgba(40,40,60,0.9); transform: scale(1.02); }
@@ -141,11 +144,11 @@
             top: 75px;
             left: 20px;
             z-index: 20;
-            background: rgba(12,12,22,0.94);
+            background: rgba(12,12,22,0.95);
             backdrop-filter: blur(14px);
             border-radius: 24px;
             padding: 10px 6px;
-            min-width: 180px;
+            min-width: 190px;
             box-shadow: 0 20px 56px rgba(0,0,0,0.8);
             border: 1px solid rgba(255,255,255,0.06);
             display: none;
@@ -171,6 +174,8 @@
         .dropdown-item i { width: 22px; color: #9aa8b9; }
         .dropdown-item:hover { background: rgba(255,215,0,0.06); border-left-color: #ffd966; color: #fff; }
         .dropdown-item.active { background: rgba(255,215,0,0.10); border-left-color: #ffd966; color: #ffea9e; }
+        .dropdown-item.danger { color: #ff6b6b; }
+        .dropdown-item.danger:hover { background: rgba(255,0,0,0.1); border-left-color: #ff6b6b; }
         .permission-overlay {
             position: absolute;
             top: 0;
@@ -240,10 +245,24 @@
             pointer-events: none;
             opacity: 0.7;
         }
+        .pinch-indicator {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffd966;
+            border-radius: 50%;
+            z-index: 25;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(255,215,0,0.6);
+            display: none;
+            transform: translate(-50%, -50%);
+        }
         @media (max-width: 480px) {
             .settings-btn span { display: none; }
             .settings-btn { padding: 10px 14px; }
             .settings-dropdown { min-width: 160px; left: 10px; top: 70px; }
+            .puzzle-container { width: 92vmin; height: 92vmin; }
+            .timer { font-size: 1.6rem; padding: 6px 16px; }
         }
     </style>
 </head>
@@ -251,6 +270,7 @@
 <div class="app-container" id="app">
     <video id="camera-view" autoplay playsinline muted></video>
     <canvas id="skeleton-canvas"></canvas>
+    <div class="pinch-indicator" id="pinchIndicator"></div>
     
     <button class="settings-btn" id="settingsToggle"><i class="fas fa-sliders-h"></i><span>Settings</span></button>
     <div class="settings-dropdown" id="settingsDropdown">
@@ -258,19 +278,23 @@
         <button class="dropdown-item" data-mode="skeleton"><i class="fas fa-robot"></i> Skeleton view</button>
         <div class="dropdown-divider"></div>
         <button class="dropdown-item" data-mode="hybrid"><i class="fas fa-layer-group"></i> Hybrid mode</button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" id="exitGameBtn"><i class="fas fa-sign-out-alt"></i> Exit Game</button>
+        <button class="dropdown-item" id="restartGameBtn"><i class="fas fa-redo"></i> Restart Game</button>
+        <button class="dropdown-item" id="setDurationBtn"><i class="fas fa-clock"></i> Set Duration</button>
     </div>
 
     <div class="permission-overlay" id="permissionOverlay">
         <div class="permission-box">
             <i class="fas fa-camera-retro"></i>
             <h2>Camera & Hand Detection</h2>
-            <p>Enable camera to detect hands and play the puzzle game.</p>
+            <p>Enable camera to detect hands and play the puzzle game with pinch control.</p>
             <button class="btn-primary" id="requestPermissionBtn"><i class="fas fa-check-circle" style="margin-right:10px;"></i> Enable camera</button>
             <button class="btn-secondary" id="openSettingsBtn"><i class="fas fa-cog" style="margin-right:8px;"></i> Open settings</button>
         </div>
     </div>
 
-    <div class="status-badge" id="modeStatus">⚙️ camera view</div>
+    <div class="status-badge" id="modeStatus">⚙️ hybrid mode</div>
 
     <!-- Puzzle overlay -->
     <div id="puzzle-overlay">
@@ -296,6 +320,7 @@
     const puzzleContainer = document.getElementById('puzzleContainer');
     const timerDisplay = document.getElementById('timerDisplay');
     const puzzleStatus = document.getElementById('puzzleStatus');
+    const pinchIndicator = document.getElementById('pinchIndicator');
 
     let currentMode = 'hybrid';
     let cameraActive = false;
@@ -305,8 +330,8 @@
     let puzzleActive = false;
     let puzzleTimer = null;
     let timerSeconds = 30;
+    let gameDuration = 30;
     let puzzlePieces = [];
-    let emptyIndex = 8;
     let isPuzzleSolved = false;
     let capturedImageData = null;
     let gameInProgress = false;
@@ -314,11 +339,11 @@
     let countdownTimer = null;
     let countdownValue = 3;
 
-    // Puzzle state
-    let draggingPiece = null;
-    let dragOffsetX = 0, dragOffsetY = 0;
-    let dragStartX = 0, dragStartY = 0;
-    let isDragging = false;
+    // Pinch tracking
+    let isPinching = false;
+    let pinchX = 0, pinchY = 0;
+    let selectedPiece = null;
+    let selectedOriginalIndex = -1;
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -329,8 +354,11 @@
 
     // MediaPipe Hands
     const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-    hands.setOptions({ maxNumHands: 4, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
-    hands.onResults((results) => { handsDetected = results.multiHandLandmarks || []; });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
+    hands.onResults((results) => { 
+        handsDetected = results.multiHandLandmarks || [];
+        processPinchDetection();
+    });
 
     function initCamera() {
         if (!video) return;
@@ -341,12 +369,172 @@
         camera.start();
     }
 
-    // Drawing skeleton
+    // Process pinch detection
+    function processPinchDetection() {
+        if (!gameInProgress || isPuzzleSolved) {
+            if (selectedPiece) {
+                selectedPiece.classList.remove('highlight');
+                selectedPiece = null;
+            }
+            pinchIndicator.style.display = 'none';
+            return;
+        }
+
+        if (!handsDetected || handsDetected.length === 0) {
+            if (selectedPiece) {
+                selectedPiece.classList.remove('highlight');
+                selectedPiece = null;
+            }
+            pinchIndicator.style.display = 'none';
+            return;
+        }
+
+        const landmarks = handsDetected[0];
+        if (!landmarks) return;
+
+        // Get thumb tip (4) and index finger tip (8)
+        const thumbTip = landmarks[4];
+        const indexTip = landmarks[8];
+        
+        // Calculate distance
+        const dx = thumbTip.x - indexTip.x;
+        const dy = thumbTip.y - indexTip.y;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        
+        // Map to screen coords (mirrored)
+        const screenX = (1 - indexTip.x) * canvas.width;
+        const screenY = indexTip.y * canvas.height;
+        
+        // Pinch threshold (normalized)
+        const pinchThreshold = 0.06;
+        const isCurrentlyPinching = distance < pinchThreshold;
+
+        // Update pinch indicator
+        if (isCurrentlyPinching) {
+            pinchIndicator.style.display = 'block';
+            pinchIndicator.style.left = screenX + 'px';
+            pinchIndicator.style.top = screenY + 'px';
+            pinchX = screenX;
+            pinchY = screenY;
+        } else {
+            pinchIndicator.style.display = 'none';
+        }
+
+        // Pinch logic for puzzle interaction
+        if (isCurrentlyPinching && !isPinching) {
+            // Pinch started - select piece
+            isPinching = true;
+            selectPieceAt(screenX, screenY);
+        } else if (!isCurrentlyPinching && isPinching) {
+            // Pinch ended - drop piece
+            isPinching = false;
+            if (selectedPiece) {
+                dropPiece();
+            }
+        } else if (isCurrentlyPinching && isPinching && selectedPiece) {
+            // Move piece with pinch
+            movePieceWithPinch(screenX, screenY);
+        }
+    }
+
+    function selectPieceAt(x, y) {
+        const containerRect = puzzleContainer.getBoundingClientRect();
+        const pieces = puzzleContainer.querySelectorAll('.puzzle-piece');
+        const pieceSize = pieces[0]?.offsetWidth || 0;
+        const gap = 4;
+        
+        // Find which piece is at the pinch position
+        for (let piece of pieces) {
+            if (piece.dataset.empty === 'true') continue;
+            const rect = piece.getBoundingClientRect();
+            const centerX = rect.left + rect.width/2;
+            const centerY = rect.top + rect.height/2;
+            const dist = Math.sqrt((x - centerX)**2 + (y - centerY)**2);
+            if (dist < rect.width/2) {
+                selectedPiece = piece;
+                selectedOriginalIndex = parseInt(piece.dataset.originalIndex);
+                piece.classList.add('highlight');
+                piece.style.transform = 'scale(1.05)';
+                piece.style.zIndex = 10;
+                return;
+            }
+        }
+    }
+
+    function movePieceWithPinch(x, y) {
+        if (!selectedPiece) return;
+        const containerRect = puzzleContainer.getBoundingClientRect();
+        const pieces = puzzleContainer.querySelectorAll('.puzzle-piece');
+        const pieceSize = pieces[0]?.offsetWidth || 0;
+        const gap = 4;
+        
+        // Calculate grid position
+        const col = Math.round((x - containerRect.left - pieceSize/2) / (pieceSize + gap));
+        const row = Math.round((y - containerRect.top - pieceSize/2) / (pieceSize + gap));
+        
+        if (col >= 0 && col < 3 && row >= 0 && row < 3) {
+            const targetIndex = row * 3 + col;
+            const targetPiece = pieces[targetIndex];
+            
+            if (targetPiece && targetPiece.dataset.empty === 'true' && targetPiece !== selectedPiece) {
+                // Swap with empty piece
+                swapPieces(selectedPiece, targetPiece);
+                selectedPiece.classList.remove('highlight');
+                selectedPiece.style.transform = '';
+                selectedPiece.style.zIndex = 1;
+                selectedPiece = null;
+                isPinching = false;
+                checkPuzzleSolved();
+            }
+        }
+    }
+
+    function swapPieces(pieceA, pieceB) {
+        // Swap data
+        const tempOriginal = pieceA.dataset.originalIndex;
+        const tempEmpty = pieceA.dataset.empty;
+        pieceA.dataset.originalIndex = pieceB.dataset.originalIndex;
+        pieceA.dataset.empty = pieceB.dataset.empty;
+        pieceB.dataset.originalIndex = tempOriginal;
+        pieceB.dataset.empty = tempEmpty;
+        
+        // Swap visuals
+        const tempBg = pieceA.style.backgroundImage;
+        pieceA.style.backgroundImage = pieceB.style.backgroundImage;
+        pieceB.style.backgroundImage = tempBg;
+        
+        // Update classes
+        pieceA.classList.toggle('empty', pieceA.dataset.empty === 'true');
+        pieceB.classList.toggle('empty', pieceB.dataset.empty === 'true');
+        
+        // Update indices in DOM
+        const tempIndex = pieceA.dataset.index;
+        pieceA.dataset.index = pieceB.dataset.index;
+        pieceB.dataset.index = tempIndex;
+        
+        // Update puzzlePieces array
+        const idxA = parseInt(pieceA.dataset.index);
+        const idxB = parseInt(pieceB.dataset.index);
+        const temp = puzzlePieces[idxA];
+        puzzlePieces[idxA] = puzzlePieces[idxB];
+        puzzlePieces[idxB] = temp;
+    }
+
+    function dropPiece() {
+        if (selectedPiece) {
+            selectedPiece.classList.remove('highlight');
+            selectedPiece.style.transform = '';
+            selectedPiece.style.zIndex = 1;
+            selectedPiece = null;
+        }
+    }
+
+    // Drawing skeleton with yellow dot for thumb
     function drawSkeletonOnCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (currentMode === 'camera') return;
         if (currentMode === 'skeleton') {
-            ctx.fillStyle = '#000';
+            ctx.fillStyle = '#0a0a12';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
         if (!handsDetected || handsDetected.length === 0) {
@@ -384,13 +572,23 @@
                 const p = pts[k];
                 const isFingertip = (k === 4 || k === 8 || k === 12 || k === 16 || k === 20);
                 const radius = isFingertip ? 8 : 5;
+                // Yellow dot for thumb (index 4)
+                const isThumb = (k === 4);
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = isFingertip ? '#ffdb7c' : colorDim;
+                ctx.fillStyle = isThumb ? '#ffd700' : (isFingertip ? '#ffdb7c' : colorDim);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
+                if (isThumb) {
+                    ctx.shadowColor = 'rgba(255,215,0,0.6)';
+                    ctx.shadowBlur = 25;
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
             }
         }
     }
@@ -406,7 +604,6 @@
 
     // ----- PUZZLE LOGIC -----
     function captureAndCreatePuzzle() {
-        // Capture from video
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = video.videoWidth || 640;
         tempCanvas.height = video.videoHeight || 480;
@@ -414,24 +611,20 @@
         tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
         capturedImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
         
-        // Create puzzle pieces
-        const containerSize = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600);
+        const containerSize = Math.min(window.innerWidth * 0.85, window.innerHeight * 0.85, 500);
         const pieceSize = containerSize / 3 - 4;
         puzzleContainer.innerHTML = '';
         puzzleContainer.style.width = containerSize + 'px';
         puzzleContainer.style.height = containerSize + 'px';
         
         const pieceOrder = [0,1,2,3,4,5,6,7,8];
-        // Shuffle
         for (let i = pieceOrder.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [pieceOrder[i], pieceOrder[j]] = [pieceOrder[j], pieceOrder[i]];
         }
-        // Ensure not solved
         if (pieceOrder.join(',') === '0,1,2,3,4,5,6,7,8') {
             [pieceOrder[0], pieceOrder[1]] = [pieceOrder[1], pieceOrder[0]];
         }
-        emptyIndex = pieceOrder.indexOf(8);
         puzzlePieces = pieceOrder;
 
         pieceOrder.forEach((originalIndex, pos) => {
@@ -455,7 +648,6 @@
                 div.style.backgroundImage = `url(${pieceCanvas.toDataURL()})`;
                 div.style.backgroundSize = 'cover';
                 div.dataset.originalIndex = originalIndex;
-                div.dataset.pos = pos;
             }
             div.dataset.index = pos;
             div.style.width = pieceSize + 'px';
@@ -463,120 +655,8 @@
             puzzleContainer.appendChild(div);
         });
         
-        // Drag events
-        puzzleContainer.querySelectorAll('.puzzle-piece:not(.empty)').forEach(piece => {
-            piece.addEventListener('mousedown', onDragStart);
-            piece.addEventListener('touchstart', onDragStart, {passive: false});
-        });
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragEnd);
-        document.addEventListener('touchmove', onDragMove, {passive: false});
-        document.addEventListener('touchend', onDragEnd);
-    }
-
-    function onDragStart(e) {
-        if (isPuzzleSolved || !gameInProgress) return;
-        e.preventDefault();
-        const piece = e.currentTarget;
-        if (piece.dataset.empty === 'true') return;
-        const rect = piece.getBoundingClientRect();
-        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-        dragOffsetX = clientX - rect.left;
-        dragOffsetY = clientY - rect.top;
-        dragStartX = rect.left;
-        dragStartY = rect.top;
-        draggingPiece = piece;
-        isDragging = true;
-        piece.style.zIndex = 100;
-        piece.style.transform = 'scale(1.05)';
-        piece.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
-    }
-
-    function onDragMove(e) {
-        if (!isDragging || !draggingPiece || isPuzzleSolved) return;
-        e.preventDefault();
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        const containerRect = puzzleContainer.getBoundingClientRect();
-        const pieceSize = puzzleContainer.children[0]?.offsetWidth || 0;
-        const gap = 4;
-        const x = clientX - containerRect.left - dragOffsetX;
-        const y = clientY - containerRect.top - dragOffsetY;
-        const col = Math.round(x / (pieceSize + gap));
-        const row = Math.round(y / (pieceSize + gap));
-        const maxCol = 2, maxRow = 2;
-        if (col >= 0 && col <= maxCol && row >= 0 && row <= maxRow) {
-            const targetIndex = row * 3 + col;
-            const targetPiece = puzzleContainer.children[targetIndex];
-            if (targetPiece && targetPiece.dataset.empty === 'true') {
-                // Swap
-                const currentIndex = parseInt(draggingPiece.dataset.index);
-                const emptyIndex = parseInt(targetPiece.dataset.index);
-                // Update data
-                const tempOriginal = draggingPiece.dataset.originalIndex;
-                draggingPiece.dataset.originalIndex = targetPiece.dataset.originalIndex;
-                targetPiece.dataset.originalIndex = tempOriginal;
-                // Swap visual
-                const tempBg = draggingPiece.style.backgroundImage;
-                const tempEmpty = draggingPiece.dataset.empty;
-                draggingPiece.style.backgroundImage = targetPiece.style.backgroundImage;
-                draggingPiece.dataset.empty = targetPiece.dataset.empty;
-                targetPiece.style.backgroundImage = tempBg;
-                targetPiece.dataset.empty = tempEmpty;
-                if (tempEmpty === 'true') {
-                    draggingPiece.classList.add('empty');
-                } else {
-                    draggingPiece.classList.remove('empty');
-                }
-                if (targetPiece.dataset.empty === 'true') {
-                    targetPiece.classList.add('empty');
-                } else {
-                    targetPiece.classList.remove('empty');
-                }
-                // Update indices
-                const tempIndex = draggingPiece.dataset.index;
-                draggingPiece.dataset.index = targetPiece.dataset.index;
-                targetPiece.dataset.index = tempIndex;
-                // Reorder DOM
-                if (targetIndex < currentIndex) {
-                    puzzleContainer.insertBefore(draggingPiece, targetPiece);
-                } else {
-                    puzzleContainer.insertBefore(targetPiece, draggingPiece);
-                }
-                // Update puzzlePieces array
-                const p1 = parseInt(draggingPiece.dataset.index);
-                const p2 = parseInt(targetPiece.dataset.index);
-                const temp = puzzlePieces[p1];
-                puzzlePieces[p1] = puzzlePieces[p2];
-                puzzlePieces[p2] = temp;
-                // Reset drag
-                isDragging = false;
-                draggingPiece.style.zIndex = 1;
-                draggingPiece.style.transform = '';
-                draggingPiece.style.boxShadow = '';
-                draggingPiece = null;
-                checkPuzzleSolved();
-                return;
-            }
-        }
-        // Move piece visually
-        draggingPiece.style.left = (clientX - containerRect.left - dragOffsetX) + 'px';
-        draggingPiece.style.top = (clientY - containerRect.top - dragOffsetY) + 'px';
-        draggingPiece.style.position = 'relative';
-    }
-
-    function onDragEnd(e) {
-        if (draggingPiece) {
-            draggingPiece.style.zIndex = 1;
-            draggingPiece.style.transform = '';
-            draggingPiece.style.boxShadow = '';
-            draggingPiece.style.left = '';
-            draggingPiece.style.top = '';
-            draggingPiece.style.position = '';
-            draggingPiece = null;
-        }
-        isDragging = false;
+        // Hide camera for puzzle game
+        video.classList.remove('active');
     }
 
     function checkPuzzleSolved() {
@@ -605,22 +685,23 @@
         puzzleActive = false;
         gameInProgress = false;
         isPuzzleSolved = false;
+        isPinching = false;
+        selectedPiece = null;
+        pinchIndicator.style.display = 'none';
         puzzleStatus.style.color = '#fff';
-        puzzleStatus.textContent = '🧩 Arrange the puzzle';
-        timerDisplay.textContent = '30';
+        puzzleStatus.textContent = '✋ Show open hand to start';
+        timerDisplay.textContent = gameDuration;
+        video.classList.add('active');
     }
 
     function startPuzzleGame() {
         if (puzzleActive) return;
-        // Check if hand detected (open hand)
         if (!handsDetected || handsDetected.length === 0) {
             puzzleStatus.textContent = '✋ Show your hand to start';
             return;
         }
-        // Check for open hand (all fingertips extended)
         const landmarks = handsDetected[0];
         if (!landmarks) return;
-        // Simple open hand detection: thumb tip, index, middle, ring, pinky tips
         const tipIndices = [4, 8, 12, 16, 20];
         const wrist = landmarks[0];
         let open = true;
@@ -632,7 +713,6 @@
             return;
         }
         
-        // Start countdown
         puzzleStatus.textContent = '⏳ 3';
         countdownValue = 3;
         puzzleOverlay.classList.add('active');
@@ -646,12 +726,12 @@
             } else {
                 clearInterval(countdownTimer);
                 countdownActive = false;
-                // Capture and start puzzle
+                video.classList.remove('active');
                 captureAndCreatePuzzle();
                 gameInProgress = true;
                 isPuzzleSolved = false;
-                timerSeconds = 30;
-                timerDisplay.textContent = '30';
+                timerSeconds = gameDuration;
+                timerDisplay.textContent = gameDuration;
                 puzzleStatus.textContent = '🧩 Arrange the puzzle';
                 puzzleStatus.style.color = '#fff';
                 puzzleTimer = setInterval(() => {
@@ -664,7 +744,6 @@
                         puzzleStatus.style.color = '#ff6b6b';
                         setTimeout(() => {
                             resetPuzzle();
-                            // Go back to initial state
                             puzzleStatus.textContent = '✋ Show open hand to start';
                         }, 2000);
                     }
@@ -684,10 +763,10 @@
             cameraStream = stream;
             cameraActive = true;
             await video.play();
+            video.classList.add('active');
             initCamera();
             permissionOverlay.classList.add('hidden');
             if (!animationFrame) renderFrame();
-            // Start puzzle loop
             setInterval(() => {
                 if (!puzzleActive && cameraActive && currentMode === 'hybrid') {
                     startPuzzleGame();
@@ -714,6 +793,42 @@
         settingsDropdown.classList.remove('open');
         if ((mode === 'camera' || mode === 'hybrid') && !cameraActive) requestPermission();
         if (!animationFrame) renderFrame();
+        if (mode === 'hybrid') {
+            video.classList.add('active');
+        } else if (mode === 'skeleton') {
+            video.classList.remove('active');
+        }
+    }
+
+    // Game controls
+    function exitGame() {
+        resetPuzzle();
+        puzzleStatus.textContent = '🚪 Game exited';
+        setTimeout(() => {
+            puzzleStatus.textContent = '✋ Show open hand to start';
+        }, 1500);
+        settingsDropdown.classList.remove('open');
+    }
+
+    function restartGame() {
+        resetPuzzle();
+        setTimeout(() => {
+            startPuzzleGame();
+        }, 500);
+        settingsDropdown.classList.remove('open');
+    }
+
+    function setDuration() {
+        const newDuration = prompt('Enter game duration in seconds:', gameDuration);
+        if (newDuration !== null && !isNaN(newDuration) && parseInt(newDuration) > 0) {
+            gameDuration = parseInt(newDuration);
+            timerDisplay.textContent = gameDuration;
+            puzzleStatus.textContent = `⏱️ Duration set to ${gameDuration}s`;
+            setTimeout(() => {
+                puzzleStatus.textContent = '✋ Show open hand to start';
+            }, 1500);
+        }
+        settingsDropdown.classList.remove('open');
     }
 
     // Event listeners
@@ -724,12 +839,16 @@
         if (!cameraActive) { if (!animationFrame) renderFrame(); setMode('skeleton'); }
     });
     settingsToggle.addEventListener('click', function(e) { e.stopPropagation(); settingsDropdown.classList.toggle('open'); });
-    document.querySelectorAll('.dropdown-item').forEach(item => {
+    document.querySelectorAll('.dropdown-item[data-mode]').forEach(item => {
         item.addEventListener('click', function() {
             const mode = this.dataset.mode;
             if (mode) setMode(mode);
         });
     });
+    document.getElementById('exitGameBtn').addEventListener('click', exitGame);
+    document.getElementById('restartGameBtn').addEventListener('click', restartGame);
+    document.getElementById('setDurationBtn').addEventListener('click', setDuration);
+    
     document.addEventListener('click', function(e) {
         if (!settingsDropdown.contains(e.target) && e.target !== settingsToggle) {
             settingsDropdown.classList.remove('open');
