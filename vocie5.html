@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Translate & Speak</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f3f4f6;height:100vh;overflow:hidden}
+.header{height:60px;background:#fff;display:flex;justify-content:flex-end;align-items:center;padding:0 12px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.settings-btn{width:44px;height:44px;border:none;border-radius:50%;background:#2563eb;color:#fff;font-size:20px;cursor:pointer}
+.main{padding:14px}
+#inputText{width:100%;height:50vh;border:none;border-radius:16px;padding:16px;font-size:18px;resize:none}
+.buttons{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.btn{border:none;padding:14px;border-radius:12px;color:white;font-size:16px;cursor:pointer}
+.eng{background:#2563eb}.mal{background:#16a34a}.hin{background:#dc2626}
+.drawer{position:fixed;left:0;bottom:0;width:100%;height:20vh;background:#fff;border-radius:20px 20px 0 0;padding:10px;box-shadow:0 -4px 10px rgba(0,0,0,.15)}
+#translatedText{width:100%;height:80%;border:none;resize:none}
+.settings{position:fixed;top:0;right:-340px;width:320px;height:100%;background:white;padding:15px;transition:.3s;overflow:auto;box-shadow:-4px 0 10px rgba(0,0,0,.2)}
+.settings.open{right:0}
+select,input[type=range]{width:100%}
+label{display:block;margin-top:12px}
+.test-btn,.close-btn{width:100%;padding:8px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="header"><button class="settings-btn" onclick="toggleSettings()">⚙️</button></div>
+
+<div class="main">
+<textarea id="inputText" placeholder="Type English text here..."></textarea>
+<div class="buttons">
+<button class="btn eng" onclick="speakEnglish()">Speak (English)</button>
+<button class="btn mal" onclick="speakMalayalam()">Speak (Malayalam)</button>
+<button class="btn hin" onclick="speakHindi()">Speak (Hindi)</button>
+</div>
+<div id="status" style="margin-top:10px">Ready</div>
+</div>
+
+<div class="drawer">
+<div><b>Translated Text</b></div>
+<textarea id="translatedText" readonly></textarea>
+</div>
+
+<div class="settings" id="settingsPanel">
+<h2>Settings</h2>
+
+<label>English Voice</label>
+<select id="engVoice"></select>
+<button class="test-btn" onclick="testVoice('en')">Test English</button>
+
+<label>Malayalam Voice</label>
+<select id="malVoice"></select>
+<button class="test-btn" onclick="testVoice('ml')">Test Malayalam</button>
+
+<label>Hindi Voice</label>
+<select id="hinVoice"></select>
+<button class="test-btn" onclick="testVoice('hi')">Test Hindi</button>
+
+<label>Pitch <span id="pitchValue">1</span></label>
+<input id="pitch" type="range" min="0" max="2" step="0.1" value="1">
+
+<label>Speed <span id="speedValue">1</span></label>
+<input id="speed" type="range" min="0.5" max="2" step="0.1" value="1">
+
+<button class="close-btn" onclick="toggleSettings()">Close</button>
+</div>
+
+<script>
+function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('open')}
+
+function loadVoices(){
+ const voices=speechSynthesis.getVoices();
+ ['engVoice','malVoice','hinVoice'].forEach(id=>{
+   const s=document.getElementById(id); s.innerHTML='';
+   voices.forEach(v=>s.add(new Option(v.name+' ('+v.lang+')',v.name)));
+ });
+}
+speechSynthesis.onvoiceschanged=loadVoices; loadVoices();
+
+pitch.oninput=()=>pitchValue.textContent=pitch.value;
+speed.oninput=()=>speedValue.textContent=speed.value;
+
+async function translate(text,target){
+ const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${target}`);
+ const d=await r.json();
+ return d.responseData.translatedText;
+}
+
+function speakText(text,voiceName,lang){
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang=lang;
+ u.pitch=parseFloat(pitch.value);
+ u.rate=parseFloat(speed.value);
+ const v=speechSynthesis.getVoices().find(x=>x.name===voiceName);
+ if(v) u.voice=v;
+ speechSynthesis.cancel();
+ speechSynthesis.speak(u);
+}
+
+function speakEnglish(){
+ const t=inputText.value.trim();
+ translatedText.value=t;
+ speakText(t,engVoice.value,'en-IN');
+}
+
+async function speakMalayalam(){
+ const t=inputText.value.trim();
+ status.textContent='Translating Malayalam...';
+ const tr=await translate(t,'ml');
+ translatedText.value=tr;
+ speakText(tr,malVoice.value,'ml-IN');
+ status.textContent='Done';
+}
+
+async function speakHindi(){
+ const t=inputText.value.trim();
+ status.textContent='Translating Hindi...';
+ const tr=await translate(t,'hi');
+ translatedText.value=tr;
+ speakText(tr,hinVoice.value,'hi-IN');
+ status.textContent='Done';
+}
+
+function testVoice(type){
+ if(type==='en') speakText('Hello this is a test voice',engVoice.value,'en-IN');
+ if(type==='ml') speakText('ഹലോ ഇത് ഒരു ടെസ്റ്റ് ശബ്ദമാണ്',malVoice.value,'ml-IN');
+ if(type==='hi') speakText('नमस्ते यह एक परीक्षण आवाज है',hinVoice.value,'hi-IN');
+}
+</script>
+</body>
+</html>
