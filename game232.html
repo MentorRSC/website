@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#0B0D10">
-  <title>Aperture — 9‑piece · skeleton guide</title>
+  <title>Aperture — Skeleton · 9‑piece</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,15 +19,42 @@
     }
     body { touch-action: none; }
 
-    /* hidden video – only used for capture */
+    /* ——— video feed (visible, mirrored) ——— */
     #video {
-      position: fixed; inset: 0; width: 1px; height: 1px;
-      opacity: 0; pointer-events: none; z-index: -1;
-      transform: scaleX(-1);
-      background: #050505;
+      position: fixed; inset: 0; width: 100vw; height: 100vh;
+      object-fit: cover; transform: scaleX(-1);
+      background: #050505; z-index: 0;
     }
 
-    /* ——— pinch cursor (red when pinching) ——— */
+    /* ——— skeleton overlay on camera ——— */
+    #cameraSkeleton {
+      position: fixed; inset: 0; z-index: 5;
+      pointer-events: none;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+    #cameraSkeleton.hidden { opacity: 0; }
+    #cameraSkeleton svg {
+      width: 180px; height: 220px;
+      filter: drop-shadow(0 0 30px rgba(255,200,87,0.3));
+    }
+    #cameraSkeleton .bone {
+      stroke: rgba(255,200,87,0.6);
+      stroke-width: 5;
+      stroke-linecap: round;
+    }
+    #cameraSkeleton .joint {
+      fill: rgba(255,200,87,0.8);
+    }
+    #cameraSkeleton .pulse-ring {
+      animation: skelPulse 2s ease-in-out infinite;
+    }
+    @keyframes skelPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.9; }
+    }
+
     #pinchCursor {
       position: fixed; top: 0; left: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px;
       border-radius: 50%; border: 2px solid #F5F1E8;
@@ -79,12 +106,12 @@
     .error-text { color: #F87171; font-size: 13px; margin-top: 16px; display: none; }
     .error-text.show { display: block; }
 
-    /* ——— camera screen: yellow dot + hint ——— */
+    /* ——— camera screen ——— */
     #screen-camera {
       pointer-events: none;
       align-items: flex-end;
       justify-content: center;
-      background: #0B0D10;
+      background: transparent;
     }
     .hint-pill {
       margin-bottom: max(46px, env(safe-area-inset-bottom) + 30px);
@@ -98,6 +125,7 @@
       gap: 10px;
       font-size: 14px;
       font-weight: 500;
+      z-index: 10;
     }
     .hint-pill .dot {
       width: 14px; height: 14px;
@@ -167,65 +195,90 @@
       background: rgba(10,12,16,0.62); padding: 8px 16px; border-radius: 999px;
       pointer-events: none; z-index: 2;
     }
-    .result-emoji { font-size: 52px; margin-bottom: 10px; }
-    .result-title.success { color: #34D399; }
-    .result-title.fail { color: #F87171; }
 
-    /* ——— hand skeleton overlay (shown after shuffle) ——— */
-    #skeletonOverlay {
-      position: absolute; inset: 0;
-      pointer-events: none; z-index: 10;
+    /* puzzle skeleton (shown after shuffle) */
+    #puzzleSkeleton {
+      position: absolute; inset: 0; z-index: 10;
+      pointer-events: none;
       display: flex; align-items: center; justify-content: center;
       opacity: 0; transition: opacity 0.6s ease;
     }
-    #skeletonOverlay.show {
-      opacity: 1;
+    #puzzleSkeleton.show { opacity: 0.6; }
+    #puzzleSkeleton svg {
+      width: 140px; height: 180px;
+      filter: drop-shadow(0 0 30px rgba(255,200,87,0.2));
     }
-    #skeletonOverlay svg {
-      width: 160px; height: 200px;
-      filter: drop-shadow(0 0 20px rgba(255,200,87,0.25));
-    }
-    #skeletonOverlay .bone {
+    #puzzleSkeleton .bone {
       stroke: rgba(255,200,87,0.5);
       stroke-width: 4;
       stroke-linecap: round;
     }
-    #skeletonOverlay .joint {
+    #puzzleSkeleton .joint {
       fill: rgba(255,200,87,0.7);
     }
-    #skeletonOverlay .pulse-ring {
-      animation: skelPulse 2s ease-in-out infinite;
-    }
-    @keyframes skelPulse {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.9; }
+    #puzzleSkeleton .pulse-ring {
+      animation: skelPulse 2.2s ease-in-out infinite;
     }
 
+    .result-emoji { font-size: 52px; margin-bottom: 10px; }
+    .result-title.success { color: #34D399; }
+    .result-title.fail { color: #F87171; }
+
     @media (prefers-reduced-motion: reduce) {
-      .aperture-badge::before, .hint-pill .dot, .countdown-num, #skeletonOverlay .pulse-ring { animation: none !important; }
+      .aperture-badge::before, .hint-pill .dot, .countdown-num,
+      #cameraSkeleton .pulse-ring, #puzzleSkeleton .pulse-ring { animation: none !important; }
     }
     @media (min-width: 720px){ .panel{ padding:52px 48px; } }
   </style>
 </head>
 <body>
 
+  <!-- video feed (visible behind UI) -->
   <video id="video" autoplay playsinline muted></video>
+
+  <!-- camera skeleton overlay -->
+  <div id="cameraSkeleton">
+    <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="18" class="joint pulse-ring" />
+      <line x1="60" y1="60" x2="40" y2="30" class="bone" />
+      <circle cx="40" cy="30" r="5" class="joint" />
+      <line x1="40" y1="30" x2="20" y2="18" class="bone" />
+      <circle cx="20" cy="18" r="5" class="joint" />
+      <line x1="60" y1="60" x2="70" y2="25" class="bone" />
+      <circle cx="70" cy="25" r="5" class="joint" />
+      <line x1="70" y1="25" x2="80" y2="10" class="bone" />
+      <circle cx="80" cy="10" r="5" class="joint" />
+      <line x1="60" y1="60" x2="80" y2="30" class="bone" />
+      <circle cx="80" cy="30" r="5" class="joint" />
+      <line x1="80" y1="30" x2="95" y2="20" class="bone" />
+      <circle cx="95" cy="20" r="5" class="joint" />
+      <line x1="60" y1="60" x2="85" y2="45" class="bone" />
+      <circle cx="85" cy="45" r="5" class="joint" />
+      <line x1="85" y1="45" x2="100" y2="42" class="bone" />
+      <circle cx="100" cy="42" r="5" class="joint" />
+      <line x1="60" y1="60" x2="78" y2="60" class="bone" />
+      <circle cx="78" cy="60" r="5" class="joint" />
+      <line x1="78" y1="60" x2="95" y2="65" class="bone" />
+      <circle cx="95" cy="65" r="5" class="joint" />
+    </svg>
+  </div>
+
   <div id="pinchCursor"></div>
   <div id="flash"></div>
 
   <div id="screen-start" class="screen modal active">
     <div class="panel">
       <div class="aperture-badge"><span>📷</span></div>
-      <p class="eyebrow">9‑Piece · Skeleton Guide</p>
+      <p class="eyebrow">Skeleton · 9‑piece</p>
       <h1 class="title">Aperture</h1>
-      <p class="lede">Open your hand to snap a selfie. After shuffle, a hand skeleton appears — pinch to grab each piece.</p>
+      <p class="lede">Camera + skeleton guide. Open your hand to snap, then pinch pieces into place.</p>
       <button id="startBtn" class="btn-shutter">Open Camera</button>
       <p id="errorText" class="error-text"></p>
     </div>
   </div>
 
   <div id="screen-camera" class="screen">
-    <div class="hint-pill"><span class="dot"></span><span>Hold up an open palm to take your photo</span></div>
+    <div class="hint-pill"><span class="dot"></span><span>Open your palm to take photo</span></div>
   </div>
 
   <div id="screen-countdown" class="screen">
@@ -246,32 +299,26 @@
     <div class="puzzle-hint">Pinch a piece, drag it into place</div>
     <div id="slotsLayer"></div>
     <div id="puzzleLayer"></div>
-    <!-- hand skeleton overlay -->
-    <div id="skeletonOverlay">
+    <!-- puzzle skeleton overlay -->
+    <div id="puzzleSkeleton">
       <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">
-        <!-- palm -->
         <circle cx="60" cy="60" r="18" class="joint pulse-ring" />
-        <!-- thumb -->
         <line x1="60" y1="60" x2="40" y2="30" class="bone" />
         <circle cx="40" cy="30" r="5" class="joint" />
         <line x1="40" y1="30" x2="20" y2="18" class="bone" />
         <circle cx="20" cy="18" r="5" class="joint" />
-        <!-- index -->
         <line x1="60" y1="60" x2="70" y2="25" class="bone" />
         <circle cx="70" cy="25" r="5" class="joint" />
         <line x1="70" y1="25" x2="80" y2="10" class="bone" />
         <circle cx="80" cy="10" r="5" class="joint" />
-        <!-- middle -->
         <line x1="60" y1="60" x2="80" y2="30" class="bone" />
         <circle cx="80" cy="30" r="5" class="joint" />
         <line x1="80" y1="30" x2="95" y2="20" class="bone" />
         <circle cx="95" cy="20" r="5" class="joint" />
-        <!-- ring -->
         <line x1="60" y1="60" x2="85" y2="45" class="bone" />
         <circle cx="85" cy="45" r="5" class="joint" />
         <line x1="85" y1="45" x2="100" y2="42" class="bone" />
         <circle cx="100" cy="42" r="5" class="joint" />
-        <!-- pinky -->
         <line x1="60" y1="60" x2="78" y2="60" class="bone" />
         <circle cx="78" cy="60" r="5" class="joint" />
         <line x1="78" y1="60" x2="95" y2="65" class="bone" />
@@ -304,6 +351,8 @@ const TIMER_CIRCUMFERENCE = 2 * Math.PI * 24;
 
 // ——— DOM ———
 const videoEl = document.getElementById('video');
+const cameraSkeleton = document.getElementById('cameraSkeleton');
+const puzzleSkeleton = document.getElementById('puzzleSkeleton');
 const pinchCursorEl = document.getElementById('pinchCursor');
 const flashEl = document.getElementById('flash');
 const startBtn = document.getElementById('startBtn');
@@ -317,7 +366,6 @@ const puzzleLayer = document.getElementById('puzzleLayer');
 const resultEmoji = document.getElementById('resultEmoji');
 const resultTitle = document.getElementById('resultTitle');
 const resultLede = document.getElementById('resultLede');
-const skeletonOverlay = document.getElementById('skeletonOverlay');
 const screens = document.querySelectorAll('.screen');
 
 // ——— STATE ———
@@ -345,11 +393,16 @@ function showState(name) {
   for (const s of screens) {
     s.classList.toggle('active', s.id === 'screen-' + name);
   }
-  // show/hide skeleton
-  if (name === 'puzzle') {
-    setTimeout(() => skeletonOverlay.classList.add('show'), 400);
+  // show/hide skeletons
+  if (name === 'camera') {
+    cameraSkeleton.classList.remove('hidden');
+    puzzleSkeleton.classList.remove('show');
+  } else if (name === 'puzzle') {
+    cameraSkeleton.classList.add('hidden');
+    setTimeout(() => puzzleSkeleton.classList.add('show'), 400);
   } else {
-    skeletonOverlay.classList.remove('show');
+    cameraSkeleton.classList.add('hidden');
+    puzzleSkeleton.classList.remove('show');
   }
 }
 
@@ -773,7 +826,7 @@ function resetToCamera() {
   pieces = [];
   slots = [];
   openHandStreak = 0;
-  skeletonOverlay.classList.remove('show');
+  puzzleSkeleton.classList.remove('show');
   showState('camera');
 }
 </script>
