@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Skeleton + Camera View</title>
-    <!-- Font Awesome for icons -->
+    <title>MediaPipe Hands · Skeleton + Camera</title>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- MediaPipe dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -13,7 +16,7 @@
             box-sizing: border-box;
         }
         body {
-            background: #0b0b0b;
+            background: #0a0a12;
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
             height: 100vh;
             overflow: hidden;
@@ -25,7 +28,7 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            background: #1a1a1a;
+            background: #111;
             overflow: hidden;
         }
 
@@ -37,11 +40,12 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            background: #222;
+            background: #1a1a1a;
             z-index: 1;
+            transform: scaleX(-1); /* mirror for natural selfie view */
         }
 
-        /* Canvas for skeleton overlay (hybrid) */
+        /* Canvas for MediaPipe skeleton overlay */
         #skeleton-canvas {
             position: absolute;
             top: 0;
@@ -50,6 +54,7 @@
             height: 100%;
             z-index: 2;
             pointer-events: none;  /* allow clicks to pass to buttons */
+            transform: scaleX(-1); /* mirror to match camera */
         }
 
         /* ----- SETTINGS BUTTON (top right) ----- */
@@ -58,33 +63,29 @@
             top: 20px;
             right: 20px;
             z-index: 10;
-            background: rgba(20, 20, 30, 0.75);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(16, 16, 28, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.15);
             border-radius: 48px;
-            padding: 12px 18px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
             gap: 10px;
             color: #f0f0f0;
             font-weight: 500;
             font-size: 0.95rem;
-            letter-spacing: 0.3px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.6);
             cursor: pointer;
             transition: 0.25s ease;
-            border: 1px solid rgba(255,215,0,0.2);
         }
-        .settings-btn i {
-            font-size: 1.2rem;
-            color: #ffd966;
-        }
+        .settings-btn i { color: #ffd966; font-size: 1.2rem; }
         .settings-btn:hover {
             background: rgba(40, 40, 60, 0.9);
-            border-color: rgba(255,215,0,0.5);
+            border-color: rgba(255,215,0,0.4);
             transform: scale(1.02);
         }
+        .settings-btn span { letter-spacing: 0.3px; }
 
         /* ---- DROPDOWN (settings menu) ---- */
         .settings-dropdown {
@@ -92,29 +93,26 @@
             top: 80px;
             right: 20px;
             z-index: 20;
-            background: rgba(16, 16, 24, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(12, 12, 22, 0.92);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             border-radius: 24px;
-            padding: 12px 6px;
+            padding: 10px 6px;
             min-width: 200px;
-            box-shadow: 0 16px 48px rgba(0,0,0,0.7);
-            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 56px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.06);
             display: none;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
             transform-origin: top right;
-            transition: 0.2s ease;
         }
-        .settings-dropdown.open {
-            display: flex;
-        }
+        .settings-dropdown.open { display: flex; }
         .dropdown-item {
             background: transparent;
             border: none;
             padding: 12px 20px;
             border-radius: 16px;
-            color: #eaeef5;
+            color: #dce2ec;
             font-size: 0.95rem;
             font-weight: 450;
             display: flex;
@@ -123,27 +121,22 @@
             cursor: pointer;
             transition: 0.15s;
             width: 100%;
-            letter-spacing: 0.2px;
             border-left: 3px solid transparent;
         }
-        .dropdown-item i {
-            width: 22px;
-            color: #aab;
-            font-size: 1.1rem;
-        }
+        .dropdown-item i { width: 22px; color: #9aa8b9; font-size: 1.1rem; }
         .dropdown-item:hover {
-            background: rgba(255, 215, 0, 0.08);
+            background: rgba(255, 215, 0, 0.06);
             border-left-color: #ffd966;
             color: #fff;
         }
         .dropdown-item.active {
-            background: rgba(255, 215, 0, 0.12);
+            background: rgba(255, 215, 0, 0.10);
             border-left-color: #ffd966;
             color: #ffea9e;
         }
         .dropdown-divider {
             height: 1px;
-            background: rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.05);
             margin: 4px 12px;
         }
 
@@ -154,9 +147,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(8, 8, 16, 0.85);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(6, 6, 16, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -166,34 +159,19 @@
             text-align: center;
             padding: 2rem;
         }
-        .permission-overlay.hidden {
-            display: none;
-        }
+        .permission-overlay.hidden { display: none; }
         .permission-box {
-            background: rgba(30, 30, 44, 0.7);
+            background: rgba(26, 26, 42, 0.7);
             backdrop-filter: blur(4px);
             padding: 2.4rem 2.8rem;
             border-radius: 48px;
-            border: 1px solid rgba(255,215,0,0.15);
+            border: 1px solid rgba(255,215,0,0.12);
             max-width: 380px;
             box-shadow: 0 24px 64px rgba(0,0,0,0.5);
         }
-        .permission-box i {
-            font-size: 3.6rem;
-            color: #ffd966;
-            margin-bottom: 16px;
-        }
-        .permission-box h2 {
-            font-weight: 400;
-            font-size: 1.6rem;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-        }
-        .permission-box p {
-            opacity: 0.7;
-            margin-bottom: 28px;
-            font-size: 0.95rem;
-        }
+        .permission-box i { font-size: 3.6rem; color: #ffd966; margin-bottom: 16px; }
+        .permission-box h2 { font-weight: 400; font-size: 1.6rem; margin-bottom: 10px; }
+        .permission-box p { opacity: 0.7; margin-bottom: 28px; font-size: 0.95rem; }
         .btn-primary {
             background: #ffd966;
             border: none;
@@ -204,17 +182,12 @@
             font-size: 1rem;
             cursor: pointer;
             transition: 0.2s;
-            letter-spacing: 0.5px;
             box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);
         }
-        .btn-primary:hover {
-            background: #ffe088;
-            transform: scale(1.02);
-            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
-        }
+        .btn-primary:hover { background: #ffe088; transform: scale(1.02); }
         .btn-secondary {
             background: transparent;
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.12);
             color: #ccc;
             padding: 12px 28px;
             border-radius: 60px;
@@ -223,28 +196,24 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: rgba(255,215,0,0.3);
-        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,215,0,0.25); }
         .status-badge {
             position: absolute;
-            bottom: 24px;
+            bottom: 28px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 5;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.55);
             backdrop-filter: blur(4px);
-            padding: 8px 20px;
+            padding: 8px 24px;
             border-radius: 40px;
-            color: #ddd;
+            color: #d0d8e6;
             font-size: 0.8rem;
-            border: 1px solid rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.05);
             pointer-events: none;
-            opacity: 0.6;
+            opacity: 0.8;
+            letter-spacing: 0.3px;
         }
-
-        /* responsiveness */
         @media (max-width: 480px) {
             .settings-btn span { display: none; }
             .settings-btn { padding: 12px 16px; }
@@ -255,19 +224,19 @@
 <body>
     <div class="app-container" id="app">
 
-        <!-- Camera feed (full screen) -->
-        <video id="camera-view" autoplay playsinline muted></video>
+        <!-- Camera feed (full screen) mirrored -->
+        <video id="camera-view" class="mirrored" autoplay playsinline muted></video>
 
-        <!-- Skeleton canvas overlay -->
+        <!-- Skeleton canvas (mirrored) -->
         <canvas id="skeleton-canvas"></canvas>
 
-        <!-- Settings button (top right) -->
+        <!-- Settings button -->
         <button class="settings-btn" id="settingsToggle">
             <i class="fas fa-sliders-h"></i>
             <span>Settings</span>
         </button>
 
-        <!-- Dropdown menu -->
+        <!-- Dropdown -->
         <div class="settings-dropdown" id="settingsDropdown">
             <button class="dropdown-item" data-mode="camera"><i class="fas fa-video"></i> Camera view</button>
             <button class="dropdown-item" data-mode="skeleton"><i class="fas fa-robot"></i> Skeleton view</button>
@@ -275,23 +244,23 @@
             <button class="dropdown-item" data-mode="hybrid"><i class="fas fa-layer-group"></i> Hybrid mode</button>
         </div>
 
-        <!-- Permission overlay (shown first) -->
+        <!-- Permission overlay -->
         <div class="permission-overlay" id="permissionOverlay">
             <div class="permission-box">
                 <i class="fas fa-camera-retro"></i>
-                <h2>Camera access</h2>
-                <p>This app uses your camera to show a live view with an optional hand skeleton overlay.</p>
+                <h2>Camera & Hand Detection</h2>
+                <p>Enable camera to detect hands and show skeleton with MediaPipe.</p>
                 <button class="btn-primary" id="requestPermissionBtn">
                     <i class="fas fa-check-circle" style="margin-right: 10px;"></i> Enable camera
                 </button>
                 <button class="btn-secondary" id="openSettingsBtn">
                     <i class="fas fa-cog" style="margin-right: 8px;"></i> Open settings
                 </button>
-                <div style="margin-top: 16px; font-size: 0.75rem; opacity: 0.4;">you can change mode anytime</div>
+                <div style="margin-top: 16px; font-size: 0.75rem; opacity: 0.35;">multi‑hand detection active</div>
             </div>
         </div>
 
-        <!-- small status -->
+        <!-- status -->
         <div class="status-badge" id="modeStatus">⚙️ camera view</div>
     </div>
 
@@ -310,11 +279,12 @@
             const settingsDropdown = document.getElementById('settingsDropdown');
             const modeStatus = document.getElementById('modeStatus');
 
-            // mode state
+            // state
             let currentMode = 'camera';   // 'camera' , 'skeleton' , 'hybrid'
             let cameraActive = false;
             let cameraStream = null;
             let animationFrame = null;
+            let handsDetected = [];        // store latest hand landmarks
 
             // ---------- canvas sizing ----------
             function resizeCanvas() {
@@ -324,193 +294,173 @@
             window.addEventListener('resize', resizeCanvas);
             resizeCanvas();
 
-            // ---------- draw skeleton (hand & finger) ----------
-            // draws a stylized skeleton hand + forearm (mock)
-            function drawSkeleton() {
+            // ---------- MediaPipe Hands setup ----------
+            const hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+
+            hands.setOptions({
+                maxNumHands: 4,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.7,
+                minTrackingConfidence: 0.6
+            });
+
+            // onResults: store landmarks, then draw
+            hands.onResults((results) => {
+                handsDetected = results.multiHandLandmarks || [];
+                // drawing is done in the render loop to sync with mode
+            });
+
+            // camera utility from MediaPipe
+            function initCamera() {
+                if (!video) return;
+                const camera = new Camera(video, {
+                    onFrame: async () => {
+                        await hands.send({ image: video });
+                    },
+                    width: 640,
+                    height: 480
+                });
+                camera.start();
+            }
+
+            // ---------- draw skeleton with MediaPipe landmarks ----------
+            function drawSkeletonOnCanvas() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // if skeleton or hybrid, draw; else skip (camera mode)
+                // if mode is 'camera' we don't draw skeleton
                 if (currentMode === 'camera') return;
 
                 const w = canvas.width;
                 const h = canvas.height;
 
-                // Map hand to roughly center-right (like a hand in view)
-                const baseX = w * 0.6;
-                const baseY = h * 0.55;
-                const scale = Math.min(w, h) / 480;
-
-                // ----- draw arm (forearm) -----
-                ctx.beginPath();
-                ctx.moveTo(baseX - 60 * scale, baseY + 120 * scale);
-                ctx.lineTo(baseX - 20 * scale, baseY + 40 * scale);
-                ctx.strokeStyle = '#7fc9ff';
-                ctx.lineWidth = 12 * scale;
-                ctx.shadowColor = 'rgba(100, 200, 255, 0.3)';
-                ctx.shadowBlur = 14;
-                ctx.stroke();
-
-                // ----- hand palm (skeleton) -----
-                ctx.shadowBlur = 12;
-                ctx.beginPath();
-                ctx.ellipse(baseX, baseY, 40 * scale, 50 * scale, 0, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(80, 180, 255, 0.20)';
-                ctx.fill();
-                ctx.strokeStyle = '#7fc9ff';
-                ctx.lineWidth = 3 * scale;
-                ctx.stroke();
-
-                // --- fingers (skeleton lines) ---
-                const fingers = [
-                    { angle: -0.45, len: 80, label: 'thumb' },
-                    { angle: -0.15, len: 90, label: 'index' },
-                    { angle: 0.05, len: 85, label: 'middle' },
-                    { angle: 0.25, len: 80, label: 'ring' },
-                    { angle: 0.45, len: 70, label: 'pinky' }
-                ];
-
-                ctx.shadowBlur = 8;
-                ctx.lineWidth = 4 * scale;
-                ctx.strokeStyle = '#6bc3ff';
-
-                fingers.forEach((f, idx) => {
-                    const angle = f.angle + (idx * 0.02);
-                    const endX = baseX + Math.sin(angle) * f.len * scale;
-                    const endY = baseY - Math.cos(angle) * f.len * scale;
-
-                    // draw finger bone (proximal)
-                    ctx.beginPath();
-                    ctx.moveTo(baseX, baseY);
-                    const midX = baseX + Math.sin(angle) * (f.len * 0.55) * scale;
-                    const midY = baseY - Math.cos(angle) * (f.len * 0.55) * scale;
-                    ctx.lineTo(midX, midY);
-                    ctx.stroke();
-
-                    // distal (tip)
-                    ctx.beginPath();
-                    ctx.moveTo(midX, midY);
-                    ctx.lineTo(endX, endY);
-                    ctx.strokeStyle = '#4fa8ff';
-                    ctx.stroke();
-
-                    // small joint circles
-                    ctx.beginPath();
-                    ctx.arc(midX, midY, 5 * scale, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#b0daff';
-                    ctx.shadowBlur = 10;
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.arc(endX, endY, 4 * scale, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#7fc9ff';
-                    ctx.fill();
-                });
-
-                // wrist joint
-                ctx.beginPath();
-                ctx.arc(baseX - 10 * scale, baseY + 18 * scale, 8 * scale, 0, 2 * Math.PI);
-                ctx.fillStyle = '#5aa9dd';
-                ctx.shadowBlur = 12;
-                ctx.fill();
-
-                // add some 'finger dots' 
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = '#cce8ff';
-                for (let i = 0; i < 5; i++) {
-                    const a = -0.35 + i * 0.2;
-                    const dx = baseX + Math.sin(a) * 60 * scale;
-                    const dy = baseY - Math.cos(a) * 65 * scale;
-                    ctx.beginPath();
-                    ctx.arc(dx, dy, 3 * scale, 0, 2 * Math.PI);
-                    ctx.fill();
-                }
-
-                // label
-                ctx.shadowBlur = 0;
-                ctx.font = `${14 * scale}px 'Segoe UI', sans-serif`;
-                ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
-                ctx.fillText('✋ skeleton hand', baseX - 40 * scale, baseY + 90 * scale);
-            }
-
-            // ---------- render loop (hybrid/camera/skeleton) ----------
-            function renderFrame() {
-                if (!cameraActive) {
-                    // if camera not active, still draw skeleton if needed
+                // if no hands detected, show placeholder
+                if (!handsDetected || handsDetected.length === 0) {
                     if (currentMode === 'skeleton' || currentMode === 'hybrid') {
-                        drawSkeleton();
-                    } else {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.font = `18px 'Segoe UI', sans-serif`;
+                        ctx.fillStyle = 'rgba(180, 200, 230, 0.5)';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('✋ show your hands', w/2, h/2 - 10);
+                        ctx.font = `14px 'Segoe UI', sans-serif`;
+                        ctx.fillStyle = 'rgba(150, 170, 200, 0.3)';
+                        ctx.fillText('multi-hand supported', w/2, h/2 + 28);
                     }
-                    animationFrame = requestAnimationFrame(renderFrame);
                     return;
                 }
 
-                // camera is active: draw skeleton overlay if hybrid or skeleton only
-                if (currentMode === 'hybrid') {
-                    // draw skeleton on top of camera (camera is background)
-                    drawSkeleton();
-                } else if (currentMode === 'skeleton') {
-                    // camera feed still visible? we want full skeleton view (hide camera)
-                    // we set video opacity 0? but we want full skeleton: we keep video but overlay skeleton
-                    // we make skeleton dominant: we draw full skeleton but we also show camera blurred? 
-                    // For skeleton mode we want to hide camera feed - but we keep it for simplicity
-                    // we set video to be visible but we draw skeleton fully opaque, so it's 'skeleton view'
-                    // we could also clear canvas and draw skeleton only.
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    drawSkeleton(); 
-                } else {
-                    // camera mode: clear skeleton canvas
+                // draw each hand
+                for (let handIdx = 0; handIdx < handsDetected.length; handIdx++) {
+                    const landmarks = handsDetected[handIdx];
+                    if (!landmarks || landmarks.length === 0) continue;
+
+                    // scale coordinates to canvas (mirrored already by canvas transform)
+                    const pts = landmarks.map(lm => ({
+                        x: lm.x * w,
+                        y: lm.y * h
+                    }));
+
+                    // choose color per hand
+                    const hue = (handIdx * 40 + 200) % 360;
+                    const color = `hsl(${hue}, 85%, 60%)`;
+                    const colorDim = `hsl(${hue}, 70%, 40%)`;
+
+                    // draw connections (MediaPipe hand connections)
+                    const connections = [
+                        [0,1],[1,2],[2,3],[3,4],         // thumb
+                        [0,5],[5,6],[6,7],[7,8],         // index
+                        [0,9],[9,10],[10,11],[11,12],    // middle
+                        [0,13],[13,14],[14,15],[15,16],  // ring
+                        [0,17],[17,18],[18,19],[19,20],  // pinky
+                        [5,9],[9,13],[13,17]              // palm
+                    ];
+
+                    ctx.lineWidth = 3.5;
+                    ctx.shadowColor = 'rgba(0,200,255,0.3)';
+                    ctx.shadowBlur = 12;
+
+                    for (let [i, j] of connections) {
+                        if (i < pts.length && j < pts.length) {
+                            ctx.beginPath();
+                            ctx.moveTo(pts[i].x, pts[i].y);
+                            ctx.lineTo(pts[j].x, pts[j].y);
+                            ctx.strokeStyle = color;
+                            ctx.stroke();
+                        }
+                    }
+
+                    // draw keypoints (fingers & joints)
+                    ctx.shadowBlur = 10;
+                    for (let k = 0; k < pts.length; k++) {
+                        const p = pts[k];
+                        // bigger for fingertips (4,8,12,16,20)
+                        const radius = (k === 4 || k === 8 || k === 12 || k === 16 || k === 20) ? 7 : 4.5;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+                        ctx.fillStyle = (k === 4 || k === 8 || k === 12 || k === 16 || k === 20) ? '#ffdb7c' : colorDim;
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.2;
+                        ctx.stroke();
+                    }
+
+                    // add small hand index label
+                    ctx.shadowBlur = 0;
+                    ctx.font = `12px 'Segoe UI', sans-serif`;
+                    ctx.fillStyle = 'rgba(255,255,240,0.6)';
+                    ctx.fillText(`hand ${handIdx+1}`, pts[0].x - 10, pts[0].y - 22);
+                }
+            }
+
+            // ---------- render loop ----------
+            function renderFrame() {
+                // clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // In skeleton mode: we want blank background (no camera) but we show skeleton
+                if (currentMode === 'skeleton') {
+                    // blank background (black) but we draw skeleton
+                    ctx.fillStyle = '#0b0b12';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    drawSkeletonOnCanvas();
+                } 
+                else if (currentMode === 'hybrid') {
+                    // camera is behind, we draw skeleton on top (transparent background)
+                    drawSkeletonOnCanvas();
+                } 
+                else { // camera mode
+                    // do nothing, just clear canvas (camera visible)
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
 
                 animationFrame = requestAnimationFrame(renderFrame);
             }
 
-            // ---------- apply mode ----------
-            function setMode(mode) {
-                currentMode = mode;
-                // update status badge
-                const modeNames = {
-                    camera: '📷 camera view',
-                    skeleton: '🦴 skeleton view',
-                    hybrid: '🌀 hybrid mode'
-                };
-                modeStatus.textContent = modeNames[mode] || 'camera view';
-
-                // update active class in dropdown
-                document.querySelectorAll('.dropdown-item').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.mode === mode) btn.classList.add('active');
-                });
-
-                // close dropdown
-                settingsDropdown.classList.remove('open');
-
-                // if mode is skeleton, we might want to show skeleton instantly
-                // render loop will handle it
-            }
-
-            // ---------- camera start ----------
-            async function startCamera() {
+            // ---------- start camera + mediapipe ----------
+            async function startCameraAndHands() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-                        audio: false 
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                        audio: false
                     });
                     video.srcObject = stream;
                     cameraStream = stream;
                     cameraActive = true;
                     await video.play();
-                    // hide permission overlay
+                    
+                    // init MediaPipe camera utils
+                    initCamera();
+
                     permissionOverlay.classList.add('hidden');
-                    // start render loop if not started
+                    // start render loop
                     if (!animationFrame) {
                         renderFrame();
                     }
                 } catch (err) {
-                    console.warn('Camera permission denied or error:', err);
-                    // show permission overlay again with hint
+                    console.warn('Camera error:', err);
                     permissionOverlay.classList.remove('hidden');
-                    // change button text
                     requestBtn.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-right:10px;"></i> Retry';
                     cameraActive = false;
                 }
@@ -518,89 +468,90 @@
 
             // ---------- permission request ----------
             function requestPermission() {
-                startCamera();
+                startCameraAndHands();
             }
 
-            // ---------- open settings (fallback) ----------
-            function openSettings() {
-                // just toggle dropdown, simulate settings
-                settingsDropdown.classList.toggle('open');
+            // ---------- set mode ----------
+            function setMode(mode) {
+                currentMode = mode;
+                const modeNames = {
+                    camera: '📷 camera view',
+                    skeleton: '🦴 skeleton view',
+                    hybrid: '🌀 hybrid mode'
+                };
+                modeStatus.textContent = modeNames[mode] || 'camera view';
+
+                document.querySelectorAll('.dropdown-item').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.mode === mode) btn.classList.add('active');
+                });
+                settingsDropdown.classList.remove('open');
+
+                // if mode is skeleton and camera not active, still show placeholder
+                // if mode hybrid/camera and camera not active, we request camera
+                if ((mode === 'camera' || mode === 'hybrid') && !cameraActive) {
+                    requestPermission();
+                }
+                // if skeleton mode, ensure render loop is running
+                if (!animationFrame) {
+                    renderFrame();
+                }
             }
 
             // ---------- event listeners ----------
             requestBtn.addEventListener('click', requestPermission);
             openSettingsBtn.addEventListener('click', function() {
-                // if permission denied, we can open settings 
-                // but we also show dropdown as "settings"
                 settingsDropdown.classList.toggle('open');
-                permissionOverlay.classList.add('hidden'); // hide overlay
-                // if no camera active, we just show skeleton mock
+                permissionOverlay.classList.add('hidden');
                 if (!cameraActive) {
-                    // start render loop for skeleton view even without camera
-                    if (!animationFrame) {
-                        renderFrame();
-                    }
-                    // set mode skeleton as default when no camera
+                    // start render loop for skeleton mock
+                    if (!animationFrame) renderFrame();
                     setMode('skeleton');
                 }
             });
 
-            // settings toggle button
             settingsToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
                 settingsDropdown.classList.toggle('open');
             });
 
-            // dropdown item clicks
             document.querySelectorAll('.dropdown-item').forEach(item => {
                 item.addEventListener('click', function(e) {
                     const mode = this.dataset.mode;
                     if (mode) {
                         setMode(mode);
-                        // if camera not active and mode is camera, try to request camera
-                        if (mode === 'camera' && !cameraActive) {
+                        if ((mode === 'camera' || mode === 'hybrid') && !cameraActive) {
                             requestPermission();
-                        } else if (mode === 'skeleton' && !cameraActive) {
-                            // start render if not started
-                            if (!animationFrame) renderFrame();
-                        } else if (mode === 'hybrid' && !cameraActive) {
-                            // hybrid needs camera + skeleton; request camera
-                            requestPermission();
-                            // but we also show skeleton mock if camera fails
+                        }
+                        if (mode === 'skeleton' && !cameraActive) {
                             if (!animationFrame) renderFrame();
                         }
                     }
                 });
             });
 
-            // close dropdown on outside click
             document.addEventListener('click', function(e) {
                 if (!settingsDropdown.contains(e.target) && e.target !== settingsToggle) {
                     settingsDropdown.classList.remove('open');
                 }
             });
 
-            // ---------- init: show permission overlay ----------
-            permissionOverlay.classList.remove('hidden');
-            // start render loop (background) so skeleton can show even without camera
-            renderFrame();
+            // resize canvas on window resize
+            window.addEventListener('resize', resizeCanvas);
 
-            // if we have no camera, but user clicks "open settings" we can show skeleton
-            // auto set skeleton as default mock
-            setMode('skeleton');
-
-            // handle window resize for canvas
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-            });
-
-            // stop stream on page unload
+            // clean up
             window.addEventListener('beforeunload', function() {
                 if (cameraStream) {
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
                 if (animationFrame) cancelAnimationFrame(animationFrame);
             });
+
+            // ---------- init: show permission overlay ----------
+            permissionOverlay.classList.remove('hidden');
+            setMode('skeleton');  // start with skeleton mock
+            // start render loop
+            renderFrame();
 
         })();
     </script>
