@@ -247,15 +247,14 @@
         }
         .pinch-indicator {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #ffd966;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             z-index: 25;
             pointer-events: none;
-            box-shadow: 0 0 30px rgba(255,215,0,0.6);
-            display: none;
             transform: translate(-50%, -50%);
+            display: none;
+            border: 2px solid rgba(255,255,255,0.3);
         }
         @media (max-width: 480px) {
             .settings-btn span { display: none; }
@@ -409,11 +408,13 @@
         const pinchThreshold = 0.06;
         const isCurrentlyPinching = distance < pinchThreshold;
 
-        // Update pinch indicator
+        // Update pinch indicator - Yellow when not pinched, Green when pinched
         if (isCurrentlyPinching) {
             pinchIndicator.style.display = 'block';
             pinchIndicator.style.left = screenX + 'px';
             pinchIndicator.style.top = screenY + 'px';
+            pinchIndicator.style.background = '#00ff88';
+            pinchIndicator.style.boxShadow = '0 0 30px rgba(0,255,136,0.6)';
             pinchX = screenX;
             pinchY = screenY;
         } else {
@@ -529,7 +530,7 @@
         }
     }
 
-    // Drawing skeleton with yellow dot for thumb
+    // Drawing skeleton with yellow dot for thumb, green dot when pinched
     function drawSkeletonOnCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (currentMode === 'camera') return;
@@ -568,6 +569,18 @@
                 }
             }
             ctx.shadowBlur = 15;
+            
+            // Check if pinched for this hand
+            let isPinched = false;
+            if (landmarks.length > 8) {
+                const thumbTip = landmarks[4];
+                const indexTip = landmarks[8];
+                const dx = thumbTip.x - indexTip.x;
+                const dy = thumbTip.y - indexTip.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                isPinched = dist < 0.06;
+            }
+            
             for (let k = 0; k < pts.length; k++) {
                 const p = pts[k];
                 const isFingertip = (k === 4 || k === 8 || k === 12 || k === 16 || k === 20);
@@ -576,17 +589,40 @@
                 const isThumb = (k === 4);
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = isThumb ? '#ffd700' : (isFingertip ? '#ffdb7c' : colorDim);
-                ctx.fill();
-                if (isThumb) {
+                
+                if (isThumb && isPinched) {
+                    // Green dot when pinched
+                    ctx.fillStyle = '#00ff88';
+                    ctx.shadowColor = 'rgba(0,255,136,0.6)';
+                    ctx.shadowBlur = 30;
+                } else if (isThumb) {
+                    // Yellow dot for thumb
+                    ctx.fillStyle = '#ffd700';
                     ctx.shadowColor = 'rgba(255,215,0,0.6)';
                     ctx.shadowBlur = 25;
+                } else if (isFingertip) {
+                    ctx.fillStyle = '#ffdb7c';
+                    ctx.shadowColor = `hsla(${hue}, 90%, 65%, 0.3)`;
+                    ctx.shadowBlur = 15;
+                } else {
+                    ctx.fillStyle = colorDim;
+                    ctx.shadowColor = `hsla(${hue}, 90%, 65%, 0.2)`;
+                    ctx.shadowBlur = 10;
+                }
+                ctx.fill();
+                
+                // Add stroke for better visibility
+                if (isThumb && isPinched) {
+                    ctx.strokeStyle = '#00ff88';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (isThumb) {
                     ctx.strokeStyle = '#ffd700';
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 } else {
-                    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                    ctx.lineWidth = 1;
                     ctx.stroke();
                 }
             }
