@@ -26,7 +26,7 @@
     #pinchCursor { position: fixed; top: 0; left: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; border: 2px solid var(--paper); pointer-events: none; z-index: 15; opacity: 0; transition: opacity .15s, background .12s, border-color .12s, transform .05s; background: rgba(255,255,255,0.05); }
     #pinchCursor.visible { opacity: .9; }
     #pinchCursor.pinching { background: var(--gold); border-color: var(--gold); transform: scale(1.3); }
-    #skeletonCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.4; }
+    #skeletonCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.6; }
     .screen { position: fixed; inset: 0; display: none; z-index: 20; }
     .screen.active { display: flex; }
     .modal { align-items: center; justify-content: center; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: radial-gradient(120% 120% at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.65)); }
@@ -239,13 +239,15 @@ function detectLoop() {
 
 function drawSkeleton() {
   ctx.clearRect(0,0,skeletonCanvas.width,skeletonCanvas.height);
-  if(!latestLandmarks || appState!=='camera' && appState!=='puzzle') return;
+  if(!latestLandmarks || (appState!=='camera' && appState!=='puzzle')) return;
   const lm = latestLandmarks;
   const pts = lm.map(p => mapNormalizedToScreen(p.x,p.y));
-  ctx.strokeStyle = 'rgba(255,200,87,0.5)'; ctx.lineWidth=2;
+  ctx.strokeStyle = 'rgba(255,200,87,0.6)'; ctx.lineWidth=2.5;
   const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
   connections.forEach(([i,j]) => { if(pts[i]&&pts[j]) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }});
-  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,4,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fill(); });
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,5,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fill(); });
+  // thumb & index highlight for pinch
+  if(pts[4]&&pts[8]) { ctx.beginPath(); ctx.arc(pts[4].x,pts[4].y,8,0,2*Math.PI); ctx.fillStyle='rgba(255,200,87,0.4)'; ctx.fill(); ctx.beginPath(); ctx.arc(pts[8].x,pts[8].y,8,0,2*Math.PI); ctx.fill(); }
 }
 
 function mapNormalizedToScreen(nx, ny) {
