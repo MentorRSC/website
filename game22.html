@@ -3,224 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🧩 Hand Puzzle · Camera Jigsaw</title>
+    <title>🧩 Pinch Puzzle · 9 pieces</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
         }
         body {
-            margin: 0;
+            background: #0a0c10;
             min-height: 100vh;
-            background: #0b0e14;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
-            touch-action: pan-y;
-        }
-        .container {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 12px;
-            position: relative;
-        }
-        /* camera / preview wrapper */
-        .camera-wrapper {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 4 / 3;
-            background: #1a1f2a;
-            border-radius: 32px;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            touch-action: none;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            border: 1px solid #3a4050;
+            width: 100%;
+            height: 100vh;
+            position: relative;
         }
-        #video {
+        #app {
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            max-height: 900px;
+            position: relative;
+            background: #141a24;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            margin: 0 auto;
+        }
+        /* FULLSCREEN CAMERA VIEW */
+        #cameraView {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+        #cameraView video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
-            background: #222;
+            background: #111;
         }
-        #canvas-preview {
-            display: none;
-        }
-        .overlay-status {
+        .camera-overlay {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             left: 0;
             right: 0;
             text-align: center;
             pointer-events: none;
-            font-size: 1.3rem;
-            font-weight: 600;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-            background: rgba(0,0,0,0.35);
-            backdrop-filter: blur(4px);
-            padding: 10px 0;
-            margin: 0 16px;
-            border-radius: 60px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+            padding: 16px 0;
+            margin: 0 20px;
+            border-radius: 80px;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
             letter-spacing: 0.5px;
-            border: 1px solid rgba(255,255,255,0.1);
         }
-        .overlay-status span {
+        .camera-overlay span {
             display: inline-block;
-            padding: 0 12px;
         }
         .timer-badge {
             position: absolute;
-            top: 16px;
-            right: 16px;
-            background: rgba(0,0,0,0.65);
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
             backdrop-filter: blur(8px);
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-size: 1.4rem;
+            padding: 10px 22px;
+            border-radius: 60px;
+            font-size: 1.5rem;
             font-weight: 700;
             border: 1px solid #ffbb33;
             color: #ffbb33;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
             letter-spacing: 1px;
+            pointer-events: none;
+        }
+        /* skeleton overlay (finger detection) */
+        #skeletonCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 15;
+            opacity: 0.7;
+        }
+        /* PUZZLE VIEW (9 pieces) */
+        #puzzleView {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #141a24;
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+            padding: 8px;
         }
         .puzzle-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 3px;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
             width: 100%;
-            aspect-ratio: 4 / 3;
-            background: #212734;
-            border-radius: 28px;
-            overflow: hidden;
-            padding: 3px;
+            height: 100%;
+            background: #1e2635;
+            border-radius: 24px;
+            padding: 4px;
             box-shadow: inset 0 0 0 1px #3d455a;
             touch-action: none;
+            position: relative;
         }
         .puzzle-piece {
             background: #2f384b;
             background-size: cover;
             background-position: center;
-            border-radius: 6px;
-            transition: transform 0.08s, box-shadow 0.1s;
-            cursor: grab;
+            border-radius: 10px;
             touch-action: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            border: 2px solid #4d5670;
+            transition: border 0.1s;
             will-change: transform;
-            border: 1px solid #4d5670;
+            position: relative;
         }
         .puzzle-piece:active {
             cursor: grabbing;
         }
         .puzzle-piece.dragging {
-            z-index: 10;
-            box-shadow: 0 16px 30px rgba(0,0,0,0.8);
+            z-index: 30;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.9);
             transform: scale(1.02);
             border-color: #ffbb33;
         }
-        .hidden {
-            display: none !important;
+        .puzzle-piece.pinched {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px #ff6b6b, 0 8px 20px rgba(255,0,0,0.4);
         }
-        .flex-center {
+        .puzzle-controls {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            gap: 10px;
+            padding: 12px 6px 6px 6px;
+            background: #141a24;
         }
-        .btn {
+        .puzzle-controls button {
+            flex: 1;
             background: #2b3548;
             border: none;
             color: white;
-            font-weight: 600;
-            padding: 14px 28px;
+            font-weight: 700;
+            padding: 14px 0;
             border-radius: 60px;
             font-size: 1.2rem;
-            margin: 12px 0;
-            width: 100%;
-            box-shadow: 0 8px 0 #141a24;
+            box-shadow: 0 6px 0 #141a24;
             transition: all 0.08s ease;
             border: 1px solid #4d5a72;
             touch-action: manipulation;
             cursor: pointer;
             letter-spacing: 0.5px;
         }
-        .btn:active {
+        .puzzle-controls button:active {
             transform: translateY(4px);
-            box-shadow: 0 4px 0 #141a24;
+            box-shadow: 0 2px 0 #141a24;
         }
-        .btn-primary {
+        .puzzle-controls .btn-primary {
             background: #ffbb33;
             color: #0b0e14;
             border-color: #ffd966;
-            box-shadow: 0 8px 0 #b17f1a;
-            font-weight: 700;
+            box-shadow: 0 6px 0 #b17f1a;
         }
-        .message-box {
+        #puzzleMessage {
             background: #1e2533;
             border-radius: 40px;
-            padding: 18px 12px;
-            margin-top: 18px;
+            padding: 14px 12px;
+            margin: 4px 0 0 0;
             text-align: center;
             border: 1px solid #4a536b;
             font-size: 1.2rem;
+            font-weight: 600;
+            color: #eee;
         }
-        .flex-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .flex-row .btn {
-            flex: 1;
-        }
-        .mt-2 { margin-top: 14px; }
-        .text-center { text-align: center; }
-        .emoji-big { font-size: 2.2rem; vertical-align: middle; }
-        .status-pulse {
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
-        .congrats {
+        .message-congrats {
             background: #1f3a2a;
             border-color: #5fbb7a;
             color: #b3ffcc;
         }
-        .sorry {
+        .message-sorry {
             background: #3a2020;
             border-color: #bb5f5f;
             color: #ffb3b3;
         }
+        .hidden {
+            display: none !important;
+        }
+        /* reset button on camera */
+        #resetCameraBtn {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid #ffbb33;
+            color: #ffbb33;
+            font-weight: 700;
+            padding: 16px;
+            border-radius: 80px;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            z-index: 20;
+            transition: 0.1s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        #resetCameraBtn:active {
+            transform: scale(0.96);
+        }
     </style>
 </head>
 <body>
-<div class="container" id="app">
-    <!-- CAMERA VIEW (initial) -->
+<div id="app">
+    <!-- CAMERA VIEW (full screen) -->
     <div id="cameraView">
-        <div class="camera-wrapper">
-            <video id="video" autoplay playsinline muted></video>
-            <div class="overlay-status" id="statusOverlay">
-                <span id="statusText">✋ Show open hand</span>
-            </div>
-            <div class="timer-badge" id="timerBadge">⏳ 0s</div>
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="skeletonCanvas"></canvas>
+        <div class="camera-overlay" id="statusOverlay">
+            <span id="statusText">✋ Show open hand</span>
         </div>
-        <button class="btn btn-primary" id="resetBtn">⟳ Restart</button>
-        <div class="message-box" id="infoBox">
-            👆 Open hand → 3s countdown → photo → puzzle
-        </div>
+        <div class="timer-badge" id="timerBadge">⏳ 0s</div>
+        <button id="resetCameraBtn">⟳ Restart</button>
     </div>
 
-    <!-- PUZZLE VIEW (hidden initially) -->
-    <div id="puzzleView" class="hidden">
+    <!-- PUZZLE VIEW (9 pieces) -->
+    <div id="puzzleView">
         <div class="puzzle-grid" id="puzzleGrid"></div>
-        <div class="flex-row mt-2">
-            <button class="btn" id="backToCameraBtn">📷 Camera</button>
-            <button class="btn btn-primary" id="shuffleBtn">🔀 Shuffle</button>
+        <div id="puzzleMessage">⏳ 30s · pinch & drag pieces</div>
+        <div class="puzzle-controls">
+            <button id="backToCameraBtn">📷 Camera</button>
+            <button id="shuffleBtn" class="btn-primary">🔀 Shuffle</button>
         </div>
-        <div id="puzzleMessage" class="message-box">⏳ 30s · arrange pieces</div>
     </div>
 </div>
 
@@ -228,6 +260,8 @@
     (function() {
         // ----- DOM refs -----
         const video = document.getElementById('video');
+        const skeletonCanvas = document.getElementById('skeletonCanvas');
+        const ctx = skeletonCanvas.getContext('2d');
         const statusText = document.getElementById('statusText');
         const timerBadge = document.getElementById('timerBadge');
         const cameraView = document.getElementById('cameraView');
@@ -236,64 +270,120 @@
         const puzzleMessage = document.getElementById('puzzleMessage');
         const backToCameraBtn = document.getElementById('backToCameraBtn');
         const shuffleBtn = document.getElementById('shuffleBtn');
-        const resetBtn = document.getElementById('resetBtn');
+        const resetCameraBtn = document.getElementById('resetCameraBtn');
 
         // ----- state -----
         let stream = null;
-        let photoDataURL = null;          // full image data
-        let pieces = [];                 // array of { id, row, col, currentIndex }
-        let dragState = null;            // { element, index, offsetX, offsetY, startX, startY }
+        let photoDataURL = null;
+        let pieces = [];                 // { id, row, col, currentIndex, dataURL }
+        let dragState = null;            // { element, index, offsetX, offsetY, startX, startY, pinchActive }
         let puzzleTimer = null;
         let countdownTimer = null;
         let gameActive = false;
-        let countdownSeconds = 0;
+        let handConfirmed = false;
+        let handDetectInterval = null;
+        let puzzleSolved = false;
 
-        // ----- helper functions -----
-        function shuffleArray(arr) {
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
+        // ----- sizing -----
+        function resizeCanvas() {
+            const rect = cameraView.getBoundingClientRect();
+            skeletonCanvas.width = rect.width || 400;
+            skeletonCanvas.height = rect.height || 600;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // ----- finger skeleton drawing (mock) -----
+        function drawSkeleton(openHand = false) {
+            const w = skeletonCanvas.width, h = skeletonCanvas.height;
+            ctx.clearRect(0, 0, w, h);
+            if (!openHand) {
+                // draw closed fist or nothing
+                ctx.fillStyle = 'rgba(255,255,0,0.2)';
+                ctx.beginPath();
+                ctx.arc(w/2, h/2, 40, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,200,0,0.6)';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                return;
             }
-            return arr;
+            // draw open hand skeleton (5 fingers)
+            const cx = w/2, cy = h/2 - 20;
+            const fingerLength = 80;
+            const spread = 0.9;
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = 6;
+            ctx.shadowColor = '#00ffcc';
+            ctx.shadowBlur = 12;
+            // palm
+            ctx.beginPath();
+            ctx.ellipse(cx, cy+20, 40, 30, 0, 0, Math.PI*2);
+            ctx.stroke();
+
+            // fingers
+            const angles = [-1.2, -0.6, 0, 0.6, 1.2];
+            for (let i = 0; i < 5; i++) {
+                const angle = angles[i];
+                const x1 = cx + Math.sin(angle) * 30;
+                const y1 = cy + 10 + Math.cos(angle) * 10;
+                const x2 = cx + Math.sin(angle) * (30 + fingerLength);
+                const y2 = cy + 10 + Math.cos(angle) * (10 + fingerLength);
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                // fingertip
+                ctx.beginPath();
+                ctx.arc(x2, y2, 10, 0, Math.PI*2);
+                ctx.fillStyle = '#00ffcc';
+                ctx.fill();
+                ctx.stroke();
+            }
+            // thumb
+            ctx.beginPath();
+            ctx.moveTo(cx-20, cy+30);
+            ctx.lineTo(cx-60, cy+70);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx-60, cy+70, 10, 0, Math.PI*2);
+            ctx.fillStyle = '#00ffcc';
+            ctx.fill();
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
 
-        // ----- camera & hand detection (mock hand detection using motion / simple logic) -----
-        // We simulate "open hand" detection via a combination of motion & brightness.
-        // In a real app you'd use MediaPipe or TensorFlow. Here we use a lightweight heuristic:
-        // If the average brightness > threshold and motion > threshold => "open hand"
-        // For demo we also allow a manual trigger with a button (but we want auto)
-        // We'll use a simple interval that checks video frames.
-        let handDetectInterval = null;
-        let lastFrameData = null;
-        let handConfirmed = false;
+        // ----- hand detection (mock with brightness + motion) -----
+        let lastAvg = 0;
+        function detectHand() {
+            if (video.readyState < 2) return false;
+            const canvas = document.createElement('canvas');
+            canvas.width = 32; canvas.height = 24;
+            const c = canvas.getContext('2d');
+            c.drawImage(video, 0, 0, 32, 24);
+            const data = c.getImageData(0, 0, 32, 24).data;
+            let sum = 0, count = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                sum += data[i] + data[i+1] + data[i+2];
+                count += 3;
+            }
+            const avg = sum / count;
+            const motion = Math.abs(avg - lastAvg) > 5;
+            lastAvg = avg;
+            // heuristic: open hand if avg brightness in range and motion
+            return (avg > 90 && avg < 210 && motion);
+        }
 
         function startHandDetection() {
             if (handDetectInterval) clearInterval(handDetectInterval);
-            // Every 300ms sample frame
             handDetectInterval = setInterval(() => {
-                if (video.readyState < 2) return;
-                const canvas = document.createElement('canvas');
-                canvas.width = 64; canvas.height = 48;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, 64, 48);
-                const imageData = ctx.getImageData(0, 0, 64, 48);
-                const data = imageData.data;
-                let sum = 0, count = 0;
-                for (let i = 0; i < data.length; i += 4) {
-                    sum += data[i] + data[i+1] + data[i+2];
-                    count += 3;
-                }
-                const avg = sum / count;
-                // simple motion: compare with previous frame (but we skip for simplicity)
-                // heuristic: if avg brightness > 100 => open hand (light skin / background)
-                const isOpen = avg > 110 && avg < 220; // rough range
+                if (puzzleSolved) return;
+                const isOpen = detectHand();
+                drawSkeleton(isOpen);
                 if (isOpen && !handConfirmed) {
-                    // start 3 second countdown
                     handConfirmed = true;
                     startCountdown();
                 } else if (!isOpen) {
                     handConfirmed = false;
-                    // reset countdown if any
                     if (countdownTimer) {
                         clearInterval(countdownTimer);
                         countdownTimer = null;
@@ -301,14 +391,13 @@
                         timerBadge.innerText = '⏳ 0s';
                     }
                 }
-                // update status
                 if (!handConfirmed) {
                     statusText.innerText = '✋ Show open hand';
                 }
-            }, 350);
+            }, 250);
         }
 
-        // ----- countdown & photo capture -----
+        // ----- countdown & capture -----
         function startCountdown() {
             if (countdownTimer) clearInterval(countdownTimer);
             let sec = 3;
@@ -330,56 +419,45 @@
         }
 
         function capturePhotoAndStartPuzzle() {
-            // capture from video
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const c = canvas.getContext('2d');
+            c.drawImage(video, 0, 0, canvas.width, canvas.height);
             photoDataURL = canvas.toDataURL('image/jpeg', 0.9);
-            // build puzzle
             buildPuzzle(photoDataURL);
-            // switch view
-            cameraView.classList.add('hidden');
-            puzzleView.classList.remove('hidden');
-            // stop hand detection
+            cameraView.style.display = 'none';
+            puzzleView.style.display = 'flex';
             if (handDetectInterval) clearInterval(handDetectInterval);
             handDetectInterval = null;
-            // start puzzle timer 30s
             startPuzzleTimer();
             gameActive = true;
+            puzzleSolved = false;
         }
 
-        // ----- puzzle build (12 pieces) -----
+        // ----- build 9-piece puzzle -----
         function buildPuzzle(imageSrc) {
             const img = new Image();
             img.onload = function() {
-                const cols = 4, rows = 3; // 12 pieces
-                const pieceWidth = img.width / cols;
-                const pieceHeight = img.height / rows;
-                const grid = puzzleGrid;
-                grid.innerHTML = '';
+                const cols = 3, rows = 3;
+                const pw = img.width / cols, ph = img.height / rows;
+                puzzleGrid.innerHTML = '';
                 pieces = [];
-                // create piece data
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         const canvas = document.createElement('canvas');
-                        canvas.width = pieceWidth;
-                        canvas.height = pieceHeight;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, c * pieceWidth, r * pieceHeight, pieceWidth, pieceHeight, 0, 0, pieceWidth, pieceHeight);
+                        canvas.width = pw; canvas.height = ph;
+                        const ctx2 = canvas.getContext('2d');
+                        ctx2.drawImage(img, c * pw, r * ph, pw, ph, 0, 0, pw, ph);
                         const dataURL = canvas.toDataURL('image/jpeg');
-                        const pieceObj = {
+                        pieces.push({
                             id: r * cols + c,
-                            row: r,
-                            col: c,
+                            row: r, col: c,
                             dataURL: dataURL,
-                            currentIndex: r * cols + c // initially correct
-                        };
-                        pieces.push(pieceObj);
+                            currentIndex: r * cols + c
+                        });
                     }
                 }
-                // shuffle
                 shufflePieces();
                 renderPuzzle();
             };
@@ -388,17 +466,16 @@
 
         function shufflePieces() {
             const indices = pieces.map((_, i) => i);
-            shuffleArray(indices);
-            pieces.forEach((p, i) => {
-                p.currentIndex = indices[i];
-            });
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            pieces.forEach((p, i) => p.currentIndex = indices[i]);
         }
 
         function renderPuzzle() {
-            const grid = puzzleGrid;
-            grid.innerHTML = '';
-            // sort by currentIndex
             const sorted = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
+            puzzleGrid.innerHTML = '';
             for (let p of sorted) {
                 const div = document.createElement('div');
                 div.className = 'puzzle-piece';
@@ -406,91 +483,123 @@
                 div.style.backgroundSize = 'cover';
                 div.dataset.id = p.id;
                 div.dataset.index = p.currentIndex;
-                // attach pinch / drag events
+                // pointer + touch events
                 div.addEventListener('pointerdown', onPiecePointerDown);
                 div.addEventListener('touchstart', onPieceTouchStart, { passive: false });
-                grid.appendChild(div);
+                puzzleGrid.appendChild(div);
             }
-            // check win condition
             checkWin();
         }
 
-        // ----- drag & drop (pinch gesture simulated via drag) -----
-        function onPiecePointerDown(e) {
-            e.preventDefault();
-            const el = e.currentTarget;
-            startDrag(el, e.clientX, e.clientY);
-        }
+        // ----- drag & pinch (gesture) -----
+        function onPiecePointerDown(e) { e.preventDefault(); startDrag(e.currentTarget, e.clientX, e.clientY); }
+        function onPieceTouchStart(e) { e.preventDefault(); const t = e.touches[0]; startDrag(e.currentTarget, t.clientX, t.clientY); }
 
-        function onPieceTouchStart(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const el = e.currentTarget;
-            startDrag(el, touch.clientX, touch.clientY);
-        }
-
-        function startDrag(el, clientX, clientY) {
-            if (!gameActive) return;
+        function startDrag(el, cx, cy) {
+            if (!gameActive || puzzleSolved) return;
             const rect = el.getBoundingClientRect();
-            const offsetX = clientX - rect.left;
-            const offsetY = clientY - rect.top;
-            const index = parseInt(el.dataset.index);
+            const gridRect = puzzleGrid.getBoundingClientRect();
+            const offsetX = cx - rect.left;
+            const offsetY = cy - rect.top;
+            const idx = parseInt(el.dataset.index);
             dragState = {
                 element: el,
-                index: index,
+                index: idx,
                 offsetX: offsetX,
                 offsetY: offsetY,
-                startX: clientX,
-                startY: clientY
+                startX: cx, startY: cy,
+                pinchActive: false,
+                snapIndex: null
             };
             el.classList.add('dragging');
-            el.style.zIndex = 100;
+            el.style.zIndex = 30;
 
-            // global listeners
             window.addEventListener('pointermove', onPointerMove);
             window.addEventListener('pointerup', onPointerUp);
             window.addEventListener('touchmove', onTouchMove, { passive: false });
             window.addEventListener('touchend', onTouchEnd, { passive: false });
+            // also listen for pinch (two finger) via touch events
+            window.addEventListener('touchmove', onPinchMove, { passive: false });
+            window.addEventListener('touchend', onPinchEnd, { passive: false });
         }
 
         function onPointerMove(e) { e.preventDefault(); moveDrag(e.clientX, e.clientY); }
-        function onTouchMove(e) { e.preventDefault(); const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }
+        function onTouchMove(e) { e.preventDefault(); const t = e.touches[0]; if (t) moveDrag(t.clientX, t.clientY); }
 
-        function moveDrag(clientX, clientY) {
+        function moveDrag(cx, cy) {
             if (!dragState) return;
             const el = dragState.element;
             const gridRect = puzzleGrid.getBoundingClientRect();
-            // compute new position (free movement)
-            const x = clientX - gridRect.left - dragState.offsetX;
-            const y = clientY - gridRect.top - dragState.offsetY;
+            const x = cx - gridRect.left - dragState.offsetX;
+            const y = cy - gridRect.top - dragState.offsetY;
             el.style.transform = `translate(${x}px, ${y}px)`;
             el.style.position = 'relative';
-            el.style.left = '0px';
-            el.style.top = '0px';
-            // snap detection: find nearest piece
-            const allPieces = puzzleGrid.querySelectorAll('.puzzle-piece');
-            let targetIndex = null;
-            const centerX = clientX - gridRect.left;
-            const centerY = clientY - gridRect.top;
-            for (let child of allPieces) {
+            el.style.left = '0px'; el.style.top = '0px';
+
+            // snap detection
+            const all = puzzleGrid.querySelectorAll('.puzzle-piece');
+            let target = null;
+            const centerX = cx - gridRect.left;
+            const centerY = cy - gridRect.top;
+            for (let child of all) {
                 if (child === el) continue;
                 const r = child.getBoundingClientRect();
-                const cx = r.left + r.width/2 - gridRect.left;
-                const cy = r.top + r.height/2 - gridRect.top;
-                const dist = Math.hypot(centerX - cx, centerY - cy);
-                if (dist < 50) {
-                    targetIndex = parseInt(child.dataset.index);
+                const cx2 = r.left + r.width/2 - gridRect.left;
+                const cy2 = r.top + r.height/2 - gridRect.top;
+                if (Math.hypot(centerX - cx2, centerY - cy2) < 45) {
+                    target = parseInt(child.dataset.index);
                     break;
                 }
             }
-            if (targetIndex !== null) {
-                // highlight
-                el.style.borderColor = '#ffbb33';
-            } else {
-                el.style.borderColor = '#4d5670';
+            dragState.snapIndex = target;
+            el.style.borderColor = target !== null ? '#ffbb33' : '#4d5670';
+        }
+
+        // pinch gesture: when two fingers on same piece -> swap with adjacent?
+        let pinchTouchIds = [];
+        function onPinchMove(e) {
+            if (!dragState || e.touches.length < 2) return;
+            const el = dragState.element;
+            // highlight as pinched
+            el.classList.add('pinched');
+            // if pinched, we swap with the piece under the second finger?
+            const touch1 = e.touches[0], touch2 = e.touches[1];
+            // get center of two fingers
+            const cx = (touch1.clientX + touch2.clientX)/2;
+            const cy = (touch1.clientY + touch2.clientY)/2;
+            // find piece at center
+            const gridRect = puzzleGrid.getBoundingClientRect();
+            const all = puzzleGrid.querySelectorAll('.puzzle-piece');
+            let targetEl = null;
+            for (let child of all) {
+                if (child === el) continue;
+                const r = child.getBoundingClientRect();
+                if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+                    targetEl = child;
+                    break;
+                }
             }
-            // store target for drop
-            dragState.snapIndex = targetIndex;
+            if (targetEl) {
+                const targetIdx = parseInt(targetEl.dataset.index);
+                const currentIdx = parseInt(el.dataset.index);
+                // swap
+                const p1 = pieces.find(p => p.currentIndex === currentIdx);
+                const p2 = pieces.find(p => p.currentIndex === targetIdx);
+                if (p1 && p2) {
+                    const temp = p1.currentIndex;
+                    p1.currentIndex = p2.currentIndex;
+                    p2.currentIndex = temp;
+                    renderPuzzle();
+                    // reset drag state
+                    endDragClean();
+                }
+            }
+        }
+
+        function onPinchEnd(e) {
+            if (dragState && dragState.element) {
+                dragState.element.classList.remove('pinched');
+            }
         }
 
         function onPointerUp(e) { e.preventDefault(); endDrag(); }
@@ -503,30 +612,39 @@
             el.style.zIndex = '';
             el.style.transform = '';
             el.style.borderColor = '#4d5670';
+            el.classList.remove('pinched');
 
-            // swap if snap
-            const snapIdx = dragState.snapIndex;
-            if (snapIdx !== undefined && snapIdx !== null) {
+            const snap = dragState.snapIndex;
+            if (snap !== undefined && snap !== null) {
                 const currentIdx = parseInt(el.dataset.index);
-                // find piece with snapIdx
-                const targetPiece = pieces.find(p => p.currentIndex === snapIdx);
+                const targetPiece = pieces.find(p => p.currentIndex === snap);
                 const currentPiece = pieces.find(p => p.currentIndex === currentIdx);
                 if (targetPiece && currentPiece) {
-                    // swap indices
                     const temp = currentPiece.currentIndex;
                     currentPiece.currentIndex = targetPiece.currentIndex;
                     targetPiece.currentIndex = temp;
                     renderPuzzle();
                 }
             }
-            // clean
+            endDragClean();
+        }
+
+        function endDragClean() {
             window.removeEventListener('pointermove', onPointerMove);
             window.removeEventListener('pointerup', onPointerUp);
             window.removeEventListener('touchmove', onTouchMove);
             window.removeEventListener('touchend', onTouchEnd);
-            dragState = null;
-            // re-render to avoid glitch
-            renderPuzzle();
+            window.removeEventListener('touchmove', onPinchMove);
+            window.removeEventListener('touchend', onPinchEnd);
+            if (dragState) {
+                if (dragState.element) {
+                    dragState.element.classList.remove('dragging');
+                    dragState.element.classList.remove('pinched');
+                    dragState.element.style.transform = '';
+                    dragState.element.style.borderColor = '#4d5670';
+                }
+                dragState = null;
+            }
         }
 
         // ----- win check -----
@@ -535,18 +653,15 @@
             const sorted = [...pieces].sort((a, b) => a.currentIndex - b.currentIndex);
             let win = true;
             for (let i = 0; i < sorted.length; i++) {
-                if (sorted[i].id !== i) {
-                    win = false;
-                    break;
-                }
+                if (sorted[i].id !== i) { win = false; break; }
             }
-            if (win) {
+            if (win && !puzzleSolved) {
+                puzzleSolved = true;
                 gameActive = false;
                 if (puzzleTimer) clearInterval(puzzleTimer);
-                puzzleMessage.className = 'message-box congrats';
-                puzzleMessage.innerHTML = '🎉 CONGRATULATIONS! You solved it! 🎉';
-                // stop timer
-                timerBadge.innerText = '🎯';
+                puzzleMessage.className = 'message-congrats';
+                puzzleMessage.innerHTML = '🎉 CONGRATULATIONS! 🎉';
+                timerBadge.innerText = '🏆';
             }
         }
 
@@ -554,24 +669,24 @@
         function startPuzzleTimer() {
             let seconds = 30;
             timerBadge.innerText = `⏳ ${seconds}s`;
-            puzzleMessage.innerText = `⏳ ${seconds}s · arrange pieces`;
+            puzzleMessage.innerText = `⏳ ${seconds}s · pinch & drag`;
             if (puzzleTimer) clearInterval(puzzleTimer);
             puzzleTimer = setInterval(() => {
                 seconds--;
                 timerBadge.innerText = `⏳ ${seconds}s`;
-                puzzleMessage.innerText = `⏳ ${seconds}s · arrange pieces`;
-                if (seconds <= 0) {
+                puzzleMessage.innerText = `⏳ ${seconds}s · pinch & drag`;
+                if (seconds <= 0 && !puzzleSolved) {
                     clearInterval(puzzleTimer);
                     puzzleTimer = null;
                     gameActive = false;
-                    puzzleMessage.className = 'message-box sorry';
-                    puzzleMessage.innerHTML = '😞 SORRY! Time is up. Try again.';
+                    puzzleMessage.className = 'message-sorry';
+                    puzzleMessage.innerHTML = '😞 SORRY! Try again.';
                     timerBadge.innerText = '⏰';
                 }
             }, 1000);
         }
 
-        // ----- reset / back to camera -----
+        // ----- reset to camera -----
         function resetToCamera() {
             if (handDetectInterval) clearInterval(handDetectInterval);
             if (countdownTimer) clearInterval(countdownTimer);
@@ -581,25 +696,27 @@
             handDetectInterval = null;
             gameActive = false;
             handConfirmed = false;
-            cameraView.classList.remove('hidden');
-            puzzleView.classList.add('hidden');
+            puzzleSolved = false;
+            cameraView.style.display = 'flex';
+            puzzleView.style.display = 'none';
             statusText.innerText = '✋ Show open hand';
             timerBadge.innerText = '⏳ 0s';
-            puzzleMessage.className = 'message-box';
-            puzzleMessage.innerHTML = '👆 Open hand → 3s countdown → photo → puzzle';
-            // restart camera if needed
-            if (!stream) {
-                startCamera();
-            }
+            puzzleMessage.className = '';
+            puzzleMessage.innerHTML = '⏳ 30s · pinch & drag';
+            if (!stream) startCamera();
             startHandDetection();
+            resizeCanvas();
         }
 
         // ----- camera init -----
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
                 video.srcObject = stream;
                 await video.play();
+                resizeCanvas();
             } catch (err) {
                 statusText.innerText = '⚠️ Camera permission denied';
                 console.warn('camera error', err);
@@ -610,17 +727,17 @@
         async function init() {
             await startCamera();
             startHandDetection();
-            // reset button
-            resetBtn.addEventListener('click', resetToCamera);
+            resetCameraBtn.addEventListener('click', resetToCamera);
             backToCameraBtn.addEventListener('click', resetToCamera);
             shuffleBtn.addEventListener('click', function() {
-                if (photoDataURL) {
+                if (photoDataURL && !puzzleSolved) {
                     shufflePieces();
                     renderPuzzle();
                 }
             });
+            // resize canvas on show
+            resizeCanvas();
         }
-
         init();
     })();
 </script>
