@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>LinguaVoice · Translate & Speak</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f8fafc;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: #0b1e33;
+    }
+
+    /* header */
+    .header {
+      height: 64px;
+      background: #ffffff;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      flex-shrink: 0;
+      backdrop-filter: blur(2px);
+      background: rgba(255,255,255,0.85);
+      border-bottom: 1px solid #e9edf2;
+    }
+    .settings-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 40px;
+      background: #1e293b;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .settings-btn:hover { background: #0f172a; transform: scale(0.96); }
+
+    /* main */
+    .main {
+      flex: 1;
+      padding: 16px 20px 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #inputText {
+      width: 100%;
+      flex: 1;
+      min-height: 140px;
+      border: 1px solid #dce1e9;
+      border-radius: 20px;
+      padding: 18px 20px;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1.6;
+      resize: none;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: 0.15s;
+      font-family: inherit;
+    }
+    #inputText:focus {
+      outline: 2px solid #2563eb;
+      outline-offset: -1px;
+      border-color: transparent;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+    .btn {
+      flex: 1 1 0;
+      min-width: 100px;
+      border: none;
+      padding: 14px 8px;
+      border-radius: 60px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #1e293b;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .btn:active { transform: scale(0.96); }
+    .eng { background: #2563eb; }
+    .eng:hover { background: #1d4ed8; }
+    .mal { background: #16a34a; }
+    .mal:hover { background: #15803d; }
+    .hin { background: #dc2626; }
+    .hin:hover { background: #b91c1c; }
+
+    #status {
+      font-size: 14px;
+      color: #475569;
+      padding: 4px 8px;
+      background: #f1f5f9;
+      border-radius: 30px;
+      display: inline-block;
+      align-self: flex-start;
+      margin-top: 4px;
+      font-weight: 450;
+    }
+
+    /* drawer - translated */
+    .drawer {
+      flex-shrink: 0;
+      background: #ffffff;
+      border-radius: 24px 24px 0 0;
+      padding: 14px 20px 18px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+      border-top: 1px solid #eef2f6;
+      margin-top: 4px;
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .drawer-header b {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+    .copy-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 30px;
+      background: #f1f5f9;
+      transition: 0.1s;
+    }
+    .copy-btn:hover { background: #e2e8f0; }
+    #translatedText {
+      width: 100%;
+      height: 64px;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-size: 16px;
+      background: #fafcff;
+      resize: none;
+      font-family: inherit;
+      color: #0b1e33;
+    }
+    #translatedText:focus { outline: 2px solid #94a3b8; }
+
+    /* settings panel */
+    .settings {
+      position: fixed;
+      top: 0;
+      right: -380px;
+      width: 340px;
+      max-width: 92vw;
+      height: 100%;
+      background: white;
+      padding: 24px 22px;
+      transition: 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+      overflow-y: auto;
+      box-shadow: -6px 0 24px rgba(0,0,0,0.08);
+      z-index: 1000;
+      border-left: 1px solid #eef2f6;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .settings.open { right: 0; }
+    .settings h2 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #0b1e33;
+      letter-spacing: -0.3px;
+    }
+    .settings label {
+      display: block;
+      margin-top: 18px;
+      font-weight: 500;
+      font-size: 14px;
+      color: #1e293b;
+    }
+    .settings select, .settings input[type="range"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 40px;
+      border: 1px solid #dce1e9;
+      background: white;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    .settings select:focus { outline: 2px solid #2563eb; }
+    .test-btn {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 40px;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: 0.1s;
+      font-size: 14px;
+    }
+    .test-btn:hover { background: #e2e8f0; }
+    .close-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 28px;
+      background: #1e293b;
+      border: none;
+      border-radius: 60px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .close-btn:hover { background: #0f172a; }
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .range-row span {
+      min-width: 32px;
+      font-weight: 500;
+      color: #0b1e33;
+    }
+    .pitch-speed-group {
+      background: #f8fafc;
+      padding: 12px 14px;
+      border-radius: 24px;
+      margin: 8px 0 4px;
+    }
+
+    /* responsive */
+    @media (max-width: 480px) {
+      .main { padding: 12px 14px; }
+      .btn { font-size: 14px; padding: 12px 6px; min-width: 70px; }
+      #inputText { font-size: 17px; padding: 16px; }
+      .drawer { padding: 12px 14px 16px; }
+      #translatedText { height: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="settings-btn" onclick="toggleSettings()" aria-label="Open settings">⚙️</button>
+  </div>
+
+  <div class="main">
+    <textarea id="inputText" placeholder="Type or paste English text here…"></textarea>
+    <div class="buttons">
+      <button class="btn eng" onclick="speakEnglish()">🔊 English</button>
+      <button class="btn mal" onclick="speakMalayalam()">🔊 മലയാളം</button>
+      <button class="btn hin" onclick="speakHindi()">🔊 हिन्दी</button>
+    </div>
+    <div id="status">● Ready</div>
+  </div>
+
+  <div class="drawer">
+    <div class="drawer-header">
+      <b>📄 Translated text</b>
+      <button class="copy-btn" onclick="copyTranslation()">Copy</button>
+    </div>
+    <textarea id="translatedText" readonly placeholder="Translation will appear here…"></textarea>
+  </div>
+
+  <!-- settings panel -->
+  <div class="settings" id="settingsPanel">
+    <h2>⚙️ Voice settings</h2>
+    <p style="font-size:14px; color:#475569; margin-top:-4px;">Preferences persist until changed</p>
+
+    <label>🇬🇧 English voice</label>
+    <select id="engVoice"></select>
+    <button class="test-btn" onclick="testVoice('en')">🔊 Test English</button>
+
+    <label>🇮🇳 Malayalam voice</label>
+    <select id="malVoice"></select>
+    <button class="test-btn" onclick="testVoice('ml')">🔊 Test Malayalam</button>
+
+    <label>🇮🇳 Hindi voice</label>
+    <select id="hinVoice"></select>
+    <button class="test-btn" onclick="testVoice('hi')">🔊 Test Hindi</button>
+
+    <div class="pitch-speed-group">
+      <label>Pitch <span id="pitchValue">1.0</span></label>
+      <input id="pitch" type="range" min="0.5" max="2.0" step="0.05" value="1.0">
+
+      <label style="margin-top:14px;">Speed <span id="speedValue">1.0</span></label>
+      <input id="speed" type="range" min="0.5" max="2.0" step="0.05" value="1.0">
+    </div>
+
+    <button class="close-btn" onclick="toggleSettings()">← Close settings</button>
+    <div style="font-size:12px; color:#94a3b8; text-align:center; margin-top:12px;">Selected voices are saved automatically</div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // DOM refs
+      const inputText = document.getElementById('inputText');
+      const translatedText = document.getElementById('translatedText');
+      const statusEl = document.getElementById('status');
+      const engVoiceSel = document.getElementById('engVoice');
+      const malVoiceSel = document.getElementById('malVoice');
+      const hinVoiceSel = document.getElementById('hinVoice');
+      const pitchRange = document.getElementById('pitch');
+      const speedRange = document.getElementById('speed');
+      const pitchValue = document.getElementById('pitchValue');
+      const speedValue = document.getElementById('speedValue');
+
+      // --- persistent storage keys ---
+      const STORAGE_KEY = 'lingua_voice_prefs';
+      let savedPrefs = { eng: '', mal: '', hin: '', pitch: 1.0, speed: 1.0 };
+
+      // load saved preferences from localStorage
+      function loadPrefsFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            savedPrefs = { ...savedPrefs, ...parsed };
+          }
+        } catch (_) {}
+      }
+      loadPrefsFromStorage();
+
+      // save current preferences
+      function persistPrefs() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(savedPrefs));
+        } catch (_) {}
+      }
+
+      // --- populate voice dropdowns ---
+      function populateVoiceLists() {
+        const voices = speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return;
+
+        // filter helpers
+        const enVoices = voices.filter(v => v.lang.startsWith('en'));
+        const mlVoices = voices.filter(v => v.lang.startsWith('ml'));
+        const hiVoices = voices.filter(v => v.lang.startsWith('hi'));
+
+        function fillSelect(selectEl, voiceList, fallbackLabel = 'Default voice') {
+          const currentVal = selectEl.value || selectEl.dataset.saved || '';
+          selectEl.innerHTML = '';
+          if (voiceList.length === 0) {
+            // fallback: show all voices with lang hint
+            const all = voices.map(v => ({ ...v }));
+            all.forEach(v => {
+              const opt = document.createElement('option');
+              opt.value = v.name;
+              opt.textContent = `${v.name} (${v.lang})`;
+              selectEl.appendChild(opt);
+            });
+          } else {
+            voiceList.forEach(v => {
+              const opt = document.createElement('option');
+              opt.value = v.name;
+              opt.textContent = `${v.name} (${v.lang})`;
+              selectEl.appendChild(opt);
+            });
+          }
+          // restore selection
+          if (currentVal) {
+            const exists = Array.from(selectEl.options).some(o => o.value === currentVal);
+            if (exists) selectEl.value = currentVal;
+            else {
+              // try to match by language if possible
+              const fallback = voiceList.length > 0 ? voiceList[0].name : (voices[0]?.name || '');
+              if (fallback) selectEl.value = fallback;
+            }
+          } else {
+            // set first as default
+            if (voiceList.length > 0) selectEl.value = voiceList[0].name;
+            else if (voices.length > 0) selectEl.value = voices[0].name;
+          }
+          // store as data attribute for persistence
+          selectEl.dataset.saved = selectEl.value;
+        }
+
+        fillSelect(engVoiceSel, enVoices);
+        fillSelect(malVoiceSel, mlVoices);
+        fillSelect(hinVoiceSel, hiVoices);
+
+        // apply saved preferences from storage (override)
+        if (savedPrefs.eng) {
+          const exists = Array.from(engVoiceSel.options).some(o => o.value === savedPrefs.eng);
+          if (exists) engVoiceSel.value = savedPrefs.eng;
+          else if (engVoiceSel.options.length > 0) engVoiceSel.value = engVoiceSel.options[0].value;
+        }
+        if (savedPrefs.mal) {
+          const exists = Array.from(malVoiceSel.options).some(o => o.value === savedPrefs.mal);
+          if (exists) malVoiceSel.value = savedPrefs.mal;
+          else if (malVoiceSel.options.length > 0) malVoiceSel.value = malVoiceSel.options[0].value;
+        }
+        if (savedPrefs.hin) {
+          const exists = Array.from(hinVoiceSel.options).some(o => o.value === savedPrefs.hin);
+          if (exists) hinVoiceSel.value = savedPrefs.hin;
+          else if (hinVoiceSel.options.length > 0) hinVoiceSel.value = hinVoiceSel.options[0].value;
+        }
+
+        // pitch & speed from storage
+        if (savedPrefs.pitch !== undefined) {
+          pitchRange.value = savedPrefs.pitch;
+          pitchValue.textContent = savedPrefs.pitch.toFixed(1);
+        }
+        if (savedPrefs.speed !== undefined) {
+          speedRange.value = savedPrefs.speed;
+          speedValue.textContent = savedPrefs.speed.toFixed(1);
+        }
+
+        // update savedPrefs with current selections
+        saveCurrentSelectionToPrefs();
+      }
+
+      // save dropdown selections into savedPrefs and localStorage
+      function saveCurrentSelectionToPrefs() {
+        savedPrefs.eng = engVoiceSel.value || '';
+        savedPrefs.mal = malVoiceSel.value || '';
+        savedPrefs.hin = hinVoiceSel.value || '';
+        savedPrefs.pitch = parseFloat(pitchRange.value) || 1.0;
+        savedPrefs.speed = parseFloat(speedRange.value) || 1.0;
+        persistPrefs();
+      }
+
+      // event listeners: when user changes any voice or slider, persist
+      engVoiceSel.addEventListener('change', saveCurrentSelectionToPrefs);
+      malVoiceSel.addEventListener('change', saveCurrentSelectionToPrefs);
+      hinVoiceSel.addEventListener('change', saveCurrentSelectionToPrefs);
+      pitchRange.addEventListener('input', function() {
+        pitchValue.textContent = parseFloat(this.value).toFixed(1);
+        saveCurrentSelectionToPrefs();
+      });
+      speedRange.addEventListener('input', function() {
+        speedValue.textContent = parseFloat(this.value).toFixed(1);
+        saveCurrentSelectionToPrefs();
+      });
+
+      // --- speech synthesis helpers ---
+      function getVoiceByName(name) {
+        const voices = speechSynthesis.getVoices();
+        return voices.find(v => v.name === name) || null;
+      }
+
+      function speakText(text, voiceName, langCode) {
+        if (!text || text.trim() === '') {
+          statusEl.textContent = '⚠️ No text to speak';
+          return;
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = langCode || 'en-IN';
+        utterance.pitch = parseFloat(pitchRange.value) || 1.0;
+        utterance.rate = parseFloat(speedRange.value) || 1.0;
+
+        const selectedVoice = getVoiceByName(voiceName);
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        } else {
+          // fallback: try to find any voice with matching language
+          const voices = speechSynthesis.getVoices();
+          const fallback = voices.find(v => v.lang.startsWith(langCode?.substring(0,2) || 'en'));
+          if (fallback) utterance.voice = fallback;
+        }
+
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+        statusEl.textContent = '🔊 Speaking...';
+        utterance.onend = () => { statusEl.textContent = '✅ Done'; };
+        utterance.onerror = () => { statusEl.textContent = '❌ Speech error'; };
+      }
+
+      // --- translation via MyMemory ---
+      async function translateText(text, targetLang) {
+        if (!text.trim()) return '';
+        try {
+          statusEl.textContent = `⏳ Translating to ${targetLang}...`;
+          const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`;
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error('Network error');
+          const data = await resp.json();
+          if (data.responseData && data.responseData.translatedText) {
+            return data.responseData.translatedText;
+          } else {
+            throw new Error('Translation unavailable');
+          }
+        } catch (err) {
+          statusEl.textContent = `⚠️ Translation error: ${err.message}`;
+          return '';
+        }
+      }
+
+      // --- public functions ---
+      window.speakEnglish = function() {
+        const text = inputText.value.trim();
+        if (!text) { statusEl.textContent = '⚠️ Please enter text'; return; }
+        translatedText.value = text;
+        speakText(text, engVoiceSel.value, 'en-IN');
+      };
+
+      window.speakMalayalam = async function() {
+        const text = inputText.value.trim();
+        if (!text) { statusEl.textContent = '⚠️ Enter text first'; return; }
+        const translated = await translateText(text, 'ml');
+        if (translated) {
+          translatedText.value = translated;
+          speakText(translated, malVoiceSel.value, 'ml-IN');
+        } else {
+          statusEl.textContent = '⚠️ Malayalam translation failed';
+        }
+      };
+
+      window.speakHindi = async function() {
+        const text = inputText.value.trim();
+        if (!text) { statusEl.textContent = '⚠️ Enter text first'; return; }
+        const translated = await translateText(text, 'hi');
+        if (translated) {
+          translatedText.value = translated;
+          speakText(translated, hinVoiceSel.value, 'hi-IN');
+        } else {
+          statusEl.textContent = '⚠️ Hindi translation failed';
+        }
+      };
+
+      window.testVoice = function(type) {
+        const testTexts = {
+          en: 'Hello, this is a test voice.',
+          ml: 'ഹലോ, ഇത് ഒരു പരീക്ഷണ ശബ്ദമാണ്.',
+          hi: 'नमस्ते, यह एक परीक्षण आवाज है।'
+        };
+        const selMap = { en: engVoiceSel, ml: malVoiceSel, hi: hinVoiceSel };
+        const langMap = { en: 'en-IN', ml: 'ml-IN', hi: 'hi-IN' };
+        const voiceName = selMap[type]?.value || '';
+        speakText(testTexts[type] || 'Test', voiceName, langMap[type] || 'en-IN');
+      };
+
+      window.copyTranslation = function() {
+        const text = translatedText.value;
+        if (!text) { statusEl.textContent = '⚠️ Nothing to copy'; return; }
+        navigator.clipboard.writeText(text).then(() => {
+          statusEl.textContent = '📋 Copied!';
+        }).catch(() => {
+          // fallback
+          translatedText.select();
+          document.execCommand('copy');
+          statusEl.textContent = '📋 Copied!';
+        });
+      };
+
+      window.toggleSettings = function() {
+        document.getElementById('settingsPanel').classList.toggle('open');
+      };
+
+      // --- init voice loading with persistence ---
+      function initVoices() {
+        if (speechSynthesis.getVoices().length > 0) {
+          populateVoiceLists();
+        } else {
+          speechSynthesis.onvoiceschanged = function() {
+            populateVoiceLists();
+            speechSynthesis.onvoiceschanged = null;
+          };
+        }
+      }
+
+      // also call when window loads
+      window.addEventListener('load', function() {
+        // ensure settings are applied from storage after voices are ready
+        setTimeout(() => {
+          if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.onvoiceschanged = function() {
+              populateVoiceLists();
+              speechSynthesis.onvoiceschanged = null;
+            };
+          } else {
+            populateVoiceLists();
+          }
+        }, 100);
+      });
+
+      // call now in case voices already loaded
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(() => {
+          if (speechSynthesis.getVoices().length > 0) populateVoiceLists();
+          else {
+            speechSynthesis.onvoiceschanged = function() {
+              populateVoiceLists();
+              speechSynthesis.onvoiceschanged = null;
+            };
+          }
+        }, 80);
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(() => {
+            if (speechSynthesis.getVoices().length > 0) populateVoiceLists();
+            else {
+              speechSynthesis.onvoiceschanged = function() {
+                populateVoiceLists();
+                speechSynthesis.onvoiceschanged = null;
+              };
+            }
+          }, 80);
+        });
+      }
+
+      // additional safety: when user changes dropdowns manually, they are saved via event listeners
+      // also save on any setting change via the range events
+
+      // ensure pitch/speed display updates from storage if they were set
+      pitchValue.textContent = parseFloat(pitchRange.value).toFixed(1);
+      speedValue.textContent = parseFloat(speedRange.value).toFixed(1);
+
+    })();
+  </script>
+</body>
+</html>
