@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0B0D10">
+  <title>Aperture — 9‑piece · dot view</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: #000; color: #F5F1E8;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden; overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body { touch-action: none; }
+
+    /* ——— video hidden, only used for capture ——— */
+    #video {
+      position: fixed; inset: 0; width: 1px; height: 1px;
+      opacity: 0; pointer-events: none; z-index: -1;
+      transform: scaleX(-1);
+      background: #050505;
+    }
+
+    #pinchCursor {
+      position: fixed; top: 0; left: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+      border-radius: 50%; border: 2px solid #F5F1E8;
+      pointer-events: none; z-index: 15;
+      opacity: 0; transition: opacity .15s ease, background .12s ease, border-color .12s ease, transform .05s linear;
+    }
+    #pinchCursor.visible { opacity: .9; }
+    #pinchCursor.pinching { background: #F87171; border-color: #F87171; transform: scale(1.3); } /* red dot */
+
+    .screen { position: fixed; inset: 0; display: none; z-index: 20; }
+    .screen.active { display: flex; }
+
+    .modal {
+      align-items: center; justify-content: center;
+      padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+      background: radial-gradient(120% 120% at 50% 20%, rgba(0,0,0,0.15), rgba(0,0,0,0.65));
+    }
+    .panel {
+      pointer-events: auto;
+      background: rgba(10,12,16,0.62);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 28px;
+      padding: 40px 32px;
+      max-width: 420px; width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .eyebrow { font-weight: 600; letter-spacing: .18em; text-transform: uppercase; font-size: 12px; color: #FFC857; margin: 0 0 10px; }
+    h1.title { font-family: 'Bebas Neue', sans-serif; font-weight: 400; letter-spacing: .02em; font-size: clamp(36px,9vw,52px); margin: 0 0 12px; line-height: 1; }
+    p.lede { font-size: 15px; line-height: 1.55; color: rgba(245,241,232,0.78); margin: 0 0 28px; }
+
+    .aperture-badge { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 22px; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,200,87,0.35); position: relative; }
+    .aperture-badge::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 1px solid rgba(255,200,87,0.35); animation: aperturePulse 2.4s ease-in-out infinite; }
+    .aperture-badge span { font-size: 34px; }
+    @keyframes aperturePulse { 0%,100%{ transform:scale(1); opacity:.65; } 50%{ transform:scale(1.18); opacity:0; } }
+
+    .btn-shutter {
+      appearance: none; border: none; cursor: pointer;
+      font-weight: 700; font-size: 15px; letter-spacing: .04em;
+      color: #0B0D10; background: #FFC857;
+      padding: 16px 30px; border-radius: 999px;
+      box-shadow: 0 10px 28px rgba(255,200,87,0.35);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-shutter:active { transform: scale(.97); }
+    .btn-shutter:disabled { opacity: .6; cursor: default; }
+    .error-text { color: #F87171; font-size: 13px; margin-top: 16px; display: none; }
+    .error-text.show { display: block; }
+
+    /* ——— camera screen: only yellow dot + hint ——— */
+    #screen-camera {
+      pointer-events: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: #0B0D10; /* solid dark background, no camera feed */
+    }
+    .hint-pill {
+      margin-bottom: max(46px, env(safe-area-inset-bottom) + 30px);
+      background: rgba(10,12,16,0.62);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .hint-pill .dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #FFC857;  /* yellow dot */
+      animation: dotPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes dotPulse { 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+
+    #screen-countdown { align-items: center; justify-content: center; background: radial-gradient(120% 120% at 50% 50%, rgba(0,0,0,0.05), rgba(0,0,0,0.55)); }
+    .countdown-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(140px, 38vw, 260px); color: #FFC857; line-height: 1; text-shadow: 0 0 60px rgba(255,200,87,0.5); animation: popIn .5s cubic-bezier(.2,1.4,.4,1); }
+    @keyframes popIn { 0%{ transform:scale(.5); opacity:0;} 60%{transform:scale(1.08);opacity:1;} 100%{transform:scale(1);} }
+
+    #flash { position: fixed; inset: 0; background: #fff; opacity: 0; z-index: 60; pointer-events: none; }
+    #flash.flash-active { animation: flashPop .22s ease-out; }
+    @keyframes flashPop { 0%{ opacity:.95; } 100%{ opacity:0; } }
+
+    /* ——— puzzle ——— */
+    #screen-puzzle { align-items: flex-start; justify-content: flex-start; background: #0B0D10; }
+    #slotsLayer, #puzzleLayer { position: absolute; inset: 0; pointer-events: none; }
+
+    .puzzle-slot {
+      position: absolute;
+      border: 1.5px dashed rgba(255,255,255,0.35);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.03);
+    }
+    .puzzle-piece {
+      position: absolute; top: 0; left: 0; border-radius: 6px;
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+      transition: box-shadow .15s ease, border-color .2s ease;
+      will-change: transform;
+    }
+    .puzzle-piece.dragging { box-shadow: 0 16px 30px rgba(0,0,0,0.6); border-color: #FFC857; z-index: 5; }
+    .puzzle-piece.correct { border-color: #34D399; box-shadow: 0 0 0 3px rgba(52,211,153,0.35); }
+
+    .hud-top {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: max(18px, env(safe-area-inset-top)) 18px 0;
+      pointer-events: none; z-index: 2;
+    }
+    /* ——— thumbnail replaced by yellow dot ——— */
+    .ref-dot {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: #FFC857; /* yellow dot */
+      border: 2px solid rgba(255,255,255,0.5);
+      box-shadow: 0 0 0 2px rgba(255,200,87,0.3);
+    }
+    .timer-ring { width: 56px; height: 56px; position: relative; }
+    .timer-ring svg { transform: rotate(-90deg); }
+    .timer-ring circle { fill: none; stroke-width: 5; }
+    .timer-ring .track { stroke: rgba(255,255,255,0.18); }
+    .timer-ring .fill { stroke: #FFC857; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .3s ease; }
+    .timer-ring.urgent .fill { stroke: #F87171; }
+    .timer-ring .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+
+    .puzzle-hint {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      top: max(80px, calc(env(safe-area-inset-top) + 70px));
+      font-size: 13px; font-weight: 500; color: rgba(245,241,232,0.75);
+      background: rgba(10,12,16,0.62); padding: 8px 16px; border-radius: 999px;
+      pointer-events: none; z-index: 2;
+    }
+    .result-emoji { font-size: 52px; margin-bottom: 10px; }
+    .result-title.success { color: #34D399; }
+    .result-title.fail { color: #F87171; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .aperture-badge::before, .hint-pill .dot, .countdown-num { animation: none !important; }
+    }
+    @media (min-width: 720px){ .panel{ padding:52px 48px; } }
+  </style>
+</head>
+<body>
+
+  <!-- video hidden, used only for capture -->
+  <video id="video" autoplay playsinline muted></video>
+  <div id="pinchCursor"></div>
+  <div id="flash"></div>
+
+  <div id="screen-start" class="screen modal active">
+    <div class="panel">
+      <div class="aperture-badge"><span>📷</span></div>
+      <p class="eyebrow">9‑Piece · Dot View</p>
+      <h1 class="title">Aperture</h1>
+      <p class="lede">Open your hand to snap a selfie, then pinch the 9 pieces back together. <br><span style="color:#FFC857;">●</span> yellow dot = thumbnail &nbsp;·&nbsp; <span style="color:#F87171;">●</span> red dot = pinch</p>
+      <button id="startBtn" class="btn-shutter">Open Camera</button>
+      <p id="errorText" class="error-text"></p>
+    </div>
+  </div>
+
+  <div id="screen-camera" class="screen">
+    <div class="hint-pill"><span class="dot"></span><span>Hold up an open palm to take your photo</span></div>
+  </div>
+
+  <div id="screen-countdown" class="screen">
+    <div id="countdownNum" class="countdown-num">3</div>
+  </div>
+
+  <div id="screen-puzzle" class="screen">
+    <div class="hud-top">
+      <div class="ref-dot"></div> <!-- yellow dot instead of thumbnail -->
+      <div class="timer-ring" id="timerRing">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle class="track" cx="28" cy="28" r="24"></circle>
+          <circle class="fill" id="timerFillCircle" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="0"></circle>
+        </svg>
+        <div class="num" id="timerNum">30</div>
+      </div>
+    </div>
+    <div class="puzzle-hint">Pinch a piece, drag it into place</div>
+    <div id="slotsLayer"></div>
+    <div id="puzzleLayer"></div>
+  </div>
+
+  <div id="screen-result" class="screen modal">
+    <div class="panel">
+      <div id="resultEmoji" class="result-emoji">🎉</div>
+      <h1 id="resultTitle" class="title result-title success">Solved!</h1>
+      <p id="resultLede" class="lede">Nice work — heading back to the camera…</p>
+    </div>
+  </div>
+
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest";
+
+// ——— CONFIG ———
+const GRID_COLS = 3, GRID_ROWS = 3, NUM_PIECES = GRID_COLS * GRID_ROWS; // 9 pieces
+const PHOTO_W = 960, PHOTO_H = 720;
+const COUNTDOWN_SECONDS = 3;
+const PUZZLE_SECONDS = 30;
+const RESULT_DISPLAY_MS = 4000;
+const OPEN_HAND_HOLD_FRAMES = 6;
+const PINCH_RATIO_ON = 0.42;
+const SNAP_RADIUS_FACTOR = 0.62;
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * 24;
+
+// ——— DOM ———
+const videoEl = document.getElementById('video');
+const pinchCursorEl = document.getElementById('pinchCursor');
+const flashEl = document.getElementById('flash');
+const startBtn = document.getElementById('startBtn');
+const errorText = document.getElementById('errorText');
+const countdownNumEl = document.getElementById('countdownNum');
+const refDotEl = document.querySelector('.ref-dot'); // yellow dot
+const timerRingEl = document.getElementById('timerRing');
+const timerFillCircle = document.getElementById('timerFillCircle');
+const timerNumEl = document.getElementById('timerNum');
+const slotsLayer = document.getElementById('slotsLayer');
+const puzzleLayer = document.getElementById('puzzleLayer');
+const resultEmoji = document.getElementById('resultEmoji');
+const resultTitle = document.getElementById('resultTitle');
+const resultLede = document.getElementById('resultLede');
+const screens = document.querySelectorAll('.screen');
+
+// ——— STATE ———
+let appState = 'start';
+let handLandmarker = null;
+let lastVideoTime = -1;
+let latestLandmarks = null;
+let openHandStreak = 0;
+let isPinching = false;
+let pinchScreenPoint = null;
+let draggingPiece = null;
+let dragOffset = { x: 0, y: 0 };
+let countdownValue = COUNTDOWN_SECONDS;
+let countdownTimerId = null;
+let puzzleTimeLeft = PUZZLE_SECONDS;
+let puzzleTimerId = null;
+let puzzleSolved = false;
+let pieces = [];
+let slots = [];
+
+startBtn.addEventListener('click', onStartTap);
+
+function showState(name) {
+  appState = name;
+  for (const s of screens) {
+    s.classList.toggle('active', s.id === 'screen-' + name);
+  }
+}
+
+// ——— START ———
+function onStartTap() {
+  errorText.classList.remove('show');
+  startBtn.disabled = true;
+  startBtn.textContent = 'Starting…';
+  requestFullscreenSafe();
+  setupCamera().then(() => {
+    showState('camera');
+  }).catch(err => {
+    startBtn.disabled = false;
+    startBtn.textContent = 'Try Again';
+    errorText.textContent = describeError(err);
+    errorText.classList.add('show');
+  });
+}
+
+function describeError(err) {
+  if (err?.name === 'NotAllowedError') return 'Camera permission denied.';
+  if (err?.name === 'NotFoundError') return 'No camera found.';
+  if (err?.name === 'UnsupportedError') return 'Camera not supported.';
+  return 'Could not start camera.';
+}
+
+function requestFullscreenSafe() {
+  try {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req && !document.fullscreenElement) req.call(el).catch(() => {});
+  } catch (_) {}
+}
+
+async function setupCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) throw { name: 'UnsupportedError' };
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 720 } },
+    audio: false
+  });
+  videoEl.srcObject = stream;
+  await new Promise(resolve => {
+    videoEl.onloadedmetadata = () => { videoEl.play(); resolve(); };
+  });
+
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
+  const modelUrl = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+  try {
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: modelUrl, delegate: 'GPU' },
+      runningMode: 'VIDEO',
+      numHands: 1
+    });
+  } catch (_) {
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: modelUrl, delegate: 'CPU' },
+      runningMode: 'VIDEO',
+      numHands: 1
+    });
+  }
+  requestAnimationFrame(detectLoop);
+}
+
+function detectLoop() {
+  if (handLandmarker && videoEl.readyState >= 2 && videoEl.currentTime !== lastVideoTime) {
+    lastVideoTime = videoEl.currentTime;
+    const result = handLandmarker.detectForVideo(videoEl, performance.now());
+    handleHandResult(result);
+  }
+  requestAnimationFrame(detectLoop);
+}
+
+function handleHandResult(result) {
+  if (result?.landmarks?.length) {
+    latestLandmarks = result.landmarks[0];
+  } else {
+    latestLandmarks = null;
+    openHandStreak = 0;
+  }
+  processGestures();
+}
+
+// ——— GESTURES ———
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+function isHandOpen(lm) {
+  const fingers = [[8,6],[12,10],[16,14],[20,18]];
+  let extended = 0;
+  for (const [tip, pip] of fingers) {
+    if (dist(lm[0], lm[tip]) > dist(lm[0], lm[pip]) * 1.15) extended++;
+  }
+  return extended >= 4;
+}
+
+function mapNormalizedToScreen(nx, ny) {
+  const vw = videoEl.videoWidth || 960;
+  const vh = videoEl.videoHeight || 720;
+  const cw = window.innerWidth;
+  const ch = window.innerHeight;
+  const videoAspect = vw / vh;
+  const containerAspect = cw / ch;
+  let scale, offsetX = 0, offsetY = 0;
+  if (videoAspect > containerAspect) {
+    scale = ch / vh;
+    offsetX = (vw * scale - cw) / 2;
+  } else {
+    scale = cw / vw;
+    offsetY = (vh * scale - ch) / 2;
+  }
+  const px = nx * vw * scale - offsetX;
+  const py = ny * vh * scale - offsetY;
+  return { x: cw - px, y: py };
+}
+
+function processGestures() {
+  if (!latestLandmarks) {
+    isPinching = false;
+    pinchScreenPoint = null;
+    updatePinchCursor();
+    if (draggingPiece) releaseDraggedPiece();
+    return;
+  }
+  const lm = latestLandmarks;
+
+  if (appState === 'camera') {
+    if (isHandOpen(lm)) {
+      openHandStreak++;
+      if (openHandStreak >= OPEN_HAND_HOLD_FRAMES) {
+        openHandStreak = 0;
+        triggerCountdown();
+      }
+    } else {
+      openHandStreak = 0;
+    }
+  }
+
+  const thumbTip = lm[4], indexTip = lm[8];
+  const palmSize = dist(lm[0], lm[9]) || 0.001;
+  const pinchDist = dist(thumbTip, indexTip);
+  isPinching = (pinchDist / palmSize) < PINCH_RATIO_ON;
+
+  const midX = (thumbTip.x + indexTip.x) / 2;
+  const midY = (thumbTip.y + indexTip.y) / 2;
+  pinchScreenPoint = mapNormalizedToScreen(midX, midY);
+
+  updatePinchCursor();
+
+  if (appState === 'puzzle') handlePuzzleDrag();
+}
+
+function updatePinchCursor() {
+  const visible = pinchScreenPoint && (appState === 'camera' || appState === 'puzzle');
+  if (!visible) { pinchCursorEl.classList.remove('visible'); return; }
+  pinchCursorEl.classList.add('visible');
+  pinchCursorEl.classList.toggle('pinching', isPinching);
+  pinchCursorEl.style.transform = `translate(${pinchScreenPoint.x}px,${pinchScreenPoint.y}px)`;
+}
+
+// ——— COUNTDOWN & CAPTURE ———
+function triggerCountdown() {
+  showState('countdown');
+  countdownValue = COUNTDOWN_SECONDS;
+  countdownNumEl.textContent = String(countdownValue);
+  restartPopAnimation();
+  countdownTimerId = setInterval(() => {
+    countdownValue--;
+    if (countdownValue <= 0) {
+      clearInterval(countdownTimerId);
+      capturePhotoAndStartPuzzle();
+    } else {
+      countdownNumEl.textContent = String(countdownValue);
+      restartPopAnimation();
+    }
+  }, 1000);
+}
+
+function restartPopAnimation() {
+  countdownNumEl.style.animation = 'none';
+  void countdownNumEl.offsetWidth;
+  countdownNumEl.style.animation = '';
+}
+
+function capturePhotoAndStartPuzzle() {
+  triggerFlash();
+  const dataUrl = captureMirroredPhoto();
+  // no thumbnail, just yellow dot (already shown)
+  buildPuzzleFromImage(dataUrl);
+  setTimeout(() => {
+    showState('puzzle');
+    startPuzzleTimer();
+  }, 260);
+}
+
+function triggerFlash() {
+  flashEl.classList.remove('flash-active');
+  void flashEl.offsetWidth;
+  flashEl.classList.add('flash-active');
+}
+
+function captureMirroredPhoto() {
+  const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
+  const targetAspect = PHOTO_W / PHOTO_H;
+  const srcAspect = vw / vh;
+  let sx, sy, sw, sh;
+  if (srcAspect > targetAspect) {
+    sh = vh; sw = vh * targetAspect; sx = (vw - sw) / 2; sy = 0;
+  } else {
+    sw = vw; sh = vw / targetAspect; sx = 0; sy = (vh - sh) / 2;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = PHOTO_W; canvas.height = PHOTO_H;
+  const ctx = canvas.getContext('2d');
+  ctx.translate(PHOTO_W, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, PHOTO_W, PHOTO_H);
+  return canvas.toDataURL('image/jpeg', 0.9);
+}
+
+// ——— PUZZLE (9 pieces) ———
+function layoutSlots() {
+  slotsLayer.innerHTML = '';
+  slots = [];
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const maxGridW = vw * 0.86;
+  const maxGridH = vh * 0.56;
+  let pieceSize = Math.floor(Math.min(maxGridW / GRID_COLS, maxGridH / GRID_ROWS));
+  pieceSize = Math.min(pieceSize, 180); // cap for large screens
+  const gridW = pieceSize * GRID_COLS, gridH = pieceSize * GRID_ROWS;
+  const startX = (vw - gridW) / 2;
+  const startY = (vh - gridH) / 2 + vh * 0.05;
+
+  for (let i = 0; i < NUM_PIECES; i++) {
+    const col = i % GRID_COLS, row = Math.floor(i / GRID_COLS);
+    const x = startX + col * pieceSize, y = startY + row * pieceSize;
+    const el = document.createElement('div');
+    el.className = 'puzzle-slot';
+    el.style.width = pieceSize + 'px';
+    el.style.height = pieceSize + 'px';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    slotsLayer.appendChild(el);
+    slots.push({ el, index: i, x, y, size: pieceSize, cx: x + pieceSize/2, cy: y + pieceSize/2, occupiedBy: null });
+  }
+}
+
+function buildPuzzleFromImage(dataUrl) {
+  puzzleLayer.innerHTML = '';
+  pieces = [];
+  layoutSlots();
+  const pieceSize = slots[0].size;
+
+  for (let i = 0; i < NUM_PIECES; i++) {
+    const col = i % GRID_COLS, row = Math.floor(i / GRID_COLS);
+    const el = document.createElement('div');
+    el.className = 'puzzle-piece';
+    el.style.width = pieceSize + 'px';
+    el.style.height = pieceSize + 'px';
+    el.style.backgroundImage = `url(${dataUrl})`;
+    el.style.backgroundSize = `${pieceSize * GRID_COLS}px ${pieceSize * GRID_ROWS}px`;
+    el.style.backgroundPosition = `-${col * pieceSize}px -${row * pieceSize}px`;
+    puzzleLayer.appendChild(el);
+    pieces.push({ el, correctIndex: i, slotIndex: null, size: pieceSize, x: 0, y: 0 });
+  }
+  scatterPieces();
+}
+
+function scatterPieces() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  for (const p of pieces) {
+    const margin = p.size * 0.6;
+    const topMargin = vh * 0.12, bottomMargin = vh * 0.06;
+    const x = margin + Math.random() * Math.max(10, vw - p.size - margin * 2);
+    const y = topMargin + Math.random() * Math.max(10, vh - p.size - topMargin - bottomMargin);
+    setPiecePosition(p, x, y);
+    p.slotIndex = null;
+    p.el.classList.remove('correct');
+  }
+}
+
+function setPiecePosition(p, x, y) {
+  p.x = x; p.y = y;
+  p.el.style.transform = `translate(${x}px,${y}px)`;
+}
+
+// ——— DRAG ———
+function findPieceAtPoint(x, y) {
+  let best = null, bestD = Infinity;
+  for (const p of pieces) {
+    if (p === draggingPiece) continue;
+    if (x >= p.x && x <= p.x + p.size && y >= p.y && y <= p.y + p.size) {
+      const cx = p.x + p.size/2, cy = p.y + p.size/2;
+      const d = (x-cx)*(x-cx) + (y-cy)*(y-cy);
+      if (d < bestD) { bestD = d; best = p; }
+    }
+  }
+  return best;
+}
+
+function handlePuzzleDrag() {
+  if (!pinchScreenPoint) {
+    if (draggingPiece) releaseDraggedPiece();
+    return;
+  }
+  if (isPinching) {
+    if (!draggingPiece) {
+      const p = findPieceAtPoint(pinchScreenPoint.x, pinchScreenPoint.y);
+      if (p) {
+        draggingPiece = p;
+        if (p.slotIndex !== null) {
+          slots[p.slotIndex].occupiedBy = null;
+          p.slotIndex = null;
+        }
+        dragOffset.x = pinchScreenPoint.x - p.x - p.size/2;
+        dragOffset.y = pinchScreenPoint.y - p.y - p.size/2;
+        p.el.classList.add('dragging');
+        puzzleLayer.appendChild(p.el);
+      }
+    } else {
+      const nx = pinchScreenPoint.x - dragOffset.x - draggingPiece.size/2;
+      const ny = pinchScreenPoint.y - dragOffset.y - draggingPiece.size/2;
+      setPiecePosition(draggingPiece, nx, ny);
+    }
+  } else if (draggingPiece) {
+    releaseDraggedPiece();
+  }
+}
+
+function releaseDraggedPiece() {
+  const p = draggingPiece;
+  draggingPiece = null;
+  p.el.classList.remove('dragging');
+
+  const pcx = p.x + p.size/2, pcy = p.y + p.size/2;
+  let nearest = null, nearestD = Infinity;
+  for (const s of slots) {
+    const d = Math.hypot(s.cx - pcx, s.cy - pcy);
+    if (d < nearestD) { nearestD = d; nearest = s; }
+  }
+  const snapRadius = p.size * SNAP_RADIUS_FACTOR;
+
+  if (nearest && nearestD <= snapRadius) {
+    if (nearest.occupiedBy && nearest.occupiedBy !== p) {
+      const other = nearest.occupiedBy;
+      other.slotIndex = null;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const margin = other.size * 0.6;
+      const topMargin = vh * 0.12, bottomMargin = vh * 0.06;
+      setPiecePosition(other,
+        margin + Math.random() * Math.max(10, vw - other.size - margin * 2),
+        topMargin + Math.random() * Math.max(10, vh - other.size - topMargin - bottomMargin));
+      other.el.classList.remove('correct');
+    }
+    nearest.occupiedBy = p;
+    p.slotIndex = nearest.index;
+    setPiecePosition(p, nearest.x, nearest.y);
+    p.el.classList.toggle('correct', p.slotIndex === p.correctIndex);
+    checkWin();
+  } else {
+    p.el.classList.remove('correct');
+  }
+}
+
+function checkWin() {
+  for (const p of pieces) {
+    if (p.slotIndex !== p.correctIndex) return;
+  }
+  puzzleSolved = true;
+  endPuzzle(true);
+}
+
+// ——— TIMER ———
+function startPuzzleTimer() {
+  puzzleSolved = false;
+  puzzleTimeLeft = PUZZLE_SECONDS;
+  timerRingEl.classList.remove('urgent');
+  updateTimerDisplay();
+  puzzleTimerId = setInterval(() => {
+    puzzleTimeLeft--;
+    updateTimerDisplay();
+    if (puzzleTimeLeft <= 5) timerRingEl.classList.add('urgent');
+    if (puzzleTimeLeft <= 0) {
+      clearInterval(puzzleTimerId);
+      if (!puzzleSolved) endPuzzle(false);
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  timerNumEl.textContent = String(Math.max(0, puzzleTimeLeft));
+  const fraction = Math.max(0, puzzleTimeLeft) / PUZZLE_SECONDS;
+  timerFillCircle.style.strokeDashoffset = String(TIMER_CIRCUMFERENCE * (1 - fraction));
+}
+
+// ——— RESULT ———
+function endPuzzle(success) {
+  clearInterval(puzzleTimerId);
+  draggingPiece = null;
+  showResult(success);
+  setTimeout(resetToCamera, RESULT_DISPLAY_MS);
+}
+
+function showResult(success) {
+  if (success) {
+    resultEmoji.textContent = '🎉';
+    resultTitle.textContent = 'Congratulations!';
+    resultTitle.className = 'title result-title success';
+    resultLede.textContent = '9‑piece puzzle solved. Heading back…';
+  } else {
+    resultEmoji.textContent = '😕';
+    resultTitle.textContent = 'Time’s up';
+    resultTitle.className = 'title result-title fail';
+    resultLede.textContent = "Let's take another shot.";
+  }
+  showState('result');
+}
+
+function resetToCamera() {
+  puzzleLayer.innerHTML = '';
+  slotsLayer.innerHTML = '';
+  pieces = [];
+  slots = [];
+  openHandStreak = 0;
+  showState('camera');
+}
+</script>
+</body>
+</html>
