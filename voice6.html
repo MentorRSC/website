@@ -1,143 +1,499 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Translate & Speak</title>
-<style>
-body{font-family:Arial;margin:0;background:#f4f4f4}
-.header{padding:10px;background:#fff;display:flex;justify-content:flex-end;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-#settings{position:fixed;top:0;right:-340px;width:320px;height:100%;background:#fff;overflow:auto;padding:15px;transition:.3s}
-#settings.open{right:0}
-textarea{width:95%;height:250px;margin:15px;padding:12px}
-.btn{display:block;width:95%;margin:10px auto;padding:14px;border:none;color:#fff;border-radius:10px}
-.eng{background:#2563eb}.mal{background:#16a34a}.hin{background:#dc2626}
-.drawer{position:fixed;bottom:0;width:100%;height:20vh;background:#fff;padding:10px}
-.drawer textarea{height:70%;margin:0;width:100%}
-select,input[type=range]{width:100%}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0B0D10">
+  <title>Aperture · Jigsaw</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    :root {
+      --ink: #0B0D10;
+      --glass: rgba(10,12,16,0.75);
+      --gold: #FFC857;
+      --gold-dim: rgba(255,200,87,0.3);
+      --emerald: #34D399;
+      --coral: #F87171;
+      --paper: #F5F1E8;
+      --display: 'Bebas Neue', sans-serif;
+      --body: 'Inter', system-ui, sans-serif;
+    }
+    html, body { width: 100%; height: 100%; background: #000; color: var(--paper); font-family: var(--body); overflow: hidden; touch-action: none; -webkit-tap-highlight-color: transparent; }
+    #video { position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); background: #050505; z-index: 0; }
+    #skeletonCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.9; background: rgba(0,0,0,0.5); }
+    #pinchCursor { position: fixed; top: 0; left: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; border: 2px solid var(--paper); pointer-events: none; z-index: 15; opacity: 0; transition: opacity .15s, background .12s, border-color .12s, transform .05s; background: rgba(255,255,255,0.05); }
+    #pinchCursor.visible { opacity: .9; }
+    #pinchCursor.pinching { background: var(--gold); border-color: var(--gold); transform: scale(1.3); }
+
+    .screen { position: fixed; inset: 0; display: none; z-index: 20; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ---- start overlay (popup) ---- */
+    #screen-start .panel {
+      pointer-events: auto;
+      background: var(--glass);
+      backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 28px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      margin: auto;
+    }
+    #screen-start { align-items: center; justify-content: center; background: rgba(0,0,0,0.5); }
+    .eyebrow { font-weight: 600; letter-spacing: .18em; text-transform: uppercase; font-size: 12px; color: var(--gold); margin: 0 0 10px; }
+    h1.title { font-family: var(--display); font-weight: 400; letter-spacing: .02em; font-size: clamp(36px,9vw,52px); margin: 0 0 12px; line-height: 1; }
+    p.lede { font-size: 15px; line-height: 1.55; color: rgba(245,241,232,0.78); margin: 0 0 28px; }
+    .btn-shutter { appearance: none; border: none; cursor: pointer; font-weight: 700; font-size: 15px; letter-spacing: .04em; color: var(--ink); background: var(--gold); padding: 16px 30px; border-radius: 999px; box-shadow: 0 10px 28px rgba(255,200,87,0.35); transition: transform .15s, box-shadow .15s; width: 100%; }
+    .btn-shutter:active { transform: scale(.97); }
+    .btn-shutter:disabled { opacity: .6; }
+
+    /* camera screen */
+    #screen-camera { align-items: flex-end; justify-content: center; pointer-events: none; }
+    .hint-pill { margin-bottom: max(46px, env(safe-area-inset-bottom) + 30px); background: var(--glass); backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
+    .hint-pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--gold); animation: dotPulse 1.4s ease-in-out infinite; }
+    @keyframes dotPulse { 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
+
+    /* countdown */
+    #screen-countdown { align-items: center; justify-content: center; background: rgba(0,0,0,0.55); z-index: 25; }
+    .countdown-num { font-family: var(--display); font-size: clamp(140px, 38vw, 260px); color: var(--gold); line-height: 1; text-shadow: 0 0 60px rgba(255,200,87,0.5); animation: popIn .5s cubic-bezier(.2,1.4,.4,1); }
+    @keyframes popIn { 0%{ transform:scale(.5); opacity:0; } 60%{ transform:scale(1.08); opacity:1; } 100%{ transform:scale(1); } }
+
+    #flash { position: fixed; inset: 0; background: #fff; opacity: 0; z-index: 60; pointer-events: none; }
+    #flash.flash-active { animation: flashPop .22s ease-out; }
+    @keyframes flashPop { 0%{ opacity:.95; } 100%{ opacity:0; } }
+
+    /* puzzle screen – black background */
+    #screen-puzzle { background: #0a0a0a; z-index: 10; }
+    #slotsLayer, #puzzleLayer { position: absolute; inset: 0; pointer-events: none; }
+    .puzzle-slot { position: absolute; border: 1.5px dashed rgba(255,255,255,0.2); border-radius: 6px; background: rgba(255,255,255,0.02); }
+    .puzzle-piece { position: absolute; top: 0; left: 0; border-radius: 6px; border: 2px solid rgba(0,0,0,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.6); transition: box-shadow .15s, border-color .2s; will-change: transform; }
+    .puzzle-piece.dragging { box-shadow: 0 16px 30px rgba(0,0,0,0.8); border-color: var(--gold); z-index: 5; }
+    .puzzle-piece.correct { border-color: var(--emerald); box-shadow: 0 0 0 3px rgba(52,211,153,0.35); }
+
+    .hud-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: max(18px, env(safe-area-inset-top)) 18px 0; pointer-events: none; z-index: 12; }
+    .ref-thumb { width: 64px; height: 48px; border-radius: 10px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+    .ref-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .timer-ring { width: 56px; height: 56px; position: relative; }
+    .timer-ring svg { transform: rotate(-90deg); }
+    .timer-ring circle { fill: none; stroke-width: 5; }
+    .timer-ring .track { stroke: rgba(255,255,255,0.18); }
+    .timer-ring .fill { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .3s; }
+    .timer-ring.urgent .fill { stroke: var(--coral); }
+    .timer-ring .num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+
+    .puzzle-hint { position: absolute; left: 50%; transform: translateX(-50%); top: max(80px, calc(env(safe-area-inset-top) + 70px)); font-size: 13px; font-weight: 500; color: rgba(245,241,232,0.75); background: var(--glass); padding: 8px 16px; border-radius: 999px; pointer-events: none; z-index: 12; white-space: nowrap; }
+
+    /* popup overlay for "welcome" */
+    #popup-overlay {
+      position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+    }
+    #popup-overlay.open { display: flex; }
+    .popup-card {
+      background: var(--glass);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 28px;
+      padding: 40px 28px;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+    }
+    .popup-card h2 { font-family: var(--display); font-size: 28px; letter-spacing: 1px; margin-bottom: 8px; }
+    .popup-card p { color: rgba(245,241,232,0.8); font-size: 15px; margin-bottom: 16px; }
+    .popup-card .popup-timer { font-size: 48px; font-weight: 700; color: var(--gold); font-family: var(--display); }
+
+    /* result */
+    #screen-result { align-items: center; justify-content: center; background: rgba(0,0,0,0.6); z-index: 30; }
+    #screen-result .panel { background: var(--glass); backdrop-filter: blur(18px); border-radius: 28px; padding: 32px 24px; max-width: 400px; width: 90%; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+    .result-emoji { font-size: 52px; margin-bottom: 10px; }
+    .result-title.success { color: var(--emerald); }
+    .result-title.fail { color: var(--coral); }
+
+    /* settings */
+    .settings-toggle { position: fixed; top: max(18px, env(safe-area-inset-top)); right: 18px; z-index: 110; background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); border-radius: 40px; padding: 8px 14px; color: var(--paper); font-size: 20px; cursor: pointer; pointer-events: auto; display: flex; align-items: center; gap: 6px; font-family: var(--body); font-weight: 500; transition: background .2s; }
+    .settings-toggle:hover { background: rgba(255,255,255,0.15); }
+    .settings-menu { position: fixed; top: max(70px, env(safe-area-inset-top) + 50px); right: 18px; z-index: 111; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 18px 20px; min-width: 200px; display: none; flex-direction: column; gap: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    .settings-menu.open { display: flex; }
+    .settings-menu label { font-size: 13px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; color: rgba(245,241,232,0.8); }
+    .settings-menu input { width: 60px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 40px; padding: 6px 8px; color: var(--paper); font-weight: 600; text-align: center; }
+    .settings-menu .menu-item { background: none; border: none; color: var(--paper); font-weight: 500; font-size: 14px; padding: 6px 0; text-align: left; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.05); }
+    .settings-menu .menu-item:first-of-type { border-top: none; }
+    .settings-menu .menu-item:hover { color: var(--gold); }
+
+    @media (max-width: 500px) { .panel { padding: 30px 20px; } .settings-menu { right: 8px; min-width: 160px; } }
+  </style>
 </head>
 <body>
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="skeletonCanvas"></canvas>
+  <div id="pinchCursor"></div>
+  <div id="flash"></div>
 
-<div class="header">
-<button onclick="toggle()">⚙️</button>
-</div>
+  <!-- Popup overlay (welcome) -->
+  <div id="popup-overlay">
+    <div class="popup-card">
+      <h2>🧩 Jigsaw Puzzle</h2>
+      <p>Show open palm to capture · 90s to solve</p>
+      <div class="popup-timer" id="popupTimer">5</div>
+      <p style="margin-top: 8px; font-size: 13px; opacity:0.7;">auto‑closes in <span id="popupCountdownLabel">5</span>s</p>
+    </div>
+  </div>
 
-<textarea id="inputText" placeholder="Type English text"></textarea>
+  <button class="settings-toggle" id="settingsToggle">⚙️ <span style="font-size:12px; letter-spacing:0.5px;">Menu</span></button>
+  <div class="settings-menu" id="settingsMenu">
+    <label>Puzzle time <input type="number" id="timeSetting" value="90" min="20" max="180"></label>
+    <label>Grid size <input type="number" id="gridSetting" value="3" min="2" max="5"></label>
+    <button class="menu-item" id="restartPuzzleBtn">🔄 Restart puzzle</button>
+    <button class="menu-item" id="exitToCameraBtn">📷 Exit to camera</button>
+  </div>
 
-<button class="btn eng" onclick="speakEnglish()">Speak English</button>
-<button class="btn mal" onclick="speakMalayalam()">Speak Malayalam</button>
-<button class="btn hin" onclick="speakHindi()">Speak Hindi</button>
+  <!-- start screen (initial) -->
+  <div id="screen-start" class="screen modal active">
+    <div class="panel">
+      <p class="eyebrow">Gesture Photo Puzzle</p>
+      <h1 class="title">Aperture</h1>
+      <p class="lede">Open your hand to snap a selfie, then pinch the pieces back together.</p>
+      <button id="startBtn" class="btn-shutter">Open Camera</button>
+    </div>
+  </div>
 
-<div id="settings">
-<h3>Settings</h3>
+  <div id="screen-camera" class="screen"><div class="hint-pill"><span class="dot"></span><span>Show open palm to capture</span></div></div>
+  <div id="screen-countdown" class="screen"><div id="countdownNum" class="countdown-num">4</div></div>
 
-<label>English Voice</label>
-<select id="engVoice"></select>
+  <div id="screen-puzzle" class="screen">
+    <div class="hud-top">
+      <div class="ref-thumb"><img id="refThumbImg" alt="ref"></div>
+      <div class="timer-ring" id="timerRing"><svg width="56" height="56" viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="24"></circle><circle class="fill" id="timerFillCircle" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="0"></circle></svg><div class="num" id="timerNum">90</div></div>
+    </div>
+    <div class="puzzle-hint">✋ Pinch a piece, drag it into place</div>
+    <div id="slotsLayer"></div>
+    <div id="puzzleLayer"></div>
+  </div>
 
-<label>Malayalam Voice</label>
-<select id="malVoice"></select>
+  <div id="screen-result" class="screen">
+    <div class="panel">
+      <div id="resultEmoji" class="result-emoji">🎉</div>
+      <h1 id="resultTitle" class="title result-title success">Solved!</h1>
+      <p id="resultLede" class="lede">Nice work — heading back to the camera…</p>
+    </div>
+  </div>
 
-<label>Hindi Voice</label>
-<select id="hinVoice"></select>
+<script type="importmap">
+{ "imports": { "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest" } }
+</script>
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
-<label>Pitch</label>
-<input id="pitch" type="range" min="0" max="2" step="0.1" value="1">
+// ----- CONFIG -----
+let GRID = 3;
+let PUZZLE_SECONDS = 90;
+const COUNTDOWN_SECONDS = 4;
+const RESULT_DISPLAY_MS = 4000;
+const OPEN_HAND_HOLD_FRAMES = 6;
+const PINCH_RATIO_ON = 0.42;
+const SNAP_RADIUS_FACTOR = 0.62;
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * 24;
 
-<label>Speed</label>
-<input id="speed" type="range" min="0.5" max="2" step="0.1" value="1">
+// ----- DOM -----
+const video = document.getElementById('video');
+const pinchCursor = document.getElementById('pinchCursor');
+const flash = document.getElementById('flash');
+const startBtn = document.getElementById('startBtn');
+const countdownNum = document.getElementById('countdownNum');
+const refThumbImg = document.getElementById('refThumbImg');
+const timerRing = document.getElementById('timerRing');
+const timerFillCircle = document.getElementById('timerFillCircle');
+const timerNum = document.getElementById('timerNum');
+const slotsLayer = document.getElementById('slotsLayer');
+const puzzleLayer = document.getElementById('puzzleLayer');
+const resultEmoji = document.getElementById('resultEmoji');
+const resultTitle = document.getElementById('resultTitle');
+const resultLede = document.getElementById('resultLede');
+const skeletonCanvas = document.getElementById('skeletonCanvas');
+const ctx = skeletonCanvas.getContext('2d');
+const screens = document.querySelectorAll('.screen');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsMenu = document.getElementById('settingsMenu');
+const timeSetting = document.getElementById('timeSetting');
+const gridSetting = document.getElementById('gridSetting');
+const restartPuzzleBtn = document.getElementById('restartPuzzleBtn');
+const exitToCameraBtn = document.getElementById('exitToCameraBtn');
+const popupOverlay = document.getElementById('popup-overlay');
+const popupTimer = document.getElementById('popupTimer');
+const popupCountdownLabel = document.getElementById('popupCountdownLabel');
 
-<button onclick="testVoice('en')">Test English</button>
-<button onclick="testVoice('ml')">Test Malayalam</button>
-<button onclick="testVoice('hi')">Test Hindi</button>
-</div>
+let handLandmarker = null; let lastVideoTime = -1; let latestLandmarks = null;
+let openHandStreak = 0; let isPinching = false; let pinchScreenPoint = null;
+let draggingPiece = null; let dragOffset = { x: 0, y: 0 };
+let countdownValue = COUNTDOWN_SECONDS; let countdownTimerId = null;
+let puzzleTimeLeft = PUZZLE_SECONDS; let puzzleTimerId = null; let puzzleSolved = false;
+let pieces = []; let slots = []; let appState = 'start';
+let photoDataUrl = '';
+let popupAutoCloseTimer = null;
 
-<div class="drawer">
-<div>Translated Text</div>
-<textarea id="translatedText" readonly></textarea>
-</div>
+// ----- helpers -----
+function showState(name) { appState = name; screens.forEach(s => s.classList.toggle('active', s.id === 'screen-'+name)); }
+function dist(a,b) { return Math.hypot(a.x-b.x, a.y-b.y); }
 
-<script>
-function toggle(){document.getElementById('settings').classList.toggle('open')}
+function resizeCanvas() { skeletonCanvas.width = window.innerWidth; skeletonCanvas.height = window.innerHeight; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
-function saveSettings(){
- localStorage.setItem('engVoice',engVoice.value);
- localStorage.setItem('malVoice',malVoice.value);
- localStorage.setItem('hinVoice',hinVoice.value);
- localStorage.setItem('pitch',pitch.value);
- localStorage.setItem('speed',speed.value);
+// ----- settings UI -----
+settingsToggle.addEventListener('click', (e) => { e.stopPropagation(); settingsMenu.classList.toggle('open'); });
+document.addEventListener('click', () => settingsMenu.classList.remove('open'));
+timeSetting.value = PUZZLE_SECONDS; gridSetting.value = GRID;
+timeSetting.addEventListener('change', () => { let v = parseInt(timeSetting.value)||90; if(v<20)v=20; if(v>180)v=180; PUZZLE_SECONDS=v; timeSetting.value=v; });
+gridSetting.addEventListener('change', () => { let v = parseInt(gridSetting.value)||3; if(v<2)v=2; if(v>5)v=5; GRID=v; gridSetting.value=v; });
+restartPuzzleBtn.addEventListener('click', () => { if(appState==='puzzle') { clearInterval(puzzleTimerId); resetPuzzle(); } });
+exitToCameraBtn.addEventListener('click', () => { if(appState==='puzzle') { clearInterval(puzzleTimerId); resetToCamera(); } });
+
+// ----- start -----
+startBtn.addEventListener('click', onStartTap);
+function onStartTap() {
+  startBtn.disabled = true; startBtn.textContent = 'Starting…';
+  requestFullscreenSafe();
+  setupCamera().then(() => {
+    showState('camera');
+    // show popup after camera starts
+    showWelcomePopup();
+    startBtn.disabled = false; startBtn.textContent = 'Open Camera';
+  }).catch(err => {
+    startBtn.disabled = false; startBtn.textContent = 'Try Again';
+    alert('Camera error: ' + err.message);
+  });
+}
+function requestFullscreenSafe() { try { let el=document.documentElement; let req=el.requestFullscreen||el.webkitRequestFullscreen; if(req && !document.fullscreenElement) req.call(el).catch(()=>{}); } catch(e){} }
+
+async function setupCamera() {
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error('Unsupported');
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ideal:960}, height:{ideal:720} }, audio:false });
+  video.srcObject = stream; await new Promise(r=>{ video.onloadedmetadata=()=>{ video.play(); r(); }; });
+  const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
+  try {
+    handLandmarker = await HandLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate:'GPU' }, runningMode:'VIDEO', numHands:1 });
+  } catch(e) {
+    handLandmarker = await HandLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate:'CPU' }, runningMode:'VIDEO', numHands:1 });
+  }
+  requestAnimationFrame(detectLoop);
 }
 
-function populate(selectId, filter){
- const sel=document.getElementById(selectId);
- sel.innerHTML='';
- let voices=speechSynthesis.getVoices().filter(filter);
- if(voices.length===0) voices=speechSynthesis.getVoices();
- voices.forEach(v=>sel.add(new Option(v.name+' ('+v.lang+')',v.name)));
+// ----- welcome popup with 5s auto-close -----
+function showWelcomePopup() {
+  popupOverlay.classList.add('open');
+  let count = 5;
+  popupTimer.textContent = count;
+  popupCountdownLabel.textContent = count;
+  clearInterval(popupAutoCloseTimer);
+  popupAutoCloseTimer = setInterval(() => {
+    count--;
+    popupTimer.textContent = count;
+    popupCountdownLabel.textContent = count;
+    if(count <= 0) {
+      clearInterval(popupAutoCloseTimer);
+      popupOverlay.classList.remove('open');
+    }
+  }, 1000);
 }
 
-function loadVoices(){
- const oldEng=localStorage.getItem('engVoice');
- const oldMal=localStorage.getItem('malVoice');
- const oldHin=localStorage.getItem('hinVoice');
-
- populate('engVoice',v=>v.lang.startsWith('en'));
- populate('malVoice',v=>v.lang.startsWith('ml'));
- populate('hinVoice',v=>v.lang.startsWith('hi'));
-
- if(oldEng) engVoice.value=oldEng;
- if(oldMal) malVoice.value=oldMal;
- if(oldHin) hinVoice.value=oldHin;
+// ----- detect loop -----
+function detectLoop() {
+  if(handLandmarker && video.readyState>=2 && video.currentTime!==lastVideoTime) {
+    lastVideoTime = video.currentTime;
+    const result = handLandmarker.detectForVideo(video, performance.now());
+    if(result.landmarks?.length) { latestLandmarks = result.landmarks[0]; } else { latestLandmarks = null; openHandStreak=0; }
+    processGestures();
+    drawSkeleton();
+  }
+  requestAnimationFrame(detectLoop);
 }
 
-speechSynthesis.onvoiceschanged=loadVoices;
-loadVoices();
-
-pitch.value=localStorage.getItem('pitch')||1;
-speed.value=localStorage.getItem('speed')||1;
-
-['engVoice','malVoice','hinVoice','pitch','speed'].forEach(id=>{
- document.getElementById(id).addEventListener('change',saveSettings);
-});
-
-async function translate(text,target){
- const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${target}`);
- const d=await r.json();
- return d.responseData.translatedText;
+function drawSkeleton() {
+  ctx.clearRect(0,0,skeletonCanvas.width,skeletonCanvas.height);
+  if(!latestLandmarks || (appState!=='camera' && appState!=='puzzle')) return;
+  const lm = latestLandmarks;
+  const pts = lm.map(p => mapNormalizedToScreen(p.x,p.y));
+  ctx.strokeStyle = 'rgba(255,200,87,0.7)'; ctx.lineWidth=2.5;
+  const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+  connections.forEach(([i,j]) => { if(pts[i]&&pts[j]) { ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke(); }});
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,5,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fill(); });
+  if(pts[4]&&pts[8]) { ctx.beginPath(); ctx.arc(pts[4].x,pts[4].y,9,0,2*Math.PI); ctx.fillStyle='rgba(255,200,87,0.35)'; ctx.fill(); ctx.beginPath(); ctx.arc(pts[8].x,pts[8].y,9,0,2*Math.PI); ctx.fill(); }
 }
 
-function speak(text,voiceName,lang){
- const u=new SpeechSynthesisUtterance(text);
- u.lang=lang;
- u.pitch=parseFloat(pitch.value);
- u.rate=parseFloat(speed.value);
- const v=speechSynthesis.getVoices().find(x=>x.name===voiceName);
- if(v) u.voice=v;
- speechSynthesis.cancel();
- speechSynthesis.speak(u);
+function mapNormalizedToScreen(nx, ny) {
+  const vw = video.videoWidth||960, vh = video.videoHeight||720, cw = window.innerWidth, ch = window.innerHeight;
+  const va = vw/vh, ca = cw/ch; let scale, ox=0, oy=0;
+  if(va>ca) { scale=ch/vh; ox=(vw*scale-cw)/2; } else { scale=cw/vw; oy=(vh*scale-ch)/2; }
+  return { x: cw - (nx*vw*scale - ox), y: ny*vh*scale - oy };
 }
 
-function speakEnglish(){
- speak(inputText.value,engVoice.value,'en-IN');
+function isHandOpen(lm) {
+  const fingers = [[8,6],[12,10],[16,14],[20,18]]; let ext=0;
+  for(let f of fingers) { if(dist(lm[0], lm[f[0]]) > dist(lm[0], lm[f[1]])*1.15) ext++; }
+  return ext>=4;
 }
 
-async function speakMalayalam(){
- const t=await translate(inputText.value,'ml');
- translatedText.value=t;
- speak(t,malVoice.value,'ml-IN');
+function processGestures() {
+  if(!latestLandmarks) { isPinching=false; pinchScreenPoint=null; updatePinchCursor(); if(draggingPiece) releaseDraggedPiece(); return; }
+  const lm = latestLandmarks;
+  if(appState==='camera') {
+    if(isHandOpen(lm)) { openHandStreak++; if(openHandStreak>=OPEN_HAND_HOLD_FRAMES) { openHandStreak=0; triggerCountdown(); } }
+    else openHandStreak=0;
+  }
+  const thumbTip=lm[4], indexTip=lm[8], palmSize=dist(lm[0],lm[9])||0.001;
+  isPinching = (dist(thumbTip,indexTip)/palmSize) < PINCH_RATIO_ON;
+  const midX=(thumbTip.x+indexTip.x)/2, midY=(thumbTip.y+indexTip.y)/2;
+  pinchScreenPoint = mapNormalizedToScreen(midX, midY);
+  updatePinchCursor();
+  if(appState==='puzzle') handlePuzzleDrag();
 }
 
-async function speakHindi(){
- const t=await translate(inputText.value,'hi');
- translatedText.value=t;
- speak(t,hinVoice.value,'hi-IN');
+function updatePinchCursor() {
+  const visible = pinchScreenPoint && (appState==='camera'||appState==='puzzle');
+  if(!visible) { pinchCursor.classList.remove('visible'); return; }
+  pinchCursor.classList.add('visible'); pinchCursor.classList.toggle('pinching', isPinching);
+  pinchCursor.style.transform = `translate(${pinchScreenPoint.x}px,${pinchScreenPoint.y}px)`;
 }
 
-function testVoice(type){
- if(type==='en') speak('Hello this is a test',engVoice.value,'en-IN');
- if(type==='ml') speak('ഹലോ ഇത് ഒരു ടെസ്റ്റ് ആണ്',malVoice.value,'ml-IN');
- if(type==='hi') speak('नमस्ते यह परीक्षण है',hinVoice.value,'hi-IN');
+// ----- countdown & capture -----
+function triggerCountdown() {
+  showState('countdown'); countdownValue = COUNTDOWN_SECONDS; countdownNum.textContent = String(countdownValue);
+  restartPopAnimation(); clearInterval(countdownTimerId);
+  countdownTimerId = setInterval(() => { countdownValue--; if(countdownValue<=0) { clearInterval(countdownTimerId); capturePhotoAndStartPuzzle(); } else { countdownNum.textContent=String(countdownValue); restartPopAnimation(); } }, 1000);
 }
+function restartPopAnimation() { countdownNum.style.animation='none'; void countdownNum.offsetWidth; countdownNum.style.animation=''; }
+
+function capturePhotoAndStartPuzzle() {
+  triggerFlash(); photoDataUrl = captureMirroredPhoto(); refThumbImg.src = photoDataUrl;
+  setTimeout(() => { buildPuzzleFromImage(photoDataUrl); showState('puzzle'); startPuzzleTimer(); }, 260);
+}
+function triggerFlash() { flash.classList.remove('flash-active'); void flash.offsetWidth; flash.classList.add('flash-active'); }
+function captureMirroredPhoto() {
+  const vw=video.videoWidth, vh=video.videoHeight, targetAspect=4/3;
+  let sx,sy,sw,sh; if(vw/vh>targetAspect) { sh=vh; sw=vh*targetAspect; sx=(vw-sw)/2; sy=0; } else { sw=vw; sh=vw/targetAspect; sx=0; sy=(vh-sh)/2; }
+  const c=document.createElement('canvas'); c.width=960; c.height=720; const ctx=c.getContext('2d');
+  ctx.translate(960,0); ctx.scale(-1,1); ctx.drawImage(video,sx,sy,sw,sh,0,0,960,720);
+  return c.toDataURL('image/jpeg',0.9);
+}
+
+// ----- puzzle build -----
+function layoutSlots() {
+  slotsLayer.innerHTML=''; slots=[]; const vw=window.innerWidth, vh=window.innerHeight;
+  const maxW=vw*0.86, maxH=vh*0.56; let size=Math.floor(Math.min(maxW/GRID, maxH/GRID));
+  const gridW=size*GRID, gridH=size*GRID, startX=(vw-gridW)/2, startY=(vh-gridH)/2+vh*0.05;
+  for(let i=0; i<GRID*GRID; i++) {
+    const col=i%GRID, row=Math.floor(i/GRID), x=startX+col*size, y=startY+row*size;
+    const el=document.createElement('div'); el.className='puzzle-slot'; Object.assign(el.style,{width:size+'px',height:size+'px',left:x+'px',top:y+'px'});
+    slotsLayer.appendChild(el); slots.push({el, index:i, x,y, size, cx:x+size/2, cy:y+size/2, occupiedBy:null});
+  }
+}
+
+function buildPuzzleFromImage(dataUrl) {
+  puzzleLayer.innerHTML=''; pieces=[]; layoutSlots(); const size=slots[0].size;
+  for(let i=0; i<GRID*GRID; i++) {
+    const col=i%GRID, row=Math.floor(i/GRID);
+    const el=document.createElement('div'); el.className='puzzle-piece'; Object.assign(el.style,{width:size+'px',height:size+'px',backgroundImage:`url(${dataUrl})`,backgroundSize:`${size*GRID}px ${size*GRID}px`,backgroundPosition:`-${col*size}px -${row*size}px`});
+    puzzleLayer.appendChild(el); pieces.push({el, correctIndex:i, slotIndex:null, size, x:0, y:0});
+  }
+  scatterPieces();
+}
+
+function scatterPieces() {
+  const vw=window.innerWidth, vh=window.innerHeight;
+  pieces.forEach(p => {
+    const margin=p.size*0.6, top=vh*0.12, bottom=vh*0.06;
+    let x=margin+Math.random()*Math.max(10, vw-p.size-margin*2);
+    let y=top+Math.random()*Math.max(10, vh-p.size-top-bottom);
+    setPiecePosition(p,x,y); p.slotIndex=null; p.el.classList.remove('correct');
+  });
+}
+function setPiecePosition(p,x,y) { p.x=x; p.y=y; p.el.style.transform=`translate(${x}px,${y}px)`; }
+
+// ----- drag -----
+function findPieceAtPoint(x,y) {
+  let best=null, bestD=Infinity;
+  for(let p of pieces) {
+    if(p===draggingPiece) continue;
+    if(x>=p.x && x<=p.x+p.size && y>=p.y && y<=p.y+p.size) {
+      const cx=p.x+p.size/2, cy=p.y+p.size/2, d=(x-cx)**2+(y-cy)**2;
+      if(d<bestD) { bestD=d; best=p; }
+    }
+  }
+  return best;
+}
+
+function handlePuzzleDrag() {
+  if(!pinchScreenPoint) { if(draggingPiece) releaseDraggedPiece(); return; }
+  if(isPinching) {
+    if(!draggingPiece) {
+      const p = findPieceAtPoint(pinchScreenPoint.x, pinchScreenPoint.y);
+      if(p) { draggingPiece=p; if(p.slotIndex!==null){ slots[p.slotIndex].occupiedBy=null; p.slotIndex=null; } dragOffset.x=pinchScreenPoint.x-p.x-p.size/2; dragOffset.y=pinchScreenPoint.y-p.y-p.size/2; p.el.classList.add('dragging'); puzzleLayer.appendChild(p.el); }
+    } else {
+      const nx=pinchScreenPoint.x-dragOffset.x-draggingPiece.size/2, ny=pinchScreenPoint.y-dragOffset.y-draggingPiece.size/2;
+      setPiecePosition(draggingPiece, nx, ny);
+    }
+  } else if(draggingPiece) releaseDraggedPiece();
+}
+
+function releaseDraggedPiece() {
+  if(!draggingPiece) return;
+  const p=draggingPiece; draggingPiece=null; p.el.classList.remove('dragging');
+  const pcx=p.x+p.size/2, pcy=p.y+p.size/2;
+  let nearest=null, nearestD=Infinity;
+  for(let s of slots) { const d=Math.hypot(s.cx-pcx, s.cy-pcy); if(d<nearestD){nearestD=d; nearest=s;} }
+  const snapRadius=p.size*SNAP_RADIUS_FACTOR;
+  if(nearest && nearestD<=snapRadius) {
+    if(nearest.occupiedBy && nearest.occupiedBy!==p) {
+      const other=nearest.occupiedBy; other.slotIndex=null; const vw=window.innerWidth, vh=window.innerHeight; const margin=other.size*0.6, top=vh*0.12, bottom=vh*0.06;
+      setPiecePosition(other, margin+Math.random()*Math.max(10, vw-other.size-margin*2), top+Math.random()*Math.max(10, vh-other.size-top-bottom));
+      other.el.classList.remove('correct');
+    }
+    nearest.occupiedBy=p; p.slotIndex=nearest.index; setPiecePosition(p,nearest.x,nearest.y);
+    p.el.classList.toggle('correct', p.slotIndex===p.correctIndex);
+    checkWin();
+  } else { p.el.classList.remove('correct'); }
+}
+
+function checkWin() {
+  for(let p of pieces) if(p.slotIndex!==p.correctIndex) return;
+  puzzleSolved=true; endPuzzle(true);
+}
+
+// ----- timer -----
+function startPuzzleTimer() {
+  puzzleSolved=false; puzzleTimeLeft=PUZZLE_SECONDS; timerRing.classList.remove('urgent'); updateTimerDisplay();
+  clearInterval(puzzleTimerId);
+  puzzleTimerId = setInterval(() => { puzzleTimeLeft--; updateTimerDisplay(); if(puzzleTimeLeft<=5) timerRing.classList.add('urgent'); if(puzzleTimeLeft<=0){ clearInterval(puzzleTimerId); if(!puzzleSolved) endPuzzle(false); } }, 1000);
+}
+function updateTimerDisplay() { timerNum.textContent=Math.max(0,puzzleTimeLeft); const frac=Math.max(0,puzzleTimeLeft)/PUZZLE_SECONDS; timerFillCircle.style.strokeDashoffset=String(TIMER_CIRCUMFERENCE*(1-frac)); }
+
+// ----- result & reset -----
+function endPuzzle(success) {
+  clearInterval(puzzleTimerId); draggingPiece=null; showResult(success); setTimeout(resetToCamera, RESULT_DISPLAY_MS);
+}
+function showResult(success) {
+  if(success) { resultEmoji.textContent='🎉'; resultTitle.textContent='Congratulations!'; resultTitle.className='title result-title success'; resultLede.textContent='Puzzle solved. Heading back…'; }
+  else { resultEmoji.textContent='😕'; resultTitle.textContent='Time out'; resultTitle.className='title result-title fail'; resultLede.textContent="Time's up — let's take another shot."; }
+  showState('result');
+}
+function resetToCamera() {
+  puzzleLayer.innerHTML=''; slotsLayer.innerHTML=''; pieces=[]; slots=[]; openHandStreak=0; showState('camera');
+  // show popup again on return to camera
+  showWelcomePopup();
+}
+function resetPuzzle() {
+  if(photoDataUrl) { buildPuzzleFromImage(photoDataUrl); startPuzzleTimer(); } else resetToCamera();
+}
+
+// ----- init -----
+showState('start');
 </script>
 </body>
 </html>
