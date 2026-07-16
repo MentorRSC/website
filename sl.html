@@ -19,6 +19,8 @@
             --radius: 12px;
             --transition: 0.3s ease;
             --input-bg: #1e1e28;
+            --seg-bg: #1e1e28;
+            --seg-border: #3a3a4a;
         }
         [data-theme="light"] {
             --bg: #f4f4f8;
@@ -29,6 +31,8 @@
             --border: #cdcdd8;
             --shadow: rgba(0, 0, 0, 0.12);
             --input-bg: #f8f8fc;
+            --seg-bg: #eaeaef;
+            --seg-border: #cdcdd8;
         }
 
         /* ── Reset & Base ── */
@@ -115,7 +119,7 @@
             background: var(--bg2);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            max-width: 720px;
+            max-width: 820px;
             width: 100%;
             max-height: 92vh;
             overflow-y: auto;
@@ -317,8 +321,8 @@
         .number-entry {
             background: var(--bg3);
             border-radius: var(--radius);
-            padding: 16px 14px 18px;
-            margin-bottom: 14px;
+            padding: 12px 12px 14px;
+            margin-bottom: 12px;
             border: 1px solid transparent;
             transition: background var(--transition), border var(--transition), box-shadow 0.2s;
         }
@@ -330,82 +334,161 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             gap: 8px;
             flex-wrap: wrap;
         }
         .number-entry .entry-header label {
             font-weight: 600;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text);
             transition: color var(--transition);
         }
         .number-entry .entry-header .required-badge {
-            font-size: 11px;
-            font-weight: 500;
+            font-size: 10px;
+            font-weight: 600;
             color: var(--accent);
             background: rgba(108, 92, 231, 0.15);
             padding: 2px 10px;
             border-radius: 20px;
             letter-spacing: 0.3px;
-        }
-        .entry-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-        .entry-row .field-group {
-            flex: 1 0 calc(50% - 8px);
-            min-width: 100px;
-        }
-        .entry-row .field-group.input-group {
-            flex: 1 0 60px;
-            min-width: 70px;
-        }
-        .entry-row .field-group label {
-            display: block;
-            font-size: 10px;
-            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: var(--text2);
-            margin-bottom: 2px;
-            transition: color var(--transition);
-        }
-        .entry-row .field-group input,
-        .entry-row .field-group select {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--input-bg);
-            color: var(--text);
-            font-size: 14px;
-            outline: none;
-            transition: border 0.2s, background var(--transition), color var(--transition);
-            font-family: inherit;
-        }
-        .entry-row .field-group input:focus,
-        .entry-row .field-group select:focus {
-            border-color: var(--accent);
-        }
-        .entry-row .field-group input::placeholder {
-            color: var(--text2);
-            opacity: 0.5;
-        }
-        .entry-row .field-group select {
-            appearance: auto;
-            cursor: pointer;
-        }
-        .entry-row .field-group select option {
-            background: var(--bg2);
-            color: var(--text);
         }
 
-        /* ── Submit Button ── */
+        /* ─── Single Row Layout (Input + Switches) ─── */
+        .entry-row {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            align-items: center;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .entry-row::-webkit-scrollbar {
+            height: 3px;
+        }
+        .entry-row::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 8px;
+        }
+        .entry-row::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .field-group {
+            flex: 1 1 0;
+            min-width: 40px;
+        }
+        .field-group.input-group {
+            flex: 0.7 1 50px;
+            min-width: 50px;
+        }
+        .field-group label {
+            display: none;
+        }
+
+        /* Input */
+        .field-group input[type="number"] {
+            width: 100%;
+            padding: 6px 4px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            transition: border 0.2s, background var(--transition), color var(--transition);
+            text-align: center;
+            min-width: 0;
+            height: 30px;
+        }
+        .field-group input[type="number"]:focus {
+            border-color: var(--accent);
+        }
+        .field-group input[type="number"]::placeholder {
+            color: var(--text2);
+            opacity: 0.4;
+            font-weight: 400;
+        }
+        .field-group input[type="number"]::-webkit-outer-spin-button,
+        .field-group input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* ─── Segmented Controls (Switches) ─── */
+        .seg-group {
+            display: flex;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--seg-border);
+            background: var(--seg-bg);
+            flex: 1 1 0;
+            min-width: 36px;
+            height: 30px;
+            transition: background var(--transition), border var(--transition);
+        }
+        .seg-btn {
+            flex: 1;
+            padding: 2px 0;
+            border: none;
+            background: transparent;
+            color: var(--text2);
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s ease;
+            white-space: nowrap;
+            text-align: center;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .seg-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Specific Switch Colors */
+        .seg-group[data-field="redBlack"] .seg-btn.active[data-value="Red"] {
+            background: #e74c3c;
+        }
+        .seg-group[data-field="redBlack"] .seg-btn.active[data-value="Black"] {
+            background: #2d3436;
+        }
+
+        .seg-group[data-field="oddEvenFh"] .seg-btn.active[data-value="Odd"] {
+            background: #0984e3;
+        }
+        .seg-group[data-field="oddEvenFh"] .seg-btn.active[data-value="Even"] {
+            background: #00b894;
+        }
+        .seg-group[data-field="oddEvenFh"] .seg-btn.active[data-value="FH"] {
+            background: #fdcb6e;
+            color: #1a1a22;
+        }
+
+        .seg-group[data-field="ah"] .seg-btn.active {
+            background: #4a5568;
+        }
+
+        .seg-group[data-field="num12"] .seg-btn.active {
+            background: var(--accent);
+        }
+
+        .seg-group[data-field="num123"] .seg-btn.active {
+            background: var(--accent);
+        }
+
+        /* ── Buttons ── */
         .data-submit-wrap {
-            margin-top: 8px;
+            margin-top: 12px;
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
@@ -440,7 +523,7 @@
             background: var(--border);
         }
 
-        /* ── Success / Summary ── */
+        /* ── Summary / Feedback ── */
         .summary-box {
             background: var(--bg3);
             border-radius: var(--radius);
@@ -456,17 +539,21 @@
             color: var(--text);
         }
         .summary-box .summary-item {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text2);
             padding: 3px 0;
             border-bottom: 1px solid var(--border);
             transition: color var(--transition), border var(--transition);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
         }
         .summary-box .summary-item:last-child {
             border-bottom: none;
         }
         .summary-box .summary-item strong {
             color: var(--text);
+            min-width: 30px;
         }
 
         .toast {
@@ -491,29 +578,40 @@
         }
 
         /* ── Responsive ── */
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
             #popup {
-                padding: 20px 14px 24px;
+                padding: 16px 12px 20px;
                 max-height: 94vh;
             }
             #popup-title {
                 font-size: 20px;
             }
-            .entry-row .field-group {
-                flex: 1 0 calc(50% - 6px);
-                min-width: 70px;
+            .entry-row {
+                gap: 4px;
             }
-            .entry-row .field-group.input-group {
-                flex: 1 0 100%;
-                min-width: 100%;
+            .field-group.input-group {
+                flex: 0.6 1 40px;
+                min-width: 40px;
             }
-            .entry-row .field-group input,
-            .entry-row .field-group select {
-                font-size: 13px;
-                padding: 7px 8px;
+            .field-group input[type="number"] {
+                font-size: 11px;
+                padding: 4px 2px;
+                height: 28px;
+            }
+            .seg-group {
+                height: 28px;
+                min-width: 30px;
+            }
+            .seg-btn {
+                font-size: 9px;
+                padding: 1px 0;
             }
             .number-entry {
-                padding: 12px 10px 14px;
+                padding: 8px 8px 10px;
+                margin-bottom: 10px;
+            }
+            .number-entry .entry-header label {
+                font-size: 12px;
             }
             .status-buttons button {
                 font-size: 15px;
@@ -543,22 +641,35 @@
         }
         @media (max-width: 420px) {
             #popup {
-                padding: 14px 10px 18px;
+                padding: 12px 6px 16px;
                 border-radius: 10px;
             }
-            .entry-row .field-group {
-                flex: 1 0 100%;
-                min-width: 100%;
+            .entry-row {
+                gap: 3px;
             }
-            .entry-row .field-group.input-group {
-                flex: 1 0 100%;
+            .field-group.input-group {
+                flex: 0.5 1 30px;
+                min-width: 30px;
+            }
+            .seg-group {
+                min-width: 24px;
+                height: 24px;
+                border-radius: 4px;
+            }
+            .seg-btn {
+                font-size: 7px;
+                padding: 0;
+            }
+            .field-group input[type="number"] {
+                font-size: 10px;
+                height: 24px;
+                border-radius: 4px;
             }
             .number-entry .entry-header label {
-                font-size: 14px;
+                font-size: 11px;
             }
         }
 
-        /* ── Utilities ── */
         .hidden-view {
             display: none !important;
         }
@@ -570,16 +681,6 @@
         }
         .text-center {
             text-align: center;
-        }
-        .gap-8 {
-            gap: 8px;
-        }
-        .flex-col {
-            display: flex;
-            flex-direction: column;
-        }
-        .flex-1 {
-            flex: 1;
         }
     </style>
 </head>
@@ -667,9 +768,9 @@
             const resetBtn = document.getElementById('reset-data');
 
             // ─── State ───
-            let currentView = 'status'; // 'status' | 'loss' | 'data'
+            let currentView = 'status';
             let lossAmount = 0;
-            let formData = []; // array of 5 entries { value, redBlack, oddEvenFh, ah, num12, num123 }
+            let formData = [];
 
             // ─── Theme ───
             let darkMode = true;
@@ -686,13 +787,11 @@
                 setTheme(!darkMode);
             }
 
-            // load saved theme
             try {
                 const saved = localStorage.getItem('theme');
                 if (saved === 'light') setTheme(false);
                 else if (saved === 'dark') setTheme(true);
                 else {
-                    // system preference
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     setTheme(prefersDark);
                 }
@@ -725,18 +824,27 @@
 
             function hidePopup() {
                 overlay.classList.add('hidden');
-                // reset to status view when closed
                 showView('status');
                 feedback.innerHTML = '';
             }
 
             // ─── Build Data Form ───
-            const dropdownOptions = {
+            const segmentOptions = {
                 redBlack: ['Red', 'Black'],
                 oddEvenFh: ['Odd', 'Even', 'FH'],
                 ah: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-                num12: ['12', '24', '26'],
+                num12: ['12', '24', '36'],
                 num123: ['1', '2', '3']
+            };
+
+            // Map to keep field names consistent
+            const fieldMap = {
+                value: 'value',
+                redBlack: 'redBlack',
+                oddEvenFh: 'oddEvenFh',
+                ah: 'ah',
+                num12: 'num12',
+                num123: 'num123'
             };
 
             function buildForm() {
@@ -768,100 +876,93 @@
                     const row = document.createElement('div');
                     row.className = 'entry-row';
 
-                    // Input
+                    // 1. Input
                     const inputGroup = document.createElement('div');
                     inputGroup.className = 'field-group input-group';
                     inputGroup.innerHTML = `
-                        <label>Value</label>
                         <input type="number" step="0.01" placeholder="0" data-field="value" />
                     `;
                     row.appendChild(inputGroup);
 
-                    // Red/Black
-                    const rbGroup = document.createElement('div');
-                    rbGroup.className = 'field-group';
-                    rbGroup.innerHTML = `
-                        <label>R/B</label>
-                        <select data-field="redBlack">
-                            ${dropdownOptions.redBlack.map(o => `<option value="${o}">${o}</option>`).join('')}
-                        </select>
-                    `;
+                    // 2. Red/Black
+                    const rbGroup = createSegmentGroup('redBlack', segmentOptions.redBlack, 'Red');
                     row.appendChild(rbGroup);
 
-                    // Odd/Even/FH
-                    const oefGroup = document.createElement('div');
-                    oefGroup.className = 'field-group';
-                    oefGroup.innerHTML = `
-                        <label>O/E/FH</label>
-                        <select data-field="oddEvenFh">
-                            ${dropdownOptions.oddEvenFh.map(o => `<option value="${o}">${o}</option>`).join('')}
-                        </select>
-                    `;
+                    // 3. Odd/Even/FH
+                    const oefGroup = createSegmentGroup('oddEvenFh', segmentOptions.oddEvenFh, 'Odd');
                     row.appendChild(oefGroup);
 
-                    // AH
-                    const ahGroup = document.createElement('div');
-                    ahGroup.className = 'field-group';
-                    ahGroup.innerHTML = `
-                        <label>AH</label>
-                        <select data-field="ah">
-                            ${dropdownOptions.ah.map(o => `<option value="${o}">${o}</option>`).join('')}
-                        </select>
-                    `;
+                    // 4. AH
+                    const ahGroup = createSegmentGroup('ah', segmentOptions.ah, 'A');
                     row.appendChild(ahGroup);
 
-                    // 12/24/26
-                    const n12Group = document.createElement('div');
-                    n12Group.className = 'field-group';
-                    n12Group.innerHTML = `
-                        <label>12/24/26</label>
-                        <select data-field="num12">
-                            ${dropdownOptions.num12.map(o => `<option value="${o}">${o}</option>`).join('')}
-                        </select>
-                    `;
+                    // 5. 12/24/36
+                    const n12Group = createSegmentGroup('num12', segmentOptions.num12, '12');
                     row.appendChild(n12Group);
 
-                    // 1/2/3
-                    const n123Group = document.createElement('div');
-                    n123Group.className = 'field-group';
-                    n123Group.innerHTML = `
-                        <label>1/2/3</label>
-                        <select data-field="num123">
-                            ${dropdownOptions.num123.map(o => `<option value="${o}">${o}</option>`).join('')}
-                        </select>
-                    `;
+                    // 6. 1/2/3
+                    const n123Group = createSegmentGroup('num123', segmentOptions.num123, '1');
                     row.appendChild(n123Group);
 
                     div.appendChild(row);
                     entriesContainer.appendChild(div);
-                }
 
-                // Wire up input events to update formData
-                document.querySelectorAll('.number-entry').forEach((entryDiv, idx) => {
-                    const inputs = entryDiv.querySelectorAll('[data-field]');
-                    inputs.forEach(el => {
-                        el.addEventListener('change', function() {
-                            const field = this.dataset.field;
-                            formData[idx][field] = this.value;
-                        });
-                        // Also update on input for number fields
-                        if (el.tagName === 'INPUT') {
-                            el.addEventListener('input', function() {
-                                formData[idx][this.dataset.field] = this.value;
-                            });
-                        }
+                    // ── Attach events ──
+                    // Input
+                    const inputEl = inputGroup.querySelector('input');
+                    inputEl.addEventListener('input', function() {
+                        formData[i - 1].value = this.value;
                     });
+
+                    // Segments
+                    const segGroups = div.querySelectorAll('.seg-group');
+                    segGroups.forEach(control => {
+                        const buttons = control.querySelectorAll('.seg-btn');
+                        const field = control.dataset.field;
+                        buttons.forEach(btn => {
+                            btn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                buttons.forEach(b => b.classList.remove('active'));
+                                this.classList.add('active');
+                                formData[i - 1][field] = this.dataset.value;
+                            });
+                        });
+                    });
+                }
+            }
+
+            function createSegmentGroup(field, options, defaultValue) {
+                const group = document.createElement('div');
+                group.className = 'seg-group';
+                group.dataset.field = field;
+
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'seg-btn' + (opt === defaultValue ? ' active' : '');
+                    btn.dataset.value = opt;
+                    btn.textContent = opt;
+                    group.appendChild(btn);
                 });
+
+                return group;
             }
 
             // ─── Sync formData from DOM ───
             function syncFormData() {
                 const entries = document.querySelectorAll('.number-entry');
                 entries.forEach((entryDiv, idx) => {
-                    const inputs = entryDiv.querySelectorAll('[data-field]');
-                    inputs.forEach(el => {
-                        const field = el.dataset.field;
-                        formData[idx][field] = el.value;
+                    // Input
+                    const input = entryDiv.querySelector('input[data-field="value"]');
+                    if (input) formData[idx].value = input.value;
+
+                    // Segments
+                    const segs = entryDiv.querySelectorAll('.seg-group');
+                    segs.forEach(seg => {
+                        const field = seg.dataset.field;
+                        const activeBtn = seg.querySelector('.seg-btn.active');
+                        if (activeBtn) {
+                            formData[idx][field] = activeBtn.dataset.value;
+                        }
                     });
                 });
             }
@@ -869,7 +970,6 @@
             // ─── Validate ───
             function validateForm() {
                 const errors = [];
-                // Number 1 & 2 required
                 for (let i = 0; i < 2; i++) {
                     const val = formData[i].value;
                     if (val === undefined || val === null || val === '' || isNaN(parseFloat(val))) {
@@ -893,8 +993,13 @@
                 formData.forEach((entry, i) => {
                     const val = entry.value || '—';
                     html += `<div class="summary-item">
-                        <strong>#${i+1}</strong> ${val} 
-                        · ${entry.redBlack} · ${entry.oddEvenFh} · ${entry.ah} · ${entry.num12} · ${entry.num123}
+                        <strong>#${i+1}</strong> 
+                        <span>${val}</span>
+                        <span>· ${entry.redBlack}</span>
+                        <span>· ${entry.oddEvenFh}</span>
+                        <span>· ${entry.ah}</span>
+                        <span>· ${entry.num12}</span>
+                        <span>· ${entry.num123}</span>
                     </div>`;
                 });
                 html += `</div>`;
@@ -903,37 +1008,39 @@
 
             // ─── Reset Form ───
             function resetForm() {
-                formData.forEach((entry, i) => {
-                    entry.value = '';
-                    entry.redBlack = 'Red';
-                    entry.oddEvenFh = 'Odd';
-                    entry.ah = 'A';
-                    entry.num12 = '12';
-                    entry.num123 = '1';
-                });
-                // Update DOM
                 const entries = document.querySelectorAll('.number-entry');
                 entries.forEach((entryDiv, idx) => {
-                    const inputs = entryDiv.querySelectorAll('[data-field]');
-                    inputs.forEach(el => {
-                        const field = el.dataset.field;
-                        if (field === 'value') {
-                            el.value = '';
-                        } else {
-                            // select dropdowns
-                            const options = dropdownOptions[field] || [];
-                            if (options.length) {
-                                el.value = options[0];
+                    // Reset input
+                    const input = entryDiv.querySelector('input[data-field="value"]');
+                    if (input) {
+                        input.value = '';
+                        formData[idx].value = '';
+                    }
+
+                    // Reset segments to first option
+                    const segs = entryDiv.querySelectorAll('.seg-group');
+                    segs.forEach(seg => {
+                        const buttons = seg.querySelectorAll('.seg-btn');
+                        buttons.forEach((btn, i) => {
+                            if (i === 0) {
+                                btn.classList.add('active');
+                                formData[idx][seg.dataset.field] = btn.dataset.value;
+                            } else {
+                                btn.classList.remove('active');
                             }
-                        }
+                        });
                     });
                 });
                 feedback.innerHTML = '';
             }
 
             // ─── View Transitions ───
-            function goToStatus() {
-                showView('status');
+            function goToData() {
+                showView('data');
+                if (entriesContainer.children.length === 0) {
+                    buildForm();
+                }
+                feedback.innerHTML = '';
             }
 
             function goToLoss() {
@@ -942,21 +1049,10 @@
                 lossInput.select();
             }
 
-            function goToData() {
-                showView('data');
-                // build form if not already built
-                if (entriesContainer.children.length === 0) {
-                    buildForm();
-                }
-                feedback.innerHTML = '';
-            }
-
             function goToDataFromLoss() {
-                // store loss amount
                 const val = parseFloat(lossInput.value);
                 lossAmount = isNaN(val) ? 0 : val;
                 goToData();
-                // show a small note
                 feedback.innerHTML = `<div class="toast success">Loss amount: ${lossAmount} recorded</div>`;
             }
 
@@ -992,16 +1088,14 @@
 
             lossNext.addEventListener('click', goToDataFromLoss);
 
-            // Submit
+            // Submit & Reset
             submitBtn.addEventListener('click', showSummary);
-
-            // Reset
             resetBtn.addEventListener('click', resetForm);
 
             // Close popup
             closeBtn.addEventListener('click', hidePopup);
 
-            // Click outside to close (on overlay)
+            // Click outside to close
             overlay.addEventListener('click', function(e) {
                 if (e.target === overlay) hidePopup();
             });
@@ -1012,17 +1106,11 @@
             });
 
             // ─── Init ───
-            // Show popup on load
             showPopup();
             showView('status');
-
-            // Pre-build form so it's ready
             buildForm();
 
-            // ─── Handle resize / orientation ───
-            // (nothing special needed, CSS handles it)
-
-            console.log('✅ App ready');
+            console.log('✅ App ready with segmented switches');
         })();
     </script>
 
