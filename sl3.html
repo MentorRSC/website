@@ -557,18 +557,82 @@
             color: #00b894;
         }
 
+        /* ── Result Popup (Loading / Try Black / Wait) ── */
+        #result-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+        #result-popup-overlay.hidden {
+            display: none;
+        }
+        #result-popup {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 420px;
+            width: 100%;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 24px 64px var(--shadow);
+            transition: background var(--transition), border var(--transition);
+        }
+        #result-popup .result-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        #result-popup .result-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        #result-popup .result-sub {
+            font-size: 15px;
+            color: var(--text2);
+            margin-bottom: 20px;
+        }
+        #result-popup .result-close-btn {
+            padding: 10px 28px;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #result-popup .result-close-btn:hover {
+            background: var(--accent-hover);
+        }
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* ── Responsive ── */
-        @media (max-width: 600px) {
-            #popup {
-                padding: 16px 12px 20px;
-                max-height: 94vh;
-            }
-            #popup-title {
-                font-size: 20px;
-            }
+        @media (max-width: 768px) {
             .field-group.input-group {
-                flex: 1 0 100%;
-                min-width: 100%;
+                flex: 0.8 1 60px;
+                min-width: 50px;
             }
             .switch-btn {
                 min-width: 36px;
@@ -577,9 +641,45 @@
                 padding: 2px 6px;
             }
             .switches-wrapper {
-                flex: 1 0 100%;
+                min-width: 100px;
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #popup {
+                padding: 16px 12px 20px;
+                max-height: 94vh;
+            }
+            #popup-title {
+                font-size: 20px;
+            }
+            .entry-row {
+                flex-wrap: nowrap;
+                gap: 4px;
+            }
+            .field-group.input-group {
+                flex: 0 1 60px;
+                min-width: 40px;
+            }
+            .field-group input[type="number"] {
+                font-size: 12px;
+                padding: 4px 2px;
+                height: 28px;
+            }
+            .switches-wrapper {
+                flex: 1 1 auto;
+                flex-wrap: nowrap;
                 justify-content: flex-start;
-                gap: 6px;
+                gap: 4px;
+                min-width: 0;
+            }
+            .switch-btn {
+                font-size: 8px;
+                padding: 0 4px;
+                min-width: 26px;
+                height: 24px;
+                flex: 0 1 auto;
             }
             .number-entry {
                 padding: 8px 6px 10px;
@@ -613,6 +713,34 @@
                 top: 12px;
                 right: 12px;
             }
+            #result-popup {
+                padding: 24px 16px;
+            }
+            #result-popup .result-title {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .field-group.input-group {
+                flex: 0 1 40px;
+                min-width: 30px;
+            }
+            .field-group input[type="number"] {
+                font-size: 10px;
+                padding: 2px 1px;
+                height: 24px;
+            }
+            .switch-btn {
+                font-size: 7px;
+                padding: 0 2px;
+                min-width: 22px;
+                height: 20px;
+                border-radius: 12px;
+            }
+            .switches-wrapper {
+                gap: 2px;
+            }
         }
 
         .hidden-view {
@@ -634,7 +762,7 @@
     <!-- ─── THEME TOGGLE ─── -->
     <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
 
-    <!-- ─── POPUP OVERLAY ─── -->
+    <!-- ─── MAIN POPUP ─── -->
     <div id="popup-overlay">
         <div id="popup">
 
@@ -674,7 +802,6 @@
                         <strong>Number 1</strong> and <strong>Number 2</strong> are required.
                     </div>
 
-                    <!-- Number entries will be rendered by JS -->
                     <div id="entries-container"></div>
 
                     <div class="data-submit-wrap">
@@ -682,13 +809,23 @@
                         <button class="btn-reset" id="reset-data">Reset</button>
                     </div>
 
-                    <!-- Feedback area -->
                     <div id="feedback"></div>
                 </div>
 
             </div><!-- /popup-content -->
         </div><!-- /popup -->
     </div><!-- /popup-overlay -->
+
+    <!-- ─── RESULT POPUP (Loading / Try Black / Wait) ─── -->
+    <div id="result-popup-overlay" class="hidden">
+        <div id="result-popup">
+            <div id="result-icon" class="result-icon">⏳</div>
+            <div id="result-title" class="result-title">Loading...</div>
+            <div id="result-sub" class="result-sub">Please wait</div>
+            <div id="result-spinner" class="spinner"></div>
+            <button id="result-close-btn" class="result-close-btn hidden">OK</button>
+        </div>
+    </div>
 
     <script>
         (function() {
@@ -714,6 +851,14 @@
             const submitBtn = document.getElementById('submit-data');
             const resetBtn = document.getElementById('reset-data');
 
+            // Result Popup elements
+            const resultOverlay = document.getElementById('result-popup-overlay');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const resultSub = document.getElementById('result-sub');
+            const resultSpinner = document.getElementById('result-spinner');
+            const resultCloseBtn = document.getElementById('result-close-btn');
+
             // ─── State ───
             let currentView = 'status';
             let lossAmount = 0;
@@ -738,14 +883,12 @@
 
                 const switches = entryDiv.querySelectorAll('.switch-btn');
 
-                // 1. Odd/Even
                 let parity = 'Even';
                 if (num === 0) parity = 'Even';
                 else if (num % 2 === 1) parity = 'Odd';
                 else parity = 'Even';
                 setSwitch(switches, 'oddEven', parity);
 
-                // 2. 12/24/36 (dozens)
                 let dozen = '12';
                 if (num === 0) dozen = '12';
                 else if (num >= 1 && num <= 12) dozen = '12';
@@ -753,7 +896,6 @@
                 else if (num >= 25 && num <= 36) dozen = '36';
                 setSwitch(switches, 'num122436', dozen);
 
-                // Update formData
                 formData[rowIndex].oddEven = parity;
                 formData[rowIndex].num122436 = dozen;
             }
@@ -853,7 +995,6 @@
                     const row = document.createElement('div');
                     row.className = 'entry-row';
 
-                    // 1. Input (always visible)
                     const inputGroup = document.createElement('div');
                     inputGroup.className = 'field-group input-group';
                     inputGroup.innerHTML = `
@@ -861,12 +1002,10 @@
                     `;
                     row.appendChild(inputGroup);
 
-                    // 2. Switches Wrapper (hidden by default)
                     const switchesWrapper = document.createElement('div');
                     switchesWrapper.className = 'switches-wrapper';
                     switchesWrapper.style.display = 'none';
 
-                    // Create only two switches: Odd/Even and 12/24/36
                     const oeBtn = createSwitchButton('oddEven', 'Odd');
                     switchesWrapper.appendChild(oeBtn);
 
@@ -877,7 +1016,6 @@
                     div.appendChild(row);
                     entriesContainer.appendChild(div);
 
-                    // ── Attach events ──
                     const inputEl = inputGroup.querySelector('input');
                     inputEl.addEventListener('input', function() {
                         const val = this.value;
@@ -892,7 +1030,6 @@
                         }
                     });
 
-                    // Switches: manual clicks
                     const switches = switchesWrapper.querySelectorAll('.switch-btn');
                     switches.forEach(btn => {
                         btn.addEventListener('click', function(e) {
@@ -952,8 +1089,39 @@
                 return errors;
             }
 
-            // ─── Show summary ───
-            function showSummary() {
+            // ─── Result Popup Logic ───
+            function showResultPopup(type, message) {
+                // type: 'loading', 'red', 'wait'
+                resultOverlay.classList.remove('hidden');
+                resultCloseBtn.classList.add('hidden');
+
+                if (type === 'loading') {
+                    resultIcon.textContent = '⏳';
+                    resultTitle.textContent = 'Calculating...';
+                    resultSub.textContent = 'Analyzing roulette numbers';
+                    resultSpinner.classList.remove('hidden');
+                    resultCloseBtn.classList.add('hidden');
+                } else if (type === 'red') {
+                    resultIcon.textContent = '🎯';
+                    resultTitle.textContent = 'Try Black';
+                    resultSub.textContent = 'Both numbers are red. Place your bet on black!';
+                    resultSpinner.classList.add('hidden');
+                    resultCloseBtn.classList.remove('hidden');
+                } else if (type === 'wait') {
+                    resultIcon.textContent = '⏱️';
+                    resultTitle.textContent = 'Wait...';
+                    resultSub.textContent = 'For the next round.';
+                    resultSpinner.classList.add('hidden');
+                    resultCloseBtn.classList.remove('hidden');
+                }
+            }
+
+            function hideResultPopup() {
+                resultOverlay.classList.add('hidden');
+            }
+
+            // ─── Submit Handler ───
+            function handleSubmit() {
                 syncFormData();
                 const errs = validateForm();
                 if (errs.length > 0) {
@@ -961,19 +1129,19 @@
                     return;
                 }
 
-                let html = `<div class="summary-box">
-                    <div class="summary-title">✅ Data Submitted</div>`;
-                formData.forEach((entry, i) => {
-                    const val = entry.value || '—';
-                    html += `<div class="summary-item">
-                        <strong>#${i+1}</strong> 
-                        <span>${val}</span>
-                        <span>· ${entry.oddEven}</span>
-                        <span>· ${entry.num122436}</span>
-                    </div>`;
-                });
-                html += `</div>`;
-                feedback.innerHTML = html;
+                const num1 = parseInt(formData[0].value);
+                const num2 = parseInt(formData[1].value);
+                const isRed1 = redNumbers.includes(num1);
+                const isRed2 = redNumbers.includes(num2);
+
+                if (isRed1 && isRed2) {
+                    showResultPopup('loading', '');
+                    setTimeout(() => {
+                        showResultPopup('red', '');
+                    }, 2000);
+                } else {
+                    showResultPopup('wait', '');
+                }
             }
 
             // ─── Reset Form ───
@@ -1000,6 +1168,7 @@
                     });
                 });
                 feedback.innerHTML = '';
+                hideResultPopup();
             }
 
             // ─── View Transitions ───
@@ -1016,6 +1185,7 @@
                         `Enter a roulette number (0–36) → switches auto‑update. <strong>Number 1</strong> and <strong>Number 2</strong> are required.`;
                 }
                 feedback.innerHTML = '';
+                hideResultPopup();
             }
 
             function goToLoss() {
@@ -1062,15 +1232,20 @@
             });
 
             lossNext.addEventListener('click', goToDataFromLoss);
-            submitBtn.addEventListener('click', showSummary);
+            submitBtn.addEventListener('click', handleSubmit);
             resetBtn.addEventListener('click', resetForm);
+
+            resultCloseBtn.addEventListener('click', hideResultPopup);
 
             closeBtn.addEventListener('click', hidePopup);
             overlay.addEventListener('click', function(e) {
                 if (e.target === overlay) hidePopup();
             });
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') hidePopup();
+                if (e.key === 'Escape') {
+                    hidePopup();
+                    hideResultPopup();
+                }
             });
 
             // ─── Init ───
@@ -1078,7 +1253,7 @@
             showView('status');
             buildForm();
 
-            console.log('✅ App ready with two switches: Odd/Even and 12/24/36');
+            console.log('✅ App ready with red number logic');
         })();
     </script>
 
