@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Roulette Data Entry</title>
+    <style>
+        /* ── CSS Variables (Theming) ── */
+        :root {
+            --bg: #0b0d12;
+            --bg2: #14181f;
+            --bg3: #1e2530;
+            --bg4: #2a3342;
+            --text: #e8edf5;
+            --text2: #8a9bb5;
+            --border: #2a3342;
+            --border-light: #3a4660;
+            --accent: #6c5ce7;
+            --accent-hover: #7d6ff0;
+            --shadow: rgba(0, 0, 0, 0.7);
+            --radius: 12px;
+            --transition: 0.25s ease;
+            --input-bg: #14181f;
+            --switch-bg: #1e2530;
+            --red: #e74c3c;
+            --black: #2d3436;
+            --green: #00b894;
+            --gold: #fdcb6e;
+            --blue: #0984e3;
+        }
+        [data-theme="light"] {
+            --bg: #f0f2f5;
+            --bg2: #ffffff;
+            --bg3: #e8ecf1;
+            --bg4: #d5dce6;
+            --text: #1a1a2e;
+            --text2: #5a6a7e;
+            --border: #d5dce6;
+            --border-light: #c0c8d4;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --input-bg: #f0f2f5;
+            --switch-bg: #e8ecf1;
+        }
+
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition), color var(--transition);
+            padding: 20px;
+            margin: 0;
+        }
+
+        /* ── Main Screen ── */
+        #main-screen {
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            padding: 40px 28px;
+            background: var(--bg2);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px var(--shadow);
+            transition: background var(--transition), border var(--transition);
+        }
+        #main-screen .logo {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        #main-screen h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        #main-screen p {
+            color: var(--text2);
+            font-size: 15px;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+        #main-screen .open-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            width: 100%;
+        }
+        #main-screen .open-btn:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 8px 30px rgba(108, 92, 231, 0.35);
+            transform: translateY(-2px);
+        }
+        #main-screen .open-btn:active {
+            transform: scale(0.97);
+        }
+        #main-screen .open-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* ── Theme Toggle (corner) ── */
+        #theme-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 999;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            transition: background var(--transition), border var(--transition), transform 0.2s;
+            box-shadow: 0 4px 16px var(--shadow);
+            user-select: none;
+            padding: 0;
+        }
+        #theme-toggle:hover {
+            transform: scale(1.05);
+        }
+        #theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* ── Popup Overlay ── */
+        #popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+        #popup-overlay.visible {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ── Popup Card ── */
+        #popup {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 720px;
+            width: 100%;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 28px 24px 32px;
+            box-shadow: 0 24px 64px var(--shadow);
+            position: relative;
+            transition: background var(--transition), border var(--transition);
+        }
+        #popup::-webkit-scrollbar {
+            width: 4px;
+        }
+        #popup::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 8px;
+        }
+
+        /* ── Popup Header ── */
+        .popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+        #popup-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+            margin: 0;
+            flex: 1;
+        }
+        #close-popup {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            color: var(--text2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        #close-popup:hover {
+            background: var(--bg4);
+            color: var(--text);
+            transform: rotate(90deg);
+        }
+
+        /* ── Popup Content ── */
+        #popup-content {
+            transition: opacity 0.25s ease;
+        }
+
+        /* ── Status View ── */
+        .status-view .sub-text {
+            color: var(--text2);
+            font-size: 15px;
+            margin-bottom: 28px;
+            text-align: center;
+            transition: color var(--transition);
+        }
+        .status-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 4px;
+        }
+        .status-buttons button {
+            padding: 16px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            width: 100%;
+            letter-spacing: 0.3px;
+        }
+        .status-buttons button:active {
+            transform: scale(0.97);
+        }
+        .btn-fresh {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-fresh:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.35);
+        }
+        .btn-loss {
+            background: var(--bg3);
+            color: var(--text);
+            border: 1px solid var(--border) !important;
+        }
+        .btn-loss:hover {
+            background: var(--border);
+        }
+
+        /* ── Loss Amount View ── */
+        .loss-view .loss-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text2);
+            margin-bottom: 10px;
+            transition: color var(--transition);
+        }
+        .loss-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .loss-input-wrap input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 600;
+            outline: none;
+            transition: border 0.2s, background var(--transition);
+            min-width: 0;
+            width: 100%;
+        }
+        .loss-input-wrap input:focus {
+            border-color: var(--accent);
+        }
+        .loss-input-wrap input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .loss-input-wrap input::-webkit-outer-spin-button,
+        .loss-input-wrap input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .arrow-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.15s;
+            flex-shrink: 0;
+            user-select: none;
+            font-weight: 300;
+        }
+        .arrow-btn:hover {
+            background: var(--border);
+        }
+        .arrow-btn:active {
+            transform: scale(0.92);
+        }
+        .loss-next-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius);
+            background: var(--accent);
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            margin-top: 4px;
+        }
+        .loss-next-btn:hover {
+            background: var(--accent-hover);
+        }
+        .loss-next-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ── Get Data View ── */
+        .data-view .data-hint {
+            color: var(--text2);
+            font-size: 13px;
+            margin-bottom: 18px;
+            padding: 10px 14px;
+            background: var(--bg3);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            transition: color var(--transition), background var(--transition);
+            line-height: 1.5;
+        }
+        .data-view .data-hint strong {
+            color: var(--text);
+        }
+
+        /* Common border around all entries */
+        .entries-container {
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 10px 6px;
+            margin-bottom: 12px;
+            transition: border-color var(--transition);
+        }
+
+        .number-entry {
+            background: var(--bg3);
+            border-radius: 10px;
+            padding: 8px 10px 10px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            transition: background var(--transition), border var(--transition);
+        }
+        .number-entry.required {
+            border-color: var(--accent);
+        }
+
+        /* ─── Input with Floating Label ─── */
+        .input-float {
+            position: relative;
+            flex: 0.7 1 70px;
+            min-width: 55px;
+        }
+        .input-float input {
+            width: 100%;
+            padding: 10px 8px 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            transition: border 0.2s, background var(--transition), color var(--transition);
+            text-align: center;
+            height: 44px;
+            font-family: inherit;
+            min-width: 0;
+        }
+        .input-float input:focus {
+            border-color: var(--accent);
+        }
+        .input-float input::placeholder {
+            color: transparent;
+        }
+        .input-float label {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text2);
+            pointer-events: none;
+            transition: 0.2s ease;
+            background: transparent;
+            padding: 0 4px;
+            letter-spacing: 0.2px;
+        }
+        .input-float input:focus~label,
+        .input-float input:not(:placeholder-shown)~label {
+            top: 4px;
+            transform: translateY(0);
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--accent);
+            background: var(--input-bg);
+            border-radius: 4px;
+            padding: 0 4px;
+        }
+        .input-float input:focus {
+            border-color: var(--accent);
+        }
+
+        /* ─── Switches Wrapper ─── */
+        .switches-wrapper {
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+
+        /* ─── Switch Buttons ─── */
+        .switch-btn {
+            padding: 4px 12px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--switch-bg);
+            color: var(--text);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            min-width: 42px;
+            text-align: center;
+            transition: 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            flex: 0 1 auto;
+        }
+        .switch-btn:active {
+            transform: scale(0.92);
+        }
+        .switch-btn.red {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+        .switch-btn.black {
+            background: var(--black);
+            color: #fff;
+            border-color: var(--black);
+        }
+        .switch-btn.n12 {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+        .switch-btn.n24 {
+            background: var(--gold);
+            color: #1a1a2e;
+            border-color: var(--gold);
+        }
+        .switch-btn.n36 {
+            background: var(--green);
+            color: #fff;
+            border-color: var(--green);
+        }
+        .switch-btn.default-switch {
+            background: var(--bg3);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        /* ── Add Number Button ── */
+        #add-number-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg3);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            color: var(--text2);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            margin-top: 4px;
+        }
+        #add-number-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--bg2);
+        }
+        #add-number-btn:active {
+            transform: scale(0.97);
+        }
+        #add-number-btn .plus {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        /* ── Buttons ── */
+        .data-submit-wrap {
+            margin-top: 14px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .data-submit-wrap button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            min-width: 110px;
+        }
+        .data-submit-wrap button:active {
+            transform: scale(0.97);
+        }
+        .btn-submit {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-submit:hover {
+            background: var(--accent-hover);
+        }
+        .btn-reset {
+            background: var(--bg3);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-reset:hover {
+            background: var(--border);
+        }
+
+        /* ── Summary / Feedback ── */
+        .summary-box {
+            background: var(--bg3);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            margin: 12px 0 8px;
+            border-left: 4px solid var(--green);
+            transition: background var(--transition);
+        }
+        .summary-box .summary-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .summary-box .summary-item {
+            font-size: 12px;
+            color: var(--text2);
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border);
+            transition: color var(--transition), border var(--transition);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .summary-box .summary-item:last-child {
+            border-bottom: none;
+        }
+        .summary-box .summary-item strong {
+            color: var(--text);
+            min-width: 28px;
+        }
+
+        .toast {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            margin-top: 12px;
+            color: var(--text);
+            font-size: 14px;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+            transition: background var(--transition), border var(--transition), color var(--transition);
+        }
+        .toast.error {
+            border-color: var(--red);
+            color: var(--red);
+        }
+        .toast.success {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        /* ── Result Popup ── */
+        #result-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+        #result-popup-overlay.visible {
+            display: flex;
+        }
+        #result-popup {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 400px;
+            width: 100%;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 24px 64px var(--shadow);
+            transition: background var(--transition), border var(--transition);
+        }
+        #result-popup .result-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        #result-popup .result-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        #result-popup .result-sub {
+            font-size: 15px;
+            color: var(--text2);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        #result-popup .result-close-btn {
+            padding: 10px 32px;
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #result-popup .result-close-btn:hover {
+            background: var(--accent-hover);
+        }
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            #popup {
+                padding: 16px 12px 20px;
+                max-height: 94vh;
+            }
+            #popup-title {
+                font-size: 19px;
+            }
+            #main-screen {
+                padding: 28px 18px;
+            }
+            #main-screen h1 {
+                font-size: 22px;
+            }
+            .entry-row {
+                flex-wrap: nowrap;
+                gap: 4px;
+            }
+            .input-float {
+                flex: 0 1 50px;
+                min-width: 32px;
+            }
+            .input-float input {
+                font-size: 11px;
+                padding: 8px 4px 2px 4px;
+                height: 38px;
+                border-radius: 6px;
+            }
+            .input-float label {
+                font-size: 10px;
+                left: 4px;
+            }
+            .input-float input:focus~label,
+            .input-float input:not(:placeholder-shown)~label {
+                font-size: 8px;
+                top: 2px;
+            }
+            .switches-wrapper {
+                flex: 1 1 auto;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                gap: 3px;
+                min-width: 0;
+            }
+            .switch-btn {
+                font-size: 8px;
+                padding: 0 6px;
+                min-width: 26px;
+                height: 24px;
+                flex: 0 1 auto;
+                border-radius: 14px;
+            }
+            .number-entry {
+                padding: 4px 4px 6px;
+                margin-bottom: 4px;
+                border-radius: 8px;
+            }
+            .entries-container {
+                padding: 6px 4px 4px;
+                border-radius: 10px;
+            }
+            #add-number-btn {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            .status-buttons button {
+                font-size: 15px;
+                padding: 14px 16px;
+            }
+            .loss-input-wrap input {
+                font-size: 16px;
+                padding: 12px 14px;
+            }
+            .arrow-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+            .data-submit-wrap button {
+                font-size: 14px;
+                padding: 12px 14px;
+                min-width: 90px;
+            }
+            #theme-toggle {
+                width: 38px;
+                height: 38px;
+                font-size: 17px;
+                top: 12px;
+                right: 12px;
+            }
+            #result-popup {
+                padding: 24px 16px;
+            }
+            #result-popup .result-title {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .input-float {
+                flex: 0 1 36px;
+                min-width: 26px;
+            }
+            .input-float input {
+                font-size: 9px;
+                padding: 6px 2px 2px 2px;
+                height: 32px;
+            }
+            .input-float label {
+                font-size: 8px;
+                left: 3px;
+            }
+            .input-float input:focus~label,
+            .input-float input:not(:placeholder-shown)~label {
+                font-size: 7px;
+                top: 1px;
+            }
+            .switch-btn {
+                font-size: 7px;
+                padding: 0 4px;
+                min-width: 20px;
+                height: 20px;
+                border-radius: 10px;
+            }
+            .switches-wrapper {
+                gap: 2px;
+            }
+        }
+
+        .hidden-view {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── THEME TOGGLE ─── -->
+    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
+
+    <!-- ─── MAIN SCREEN ─── -->
+    <div id="main-screen">
+        <div class="logo">🎯</div>
+        <h1>Roulette Data Entry</h1>
+        <p>Enter your roulette numbers and get instant insights. Track red/black, dozens, and more.</p>
+        <button class="open-btn" id="open-popup-btn">
+            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V5h14v14zM7 10h10v2H7v-2zm0 4h6v2H7v-2zm0-8h10v2H7V6z"/></svg>
+            Open Data Entry
+        </button>
+    </div>
+
+    <!-- ─── MAIN POPUP ─── -->
+    <div id="popup-overlay">
+        <div id="popup">
+
+            <!-- Header -->
+            <div class="popup-header">
+                <h2 id="popup-title">Status</h2>
+                <button id="close-popup" aria-label="Close popup">✕</button>
+            </div>
+
+            <!-- Content -->
+            <div id="popup-content">
+
+                <!-- ===== VIEW: Status ===== -->
+                <div id="view-status" class="status-view">
+                    <p class="sub-text">Choose how you want to proceed</p>
+                    <div class="status-buttons">
+                        <button class="btn-fresh" data-action="fresh">Fresh</button>
+                        <button class="btn-loss" data-action="loss">Loss Recovery</button>
+                    </div>
+                </div>
+
+                <!-- ===== VIEW: Loss Amount ===== -->
+                <div id="view-loss" class="loss-view hidden-view">
+                    <label class="loss-label" for="loss-amount">Enter loss amount</label>
+                    <div class="loss-input-wrap">
+                        <input type="number" id="loss-amount" value="0" step="1" min="0" />
+                        <button class="arrow-btn" id="loss-down" aria-label="Decrease">−</button>
+                        <button class="arrow-btn" id="loss-up" aria-label="Increase">+</button>
+                    </div>
+                    <button class="loss-next-btn" id="loss-next">Continue →</button>
+                </div>
+
+                <!-- ===== VIEW: Get Data ===== -->
+                <div id="view-data" class="data-view hidden-view">
+                    <div class="data-hint" id="data-hint">
+                        Enter a roulette number (0–36) → switches auto‑update.
+                        <strong>Number 1</strong> and <strong>Number 2</strong> are required.
+                    </div>
+
+                    <!-- Entries with common border -->
+                    <div id="entries-container" class="entries-container"></div>
+
+                    <!-- Add Number Button -->
+                    <button id="add-number-btn">
+                        <span class="plus">+</span> Add Number
+                    </button>
+
+                    <div class="data-submit-wrap">
+                        <button class="btn-submit" id="submit-data">Submit Data</button>
+                        <button class="btn-reset" id="reset-data">Reset</button>
+                    </div>
+
+                    <div id="feedback"></div>
+                </div>
+
+            </div><!-- /popup-content -->
+        </div><!-- /popup -->
+    </div><!-- /popup-overlay -->
+
+    <!-- ─── RESULT POPUP ─── -->
+    <div id="result-popup-overlay">
+        <div id="result-popup">
+            <div id="result-icon" class="result-icon">⏳</div>
+            <div id="result-title" class="result-title">Loading...</div>
+            <div id="result-sub" class="result-sub">Please wait</div>
+            <div id="result-spinner" class="spinner"></div>
+            <button id="result-close-btn" class="result-close-btn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── DOM refs ───
+            const mainScreen = document.getElementById('main-screen');
+            const popupOverlay = document.getElementById('popup-overlay');
+            const popupTitle = document.getElementById('popup-title');
+            const viewStatus = document.getElementById('view-status');
+            const viewLoss = document.getElementById('view-loss');
+            const viewData = document.getElementById('view-data');
+            const entriesContainer = document.getElementById('entries-container');
+            const feedback = document.getElementById('feedback');
+            const dataHint = document.getElementById('data-hint');
+            const closeBtn = document.getElementById('close-popup');
+            const openBtn = document.getElementById('open-popup-btn');
+            const themeToggle = document.getElementById('theme-toggle');
+
+            const lossInput = document.getElementById('loss-amount');
+            const lossDown = document.getElementById('loss-down');
+            const lossUp = document.getElementById('loss-up');
+            const lossNext = document.getElementById('loss-next');
+
+            const submitBtn = document.getElementById('submit-data');
+            const resetBtn = document.getElementById('reset-data');
+            const addBtn = document.getElementById('add-number-btn');
+
+            // Result Popup elements
+            const resultOverlay = document.getElementById('result-popup-overlay');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const resultSub = document.getElementById('result-sub');
+            const resultSpinner = document.getElementById('result-spinner');
+            const resultCloseBtn = document.getElementById('result-close-btn');
+
+            // ─── State ───
+            let currentView = 'status';
+            let lossAmount = 0;
+            let formData = [];
+            let visibleCount = 2;
+
+            // ─── Switch Configuration ───
+            const switchConfig = {
+                redBlack: { options: ['Red', 'Black'], default: 'Red', classMap: { 'Red': 'red', 'Black': 'black' } },
+                num122436: { options: ['12', '24', '36'], default: '12', classMap: { '12': 'n12', '24': 'n24',
+                        '36': 'n36' } }
+            };
+
+            // ─── Roulette Auto‑Fill Mapping ───
+            const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+
+            function autoFillSwitches(rowIndex, number) {
+                const num = parseInt(number);
+                if (isNaN(num) || num < 0 || num > 36) return;
+
+                const entryDiv = document.querySelector(`.number-entry[data-index="${rowIndex}"]`);
+                if (!entryDiv) return;
+
+                const switches = entryDiv.querySelectorAll('.switch-btn');
+
+                // Red/Black
+                let color = 'Red';
+                if (num === 0) color = 'Red';
+                else if (redNumbers.includes(num)) color = 'Red';
+                else color = 'Black';
+                setSwitch(switches, 'redBlack', color);
+
+                // Dozen
+                let dozen = '12';
+                if (num === 0) dozen = '12';
+                else if (num >= 1 && num <= 12) dozen = '12';
+                else if (num >= 13 && num <= 24) dozen = '24';
+                else if (num >= 25 && num <= 36) dozen = '36';
+                setSwitch(switches, 'num122436', dozen);
+
+                formData[rowIndex].redBlack = color;
+                formData[rowIndex].num122436 = dozen;
+            }
+
+            function setSwitch(switchBtns, field, value) {
+                const config = switchConfig[field];
+                if (!config) return;
+                for (let btn of switchBtns) {
+                    if (btn.dataset.field === field) {
+                        btn.textContent = value;
+                        btn.className = 'switch-btn ' + (config.classMap[value] || 'default-switch');
+                        break;
+                    }
+                }
+            }
+
+            // ─── Theme ───
+            let darkMode = true;
+            const themeKey = 'data-theme';
+
+            function setTheme(dark) {
+                darkMode = dark;
+                document.documentElement.setAttribute(themeKey, dark ? 'dark' : 'light');
+                themeToggle.textContent = dark ? '🌙' : '☀️';
+                try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (_) {}
+            }
+
+            function toggleTheme() {
+                setTheme(!darkMode);
+            }
+
+            try {
+                const saved = localStorage.getItem('theme');
+                if (saved === 'light') setTheme(false);
+                else if (saved === 'dark') setTheme(true);
+                else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    setTheme(prefersDark);
+                }
+            } catch (_) { setTheme(true); }
+
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // ─── Popup Controls ───
+            function openPopup() {
+                popupOverlay.classList.add('visible');
+                document.body.style.overflow = 'hidden';
+                // Reset to status view
+                showView('status');
+                feedback.innerHTML = '';
+                hideResultPopup();
+            }
+
+            function closePopup() {
+                popupOverlay.classList.remove('visible');
+                document.body.style.overflow = '';
+                hideResultPopup();
+            }
+
+            // ─── Helpers ───
+            function showView(viewId) {
+                [viewStatus, viewLoss, viewData].forEach(el => el.classList.add('hidden-view'));
+                if (viewId === 'status') {
+                    viewStatus.classList.remove('hidden-view');
+                    popupTitle.textContent = 'Status';
+                    currentView = 'status';
+                } else if (viewId === 'loss') {
+                    viewLoss.classList.remove('hidden-view');
+                    popupTitle.textContent = 'Loss Recovery';
+                    currentView = 'loss';
+                } else if (viewId === 'data') {
+                    viewData.classList.remove('hidden-view');
+                    popupTitle.textContent = 'Get Data';
+                    currentView = 'data';
+                }
+                feedback.innerHTML = '';
+            }
+
+            // ─── Build Data Form ───
+            function buildForm(initialVisible) {
+                entriesContainer.innerHTML = '';
+                formData = [];
+                for (let i = 1; i <= 5; i++) {
+                    const entry = {
+                        value: '',
+                        redBlack: 'Red',
+                        num122436: '12'
+                    };
+                    formData.push(entry);
+
+                    const div = document.createElement('div');
+                    div.className = 'number-entry' + (i <= 2 ? ' required' : '');
+                    div.dataset.index = i - 1;
+                    if (i > visibleCount) {
+                        div.style.display = 'none';
+                    }
+
+                    const row = document.createElement('div');
+                    row.className = 'entry-row';
+
+                    // Input with floating label
+                    const floatWrapper = document.createElement('div');
+                    floatWrapper.className = 'input-float';
+                    floatWrapper.innerHTML = `
+                        <input type="number" step="0.01" placeholder=" " data-field="value" />
+                        <label>Number ${i}</label>
+                    `;
+                    row.appendChild(floatWrapper);
+
+                    const switchesWrapper = document.createElement('div');
+                    switchesWrapper.className = 'switches-wrapper';
+                    switchesWrapper.style.display = 'none';
+
+                    // 2 switches: Red/Black, 12/24/36
+                    const rbBtn = createSwitchButton('redBlack', 'Red');
+                    switchesWrapper.appendChild(rbBtn);
+                    const dozenBtn = createSwitchButton('num122436', '12');
+                    switchesWrapper.appendChild(dozenBtn);
+
+                    row.appendChild(switchesWrapper);
+                    div.appendChild(row);
+                    entriesContainer.appendChild(div);
+
+                    const inputEl = floatWrapper.querySelector('input');
+                    inputEl.addEventListener('input', function() {
+                        const val = this.value;
+                        const num = parseInt(val);
+                        formData[i - 1].value = val;
+
+                        if (!isNaN(num) && num >= 0 && num <= 36 && val.trim() !== '') {
+                            autoFillSwitches(i - 1, num);
+                            switchesWrapper.style.display = 'flex';
+                        } else {
+                            switchesWrapper.style.display = 'none';
+                        }
+                    });
+
+                    const switches = switchesWrapper.querySelectorAll('.switch-btn');
+                    switches.forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const field = this.dataset.field;
+                            const currentVal = this.textContent;
+                            const config = switchConfig[field];
+                            const newVal = getNextValue(currentVal, config.options);
+                            this.textContent = newVal;
+                            this.className = 'switch-btn ' + (config.classMap[newVal] || 'default-switch');
+                            const index = this.closest('.number-entry').dataset.index;
+                            formData[index][field] = newVal;
+                        });
+                    });
+                }
+
+                updateAddButton();
+            }
+
+            function createSwitchButton(field, defaultValue) {
+                const btn = document.createElement('button');
+                btn.className = 'switch-btn';
+                const config = switchConfig[field];
+                btn.dataset.field = field;
+                btn.textContent = defaultValue;
+                btn.classList.add(config.classMap[defaultValue] || 'default-switch');
+                return btn;
+            }
+
+            function getNextValue(current, options) {
+                const idx = options.indexOf(current);
+                if (idx === -1) return options[0];
+                return options[(idx + 1) % options.length];
+            }
+
+            function updateAddButton() {
+                if (visibleCount < 5) {
+                    addBtn.style.display = 'flex';
+                    addBtn.innerHTML = `<span class="plus">+</span> Add Number ${visibleCount+1}`;
+                } else {
+                    addBtn.style.display = 'none';
+                }
+            }
+
+            function addNumber() {
+                if (visibleCount < 5) {
+                    visibleCount++;
+                    const entries = entriesContainer.querySelectorAll('.number-entry');
+                    if (entries[visibleCount - 1]) {
+                        entries[visibleCount - 1].style.display = '';
+                    }
+                    updateAddButton();
+                }
+            }
+
+            // ─── Sync formData from DOM ───
+            function syncFormData() {
+                const entries = document.querySelectorAll('.number-entry');
+                entries.forEach((entryDiv, idx) => {
+                    const input = entryDiv.querySelector('input[data-field="value"]');
+                    if (input) formData[idx].value = input.value;
+                    const switches = entryDiv.querySelectorAll('.switch-btn');
+                    switches.forEach(btn => {
+                        const field = btn.dataset.field;
+                        formData[idx][field] = btn.textContent;
+                    });
+                });
+            }
+
+            // ─── Validate ───
+            function validateForm() {
+                const errors = [];
+                for (let i = 0; i < 2; i++) {
+                    const val = formData[i].value;
+                    if (val === undefined || val === null || val === '' || isNaN(parseFloat(val))) {
+                        errors.push(`Number ${i+1} is required`);
+                    }
+                }
+                return errors;
+            }
+
+            // ─── Result Popup Logic ───
+            function showResultPopup(type) {
+                resultOverlay.classList.add('visible');
+                resultCloseBtn.style.display = 'inline-block';
+
+                if (type === 'loading') {
+                    resultIcon.textContent = '⏳';
+                    resultTitle.textContent = 'Calculating...';
+                    resultSub.textContent = 'Analyzing roulette numbers';
+                    resultSpinner.style.display = 'block';
+                    resultCloseBtn.style.display = 'none';
+                } else if (type === 'red') {
+                    resultIcon.textContent = '🎯';
+                    resultTitle.textContent = 'Try Black';
+                    resultSub.textContent = 'Both numbers are red. Place your bet on black!';
+                    resultSpinner.style.display = 'none';
+                    resultCloseBtn.style.display = 'inline-block';
+                } else if (type === 'wait') {
+                    resultIcon.textContent = '⏱️';
+                    resultTitle.textContent = 'Wait...';
+                    resultSub.textContent = 'For the next round.';
+                    resultSpinner.style.display = 'none';
+                    resultCloseBtn.style.display = 'inline-block';
+                }
+            }
+
+            function hideResultPopup() {
+                resultOverlay.classList.remove('visible');
+            }
+
+            // ─── Submit Handler ───
+            function handleSubmit() {
+                syncFormData();
+                const errs = validateForm();
+                if (errs.length > 0) {
+                    feedback.innerHTML = `<div class="toast error">⚠️ ${errs.join(' • ')}</div>`;
+                    return;
+                }
+
+                const num1 = parseInt(formData[0].value);
+                const num2 = parseInt(formData[1].value);
+                const isRed1 = redNumbers.includes(num1);
+                const isRed2 = redNumbers.includes(num2);
+
+                if (isRed1 && isRed2) {
+                    showResultPopup('loading');
+                    setTimeout(() => {
+                        showResultPopup('red');
+                    }, 2000);
+                } else {
+                    showResultPopup('wait');
+                }
+            }
+
+            // ─── Reset Form ───
+            function resetForm() {
+                const entries = document.querySelectorAll('.number-entry');
+                entries.forEach((entryDiv, idx) => {
+                    const input = entryDiv.querySelector('input[data-field="value"]');
+                    if (input) {
+                        input.value = '';
+                        formData[idx].value = '';
+                    }
+                    const switchesWrapper = entryDiv.querySelector('.switches-wrapper');
+                    if (switchesWrapper) {
+                        switchesWrapper.style.display = 'none';
+                    }
+                    const switches = entryDiv.querySelectorAll('.switch-btn');
+                    switches.forEach(btn => {
+                        const field = btn.dataset.field;
+                        const config = switchConfig[field];
+                        const defaultVal = config.default;
+                        btn.textContent = defaultVal;
+                        btn.className = 'switch-btn ' + (config.classMap[defaultVal] || 'default-switch');
+                        formData[idx][field] = defaultVal;
+                    });
+                });
+                feedback.innerHTML = '';
+                hideResultPopup();
+            }
+
+            // ─── View Transitions ───
+            function goToData() {
+                showView('data');
+                if (entriesContainer.children.length === 0) {
+                    visibleCount = 2;
+                    buildForm(visibleCount);
+                }
+                if (lossAmount > 0) {
+                    dataHint.innerHTML =
+                        `Loss amount: <strong>${lossAmount}</strong> · Enter a roulette number (0–36) → switches auto‑update. <strong>Number 1</strong> and <strong>Number 2</strong> are required.`;
+                } else {
+                    dataHint.innerHTML =
+                        `Enter a roulette number (0–36) → switches auto‑update. <strong>Number 1</strong> and <strong>Number 2</strong> are required.`;
+                }
+                feedback.innerHTML = '';
+                hideResultPopup();
+                updateAddButton();
+            }
+
+            function goToLoss() {
+                showView('loss');
+                lossInput.focus();
+                lossInput.select();
+            }
+
+            function goToDataFromLoss() {
+                const val = parseFloat(lossInput.value);
+                lossAmount = isNaN(val) ? 0 : val;
+                goToData();
+            }
+
+            // ─── Event Handlers ───
+
+            // Open popup from main screen
+            openBtn.addEventListener('click', openPopup);
+
+            // Close popup
+            closeBtn.addEventListener('click', closePopup);
+            popupOverlay.addEventListener('click', function(e) {
+                if (e.target === popupOverlay) closePopup();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePopup();
+                    hideResultPopup();
+                }
+            });
+
+            // Status buttons
+            document.querySelector('[data-action="fresh"]').addEventListener('click', function() {
+                lossAmount = 0;
+                goToData();
+            });
+            document.querySelector('[data-action="loss"]').addEventListener('click', goToLoss);
+
+            // Loss amount controls
+            lossDown.addEventListener('click', function() {
+                let v = parseFloat(lossInput.value) || 0;
+                v = Math.max(0, v - 1);
+                lossInput.value = v;
+                lossInput.dispatchEvent(new Event('change'));
+            });
+            lossUp.addEventListener('click', function() {
+                let v = parseFloat(lossInput.value) || 0;
+                v = Math.max(0, v + 1);
+                lossInput.value = v;
+                lossInput.dispatchEvent(new Event('change'));
+            });
+            lossInput.addEventListener('change', function() {
+                let v = parseFloat(this.value);
+                if (isNaN(v) || v < 0) this.value = 0;
+            });
+            lossInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    lossNext.click();
+                }
+            });
+
+            lossNext.addEventListener('click', goToDataFromLoss);
+            submitBtn.addEventListener('click', handleSubmit);
+            resetBtn.addEventListener('click', resetForm);
+            addBtn.addEventListener('click', addNumber);
+
+            resultCloseBtn.addEventListener('click', hideResultPopup);
+
+            // ─── Init ───
+            // Show main screen, popup closed by default
+            buildForm(visibleCount);
+
+            console.log('✅ App ready with professional UI');
+        })();
+    </script>
+
+</body>
+</html>
