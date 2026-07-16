@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Data Entry</title>
+    <style>
+        /* ── CSS Variables (Theming) ── */
+        :root {
+            --bg: #0f0f13;
+            --bg2: #1a1a22;
+            --bg3: #282833;
+            --text: #eeeef0;
+            --text2: #aaaabc;
+            --border: #3a3a4a;
+            --accent: #6c5ce7;
+            --accent-hover: #7d6ff0;
+            --shadow: rgba(0, 0, 0, 0.6);
+            --radius: 12px;
+            --transition: 0.3s ease;
+            --input-bg: #1e1e28;
+        }
+        [data-theme="light"] {
+            --bg: #f4f4f8;
+            --bg2: #ffffff;
+            --bg3: #eaeaef;
+            --text: #1a1a22;
+            --text2: #555568;
+            --border: #cdcdd8;
+            --shadow: rgba(0, 0, 0, 0.12);
+            --input-bg: #f8f8fc;
+        }
+
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition), color var(--transition);
+            padding: 16px;
+            margin: 0;
+        }
+
+        /* ── Theme Toggle (corner) ── */
+        #theme-toggle {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 999;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            transition: background var(--transition), border var(--transition), transform 0.2s;
+            box-shadow: 0 4px 12px var(--shadow);
+            user-select: none;
+            padding: 0;
+        }
+        #theme-toggle:hover {
+            transform: scale(1.05);
+        }
+        #theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* ── Popup Overlay ── */
+        #popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+        #popup-overlay.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ── Popup Card ── */
+        #popup {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 720px;
+            width: 100%;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 28px 24px 32px;
+            box-shadow: 0 24px 64px var(--shadow);
+            position: relative;
+            transition: background var(--transition), border var(--transition);
+            scroll-behavior: smooth;
+        }
+        #popup::-webkit-scrollbar {
+            width: 4px;
+        }
+        #popup::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 8px;
+        }
+
+        /* ── Popup Header ── */
+        .popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+        #popup-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+            transition: color var(--transition);
+            margin: 0;
+            flex: 1;
+        }
+        #close-popup {
+            background: transparent;
+            border: none;
+            color: var(--text2);
+            font-size: 26px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            transition: color 0.2s, transform 0.2s;
+            flex-shrink: 0;
+        }
+        #close-popup:hover {
+            color: var(--text);
+            transform: rotate(90deg);
+        }
+
+        /* ── Popup Content ── */
+        #popup-content {
+            transition: opacity 0.25s ease;
+        }
+
+        /* ── Status View ── */
+        .status-view .sub-text {
+            color: var(--text2);
+            font-size: 15px;
+            margin-bottom: 28px;
+            text-align: center;
+            transition: color var(--transition);
+        }
+        .status-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 4px;
+        }
+        .status-buttons button {
+            padding: 16px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            width: 100%;
+            letter-spacing: 0.3px;
+        }
+        .status-buttons button:active {
+            transform: scale(0.97);
+        }
+        .btn-fresh {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-fresh:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.35);
+        }
+        .btn-loss {
+            background: var(--bg3);
+            color: var(--text);
+            border: 1px solid var(--border) !important;
+        }
+        .btn-loss:hover {
+            background: var(--border);
+        }
+
+        /* ── Loss Amount View ── */
+        .loss-view .loss-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text2);
+            margin-bottom: 8px;
+            transition: color var(--transition);
+        }
+        .loss-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .loss-input-wrap input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 18px;
+            font-weight: 600;
+            outline: none;
+            transition: border 0.2s, background var(--transition);
+            min-width: 0;
+            width: 100%;
+        }
+        .loss-input-wrap input:focus {
+            border-color: var(--accent);
+        }
+        .loss-input-wrap input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .loss-input-wrap input::-webkit-outer-spin-button,
+        .loss-input-wrap input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .arrow-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            color: var(--text);
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.15s;
+            flex-shrink: 0;
+            user-select: none;
+            font-weight: 300;
+        }
+        .arrow-btn:hover {
+            background: var(--border);
+        }
+        .arrow-btn:active {
+            transform: scale(0.92);
+        }
+        .loss-next-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius);
+            background: var(--accent);
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            margin-top: 4px;
+        }
+        .loss-next-btn:hover {
+            background: var(--accent-hover);
+        }
+        .loss-next-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ── Get Data View ── */
+        .data-view .data-hint {
+            color: var(--text2);
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 10px 14px;
+            background: var(--bg3);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            transition: color var(--transition), background var(--transition);
+        }
+        .data-view .data-hint strong {
+            color: var(--text);
+        }
+
+        .number-entry {
+            background: var(--bg3);
+            border-radius: var(--radius);
+            padding: 16px 14px 18px;
+            margin-bottom: 14px;
+            border: 1px solid transparent;
+            transition: background var(--transition), border var(--transition), box-shadow 0.2s;
+        }
+        .number-entry.required {
+            border-color: var(--accent);
+            border-width: 1px;
+        }
+        .number-entry .entry-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .number-entry .entry-header label {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text);
+            transition: color var(--transition);
+        }
+        .number-entry .entry-header .required-badge {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--accent);
+            background: rgba(108, 92, 231, 0.15);
+            padding: 2px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+        .entry-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .entry-row .field-group {
+            flex: 1 0 calc(50% - 8px);
+            min-width: 100px;
+        }
+        .entry-row .field-group.input-group {
+            flex: 1 0 60px;
+            min-width: 70px;
+        }
+        .entry-row .field-group label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text2);
+            margin-bottom: 2px;
+            transition: color var(--transition);
+        }
+        .entry-row .field-group input,
+        .entry-row .field-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s, background var(--transition), color var(--transition);
+            font-family: inherit;
+        }
+        .entry-row .field-group input:focus,
+        .entry-row .field-group select:focus {
+            border-color: var(--accent);
+        }
+        .entry-row .field-group input::placeholder {
+            color: var(--text2);
+            opacity: 0.5;
+        }
+        .entry-row .field-group select {
+            appearance: auto;
+            cursor: pointer;
+        }
+        .entry-row .field-group select option {
+            background: var(--bg2);
+            color: var(--text);
+        }
+
+        /* ── Submit Button ── */
+        .data-submit-wrap {
+            margin-top: 8px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .data-submit-wrap button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            min-width: 120px;
+        }
+        .data-submit-wrap button:active {
+            transform: scale(0.97);
+        }
+        .btn-submit {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-submit:hover {
+            background: var(--accent-hover);
+        }
+        .btn-reset {
+            background: var(--bg3);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-reset:hover {
+            background: var(--border);
+        }
+
+        /* ── Success / Summary ── */
+        .summary-box {
+            background: var(--bg3);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            margin: 12px 0 8px;
+            border-left: 4px solid #00b894;
+            transition: background var(--transition);
+        }
+        .summary-box .summary-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .summary-box .summary-item {
+            font-size: 13px;
+            color: var(--text2);
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border);
+            transition: color var(--transition), border var(--transition);
+        }
+        .summary-box .summary-item:last-child {
+            border-bottom: none;
+        }
+        .summary-box .summary-item strong {
+            color: var(--text);
+        }
+
+        .toast {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            margin-top: 12px;
+            color: var(--text);
+            font-size: 14px;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+            transition: background var(--transition), border var(--transition), color var(--transition);
+        }
+        .toast.error {
+            border-color: #e74c6f;
+            color: #e74c6f;
+        }
+        .toast.success {
+            border-color: #00b894;
+            color: #00b894;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            #popup {
+                padding: 20px 14px 24px;
+                max-height: 94vh;
+            }
+            #popup-title {
+                font-size: 20px;
+            }
+            .entry-row .field-group {
+                flex: 1 0 calc(50% - 6px);
+                min-width: 70px;
+            }
+            .entry-row .field-group.input-group {
+                flex: 1 0 100%;
+                min-width: 100%;
+            }
+            .entry-row .field-group input,
+            .entry-row .field-group select {
+                font-size: 13px;
+                padding: 7px 8px;
+            }
+            .number-entry {
+                padding: 12px 10px 14px;
+            }
+            .status-buttons button {
+                font-size: 15px;
+                padding: 14px 16px;
+            }
+            .loss-input-wrap input {
+                font-size: 16px;
+                padding: 12px 14px;
+            }
+            .arrow-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+            .data-submit-wrap button {
+                font-size: 15px;
+                padding: 12px 16px;
+                min-width: 100px;
+            }
+            #theme-toggle {
+                width: 38px;
+                height: 38px;
+                font-size: 17px;
+                top: 12px;
+                right: 12px;
+            }
+        }
+        @media (max-width: 420px) {
+            #popup {
+                padding: 14px 10px 18px;
+                border-radius: 10px;
+            }
+            .entry-row .field-group {
+                flex: 1 0 100%;
+                min-width: 100%;
+            }
+            .entry-row .field-group.input-group {
+                flex: 1 0 100%;
+            }
+            .number-entry .entry-header label {
+                font-size: 14px;
+            }
+        }
+
+        /* ── Utilities ── */
+        .hidden-view {
+            display: none !important;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mb-4 {
+            margin-bottom: 4px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .gap-8 {
+            gap: 8px;
+        }
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+        }
+        .flex-1 {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── THEME TOGGLE ─── -->
+    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
+
+    <!-- ─── POPUP OVERLAY ─── -->
+    <div id="popup-overlay">
+        <div id="popup">
+
+            <!-- Header -->
+            <div class="popup-header">
+                <h2 id="popup-title">Status</h2>
+                <button id="close-popup" aria-label="Close popup">✕</button>
+            </div>
+
+            <!-- Content -->
+            <div id="popup-content">
+
+                <!-- ===== VIEW: Status ===== -->
+                <div id="view-status" class="status-view">
+                    <p class="sub-text">Choose how you want to proceed</p>
+                    <div class="status-buttons">
+                        <button class="btn-fresh" data-action="fresh">Fresh</button>
+                        <button class="btn-loss" data-action="loss">Loss Recovery</button>
+                    </div>
+                </div>
+
+                <!-- ===== VIEW: Loss Amount ===== -->
+                <div id="view-loss" class="loss-view hidden-view">
+                    <label class="loss-label" for="loss-amount">Enter loss amount</label>
+                    <div class="loss-input-wrap">
+                        <input type="number" id="loss-amount" value="0" step="1" min="0" />
+                        <button class="arrow-btn" id="loss-down" aria-label="Decrease">−</button>
+                        <button class="arrow-btn" id="loss-up" aria-label="Increase">+</button>
+                    </div>
+                    <button class="loss-next-btn" id="loss-next">Continue →</button>
+                </div>
+
+                <!-- ===== VIEW: Get Data ===== -->
+                <div id="view-data" class="data-view hidden-view">
+                    <div class="data-hint">
+                        Enter previous values. <strong>Number 1</strong> and <strong>Number 2</strong> are required.
+                    </div>
+
+                    <!-- Number entries will be rendered by JS -->
+                    <div id="entries-container"></div>
+
+                    <div class="data-submit-wrap">
+                        <button class="btn-submit" id="submit-data">Submit Data</button>
+                        <button class="btn-reset" id="reset-data">Reset</button>
+                    </div>
+
+                    <!-- Feedback area -->
+                    <div id="feedback"></div>
+                </div>
+
+            </div><!-- /popup-content -->
+        </div><!-- /popup -->
+    </div><!-- /popup-overlay -->
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ─── DOM refs ───
+            const overlay = document.getElementById('popup-overlay');
+            const popupTitle = document.getElementById('popup-title');
+            const viewStatus = document.getElementById('view-status');
+            const viewLoss = document.getElementById('view-loss');
+            const viewData = document.getElementById('view-data');
+            const entriesContainer = document.getElementById('entries-container');
+            const feedback = document.getElementById('feedback');
+            const closeBtn = document.getElementById('close-popup');
+            const themeToggle = document.getElementById('theme-toggle');
+
+            const lossInput = document.getElementById('loss-amount');
+            const lossDown = document.getElementById('loss-down');
+            const lossUp = document.getElementById('loss-up');
+            const lossNext = document.getElementById('loss-next');
+
+            const submitBtn = document.getElementById('submit-data');
+            const resetBtn = document.getElementById('reset-data');
+
+            // ─── State ───
+            let currentView = 'status'; // 'status' | 'loss' | 'data'
+            let lossAmount = 0;
+            let formData = []; // array of 5 entries { value, redBlack, oddEvenFh, ah, num12, num123 }
+
+            // ─── Theme ───
+            let darkMode = true;
+            const themeKey = 'data-theme';
+
+            function setTheme(dark) {
+                darkMode = dark;
+                document.documentElement.setAttribute(themeKey, dark ? 'dark' : 'light');
+                themeToggle.textContent = dark ? '🌙' : '☀️';
+                try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (_) {}
+            }
+
+            function toggleTheme() {
+                setTheme(!darkMode);
+            }
+
+            // load saved theme
+            try {
+                const saved = localStorage.getItem('theme');
+                if (saved === 'light') setTheme(false);
+                else if (saved === 'dark') setTheme(true);
+                else {
+                    // system preference
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    setTheme(prefersDark);
+                }
+            } catch (_) { setTheme(true); }
+
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // ─── Helpers ───
+            function showView(viewId) {
+                [viewStatus, viewLoss, viewData].forEach(el => el.classList.add('hidden-view'));
+                if (viewId === 'status') {
+                    viewStatus.classList.remove('hidden-view');
+                    popupTitle.textContent = 'Status';
+                    currentView = 'status';
+                } else if (viewId === 'loss') {
+                    viewLoss.classList.remove('hidden-view');
+                    popupTitle.textContent = 'Loss Recovery';
+                    currentView = 'loss';
+                } else if (viewId === 'data') {
+                    viewData.classList.remove('hidden-view');
+                    popupTitle.textContent = 'Get Data';
+                    currentView = 'data';
+                }
+                feedback.innerHTML = '';
+            }
+
+            function showPopup() {
+                overlay.classList.remove('hidden');
+            }
+
+            function hidePopup() {
+                overlay.classList.add('hidden');
+                // reset to status view when closed
+                showView('status');
+                feedback.innerHTML = '';
+            }
+
+            // ─── Build Data Form ───
+            const dropdownOptions = {
+                redBlack: ['Red', 'Black'],
+                oddEvenFh: ['Odd', 'Even', 'FH'],
+                ah: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+                num12: ['12', '24', '26'],
+                num123: ['1', '2', '3']
+            };
+
+            function buildForm() {
+                entriesContainer.innerHTML = '';
+                formData = [];
+                for (let i = 1; i <= 5; i++) {
+                    const entry = {
+                        value: '',
+                        redBlack: 'Red',
+                        oddEvenFh: 'Odd',
+                        ah: 'A',
+                        num12: '12',
+                        num123: '1'
+                    };
+                    formData.push(entry);
+
+                    const div = document.createElement('div');
+                    div.className = 'number-entry' + (i <= 2 ? ' required' : '');
+                    div.dataset.index = i - 1;
+
+                    const header = document.createElement('div');
+                    header.className = 'entry-header';
+                    header.innerHTML = `
+                        <label>Number ${i}</label>
+                        ${i <= 2 ? '<span class="required-badge">Required</span>' : ''}
+                    `;
+                    div.appendChild(header);
+
+                    const row = document.createElement('div');
+                    row.className = 'entry-row';
+
+                    // Input
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'field-group input-group';
+                    inputGroup.innerHTML = `
+                        <label>Value</label>
+                        <input type="number" step="0.01" placeholder="0" data-field="value" />
+                    `;
+                    row.appendChild(inputGroup);
+
+                    // Red/Black
+                    const rbGroup = document.createElement('div');
+                    rbGroup.className = 'field-group';
+                    rbGroup.innerHTML = `
+                        <label>R/B</label>
+                        <select data-field="redBlack">
+                            ${dropdownOptions.redBlack.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                    `;
+                    row.appendChild(rbGroup);
+
+                    // Odd/Even/FH
+                    const oefGroup = document.createElement('div');
+                    oefGroup.className = 'field-group';
+                    oefGroup.innerHTML = `
+                        <label>O/E/FH</label>
+                        <select data-field="oddEvenFh">
+                            ${dropdownOptions.oddEvenFh.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                    `;
+                    row.appendChild(oefGroup);
+
+                    // AH
+                    const ahGroup = document.createElement('div');
+                    ahGroup.className = 'field-group';
+                    ahGroup.innerHTML = `
+                        <label>AH</label>
+                        <select data-field="ah">
+                            ${dropdownOptions.ah.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                    `;
+                    row.appendChild(ahGroup);
+
+                    // 12/24/26
+                    const n12Group = document.createElement('div');
+                    n12Group.className = 'field-group';
+                    n12Group.innerHTML = `
+                        <label>12/24/26</label>
+                        <select data-field="num12">
+                            ${dropdownOptions.num12.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                    `;
+                    row.appendChild(n12Group);
+
+                    // 1/2/3
+                    const n123Group = document.createElement('div');
+                    n123Group.className = 'field-group';
+                    n123Group.innerHTML = `
+                        <label>1/2/3</label>
+                        <select data-field="num123">
+                            ${dropdownOptions.num123.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                    `;
+                    row.appendChild(n123Group);
+
+                    div.appendChild(row);
+                    entriesContainer.appendChild(div);
+                }
+
+                // Wire up input events to update formData
+                document.querySelectorAll('.number-entry').forEach((entryDiv, idx) => {
+                    const inputs = entryDiv.querySelectorAll('[data-field]');
+                    inputs.forEach(el => {
+                        el.addEventListener('change', function() {
+                            const field = this.dataset.field;
+                            formData[idx][field] = this.value;
+                        });
+                        // Also update on input for number fields
+                        if (el.tagName === 'INPUT') {
+                            el.addEventListener('input', function() {
+                                formData[idx][this.dataset.field] = this.value;
+                            });
+                        }
+                    });
+                });
+            }
+
+            // ─── Sync formData from DOM ───
+            function syncFormData() {
+                const entries = document.querySelectorAll('.number-entry');
+                entries.forEach((entryDiv, idx) => {
+                    const inputs = entryDiv.querySelectorAll('[data-field]');
+                    inputs.forEach(el => {
+                        const field = el.dataset.field;
+                        formData[idx][field] = el.value;
+                    });
+                });
+            }
+
+            // ─── Validate ───
+            function validateForm() {
+                const errors = [];
+                // Number 1 & 2 required
+                for (let i = 0; i < 2; i++) {
+                    const val = formData[i].value;
+                    if (val === undefined || val === null || val === '' || isNaN(parseFloat(val))) {
+                        errors.push(`Number ${i+1} is required`);
+                    }
+                }
+                return errors;
+            }
+
+            // ─── Show summary ───
+            function showSummary() {
+                syncFormData();
+                const errs = validateForm();
+                if (errs.length > 0) {
+                    feedback.innerHTML = `<div class="toast error">⚠️ ${errs.join(' • ')}</div>`;
+                    return;
+                }
+
+                let html = `<div class="summary-box">
+                    <div class="summary-title">✅ Data Submitted</div>`;
+                formData.forEach((entry, i) => {
+                    const val = entry.value || '—';
+                    html += `<div class="summary-item">
+                        <strong>#${i+1}</strong> ${val} 
+                        · ${entry.redBlack} · ${entry.oddEvenFh} · ${entry.ah} · ${entry.num12} · ${entry.num123}
+                    </div>`;
+                });
+                html += `</div>`;
+                feedback.innerHTML = html;
+            }
+
+            // ─── Reset Form ───
+            function resetForm() {
+                formData.forEach((entry, i) => {
+                    entry.value = '';
+                    entry.redBlack = 'Red';
+                    entry.oddEvenFh = 'Odd';
+                    entry.ah = 'A';
+                    entry.num12 = '12';
+                    entry.num123 = '1';
+                });
+                // Update DOM
+                const entries = document.querySelectorAll('.number-entry');
+                entries.forEach((entryDiv, idx) => {
+                    const inputs = entryDiv.querySelectorAll('[data-field]');
+                    inputs.forEach(el => {
+                        const field = el.dataset.field;
+                        if (field === 'value') {
+                            el.value = '';
+                        } else {
+                            // select dropdowns
+                            const options = dropdownOptions[field] || [];
+                            if (options.length) {
+                                el.value = options[0];
+                            }
+                        }
+                    });
+                });
+                feedback.innerHTML = '';
+            }
+
+            // ─── View Transitions ───
+            function goToStatus() {
+                showView('status');
+            }
+
+            function goToLoss() {
+                showView('loss');
+                lossInput.focus();
+                lossInput.select();
+            }
+
+            function goToData() {
+                showView('data');
+                // build form if not already built
+                if (entriesContainer.children.length === 0) {
+                    buildForm();
+                }
+                feedback.innerHTML = '';
+            }
+
+            function goToDataFromLoss() {
+                // store loss amount
+                const val = parseFloat(lossInput.value);
+                lossAmount = isNaN(val) ? 0 : val;
+                goToData();
+                // show a small note
+                feedback.innerHTML = `<div class="toast success">Loss amount: ${lossAmount} recorded</div>`;
+            }
+
+            // ─── Event Handlers ───
+
+            // Status buttons
+            document.querySelector('[data-action="fresh"]').addEventListener('click', goToData);
+            document.querySelector('[data-action="loss"]').addEventListener('click', goToLoss);
+
+            // Loss amount arrows
+            lossDown.addEventListener('click', function() {
+                let v = parseFloat(lossInput.value) || 0;
+                v = Math.max(0, v - 1);
+                lossInput.value = v;
+                lossInput.dispatchEvent(new Event('change'));
+            });
+            lossUp.addEventListener('click', function() {
+                let v = parseFloat(lossInput.value) || 0;
+                v = Math.max(0, v + 1);
+                lossInput.value = v;
+                lossInput.dispatchEvent(new Event('change'));
+            });
+            lossInput.addEventListener('change', function() {
+                let v = parseFloat(this.value);
+                if (isNaN(v) || v < 0) this.value = 0;
+            });
+            lossInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    lossNext.click();
+                }
+            });
+
+            lossNext.addEventListener('click', goToDataFromLoss);
+
+            // Submit
+            submitBtn.addEventListener('click', showSummary);
+
+            // Reset
+            resetBtn.addEventListener('click', resetForm);
+
+            // Close popup
+            closeBtn.addEventListener('click', hidePopup);
+
+            // Click outside to close (on overlay)
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) hidePopup();
+            });
+
+            // Keyboard: Escape to close
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') hidePopup();
+            });
+
+            // ─── Init ───
+            // Show popup on load
+            showPopup();
+            showView('status');
+
+            // Pre-build form so it's ready
+            buildForm();
+
+            // ─── Handle resize / orientation ───
+            // (nothing special needed, CSS handles it)
+
+            console.log('✅ App ready');
+        })();
+    </script>
+
+</body>
+</html>
