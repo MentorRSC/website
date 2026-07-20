@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>DriveClean - Your Car's Digital Co-Pilot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f6fa;
+            color: #1a202c;
+            scroll-behavior: smooth;
+        }
+
+        /* Brand Colors */
+        :root {
+            --primary: #0b3b5c;
+            --primary-light: #1a5a7a;
+            --accent: #f97316;
+            --accent-light: #fb923c;
+            --bg-card: #ffffff;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            --radius: 20px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* Utilities */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:hover {
+            background: #ea580c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-outline:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        /* HEADER */
+        header {
+            background: var(--primary);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -1px;
+        }
+        .logo span {
+            color: var(--accent);
+        }
+        .logo small {
+            font-size: 0.7rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+            margin-top: -4px;
+            letter-spacing: 1px;
+        }
+        nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        nav a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        nav a:hover { color: white; }
+        .nav-cta {
+            background: var(--accent);
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: white !important;
+            font-weight: 700;
+        }
+        .nav-cta:hover { background: #ea580c; }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, #0a2a3f 100%);
+            padding: 60px 0 80px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            right: -100px;
+            top: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(249,115,22,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+        .hero h1 span { color: var(--accent); }
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hero-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .hero-stats div { font-weight: 700; font-size: 1.4rem; }
+        .hero-stats div small { display: block; font-weight: 400; font-size: 0.8rem; opacity: 0.7; }
+
+        .hero-image-placeholder {
+            background: rgba(255,255,255,0.05);
+            border-radius: var(--radius);
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        .hero-image-placeholder .big-icon { font-size: 4rem; }
+
+        /* DASHBOARD GRID */
+        .section-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 50px 0 10px;
+            color: var(--primary);
+        }
+        .section-sub {
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0 60px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 28px 24px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid #edf2f7;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1);
+            border-color: var(--accent);
+        }
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        .card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--primary);
+        }
+        .card p {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .card .value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        .card .badge-success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .card .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .card input, .card select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            margin: 12px 0;
+            transition: 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+        .card input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(11, 59, 92, 0.1);
+        }
+        .card .btn-sm {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            font-size: 0.95rem;
+        }
+        .card .btn-sm:hover { background: var(--primary-light); }
+
+        /* SLIDER */
+        .slider-container {
+            margin: 15px 0;
+        }
+        .slider-container input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* FRANCHISE MISSION SECTION */
+        .mission-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
+            border-radius: var(--radius);
+            padding: 50px 40px;
+            margin: 40px 0 60px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .mission-section h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .mission-section h2 span { color: var(--accent); }
+        .mission-section p {
+            max-width: 700px;
+            margin: 15px auto;
+            color: #334155;
+            font-size: 1.1rem;
+        }
+        .mission-tags {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 25px 0 10px;
+        }
+        .mission-tags span {
+            background: white;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+            font-size: 0.9rem;
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--primary);
+            color: white;
+            padding: 40px 0 20px;
+            margin-top: 40px;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 40px;
+        }
+        .footer-grid h4 { margin-bottom: 15px; font-size: 1.1rem; }
+        .footer-grid p { opacity: 0.8; line-height: 1.7; }
+        .footer-grid ul { list-style: none; }
+        .footer-grid ul li { margin-bottom: 8px; opacity: 0.8; cursor: default; }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            margin-top: 30px;
+            text-align: center;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+
+        /* MODAL / TOAST */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 60px;
+            font-weight: 600;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 999;
+            text-align: center;
+            max-width: 90%;
+        }
+        .toast.show { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-grid { grid-template-columns: 1fr; text-align: center; }
+            .hero h1 { font-size: 2.4rem; }
+            .hero p { margin: 0 auto 25px; }
+            .hero-stats { justify-content: center; }
+            .header-inner { flex-wrap: wrap; gap: 10px; }
+            nav a { font-size: 0.8rem; }
+            .nav-cta { padding: 6px 14px; }
+            .mission-section { padding: 30px 20px; }
+            .footer-grid { grid-template-columns: 1fr; gap: 20px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">✨ Toast Message</div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="container header-inner">
+            <div class="logo">
+                Drive<span>Clean</span>
+                <small>Youth Franchise Network</small>
+            </div>
+            <nav>
+                <a href="#">Dashboard</a>
+                <a href="#services">Services</a>
+                <a href="#mission">Our Mission</a>
+                <a href="#" class="nav-cta" onclick="openBooking()">🚗 Book Now</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div>
+                <div class="hero-badge">🌟 #1 Driver's Dashboard in India</div>
+                <h1>Your Car's <span>Digital</span> Co-Pilot</h1>
+                <p>Check weather before washing, track fuel prices, scan for challans, and book a premium wash—all in one place.</p>
+                <button class="btn-primary" onclick="openBooking()">🚘 Book a Smart Wash</button>
+                <div class="hero-stats">
+                    <div>12+ <small>Branches</small></div>
+                    <div>45+ <small>Youth Owners</small></div>
+                    <div>4.9★ <small>Customer Rating</small></div>
+                </div>
+            </div>
+            <div class="hero-image-placeholder">
+                <div class="big-icon">🧼</div>
+                <h3 style="color:white; margin:10px 0">Smart Car Care</h3>
+                <p style="color:rgba(255,255,255,0.7); font-size:0.9rem;">Waterless eco-wash • Full detailing • Doorstep service</p>
+                <div style="margin-top:20px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                    <span style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:40px; font-size:0.8rem;">🌧️ Rain Guard</span>
+                    <span style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:40px; font-size:0.8rem;">⛽ Fuel Tracker</span>
+                    <span style="background:rgba(255,255,255,0.1); padding:5px 15px; border-radius:40px; font-size:0.8rem;">📋 E-Challan</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DASHBOARD GRID -->
+    <div class="container" id="services">
+        <h2 class="section-title">🛞 Driver's Dashboard</h2>
+        <p class="section-sub">Free tools to save you money, time, and fines. Your hub before hitting the road.</p>
+
+        <div class="dashboard-grid">
+            <!-- CARD 1: WEATHER SMART WASH -->
+            <div class="card">
+                <div class="card-icon">🌦️</div>
+                <h3>Smart Wash Scheduler</h3>
+                <p>We check the sky so you don't have to. Wash when it's safe.</p>
+                <div id="weatherDisplay" style="margin: 15px 0;">
+                    <div class="value" id="weatherTemp">--°C</div>
+                    <div id="weatherCondition">📍 Fetching your location...</div>
+                    <div id="weatherAdvice" style="margin-top: 8px;"></div>
+                </div>
+                <button class="btn-sm" onclick="fetchWeather()">🔄 Refresh Weather</button>
+                <div style="margin-top:12px; font-size:0.8rem; color:#64748b;">
+                    ⏳ Updated: <span id="weatherTime">Just now</span>
+                </div>
+            </div>
+
+            <!-- CARD 2: FUEL PRICES -->
+            <div class="card">
+                <div class="card-icon">⛽</div>
+                <h3>Fuel Price Checker</h3>
+                <p>Current rates in your city (Live Data).</p>
+                <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                    <span>Petrol</span>
+                    <span class="value" style="font-size:1.3rem;" id="petrolPrice">₹94.72</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                    <span>Diesel</span>
+                    <span class="value" style="font-size:1.3rem;" id="dieselPrice">₹87.65</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:10px 0;">
+                    <span>CNG</span>
+                    <span class="value" style="font-size:1.3rem;" id="cngPrice">₹76.20</span>
+                </div>
+                <div style="font-size:0.7rem; color:#94a3b8;">*Avg. Delhi rates. Updated hourly.</div>
+            </div>
+
+            <!-- CARD 3: E-CHALLAN TRACKER -->
+            <div class="card">
+                <div class="card-icon">🚨</div>
+                <h3>E-Challan Check</h3>
+                <p>Enter your vehicle number to check pending fines.</p>
+                <input type="text" id="vehicleInput" placeholder="e.g. DL 01 AB 1234" style="text-transform:uppercase;">
+                <button class="btn-sm" onclick="checkChallan()">🔍 Check Now</button>
+                <div id="challanResult" style="margin-top: 12px; font-weight:600; min-height:30px;"></div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:6px;">We help you avoid late fees.</div>
+            </div>
+
+            <!-- CARD 4: RESALE VALUE ESTIMATOR -->
+            <div class="card">
+                <div class="card-icon">📈</div>
+                <h3>Car Resale Value</h3>
+                <p>Wondering what your car is worth today?</p>
+                <div class="slider-container">
+                    <label style="font-weight:600; font-size:0.9rem;">Manufacturing Year</label>
+                    <input type="range" id="yearSlider" min="2010" max="2026" value="2018">
+                    <div class="slider-labels">
+                        <span>2010</span>
+                        <span id="yearDisplay">2018</span>
+                        <span>2026</span>
+                    </div>
+                </div>
+                <div class="slider-container">
+                    <label style="font-weight:600; font-size:0.9rem;">Kilometers Driven (Lakhs)</label>
+                    <input type="range" id="kmSlider" min="0" max="5" step="0.1" value="1.5">
+                    <div class="slider-labels">
+                        <span>0</span>
+                        <span id="kmDisplay">1.5L</span>
+                        <span>5L+</span>
+                    </div>
+                </div>
+                <div style="background:#f1f5f9; padding:12px; border-radius:12px; text-align:center; margin-top:10px;">
+                    <span style="color:#64748b;">Estimated Resale Value</span>
+                    <div class="value" id="resaleValue" style="font-size:1.8rem;">₹4,50,000</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING SECTION SNIPPET (Quick CTA) -->
+    <div class="container" style="text-align:center; margin: -20px 0 30px;">
+        <p style="color:#64748b;">Like these tools? Book a premium waterless wash and get <strong style="color:var(--accent);">10% OFF</strong> today!</p>
+        <button class="btn-primary" onclick="openBooking()" style="margin-top:10px;">📅 Schedule Your Wash</button>
+    </div>
+
+    <!-- MISSION / FRANCHISE SECTION -->
+    <div class="container" id="mission">
+        <div class="mission-section">
+            <h2>🧑‍🤝‍🧑 Built by Youth, <span>Driven by Ambition</span></h2>
+            <p>DriveClean isn't just a car wash—it's a movement. We lease fully-equipped branches to unemployed youth, training them to become independent business owners under one powerful national brand.</p>
+            <div class="mission-tags">
+                <span>✅ 0% Franchise Exploitation</span>
+                <span>📚 Free Business Training</span>
+                <span>🤝 Profit Sharing Model</span>
+                <span>🌱 Eco-Friendly Operations</span>
+            </div>
+            <p style="margin-top:20px; font-weight:600; color:var(--primary);">Together, we are building India's largest youth-owned car care network.</p>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container footer-grid">
+            <div>
+                <h3 style="font-size:1.8rem; font-weight:800;">Drive<span style="color:var(--accent);">Clean</span></h3>
+                <p style="margin-top:10px;">Your trusted car care partner. Smart tools, premium service, and a mission to empower the next generation of entrepreneurs.</p>
+            </div>
+            <div>
+                <h4>Quick Links</h4>
+                <ul>
+                    <li>🚗 Book a Wash</li>
+                    <li>📍 Find a Branch</li>
+                    <li>📞 Support</li>
+                    <li>📋 Franchise Enquiry</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Contact</h4>
+                <ul>
+                    <li>📧 hello@driveclean.in</li>
+                    <li>📞 +91 98765 43210</li>
+                    <li>🏢 Delhi NCR, India</li>
+                </ul>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            © 2026 DriveClean. Built with ❤️ for India's drivers & future business owners.
+        </div>
+    </footer>
+
+    <script>
+        // ----- TOAST SYSTEM -----
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = isSuccess ? '#1e293b' : '#991b1b';
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // ----- BOOKING MODAL (Mock) -----
+        function openBooking() {
+            showToast('📞 Great choice! Call us at +91 98765 43210 or visit a nearby branch.', true);
+        }
+
+        // ----- 1. WEATHER WIDGET (Free Open-Meteo API) -----
+        async function fetchWeather() {
+            const tempDisplay = document.getElementById('weatherTemp');
+            const condDisplay = document.getElementById('weatherCondition');
+            const adviceDisplay = document.getElementById('weatherAdvice');
+            const timeDisplay = document.getElementById('weatherTime');
+
+            condDisplay.textContent = '⏳ Fetching weather...';
+            adviceDisplay.innerHTML = '';
+
+            try {
+                const pos = await new Promise((resolve, reject) => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(resolve, () => reject('Location denied'));
+                    } else {
+                        reject('No GPS');
+                    }
+                });
+
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+                const weather = data.current_weather;
+
+                const temp = weather.temperature;
+                const code = weather.weathercode;
+
+                let condition = '☀️ Clear';
+                let advice = '';
+                let isGood = true;
+
+                if (code === 0) { condition = '☀️ Clear Sky'; advice = '🌟 Perfect! Get your car washed today!'; }
+                else if (code >= 1 && code <= 3) { condition = '⛅ Partly Cloudy'; advice = '🌤️ Safe to wash, but hurry!'; }
+                else if (code >= 45 && code <= 48) { condition = '🌫️ Foggy'; advice = '⚠️ Low visibility. Drive safe, wash later.'; isGood = false; }
+                else if (code >= 51 && code <= 67) { condition = '🌧️ Light Rain'; advice = '☔ Rain expected! Wait 24 hrs to wash.'; isGood = false; }
+                else if (code >= 71 && code <= 77) { condition = '❄️ Snow'; advice = '❄️ Too cold! Postpone your wash.'; isGood = false; }
+                else if (code >= 80 && code <= 99) { condition = '⛈️ Heavy Rain/Storm'; advice = '⛔ DO NOT WASH TODAY. Stay safe.'; isGood = false; }
+                else { condition = '🌤️ Mixed'; advice = '👍 Good to go!'; }
+
+                tempDisplay.textContent = `${Math.round(temp)}°C`;
+                condDisplay.textContent = `${condition} (${Math.round(temp)}°C)`;
+                adviceDisplay.innerHTML = `<span class="${isGood ? 'badge-success' : 'badge-danger'}">${advice}</span>`;
+                timeDisplay.textContent = new Date().toLocaleTimeString();
+
+            } catch (error) {
+                // Fallback if location denied or API fails
+                condDisplay.textContent = '📍 Using default (Delhi)';
+                tempDisplay.textContent = '32°C';
+                adviceDisplay.innerHTML = `<span class="badge-success">🌞 Good to wash! (Default)</span>`;
+                showToast('ℹ️ Allow location for hyper-local weather.', false);
+            }
+        }
+
+        // Run weather on load
+        window.onload = function() {
+            fetchWeather();
+            updateResale();
+            // Fuel prices - just static demo, update time
+            document.getElementById('petrolPrice').textContent = `₹${(92 + Math.random() * 5).toFixed(2)}`;
+            document.getElementById('dieselPrice').textContent = `₹${(85 + Math.random() * 4).toFixed(2)}`;
+            document.getElementById('cngPrice').textContent = `₹${(74 + Math.random() * 3).toFixed(2)}`;
+        };
+
+        // ----- 2. E-CHALLAN CHECKER (Mock) -----
+        function checkChallan() {
+            const input = document.getElementById('vehicleInput');
+            const result = document.getElementById('challanResult');
+            const val = input.value.trim().toUpperCase();
+
+            if (val.length < 4) {
+                result.innerHTML = '⚠️ Please enter a valid number (e.g. DL 01 AB 1234)';
+                result.style.color = '#991b1b';
+                return;
+            }
+
+            // Simulate a check - random result for demo
+            const random = Math.random();
+            if (random > 0.6) {
+                result.innerHTML = '✅ No pending challans! You\'re a safe driver. 🚗💨';
+                result.style.color = '#166534';
+                showToast('🎉 No fines found! Drive safe.', true);
+            } else {
+                const fineAmount = Math.floor(Math.random() * 5000) + 500;
+                result.innerHTML = `🚨 Alert: 1 pending challan of ₹${fineAmount}. Pay soon to avoid late fees.`;
+                result.style.color = '#991b1b';
+                showToast(`⚠️ Pending challan of ₹${fineAmount} detected!`, false);
+            }
+        }
+
+        // ----- 3. RESALE VALUE CALCULATOR -----
+        const yearSlider = document.getElementById('yearSlider');
+        const kmSlider = document.getElementById('kmSlider');
+        const yearDisplay = document.getElementById('yearDisplay');
+        const kmDisplay = document.getElementById('kmDisplay');
+        const resaleDisplay = document.getElementById('resaleValue');
+
+        yearSlider.addEventListener('input', updateResale);
+        kmSlider.addEventListener('input', updateResale);
+
+        function updateResale() {
+            const year = parseInt(yearSlider.value);
+            const km = parseFloat(kmSlider.value);
+
+            yearDisplay.textContent = year;
+            kmDisplay.textContent = km + 'L';
+
+            // Base price of a hypothetical car (say ₹8,00,000 new)
+            const basePrice = 800000;
+            const currentYear = 2026;
+            const age = currentYear - year;
+            
+            // Depreciation: 15% per year, max 80% depreciation. 
+            let depFactor = Math.max(0.2, 1 - (age * 0.15));
+            // Km penalty: reduce by up to 30% for high km
+            let kmPenalty = Math.min(1, 1 - (km / 8));
+            
+            let finalValue = Math.round(basePrice * depFactor * kmPenalty);
+            // Ensure it doesn't go below 30,000
+            if (finalValue < 30000) finalValue = 30000;
+            
+            resaleDisplay.textContent = `₹${finalValue.toLocaleString('en-IN')}`;
+        }
+
+        // Enter key for challan
+        document.getElementById('vehicleInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkChallan();
+        });
+
+        // Extra: Smooth scroll for nav links
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
