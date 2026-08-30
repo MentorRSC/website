@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Spidey Emergency AI</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+#header{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:65px;
+    z-index:20;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 20px;
+    background:rgba(0,0,0,.85);
+}
+
+#title{
+    font-size:25px;
+    font-weight:bold;
+}
+
+#status{
+    font-size:18px;
+}
+
+#camera{
+    position:absolute;
+    top:65px;
+    left:0;
+    width:100%;
+    height:calc(100% - 65px);
+    background:#000;
+}
+
+#video{
+    position:absolute;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+}
+
+#canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    transform:scaleX(-1);
+}
+
+#startScreen{
+    position:absolute;
+    inset:0;
+    z-index:100;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    background:#050505;
+}
+
+#startScreen h1{
+    font-size:50px;
+    margin:10px;
+}
+
+#startButton{
+    margin-top:20px;
+    padding:18px 40px;
+    font-size:24px;
+    font-weight:bold;
+    border:0;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+#gestureBox{
+    position:absolute;
+    left:20px;
+    bottom:20px;
+    z-index:10;
+    min-width:310px;
+    padding:18px;
+    border-radius:15px;
+    background:rgba(0,0,0,.8);
+}
+
+#gesture{
+    font-size:28px;
+    font-weight:bold;
+}
+
+#details{
+    margin-top:8px;
+    font-size:16px;
+}
+
+#help{
+    position:absolute;
+    right:20px;
+    bottom:20px;
+    z-index:10;
+    padding:18px;
+    line-height:1.8;
+    border-radius:15px;
+    background:rgba(0,0,0,.8);
+}
+
+#emergency{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:#b00000;
+}
+
+#emergency.active{
+    display:flex;
+    animation:flash .35s infinite alternate;
+}
+
+#emergency h1{
+    font-size:75px;
+    margin:10px;
+}
+
+#emergencyType{
+    font-size:45px;
+    font-weight:bold;
+}
+
+#reset{
+    font-size:25px;
+    margin-top:25px;
+}
+
+@keyframes flash{
+
+    from{
+        background:#b00000;
+    }
+
+    to{
+        background:#300000;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="header">
+
+```
+<div id="title">
+    🕷️ SPIDEY EMERGENCY AI
+</div>
+
+<div id="status">
+    Loading MediaPipe...
+</div>
+```
+
+</div>
+
+<div id="camera">
+
+```
+<video
+    id="video"
+    autoplay
+    playsinline>
+</video>
+
+<canvas
+    id="canvas">
+</canvas>
+
+
+<div id="gestureBox">
+
+    <div id="gesture">
+        Waiting...
+    </div>
+
+    <div id="details">
+        Show your hand
+    </div>
+
+</div>
+
+
+<div id="help">
+
+    🤏 Index + Thumb → EMERGENCY 2<br>
+
+    🤙 Pinky + Thumb → EMERGENCY 1<br>
+
+    ✊ Fist → EXTREME ALERT<br>
+
+    🖐️ Five Fingers → NOTHING<br>
+
+    🕷️ Spidey → RESET
+
+</div>
+
+
+<div id="startScreen">
+
+    <h1>
+        🕷️ SPIDEY EMERGENCY AI
+    </h1>
+
+    <p>
+        Hand Gesture Emergency System
+    </p>
+
+    <button id="startButton">
+        START CAMERA
+    </button>
+
+</div>
+```
+
+</div>
+
+<div id="emergency">
+
+```
+<h1>
+    🚨 ALERT 🚨
+</h1>
+
+<div id="emergencyType">
+    ALERT
+</div>
+
+<div id="reset">
+    🕷️ Hold SPIDEY gesture to reset
+</div>
+```
+
+</div>
+
+<script type="module">
+
+
+/* =====================================================
+   MEDIAPIPE
+===================================================== */
+
+import {
+
+    FilesetResolver,
+    HandLandmarker
+
+}
+
+from
+"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/vision_bundle.mjs";
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const video =
+document.getElementById("video");
+
+const canvas =
+document.getElementById("canvas");
+
+const ctx =
+canvas.getContext("2d");
+
+const status =
+document.getElementById("status");
+
+const startButton =
+document.getElementById("startButton");
+
+const startScreen =
+document.getElementById("startScreen");
+
+const gesture =
+document.getElementById("gesture");
+
+const details =
+document.getElementById("details");
+
+const emergency =
+document.getElementById("emergency");
+
+const emergencyType =
+document.getElementById("emergencyType");
+
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+let landmarker = null;
+
+let running = false;
+
+let lastTime = -1;
+
+let emergencyActive = false;
+
+let spideySince = 0;
+
+let currentStable = "";
+
+let candidateGesture = "";
+
+let candidateSince = 0;
+
+
+/* =====================================================
+   AUDIO
+===================================================== */
+
+let audio = null;
+
+let osc = null;
+
+let gain = null;
+
+let alarmTimer = null;
+
+
+/* =====================================================
+   INITIALIZE MEDIAPIPE
+===================================================== */
+
+async function initialize(){
+
+    try{
+
+        status.textContent =
+        "Loading MediaPipe...";
+
+
+        const vision =
+        await FilesetResolver.forVisionTasks(
+
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/wasm"
+
+        );
+
+
+        landmarker =
+        await HandLandmarker.createFromOptions(
+
+            vision,
+
+            {
+
+                baseOptions:{
+
+                    modelAssetPath:
+
+                    "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+
+                    delegate:"GPU"
+
+                },
+
+                runningMode:"VIDEO",
+
+                numHands:1,
+
+                minHandDetectionConfidence:.5,
+
+                minHandPresenceConfidence:.5,
+
+                minTrackingConfidence:.5
+
+            }
+
+        );
+
+
+        status.textContent =
+        "✅ AI READY";
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        status.textContent =
+        "❌ MEDIAPIPE FAILED";
+
+    }
+
+}
+
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
+async function startCamera(){
+
+    try{
+
+        if(!landmarker){
+
+            alert(
+                "MediaPipe is still loading. Wait a few seconds."
+            );
+
+            return;
+
+        }
+
+
+        const stream =
+        await navigator.mediaDevices.getUserMedia({
+
+            video:{
+                width:{ideal:1280},
+                height:{ideal:720},
+                facingMode:"user"
+            },
+
+            audio:false
+
+        });
+
+
+        video.srcObject =
+        stream;
+
+
+        await video.play();
+
+
+        canvas.width =
+        video.videoWidth;
+
+        canvas.height =
+        video.videoHeight;
+
+
+        startScreen.style.display =
+        "none";
+
+
+        running = true;
+
+
+        status.textContent =
+        "🟢 CAMERA ACTIVE";
+
+
+        requestAnimationFrame(
+            detect
+        );
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        status.textContent =
+        "❌ CAMERA FAILED";
+
+        alert(
+            "Camera could not start:\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   MAIN DETECTION
+===================================================== */
+
+function detect(){
+
+    if(!running)
+        return;
+
+
+    if(
+        video.readyState >= 2 &&
+        video.currentTime !== lastTime
+    ){
+
+        lastTime =
+        video.currentTime;
+
+
+        try{
+
+            const result =
+            landmarker.detectForVideo(
+
+                video,
+
+                performance.now()
+
+            );
+
+
+            draw(result);
+
+
+            if(
+                result.landmarks &&
+                result.landmarks.length > 0
+            ){
+
+                const hand =
+                result.landmarks[0];
+
+
+                const type =
+                recognize(hand);
+
+
+                updateStable(type);
+
+
+                showGesture(type);
+
+
+                processGesture();
+
+            }
+
+            else{
+
+                gesture.textContent =
+                "No hand";
+
+                details.textContent =
+                "Show your hand";
+
+                candidateGesture = "";
+                currentStable = "";
+                candidateSince = 0;
+                spideySince = 0;
+
+            }
+
+        }
+
+        catch(error){
+
+            console.error(
+                "Detection error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    requestAnimationFrame(
+        detect
+    );
+
+}
+
+
+/* =====================================================
+   STABLE GESTURE FILTER
+===================================================== */
+
+function updateStable(type){
+
+    const now =
+    performance.now();
+
+
+    if(type !== candidateGesture){
+
+        candidateGesture =
+        type;
+
+        candidateSince =
+        now;
+
+        currentStable = "";
+
+        return;
+
+    }
+
+
+    if(
+        now - candidateSince >= 250
+    ){
+
+        currentStable =
+        type;
+
+    }
+
+}
+
+
+/* =====================================================
+   GESTURE DISPLAY
+===================================================== */
+
+function showGesture(type){
+
+    if(type === "PINCH"){
+
+        gesture.textContent =
+        "🤏 INDEX + THUMB";
+
+        details.textContent =
+        "EMERGENCY 2";
+
+    }
+
+    else if(type === "PINKY"){
+
+        gesture.textContent =
+        "🤙 PINKY + THUMB";
+
+        details.textContent =
+        "EMERGENCY 1";
+
+    }
+
+    else if(type === "FIST"){
+
+        gesture.textContent =
+        "✊ FIST";
+
+        details.textContent =
+        "EXTREME ALERT";
+
+    }
+
+    else if(type === "OPEN"){
+
+        gesture.textContent =
+        "🖐️ FIVE FINGERS";
+
+        details.textContent =
+        "NO ALARM";
+
+    }
+
+    else if(type === "SPIDEY"){
+
+        gesture.textContent =
+        "🕷️ SPIDEY";
+
+        details.textContent =
+        "RESET";
+
+    }
+
+    else{
+
+        gesture.textContent =
+        "🖐️ HAND";
+
+        details.textContent =
+        "Gesture not recognized";
+
+    }
+
+}
+
+
+/* =====================================================
+   PROCESS
+===================================================== */
+
+function processGesture(){
+
+    /*
+     * RESET
+     */
+
+    if(
+        currentStable === "SPIDEY"
+    ){
+
+        if(emergencyActive){
+
+            if(spideySince === 0){
+
+                spideySince =
+                performance.now();
+
+            }
+
+
+            if(
+                performance.now() -
+                spideySince >= 800
+            ){
+
+                resetEmergency();
+
+                spideySince = 0;
+
+            }
+
+        }
+
+    }
+
+    else{
+
+        spideySince = 0;
+
+    }
+
+
+    /*
+     * DO NOT trigger another
+     * alarm while one is active.
+     */
+
+    if(emergencyActive)
+        return;
+
+
+    /*
+     * EMERGENCY 2
+     */
+
+    if(
+        currentStable === "PINCH"
+    ){
+
+        trigger(
+            "EMERGENCY 2"
+        );
+
+    }
+
+
+    /*
+     * EMERGENCY 1
+     */
+
+    else if(
+        currentStable === "PINKY"
+    ){
+
+        trigger(
+            "EMERGENCY 1"
+        );
+
+    }
+
+
+    /*
+     * EXTREME ALERT
+     */
+
+    else if(
+        currentStable === "FIST"
+    ){
+
+        trigger(
+            "EXTREME ALERT"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   GESTURE RECOGNITION
+===================================================== */
+
+function recognize(h){
+
+    const wrist =
+    h[0];
+
+    const thumb =
+    h[4];
+
+    const index =
+    h[8];
+
+    const middle =
+    h[12];
+
+    const ring =
+    h[16];
+
+    const pinky =
+    h[20];
+
+
+    const indexPIP =
+    h[6];
+
+    const middlePIP =
+    h[10];
+
+    const ringPIP =
+    h[14];
+
+    const pinkyPIP =
+    h[18];
+
+
+    /*
+     * -----------------------------------------------
+     * FINGER OPEN TEST
+     * -----------------------------------------------
+     */
+
+    const indexOpen =
+    distance(index,wrist) >
+    distance(indexPIP,wrist) * 1.08;
+
+
+    const middleOpen =
+    distance(middle,wrist) >
+    distance(middlePIP,wrist) * 1.08;
+
+
+    const ringOpen =
+    distance(ring,wrist) >
+    distance(ringPIP,wrist) * 1.08;
+
+
+    const pinkyOpen =
+    distance(pinky,wrist) >
+    distance(pinkyPIP,wrist) * 1.08;
+
+
+    /*
+     * -----------------------------------------------
+     * PALM SCALE
+     * -----------------------------------------------
+     */
+
+    const palm =
+    distance(wrist,h[9]);
+
+
+    /*
+     * -----------------------------------------------
+     * THUMB + INDEX
+     * -----------------------------------------------
+     */
+
+    const thumbIndex =
+    distance(thumb,index);
+
+
+    /*
+     * -----------------------------------------------
+     * THUMB + PINKY
+     * -----------------------------------------------
+     */
+
+    const thumbPinky =
+    distance(thumb,pinky);
+
+
+    /*
+     * =================================================
+     * FIRST: PINCH
+     *
+     * Thumb must be touching index.
+     * =================================================
+     */
+
+    if(
+        thumbIndex <
+        palm * .30
+    ){
+
+        /*
+         * Make sure pinky isn't
+         * also the main touching finger.
+         */
+
+        if(
+            thumbPinky >
+            palm * .28
+        ){
+
+            return "PINCH";
+
+        }
+
+    }
+
+
+    /*
+     * =================================================
+     * SECOND: PINKY + THUMB
+     *
+     * Pinky must be touching thumb.
+     * =================================================
+     */
+
+    if(
+        thumbPinky <
+        palm * .32
+    ){
+
+        /*
+         * Don't classify a normal
+         * open hand as pinky touch.
+         */
+
+        if(
+            !(indexOpen &&
+              middleOpen &&
+              ringOpen &&
+              pinkyOpen)
+        ){
+
+            return "PINKY";
+
+        }
+
+    }
+
+
+    /*
+     * =================================================
+     * SPIDEY
+     *
+     * Index open
+     * Pinky open
+     * Middle closed
+     * Ring closed
+     *
+     * Thumb is ignored.
+     * =================================================
+     */
+
+    if(
+
+        indexOpen &&
+
+        !middleOpen &&
+
+        !ringOpen &&
+
+        pinkyOpen
+
+    ){
+
+        return "SPIDEY";
+
+    }
+
+
+    /*
+     * =================================================
+     * FIVE FINGERS
+     *
+     * IMPORTANT:
+     *
+     * This is checked BEFORE FIST.
+     * It NEVER triggers an alarm.
+     * =================================================
+     */
+
+    if(
+
+        indexOpen &&
+        middleOpen &&
+        ringOpen &&
+        pinkyOpen
+
+    ){
+
+        return "OPEN";
+
+    }
+
+
+    /*
+     * =================================================
+     * FIST
+     * =================================================
+     */
+
+    if(
+
+        !indexOpen &&
+        !middleOpen &&
+        !ringOpen &&
+        !pinkyOpen
+
+    ){
+
+        return "FIST";
+
+    }
+
+
+    return "UNKNOWN";
+
+}
+
+
+/* =====================================================
+   DISTANCE
+===================================================== */
+
+function distance(a,b){
+
+    const dx =
+    a.x-b.x;
+
+    const dy =
+    a.y-b.y;
+
+    const dz =
+    (a.z||0)-(b.z||0);
+
+
+    return Math.sqrt(
+
+        dx*dx +
+        dy*dy +
+        dz*dz
+
+    );
+
+}
+
+
+/* =====================================================
+   DRAW HAND
+===================================================== */
+
+function draw(result){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    if(
+        !result.landmarks ||
+        !result.landmarks.length
+    )
+        return;
+
+
+    const connections = [
+
+        [0,1],
+        [1,2],
+        [2,3],
+        [3,4],
+
+        [0,5],
+        [5,6],
+        [6,7],
+        [7,8],
+
+        [5,9],
+        [9,10],
+        [10,11],
+        [11,12],
+
+        [9,13],
+        [13,14],
+        [14,15],
+        [15,16],
+
+        [13,17],
+        [17,18],
+        [18,19],
+        [19,20],
+
+        [0,17]
+
+    ];
+
+
+    const hand =
+    result.landmarks[0];
+
+
+    ctx.beginPath();
+
+
+    for(
+        const c of connections
+    ){
+
+        const a =
+        hand[c[0]];
+
+        const b =
+        hand[c[1]];
+
+
+        ctx.moveTo(
+            a.x*canvas.width,
+            a.y*canvas.height
+        );
+
+
+        ctx.lineTo(
+            b.x*canvas.width,
+            b.y*canvas.height
+        );
+
+    }
+
+
+    ctx.strokeStyle =
+    "#00ff00";
+
+    ctx.lineWidth = 5;
+
+    ctx.stroke();
+
+
+    for(
+        const p of hand
+    ){
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            p.x*canvas.width,
+            p.y*canvas.height,
+
+            6,
+
+            0,
+            Math.PI*2
+
+        );
+
+
+        ctx.fillStyle =
+        "#00ffff";
+
+        ctx.fill();
+
+    }
+
+}
+
+
+/* =====================================================
+   TRIGGER
+===================================================== */
+
+function trigger(type){
+
+    if(emergencyActive)
+        return;
+
+
+    emergencyActive =
+    true;
+
+
+    emergencyType.textContent =
+    type;
+
+
+    emergency.classList.add(
+        "active"
+    );
+
+
+    status.textContent =
+    "🚨 " + type;
+
+
+    startAlarm();
+
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function resetEmergency(){
+
+    emergencyActive =
+    false;
+
+
+    emergency.classList.remove(
+        "active"
+    );
+
+
+    stopAlarm();
+
+
+    status.textContent =
+    "🟢 SYSTEM SAFE";
+
+
+    candidateGesture = "";
+
+    currentStable = "";
+
+}
+
+
+/* =====================================================
+   ALARM
+===================================================== */
+
+function startAlarm(){
+
+    if(audio)
+        return;
+
+
+    try{
+
+        audio =
+        new AudioContext();
+
+
+        osc =
+        audio.createOscillator();
+
+
+        gain =
+        audio.createGain();
+
+
+        osc.type =
+        "square";
+
+
+        osc.frequency.value =
+        900;
+
+
+        gain.gain.value =
+        .3;
+
+
+        osc.connect(gain);
+
+        gain.connect(
+            audio.destination
+        );
+
+
+        osc.start();
+
+
+        let high = false;
+
+
+        alarmTimer =
+        setInterval(()=>{
+
+            if(!osc)
+                return;
+
+
+            high =
+            !high;
+
+
+            osc.frequency.value =
+            high ? 1200 : 600;
+
+
+        },300);
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Alarm audio error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   STOP ALARM
+===================================================== */
+
+function stopAlarm(){
+
+    if(alarmTimer){
+
+        clearInterval(
+            alarmTimer
+        );
+
+        alarmTimer =
+        null;
+
+    }
+
+
+    if(osc){
+
+        try{
+            osc.stop();
+        }
+        catch(e){}
+
+
+        osc.disconnect();
+
+        osc = null;
+
+    }
+
+
+    if(gain){
+
+        gain.disconnect();
+
+        gain = null;
+
+    }
+
+
+    if(audio){
+
+        try{
+            audio.close();
+        }
+        catch(e){}
+
+
+        audio = null;
+
+    }
+
+}
+
+
+/* =====================================================
+   START
+===================================================== */
+
+startButton.addEventListener(
+    "click",
+    startCamera
+);
+
+
+/* =====================================================
+   LOAD
+===================================================== */
+
+initialize();
+
+</script>
+
+</body>
+</html>
