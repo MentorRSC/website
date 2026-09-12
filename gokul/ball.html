@@ -1,0 +1,561 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Ping Pong Game</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    body {
+        background: #111827;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+        touch-action: none;
+    }
+
+    #gameContainer {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    canvas {
+        background: #182235;
+        border: 4px solid white;
+        border-radius: 10px;
+        display: block;
+        box-shadow: 0 0 25px rgba(255,255,255,0.15);
+    }
+
+    #topBar {
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(90vw, 600px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    #score {
+        color: #38bdf8;
+    }
+
+    #lives {
+        color: #fb7185;
+    }
+
+    #message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+        z-index: 10;
+        display: none;
+    }
+
+    #message h1 {
+        font-size: 42px;
+        margin-bottom: 15px;
+    }
+
+    #message p {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    button {
+        border: none;
+        background: #38bdf8;
+        color: #07111f;
+        padding: 13px 28px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    button:active {
+        transform: scale(0.95);
+    }
+
+    #instructions {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #cbd5e1;
+        font-size: 14px;
+        text-align: center;
+        width: 90%;
+        pointer-events: none;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="gameContainer">
+
+    <div id="topBar">
+        <div>Score: <span id="score">0</span></div>
+        <div>❤️ Lives: <span id="lives">3</span></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="message">
+        <h1 id="gameOverText">GAME OVER</h1>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="restartGame()">PLAY AGAIN</button>
+    </div>
+
+    <div id="instructions">
+        Move the paddle with your finger or mouse
+    </div>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const scoreElement = document.getElementById("score");
+const livesElement = document.getElementById("lives");
+const message = document.getElementById("message");
+const finalScore = document.getElementById("finalScore");
+
+let width;
+let height;
+
+let score = 0;
+let lives = 3;
+
+let gameRunning = true;
+
+const ball = {
+    x: 0,
+    y: 0,
+    radius: 9,
+    speedX: 4,
+    speedY: -4
+};
+
+const paddle = {
+    width: 110,
+    height: 14,
+    x: 0,
+    y: 0
+};
+
+
+/* =========================
+   RESIZE GAME
+========================= */
+
+function resizeGame() {
+
+    const maxWidth = 650;
+    const maxHeight = 850;
+
+    width = Math.min(window.innerWidth - 20, maxWidth);
+    height = Math.min(window.innerHeight - 80, maxHeight);
+
+    canvas.width = width;
+    canvas.height = height;
+
+    paddle.y = height - 45;
+
+    if (paddle.x === 0) {
+        paddle.x = width / 2 - paddle.width / 2;
+    }
+
+}
+
+window.addEventListener("resize", resizeGame);
+
+resizeGame();
+
+
+/* =========================
+   RESET BALL
+========================= */
+
+function resetBall() {
+
+    ball.x = width / 2;
+    ball.y = height / 2;
+
+    let direction = Math.random() > 0.5 ? 1 : -1;
+
+    ball.speedX = direction * (3 + Math.random() * 2);
+    ball.speedY = -(3 + Math.random() * 2);
+}
+
+
+/* =========================
+   MOVE PADDLE
+========================= */
+
+function movePaddle(clientX) {
+
+    const rect = canvas.getBoundingClientRect();
+
+    let mouseX = clientX - rect.left;
+
+    paddle.x = mouseX - paddle.width / 2;
+
+    if (paddle.x < 0) {
+        paddle.x = 0;
+    }
+
+    if (paddle.x + paddle.width > width) {
+        paddle.x = width - paddle.width;
+    }
+}
+
+
+/* Mouse control */
+
+canvas.addEventListener("mousemove", function(e) {
+    movePaddle(e.clientX);
+});
+
+
+/* Touch control */
+
+canvas.addEventListener("touchmove", function(e) {
+
+    e.preventDefault();
+
+    if (e.touches.length > 0) {
+        movePaddle(e.touches[0].clientX);
+    }
+
+}, { passive: false });
+
+
+canvas.addEventListener("touchstart", function(e) {
+
+    e.preventDefault();
+
+    if (e.touches.length > 0) {
+        movePaddle(e.touches[0].clientX);
+    }
+
+}, { passive: false });
+
+
+/* =========================
+   DRAW BALL
+========================= */
+
+function drawBall() {
+
+    ctx.beginPath();
+
+    ctx.arc(
+        ball.x,
+        ball.y,
+        ball.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "white";
+
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = "white";
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+}
+
+
+/* =========================
+   DRAW PADDLE
+========================= */
+
+function drawPaddle() {
+
+    ctx.fillStyle = "#38bdf8";
+
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = "#38bdf8";
+
+    ctx.fillRect(
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        paddle.height
+    );
+
+    ctx.shadowBlur = 0;
+}
+
+
+/* =========================
+   DRAW CENTER LINE
+========================= */
+
+function drawDecorations() {
+
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 2;
+
+    ctx.setLineDash([8, 8]);
+
+    ctx.beginPath();
+
+    ctx.moveTo(0, height / 2);
+    ctx.lineTo(width, height / 2);
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+}
+
+
+/* =========================
+   UPDATE BALL
+========================= */
+
+function updateBall() {
+
+    ball.x += ball.speedX;
+    ball.y += ball.speedY;
+
+
+    /* LEFT EDGE */
+
+    if (ball.x - ball.radius <= 0) {
+
+        ball.x = ball.radius;
+
+        ball.speedX *= -1;
+
+    }
+
+
+    /* RIGHT EDGE */
+
+    if (ball.x + ball.radius >= width) {
+
+        ball.x = width - ball.radius;
+
+        ball.speedX *= -1;
+
+    }
+
+
+    /* TOP EDGE */
+
+    if (ball.y - ball.radius <= 0) {
+
+        ball.y = ball.radius;
+
+        ball.speedY *= -1;
+
+    }
+
+
+    /* =========================
+       PADDLE COLLISION
+    ========================= */
+
+    if (
+
+        ball.y + ball.radius >= paddle.y &&
+
+        ball.y - ball.radius <=
+        paddle.y + paddle.height &&
+
+        ball.x >= paddle.x &&
+
+        ball.x <= paddle.x + paddle.width &&
+
+        ball.speedY > 0
+
+    ) {
+
+        /* Bounce */
+
+        ball.y = paddle.y - ball.radius;
+
+        ball.speedY *= -1;
+
+
+        /* SCORE +1 */
+
+        score++;
+
+        scoreElement.textContent = score;
+
+
+        /* Change angle depending
+           on where ball hits paddle */
+
+        let hitPosition =
+            (ball.x - paddle.x) / paddle.width;
+
+        let angle =
+            (hitPosition - 0.5) * 2;
+
+        ball.speedX = angle * 6;
+
+
+        /* Increase difficulty */
+
+        let maxSpeed = 9;
+
+        if (Math.abs(ball.speedY) < maxSpeed) {
+            ball.speedY *= 1.04;
+        }
+
+    }
+
+
+    /* =========================
+       BALL MISSES PADDLE
+    ========================= */
+
+    if (ball.y - ball.radius > height) {
+
+        lives--;
+
+        livesElement.textContent = lives;
+
+
+        if (lives <= 0) {
+
+            gameOver();
+
+        } else {
+
+            resetBall();
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function gameOver() {
+
+    gameRunning = false;
+
+    finalScore.textContent = score;
+
+    message.style.display = "block";
+
+}
+
+
+/* =========================
+   RESTART GAME
+========================= */
+
+function restartGame() {
+
+    score = 0;
+
+    lives = 3;
+
+    scoreElement.textContent = score;
+    livesElement.textContent = lives;
+
+    paddle.x =
+        width / 2 - paddle.width / 2;
+
+    message.style.display = "none";
+
+    gameRunning = true;
+
+    resetBall();
+
+}
+
+
+/* =========================
+   DRAW GAME
+========================= */
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+    drawDecorations();
+
+    drawPaddle();
+
+    drawBall();
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop() {
+
+    if (gameRunning) {
+
+        updateBall();
+
+        draw();
+
+    }
+
+    requestAnimationFrame(gameLoop);
+
+}
+
+
+/* START */
+
+resetBall();
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
+```
