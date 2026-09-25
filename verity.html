@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verity AI Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0c10;
+      --card-bg: rgba(22, 24, 33, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #ffe600;
+      --primary-hover: #ffd000;
+      --text-main: #f0f2f5;
+      --text-muted: #8a8f9d;
+      --accent-glow: rgba(255, 230, 0, 0.25);
+      --danger: #ff4757;
+      --success: #2ed573;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 50% 30%, rgba(255, 230, 0, 0.04) 0%, transparent 70%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+    }
+
+    /* Header & Navigation */
+    header {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 1.2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      background-color: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    /* Avatar Workspace */
+    .avatar-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: auto 0;
+      position: relative;
+    }
+
+    .smiley-face {
+      width: 140px;
+      height: 140px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 40px var(--accent-glow), inset 0 -8px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .smiley-face.thinking {
+      animation: floatPulse 1.5s infinite ease-in-out;
+    }
+
+    .smiley-face.speaking {
+      animation: talkBounce 0.4s infinite alternate ease-in-out;
+      box-shadow: 0 0 60px var(--accent-glow), inset 0 -4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    @keyframes floatPulse {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-8px) scale(1.02);
+      }
+    }
+
+    @keyframes talkBounce {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.05);
+      }
+    }
+
+    .eyes {
+      display: flex;
+      gap: 28px;
+      margin-top: -6px;
+    }
+
+    .eye {
+      width: 14px;
+      height: 22px;
+      background: #000;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .smiley-face.thinking .eye {
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    .mouth-svg {
+      width: 46px;
+      height: 26px;
+      margin-top: 6px;
+      overflow: visible;
+    }
+
+    .mouth-path {
+      stroke: #000;
+      stroke-width: 5.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      transition: all 0.2s ease;
+    }
+
+    .status-badge {
+      margin-top: 1.2rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      letter-spacing: 0.5px;
+    }
+
+    /* Main Response Box */
+    .response-card {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 1.4rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .response-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .response-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .response-text {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      white-space: pre-wrap;
+      word-break: break-word;
+      user-select: text;
+    }
+
+    .response-tools {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 1rem;
+    }
+
+    /* Bottom Input & Footer Area */
+    .bottom-wrapper {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .input-container {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+
+    .text-input {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 0.98rem;
+      outline: none;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .text-input:focus {
+      border-color: rgba(255, 230, 0, 0.4);
+      box-shadow: 0 0 15px rgba(255, 230, 0, 0.1);
+    }
+
+    .btn-submit {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 0 22px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-submit:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-mic {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-mic.listening {
+      background: var(--danger);
+      color: #fff;
+      animation: pulseMic 1s infinite;
+    }
+
+    @keyframes pulseMic {
+      0%, 100% {
+        box-shadow: 0 0 0 rgba(255, 71, 87, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 15px rgba(255, 71, 87, 0.8);
+      }
+    }
+
+    /* Disclaimer & Creator Footer */
+    .footer-credits {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .footer-disclaimer {
+      opacity: 0.8;
+    }
+
+    .footer-author {
+      font-weight: 500;
+    }
+
+    .footer-author a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-author a:hover {
+      text-decoration: underline;
+    }
+
+    /* Modal Windows */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal-overlay.active {
+      display: flex !important;
+    }
+
+    .modal-card {
+      background: #14161f;
+      border: 1px solid var(--card-border);
+      width: 100%;
+      max-width: 480px;
+      border-radius: 20px;
+      padding: 1.8rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.6rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-main);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .form-input,
+    .form-select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .form-select option {
+      background: #14161f;
+      color: var(--text-main);
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .radio-btn {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .radio-btn.active {
+      background: rgba(255, 230, 0, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-save {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .btn-save:hover {
+      background: var(--primary-hover);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-dot"></div>
+      Verity AI
+    </div>
+    <div class="nav-buttons">
+      <button class="btn-icon" id="openAiModal">
+        <span>⚡</span> AI Model
+      </button>
+      <button class="btn-icon" id="openVoiceModal">
+        <span>🎙️</span> Voice Setup
+      </button>
+    </div>
+  </header>
+
+  <!-- Avatar Workspace -->
+  <div class="avatar-container">
+    <div class="smiley-face" id="smiley" title="Click to hear greeting">
+      <div class="eyes">
+        <div class="eye"></div>
+        <div class="eye"></div>
+      </div>
+      <svg class="mouth-svg" viewBox="0 0 46 26">
+        <path id="mouthPath" class="mouth-path" d="M 8 7 Q 23 22 38 7" />
+      </svg>
+    </div>
+    <div class="status-badge" id="statusBadge">Ready</div>
+  </div>
+
+  <!-- Response Card -->
+  <div class="response-card">
+    <div class="response-header">
+      <div class="response-title">
+        <span>●</span> Verity Response
+      </div>
+    </div>
+    <div class="response-text" id="responseText">hello i am verity
+
+ask me anything cuz i know everything</div>
+    <div class="response-tools">
+      <button class="btn-icon" id="copyBtn">📋 Copy</button>
+      <button class="btn-icon" id="replayBtn">🔊 Speak</button>
+    </div>
+  </div>
+
+  <!-- Bottom Input & Footer Area -->
+  <div class="bottom-wrapper">
+    <div class="input-container">
+      <button class="btn-mic" id="micBtn" title="Voice Input">🎤</button>
+      <input type="text" class="text-input" id="userInput" placeholder="Ask Verity anything..." autocomplete="off">
+      <button class="btn-submit" id="sendBtn">Send</button>
+    </div>
+
+    <div class="footer-credits">
+      <div class="footer-disclaimer">Verity is an AI and can make mistakes.</div>
+      <div class="footer-author">Created by Shivathej | Follow me on 📺 <a href="https://www.youtube.com/@cactus_edits-l6x" target="_blank" rel="noopener noreferrer">cactus_editz-l6x</a></div>
+    </div>
+  </div>
+
+  <!-- AI Model Modal -->
+  <div class="modal-overlay" id="aiModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>⚡ AI Engine Settings</span>
+        <button class="modal-close">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Gemini API Key</label>
+        <input type="password" class="form-input" id="geminiApiKey" placeholder="AIzaSy...">
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Leave empty to use Pollinations AI free tier.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Gemini 3 Model Selection</label>
+        <select class="form-select" id="geminiModelSelect">
+          <option value="gemini-3.5-flash">Gemini 3.5 Flash (Recommended)</option>
+          <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Advanced Reasoning)</option>
+          <option value="gemini-3-flash-preview">Gemini 3 Flash (Fast)</option>
+          <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (High Volume)</option>
+        </select>
+      </div>
+
+      <button class="btn-save" id="saveAiSettings">Save Settings</button>
+    </div>
+  </div>
+
+  <!-- Voice Settings Modal -->
+  <div class="modal-overlay" id="voiceModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>🎙️ Voice Settings (TTS)</span>
+        <button class="modal-close">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Voice Speech Output</label>
+        <div class="radio-group">
+          <div class="radio-btn active" id="speechEnabledBtn">Enabled</div>
+          <div class="radio-btn" id="speechDisabledBtn">Disabled</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Text-To-Speech Engine</label>
+        <div class="radio-group">
+          <div class="radio-btn active" id="browserTtsBtn">Browser Speech</div>
+          <div class="radio-btn" id="fishTtsBtn">Fish Audio API</div>
+        </div>
+      </div>
+
+      <div class="form-group" id="voiceSelectGroup">
+        <label class="form-label">Select Voice</label>
+        <select class="form-select" id="voiceSelect"></select>
+      </div>
+
+      <div class="form-group" id="fishApiGroup" style="display: none;">
+        <label class="form-label">Fish Audio API Key</label>
+        <input type="password" class="form-input" id="fishApiKey" placeholder="Your Fish Audio API key">
+      </div>
+
+      <button class="btn-icon" id="testVoiceBtn" style="justify-content: center; padding: 10px;">Test Speech Voice Output</button>
+
+      <button class="btn-save" id="saveVoiceSettings">Save & Close</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Settings Saved</div>
+
+  <script>
+    const DEFAULT_GREETING = "hello i am verity\n\nask me anything cuz i know everything";
+
+    const state = {
+      geminiApiKey: localStorage.getItem('verity_gemini_key') || '',
+      geminiModel: localStorage.getItem('verity_gemini_model') || 'gemini-3.5-flash',
+      speechEnabled: localStorage.getItem('verity_speech_enabled') !== 'false',
+      ttsEngine: localStorage.getItem('verity_tts_engine') || 'browser',
+      fishApiKey: localStorage.getItem('verity_fish_key') || '',
+      selectedVoiceIndex: localStorage.getItem('verity_selected_voice_index') || null,
+      isProcessing: false,
+      isSpeaking: false,
+      hasSpokenInitial: false
+    };
+
+    const smiley = document.getElementById('smiley');
+    const mouthPath = document.getElementById('mouthPath');
+    const statusBadge = document.getElementById('statusBadge');
+    const responseText = document.getElementById('responseText');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const replayBtn = document.getElementById('replayBtn');
+    const toast = document.getElementById('toast');
+
+    const aiModal = document.getElementById('aiModal');
+    const voiceModal = document.getElementById('voiceModal');
+    const openAiModal = document.getElementById('openAiModal');
+    const openVoiceModal = document.getElementById('openVoiceModal');
+    const closeModals = document.querySelectorAll('.modal-close');
+    const modalOverlays = document.querySelectorAll('.modal-overlay');
+
+    const geminiApiKeyInput = document.getElementById('geminiApiKey');
+    const geminiModelSelect = document.getElementById('geminiModelSelect');
+    const saveAiSettings = document.getElementById('saveAiSettings');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const speechEnabledBtn = document.getElementById('speechEnabledBtn');
+    const speechDisabledBtn = document.getElementById('speechDisabledBtn');
+    const browserTtsBtn = document.getElementById('browserTtsBtn');
+    const fishTtsBtn = document.getElementById('fishTtsBtn');
+    const fishApiGroup = document.getElementById('fishApiGroup');
+    const fishApiKeyInput = document.getElementById('fishApiKey');
+    const voiceSelectGroup = document.getElementById('voiceSelectGroup');
+    const testVoiceBtn = document.getElementById('testVoiceBtn');
+    const saveVoiceSettings = document.getElementById('saveVoiceSettings');
+
+    const synth = window.speechSynthesis;
+    let recognition = null;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        micBtn.classList.add('listening');
+        setStatus('Listening...', 'thinking');
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        userInput.value = transcript;
+        handleSend();
+      };
+
+      recognition.onerror = () => {
+        micBtn.classList.remove('listening');
+        setStatus('Ready', 'idle');
+      };
+
+      recognition.onend = () => {
+        micBtn.classList.remove('listening');
+      };
+    }
+
+    function showModal(modal) {
+      modal.classList.add('active');
+    }
+
+    function hideModals() {
+      aiModal.classList.remove('active');
+      voiceModal.classList.remove('active');
+    }
+
+    openAiModal.addEventListener('click', () => {
+      geminiApiKeyInput.value = state.geminiApiKey;
+      geminiModelSelect.value = state.geminiModel;
+      showModal(aiModal);
+    });
+
+    openVoiceModal.addEventListener('click', () => {
+      populateVoices();
+      showModal(voiceModal);
+    });
+
+    closeModals.forEach(btn => btn.addEventListener('click', hideModals));
+
+    modalOverlays.forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) hideModals();
+      });
+    });
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function setStatus(text, mode = 'idle') {
+      statusBadge.textContent = text;
+      smiley.classList.remove('thinking', 'speaking');
+
+      if (mode === 'thinking') {
+        smiley.classList.add('thinking');
+        mouthPath.setAttribute('d', 'M 12 14 Q 23 14 34 14');
+      } else if (mode === 'speaking') {
+        smiley.classList.add('speaking');
+        mouthPath.setAttribute('d', 'M 10 9 Q 23 25 36 9');
+      } else {
+        mouthPath.setAttribute('d', 'M 8 7 Q 23 22 38 7');
+      }
+    }
+
+    function sanitizeText(raw) {
+      if (!raw) return DEFAULT_GREETING;
+      let clean = raw.replace(/\x60\x60\x60[\s\S]*?\x60\x60\x60/g, '')
+                     .replace(/[#*\x60_~]/g, '')
+                     .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+                     .trim();
+
+      if (!clean || /^[^a-zA-Z0-9\u0600-\u06FF\u0D00-\u0D7F]+$/.test(clean)) {
+        return DEFAULT_GREETING;
+      }
+      return clean;
+    }
+
+    function populateVoices() {
+      if (!synth) return;
+      const voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+      let emmaIndex = -1;
+
+      voices.forEach((v, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(option);
+
+        if (v.name.includes("Microsoft Emma Online (Natural)") || v.name.includes("Microsoft Emma Multilingual Online (Natural)")) {
+          emmaIndex = index;
+        } else if (emmaIndex === -1 && (v.name.includes("Emma") || v.name.includes("Natural"))) {
+          emmaIndex = index;
+        }
+      });
+
+      if (state.selectedVoiceIndex !== null && voices[state.selectedVoiceIndex]) {
+        voiceSelect.value = state.selectedVoiceIndex;
+      } else if (emmaIndex !== -1) {
+        voiceSelect.value = emmaIndex;
+        state.selectedVoiceIndex = emmaIndex;
+      } else if (voices.length > 0) {
+        voiceSelect.value = 0;
+      }
+    }
+
+    if (synth) {
+      synth.onvoiceschanged = populateVoices;
+    }
+
+    function speakText(text) {
+      if (!state.speechEnabled || !text) return;
+      if (synth) synth.cancel();
+
+      if (state.ttsEngine === 'browser' && synth) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = synth.getVoices();
+        const selectedIdx = voiceSelect.value || state.selectedVoiceIndex;
+
+        if (voices[selectedIdx]) {
+          utterance.voice = voices[selectedIdx];
+        }
+
+        utterance.onstart = () => {
+          state.isSpeaking = true;
+          setStatus('Speaking...', 'speaking');
+        };
+
+        utterance.onend = () => {
+          state.isSpeaking = false;
+          setStatus('Ready', 'idle');
+        };
+
+        utterance.onerror = () => {
+          state.isSpeaking = false;
+          setStatus('Ready', 'idle');
+        };
+
+        synth.speak(utterance);
+      }
+    }
+
+    function speakInitialGreeting() {
+      if (state.hasSpokenInitial) return;
+      state.hasSpokenInitial = true;
+      speakText(DEFAULT_GREETING);
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        speakInitialGreeting();
+      }, 500);
+    });
+
+    const unlockAudio = () => {
+      speakInitialGreeting();
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    smiley.addEventListener('click', () => {
+      speakText(DEFAULT_GREETING);
+    });
+
+    async function fetchGeminiAI(prompt) {
+      const model = state.geminiModel || 'gemini-3.5-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.geminiApiKey}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are Verity, a concise, friendly voice assistant. Respond conversationally in clear plain text without markdown formatting or emojis.\n\nUser: ${prompt}`
+            }]
+          }]
+        })
+      });
+
+      if (!res.ok) throw new Error(`Gemini status ${res.status}`);
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('No candidate response from Gemini');
+      return text;
+    }
+
+    async function fetchPollinationsAI(prompt) {
+      const systemPrompt = "You are Verity, a helpful AI assistant. Answer concisely in plain text without emojis or formatting.";
+      const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent(systemPrompt)}`;
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Pollinations request failed');
+      return await res.text();
+    }
+
+    function generateLocalFallback(prompt) {
+      const p = prompt.toLowerCase();
+      if (p.includes('hello') || p.includes('hi')) return DEFAULT_GREETING;
+      if (p.includes('time')) return `The current time is ${new Date().toLocaleTimeString()}`;
+      if (p.includes('date')) return `Today is ${new Date().toLocaleDateString()}`;
+      if (p.includes('who are you')) return DEFAULT_GREETING;
+      return "I have received your request. Let me know if you would like me to adjust any settings.";
+    }
+
+    async function handleSend() {
+      const text = userInput.value.trim();
+      if (!text || state.isProcessing) return;
+
+      state.isProcessing = true;
+      userInput.value = '';
+      setStatus('Thinking...', 'thinking');
+
+      let response = '';
+
+      try {
+        if (state.geminiApiKey) {
+          try {
+            response = await fetchGeminiAI(text);
+          } catch (geminiErr) {
+            console.warn('Gemini primary failed, using Pollinations fallback...', geminiErr);
+            response = await fetchPollinationsAI(text);
+          }
+        } else {
+          response = await fetchPollinationsAI(text);
+        }
+      } catch (err) {
+        console.warn('Network APIs failed, using local fallback...', err);
+        response = generateLocalFallback(text);
+      }
+
+      const cleanResponse = sanitizeText(response);
+      
+      responseText.textContent = '';
+      let i = 0;
+      const typeInterval = setInterval(() => {
+        if (i < cleanResponse.length) {
+          responseText.textContent += cleanResponse.charAt(i);
+          i++;
+        } else {
+          clearInterval(typeInterval);
+          state.isProcessing = false;
+          speakText(cleanResponse);
+        }
+      }, 15);
+    }
+
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSend();
+    });
+
+    micBtn.addEventListener('click', () => {
+      if (!recognition) {
+        showToast('Speech Recognition not supported in browser');
+        return;
+      }
+      try {
+        recognition.start();
+      } catch(e) {
+        recognition.stop();
+      }
+    });
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(responseText.textContent);
+      showToast('Copied to clipboard');
+    });
+
+    replayBtn.addEventListener('click', () => {
+      speakText(responseText.textContent);
+    });
+
+    saveAiSettings.addEventListener('click', () => {
+      state.geminiApiKey = geminiApiKeyInput.value.trim();
+      state.geminiModel = geminiModelSelect.value;
+
+      localStorage.setItem('verity_gemini_key', state.geminiApiKey);
+      localStorage.setItem('verity_gemini_model', state.geminiModel);
+
+      hideModals();
+      showToast('AI Settings Updated');
+    });
+
+    saveVoiceSettings.addEventListener('click', () => {
+      state.selectedVoiceIndex = voiceSelect.value;
+      localStorage.setItem('verity_selected_voice_index', state.selectedVoiceIndex);
+      localStorage.setItem('verity_speech_enabled', state.speechEnabled);
+      localStorage.setItem('verity_tts_engine', state.ttsEngine);
+      localStorage.setItem('verity_fish_key', fishApiKeyInput.value.trim());
+
+      hideModals();
+      showToast('Voice Settings Saved');
+    });
+
+    speechEnabledBtn.addEventListener('click', () => {
+      state.speechEnabled = true;
+      speechEnabledBtn.classList.add('active');
+      speechDisabledBtn.classList.remove('active');
+    });
+
+    speechDisabledBtn.addEventListener('click', () => {
+      state.speechEnabled = false;
+      speechDisabledBtn.classList.add('active');
+      speechEnabledBtn.classList.remove('active');
+    });
+
+    browserTtsBtn.addEventListener('click', () => {
+      state.ttsEngine = 'browser';
+      browserTtsBtn.classList.add('active');
+      fishTtsBtn.classList.remove('active');
+      voiceSelectGroup.style.display = 'flex';
+      fishApiGroup.style.display = 'none';
+    });
+
+    fishTtsBtn.addEventListener('click', () => {
+      state.ttsEngine = 'fish';
+      fishTtsBtn.classList.add('active');
+      browserTtsBtn.classList.remove('active');
+      voiceSelectGroup.style.display = 'none';
+      fishApiGroup.style.display = 'flex';
+    });
+
+    testVoiceBtn.addEventListener('click', () => {
+      speakText(DEFAULT_GREETING);
+    });
+
+    populateVoices();
+  </script>
+</body>
+</html>
