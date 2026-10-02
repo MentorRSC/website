@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SHADOW RUN — Ultimate Stealth</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#05070b;
+    color:#e9f0f7;
+    font-family:Arial,Helvetica,sans-serif;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+    padding:15px;
+}
+
+#game{
+    width:950px;
+    max-width:100%;
+}
+
+h1{
+    margin:0 0 8px;
+    letter-spacing:4px;
+    font-size:28px;
+}
+
+.subtitle{
+    color:#788696;
+    margin-bottom:10px;
+}
+
+#hud{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:9px;
+    background:#0d1219;
+    border:1px solid #273240;
+    border-radius:10px 10px 0 0;
+}
+
+.stat{
+    background:#080c12;
+    border:1px solid #273240;
+    border-radius:7px;
+    padding:7px 10px;
+    font-size:13px;
+}
+
+.bar{
+    display:inline-block;
+    width:105px;
+    height:11px;
+    background:#202630;
+    border-radius:10px;
+    overflow:hidden;
+    vertical-align:middle;
+}
+
+.fill{
+    height:100%;
+    width:100%;
+}
+
+#hpBar{background:#32df78}
+#alarmBar{background:#ff5149}
+#bossBar{background:#c944ff}
+
+canvas{
+    display:block;
+    width:100%;
+    height:auto;
+    background:#080b10;
+    border-left:1px solid #273240;
+    border-right:1px solid #273240;
+}
+
+#buttons{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+    padding:9px;
+    background:#0d1219;
+    border:1px solid #273240;
+    border-radius:0 0 10px 10px;
+}
+
+button{
+    background:#151d27;
+    color:#eaf1f8;
+    border:1px solid #394858;
+    padding:9px 14px;
+    border-radius:7px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#263443;
+}
+
+#message{
+    margin-top:8px;
+    min-height:24px;
+    color:#aeb9c5;
+}
+
+.help{
+    color:#667383;
+    font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<h1>SHADOW RUN</h1>
+<div class="subtitle">ULTIMATE STEALTH OPERATIONS</div>
+
+<div id="hud">
+
+<div class="stat">
+LEVEL <b id="level">1</b>
+</div>
+
+<div class="stat">
+HP
+<span class="bar">
+<span id="hpBar" class="fill"></span>
+</span>
+<b id="hpText">100</b>
+</div>
+
+<div class="stat">
+ALARM
+<span class="bar">
+<span id="alarmBar" class="fill"></span>
+</span>
+<b id="alarmText">0</b>%
+</div>
+
+<div class="stat">
+KEYS <b id="keysText">0/1</b>
+</div>
+
+<div class="stat">
+STATUS <b id="status">STEALTH</b>
+</div>
+
+<div class="stat" id="bossHUD" style="display:none">
+BOSS
+<span class="bar">
+<span id="bossBar" class="fill"></span>
+</span>
+<b id="bossText">100</b>%
+</div>
+
+</div>
+
+<canvas id="canvas" width="900" height="540"></canvas>
+
+<div id="buttons">
+<button id="restart">↻ Restart</button>
+<button id="respawn">⟳ Respawn</button>
+<button id="checkpoint">⚑ Checkpoint</button>
+<button id="levelSelect">☰ Level</button>
+</div>
+
+<div id="message">
+WASD / Arrow Keys = Move · Shift = Sneak · R = Restart
+</div>
+
+<div class="help">
+Collect objectives → avoid detection → reach extraction.
+</div>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const W=900;
+const H=540;
+
+const MAX_HP=100;
+const BULLET_DAMAGE=20;
+
+const keysDown={};
+
+let level=1;
+
+let player;
+let guards=[];
+let bullets=[];
+let walls=[];
+let shadows=[];
+let keys=[];
+let terminals=[];
+let cameras=[];
+
+let alarm=0;
+let hp=MAX_HP;
+
+let running=true;
+let won=false;
+let dead=false;
+
+let invulnerability=0;
+
+let checkpoint={
+    x:55,
+    y:470,
+    hp:100,
+    keys:0,
+    terminals:0
+};
+
+let boss=null;
+
+let particles=[];
+
+let lastTime=0;
+
+
+/* DOM */
+
+const levelEl=document.getElementById("level");
+const hpText=document.getElementById("hpText");
+const hpBar=document.getElementById("hpBar");
+
+const alarmText=document.getElementById("alarmText");
+const alarmBar=document.getElementById("alarmBar");
+
+const keysText=document.getElementById("keysText");
+const statusEl=document.getElementById("status");
+
+const bossHUD=document.getElementById("bossHUD");
+const bossBar=document.getElementById("bossBar");
+const bossText=document.getElementById("bossText");
+
+const message=document.getElementById("message");
+
+
+/* INPUT */
+
+document.addEventListener("keydown",e=>{
+
+    keysDown[e.key.toLowerCase()]=true;
+
+    if(e.key.toLowerCase()==="r"){
+        setup(level);
+    }
+
+    if(e.key.toLowerCase()==="n" && won){
+        if(level<8){
+            setup(level+1);
+        }
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+    keysDown[e.key.toLowerCase()]=false;
+});
+
+
+/* BUTTONS */
+
+document.getElementById("restart").onclick=()=>{
+    setup(level);
+};
+
+document.getElementById("respawn").onclick=()=>{
+    respawn();
+};
+
+document.getElementById("checkpoint").onclick=()=>{
+    saveCheckpoint();
+};
+
+document.getElementById("levelSelect").onclick=()=>{
+
+    let n=parseInt(prompt("Choose level 1-8"));
+
+    if(n>=1 && n<=8){
+        setup(n);
+    }
+
+};
+
+
+/* UTILITIES */
+
+function addWall(x,y,w,h){
+    walls.push({x,y,w,h});
+}
+
+function addShadow(x,y,w,h){
+    shadows.push({x,y,w,h});
+}
+
+function distance(a,b){
+    return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+function pointInRect(x,y,r){
+
+    return (
+        x>r.x &&
+        x<r.x+r.w &&
+        y>r.y &&
+        y<r.y+r.h
+    );
+
+}
+
+function circleRect(cx,cy,r,o){
+
+    let x=Math.max(
+        o.x,
+        Math.min(cx,o.x+o.w)
+    );
+
+    let y=Math.max(
+        o.y,
+        Math.min(cy,o.y+o.h)
+    );
+
+    return Math.hypot(cx-x,cy-y)<r;
+
+}
+
+function blocked(x,y,r){
+
+    return walls.some(w=>circleRect(x,y,r,w));
+
+}
+
+function lineBlocked(x1,y1,x2,y2){
+
+    let d=Math.hypot(x2-x1,y2-y1);
+
+    let steps=Math.max(1,Math.ceil(d/7));
+
+    for(let i=0;i<=steps;i++){
+
+        let t=i/steps;
+
+        let x=x1+(x2-x1)*t;
+        let y=y1+(y2-y1)*t;
+
+        if(
+            walls.some(w=>
+                x>w.x &&
+                x<w.x+w.w &&
+                y>w.y &&
+                y<w.y+w.h
+            )
+        ){
+            return true;
+        }
+
+    }
+
+    return false;
+}
+
+
+/* PARTICLES */
+
+function particle(x,y,color){
+
+    particles.push({
+        x,
+        y,
+        vx:(Math.random()-.5)*100,
+        vy:(Math.random()-.5)*100,
+        life:.5,
+        color
+    });
+
+}
+
+function updateParticles(dt){
+
+    for(let i=particles.length-1;i>=0;i--){
+
+        let p=particles[i];
+
+        p.x+=p.vx*dt;
+        p.y+=p.vy*dt;
+
+        p.life-=dt;
+
+        if(p.life<=0){
+            particles.splice(i,1);
+        }
+
+    }
+
+}
+
+
+/* LEVEL SETUP */
+
+function setup(n){
+
+    level=n;
+
+    hp=MAX_HP;
+    alarm=0;
+
+    running=true;
+    won=false;
+    dead=false;
+
+    invulnerability=0;
+
+    guards=[];
+    bullets=[];
+    walls=[];
+    shadows=[];
+    keys=[];
+    terminals=[];
+    cameras=[];
+    particles=[];
+
+    boss=null;
+
+    player={
+        x:55,
+        y:470,
+        r:11,
+        speed:155,
+        sneakSpeed:75
+    };
+
+    checkpoint={
+        x:55,
+        y:470,
+        hp:100,
+        keys:0,
+        terminals:0
+    };
+
+    buildLevel(n);
+
+    updateHUD();
+
+}
+
+
+/* MAP */
+
+function buildLevel(n){
+
+    /* BORDER */
+
+    addWall(0,0,W,18);
+    addWall(0,H-18,W,18);
+    addWall(0,0,18,H);
+    addWall(W-18,0,18,H);
+
+
+    /* LEVEL 1 */
+
+    if(n===1){
+
+        addWall(180,70,25,350);
+        addWall(350,160,250,25);
+        addWall(500,270,25,190);
+        addWall(680,70,25,300);
+
+        addShadow(60,380,100,90);
+        addShadow(380,50,100,75);
+
+        keys.push({x:120,y:80});
+        keys.push({x:760,y:430});
+
+        createGuard(430,90,[
+            {x:430,y:90},
+            {x:600,y:90},
+            {x:600,y:220},
+            {x:430,y:220}
+        ]);
+
+        createGuard(760,350,[
+            {x:760,y:350},
+            {x:760,y:470},
+            {x:580,y:470},
+            {x:580,y:350}
+        ]);
+
+    }
+
+
+    /* LEVEL 2 */
+
+    if(n===2){
+
+        addWall(130,60,25,400);
+        addWall(300,60,25,300);
+        addWall(470,180,25,280);
+        addWall(640,60,25,330);
+        addWall(780,180,25,280);
+
+        addShadow(45,70,90,80);
+        addShadow(350,390,100,80);
+        addShadow(680,70,90,70);
+
+        keys.push({x:80,y:90});
+        keys.push({x:400,y:420});
+
+        createGuard(210,100,[
+            {x:210,y:100},
+            {x:270,y:100},
+            {x:270,y:440},
+            {x:210,y:440}
+        ]);
+
+        createGuard(550,90,[
+            {x:550,y:90},
+            {x:600,y:90},
+            {x:600,y:430},
+            {x:550,y:430}
+        ]);
+
+        createGuard(730,400,[
+            {x:730,y:400},
+            {x:850,y:400},
+            {x:850,y:100},
+            {x:730,y:100}
+        ]);
+
+    }
+
+
+    /* LEVEL 3 */
+
+    if(n===3){
+
+        addWall(110,110,300,25);
+        addWall(110,110,25,300);
+        addWall(385,110,25,300);
+
+        addWall(500,70,25,370);
+        addWall(700,150,25,300);
+
+        addShadow(50,370,100,100);
+        addShadow(550,40,100,70);
+        addShadow(760,370,90,90);
+
+        keys.push({x:60,y:70});
+        keys.push({x:460,y:470});
+        keys.push({x:780,y:80});
+
+        createGuard(220,70,[
+            {x:220,y:70},
+            {x:350,y:70},
+            {x:350,y:450},
+            {x:220,y:450}
+        ]);
+
+        createGuard(580,100,[
+            {x:580,y:100},
+            {x:650,y:100},
+            {x:650,y:400},
+            {x:580,y:400}
+        ]);
+
+        createGuard(800,200,[
+            {x:800,y:200},
+            {x:800,y:450}
+        ]);
+
+    }
+
+
+    /* LEVEL 4 */
+
+    if(n===4){
+
+        for(let x=110;x<=710;x+=150){
+            addWall(x,70,25,370);
+        }
+
+        addShadow(40,40,80,80);
+        addShadow(300,450,110,60);
+        addShadow(600,40,100,70);
+
+        keys.push({x:60,y:100});
+        keys.push({x:360,y:470});
+        keys.push({x:780,y:100});
+
+        createGuard(180,60,[
+            {x:180,y:60},
+            {x:180,y:450}
+        ]);
+
+        createGuard(330,450,[
+            {x:330,y:450},
+            {x:330,y:60}
+        ]);
+
+        createGuard(630,60,[
+            {x:630,y:60},
+            {x:630,y:450}
+        ]);
+
+        createCamera(450,270,Math.PI/2);
+
+    }
+
+
+    /* LEVEL 5 — COMMANDER */
+
+    if(n===5){
+
+        addWall(120,90,280,25);
+        addWall(120,90,25,330);
+        addWall(375,90,25,330);
+
+        addWall(500,140,270,25);
+        addWall(500,140,25,300);
+        addWall(745,140,25,300);
+
+        addShadow(45,400,110,80);
+        addShadow(420,40,110,80);
+        addShadow(790,400,70,80);
+
+        keys.push({x:80,y:70});
+        keys.push({x:450,y:470});
+        keys.push({x:810,y:70});
+
+        createGuard(250,220,[
+            {x:180,y:220},
+            {x:330,y:220},
+            {x:330,y:350},
+            {x:180,y:350}
+        ]);
+
+        createGuard(600,230,[
+            {x:550,y:230},
+            {x:700,y:230},
+            {x:700,y:350},
+            {x:550,y:350}
+        ]);
+
+        boss={
+            x:620,
+            y:350,
+            r:20,
+            hp:100,
+            maxHp:100,
+            speed:70,
+            cooldown:1,
+            phase:1,
+            active:true,
+            name:"COMMANDER"
+        };
+
+    }
+
+
+    /* LEVEL 6 — HUNTER */
+
+    if(n===6){
+
+        addWall(100,100,250,25);
+        addWall(100,100,25,320);
+        addWall(325,100,25,320);
+
+        addWall(470,80,25,350);
+        addWall(700,80,25,350);
+
+        addShadow(40,390,100,90);
+        addShadow(380,430,90,70);
+        addShadow(760,390,90,90);
+
+        keys.push({x:60,y:60});
+        keys.push({x:420,y:60});
+        keys.push({x:800,y:60});
+
+        boss={
+            x:620,
+            y:260,
+            r:22,
+            hp:100,
+            maxHp:100,
+            speed:105,
+            cooldown:.5,
+            phase:1,
+            active:true,
+            name:"THE HUNTER"
+        };
+
+        createGuard(200,300,[
+            {x:160,y:300},
+            {x:290,y:300}
+        ]);
+
+        createGuard(570,100,[
+            {x:570,y:100},
+            {x:650,y:100},
+            {x:650,y:200},
+            {x:570,y:200}
+        ]);
+
+    }
+
+
+    /* LEVEL 7 — SECURITY AI */
+
+    if(n===7){
+
+        addWall(120,80,25,380);
+        addWall(300,80,25,380);
+        addWall(480,80,25,380);
+        addWall(660,80,25,380);
+
+        addShadow(40,40,80,80);
+        addShadow(350,430,100,70);
+        addShadow(740,40,100,80);
+
+        terminals.push({x:220,y:70,disabled:false});
+        terminals.push({x:400,y:470,disabled:false});
+        terminals.push({x:760,y:250,disabled:false});
+
+        createCamera(200,250,0);
+        createCamera(400,250,Math.PI);
+        createCamera(600,250,0);
+
+        createGuard(250,150,[
+            {x:180,y:150},
+            {x:270,y:150},
+            {x:270,y:400},
+            {x:180,y:400}
+        ]);
+
+        createGuard(550,350,[
+            {x:530,y:350},
+            {x:620,y:350},
+            {x:620,y:120},
+            {x:530,y:120}
+        ]);
+
+        boss={
+            x:790,
+            y:270,
+            r:24,
+            hp:100,
+            maxHp:100,
+            speed:45,
+            cooldown:1,
+            phase:1,
+            active:true,
+            name:"SECURITY AI"
+        };
+
+    }
+
+
+    /* LEVEL 8 — FINAL SHADOW */
+
+    if(n===8){
+
+        addWall(100,100,250,25);
+        addWall(100,100,25,320);
+        addWall(325,100,25,320);
+
+        addWall(450,80,25,360);
+        addWall(650,80,25,360);
+
+        addWall(760,170,25,270);
+
+        addShadow(40,390,100,90);
+        addShadow(380,40,100,80);
+        addShadow(690,40,100,80);
+
+        terminals.push({x:220,y:70,disabled:false});
+        terminals.push({x:550,y:470,disabled:false});
+
+        createCamera(400,250,Math.PI/2);
+        createCamera(700,250,-Math.PI/2);
+
+        createGuard(210,250,[
+            {x:160,y:250},
+            {x:290,y:250}
+        ]);
+
+        createGuard(550,150,[
+            {x:530,y:150},
+            {x:620,y:150},
+            {x:620,y:350},
+            {x:530,y:350}
+        ]);
+
+        boss={
+            x:760,
+            y:270,
+            r:28,
+            hp:150,
+            maxHp:150,
+            speed:85,
+            cooldown:.6,
+            phase:1,
+            active:true,
+            name:"THE SHADOW"
+        };
+
+    }
+
+}
+
+
+/* GUARDS */
+
+function createGuard(x,y,path){
+
+    guards.push({
+        x,
+        y,
+        r:12,
+        path,
+        index:0,
+        speed:48,
+        alert:0,
+        cooldown:Math.random(),
+        facing:0,
+        searching:false,
+        searchX:x,
+        searchY:y
+    });
+
+}
+
+
+/* CAMERAS */
+
+function createCamera(x,y,angle){
+
+    cameras.push({
+        x,
+        y,
+        angle,
+        range:300,
+        fov:.55,
+        sweep:0
+    });
+
+}
+
+
+/* RESPAWN */
+
+function respawn(){
+
+    player.x=checkpoint.x;
+    player.y=checkpoint.y;
+
+    hp=checkpoint.hp;
+
+    alarm=0;
+
+    bullets=[];
+
+    running=true;
+    won=false;
+    dead=false;
+
+    invulnerability=1.5;
+
+    for(const g of guards){
+
+        g.index=0;
+        g.alert=0;
+        g.searching=false;
+        g.cooldown=.8;
+
+        if(g.path.length){
+
+            g.x=g.path[0].x;
+            g.y=g.path[0].y;
+
+        }
+
+    }
+
+    if(boss){
+
+        boss.active=true;
+
+        boss.hp=boss.maxHp;
+
+        boss.phase=1;
+
+    }
+
+    message.textContent=
+        "RESPAWNED AT CHECKPOINT — OBJECTIVES KEPT.";
+
+}
+
+
+/* CHECKPOINT */
+
+function saveCheckpoint(){
+
+    checkpoint={
+        x:player.x,
+        y:player.y,
+        hp:hp,
+        keys:keys.filter(k=>k.collected).length,
+        terminals:terminals.filter(t=>t.disabled).length
+    };
+
+    message.textContent=
+        "CHECKPOINT SAVED.";
+
+}
+
+
+/* PLAYER */
+
+function updatePlayer(dt){
+
+    let dx=0;
+    let dy=0;
+
+    if(keysDown["w"]||keysDown["arrowup"])dy--;
+    if(keysDown["s"]||keysDown["arrowdown"])dy++;
+    if(keysDown["a"]||keysDown["arrowleft"])dx--;
+    if(keysDown["d"]||keysDown["arrowright"])dx++;
+
+    if(!dx && !dy)return;
+
+    let len=Math.hypot(dx,dy);
+
+    dx/=len;
+    dy/=len;
+
+    let speed=
+        keysDown["shift"]?
+        player.sneakSpeed:
+        player.speed;
+
+    let nx=player.x+dx*speed*dt;
+    let ny=player.y+dy*speed*dt;
+
+    if(!blocked(nx,player.y,player.r)){
+        player.x=nx;
+    }
+
+    if(!blocked(player.x,ny,player.r)){
+        player.y=ny;
+    }
+
+}
+
+
+/* GUARDS */
+
+function updateGuards(dt){
+
+    for(const g of guards){
+
+        let target=g.path[g.index];
+
+        let dx=target.x-g.x;
+        let dy=target.y-g.y;
+
+        let d=Math.hypot(dx,dy);
+
+        if(d<5){
+
+            g.index=
+                (g.index+1)%g.path.length;
+
+        }else{
+
+            g.x+=dx/d*g.speed*dt;
+            g.y+=dy/d*g.speed*dt;
+
+            g.facing=Math.atan2(dy,dx);
+
+        }
+
+
+        let px=player.x-g.x;
+        let py=player.y-g.y;
+
+        let pd=Math.hypot(px,py);
+
+        let angle=Math.atan2(py,px);
+
+        let diff=Math.atan2(
+            Math.sin(angle-g.facing),
+            Math.cos(angle-g.facing)
+        );
+
+        let hidden=shadows.some(s=>
+            pointInRect(player.x,player.y,s)
+        );
+
+        let visible=
+            pd<390 &&
+            Math.abs(diff)<.62 &&
+            !lineBlocked(
+                g.x,
+                g.y,
+                player.x,
+                player.y
+            );
+
+        if(visible && !hidden){
+
+            g.alert=Math.min(
+                1,
+                g.alert+dt*1.4
+            );
+
+            g.searching=true;
+            g.searchX=player.x;
+            g.searchY=player.y;
+
+        }else{
+
+            g.alert=Math.max(
+                0,
+                g.alert-dt*.65
+            );
+
+        }
+
+
+        if(g.alert>.4){
+
+            alarm+=dt*8;
+
+        }
+
+
+        g.cooldown-=dt;
+
+
+        if(
+            g.alert>.4 &&
+            pd<320 &&
+            g.cooldown<=0 &&
+            !lineBlocked(
+                g.x,
+                g.y,
+                player.x,
+                player.y
+            )
+        ){
+
+            fireBullet(
+                g.x,
+                g.y,
+                player.x,
+                player.y,
+                520,
+                "guard"
+            );
+
+            g.cooldown=1.1;
+
+        }
+
+    }
+
+}
+
+
+/* BOSS */
+
+function updateBoss(dt){
+
+    if(!boss || !boss.active)return;
+
+    let dx=player.x-boss.x;
+    let dy=player.y-boss.y;
+
+    let d=Math.hypot(dx,dy);
+
+    boss.phase=
+        boss.hp<boss.maxHp*.65?
+        2:
+        boss.hp<boss.maxHp*.3?
+        3:
+        1;
+
+    let speed=boss.speed;
+
+    if(boss.phase===2)speed*=1.3;
+    if(boss.phase===3)speed*=1.65;
+
+
+    if(d>100){
+
+        let nx=boss.x+dx/d*speed*dt;
+        let ny=boss.y+dy/d*speed*dt;
+
+        if(!blocked(nx,boss.y,boss.r))
+            boss.x=nx;
+
+        if(!blocked(boss.x,ny,boss.r))
+            boss.y=ny;
+
+    }
+
+
+    boss.cooldown-=dt;
+
+
+    if(
+        d<430 &&
+        boss.cooldown<=0 &&
+        !lineBlocked(
+            boss.x,
+            boss.y,
+            player.x,
+            player.y
+        )
+    ){
+
+        let bulletSpeed=
+            boss.phase===3?
+            680:
+            570;
+
+        fireBullet(
+            boss.x,
+            boss.y,
+            player.x,
+            player.y,
+            bulletSpeed,
+            "boss"
+        );
+
+        boss.cooldown=
+            boss.phase===3?
+            .42:
+            boss.phase===2?
+            .7:
+            1;
+
+    }
+
+
+    if(d<65){
+
+        damagePlayer(
+            boss.phase===3?30:20
+        );
+
+    }
+
+}
+
+
+/* BULLETS */
+
+function fireBullet(x,y,tx,ty,speed,type){
+
+    let dx=tx-x;
+    let dy=ty-y;
+
+    let d=Math.hypot(dx,dy);
+
+    bullets.push({
+        x,
+        y,
+        vx:dx/d*speed,
+        vy:dy/d*speed,
+        life:2,
+        type
+    });
+
+}
+
+
+function updateBullets(dt){
+
+    for(let i=bullets.length-1;i>=0;i--){
+
+        let b=bullets[i];
+
+        b.x+=b.vx*dt;
+        b.y+=b.vy*dt;
+
+        b.life-=dt;
+
+        if(
+            b.life<=0 ||
+            b.x<0 ||
+            b.x>W ||
+            b.y<0 ||
+            b.y>H ||
+            blocked(b.x,b.y,3)
+        ){
+
+            bullets.splice(i,1);
+            continue;
+
+        }
+
+
+        if(
+            Math.hypot(
+                b.x-player.x,
+                b.y-player.y
+            )<player.r+4
+        ){
+
+            bullets.splice(i,1);
+
+            damagePlayer(
+                b.type==="boss"?25:BULLET_DAMAGE
+            );
+
+        }
+
+    }
+
+}
+
+
+/* DAMAGE */
+
+function damagePlayer(amount){
+
+    if(invulnerability>0)return;
+
+    hp=Math.max(
+        0,
+        hp-amount
+    );
+
+    invulnerability=.65;
+
+    for(let i=0;i<8;i++){
+        particle(
+            player.x,
+            player.y,
+            "#ff4444"
+        );
+    }
+
+    message.textContent=
+        "HIT! -"+amount+" HP";
+
+    if(hp<=0){
+
+        dead=true;
+        running=false;
+
+        message.textContent=
+            "YOU ARE DOWN — press RESPAWN.";
+
+    }
+
+}
+
+
+/* CAMERAS */
+
+function updateCameras(dt){
+
+    for(const c of cameras){
+
+        c.sweep+=dt;
+
+        let angle=
+            c.angle+
+            Math.sin(c.sweep*.8)*.8;
+
+        let dx=player.x-c.x;
+        let dy=player.y-c.y;
+
+        let d=Math.hypot(dx,dy);
+
+        let playerAngle=Math.atan2(dy,dx);
+
+        let diff=Math.atan2(
+            Math.sin(playerAngle-angle),
+            Math.cos(playerAngle-angle)
+        );
+
+        let hidden=shadows.some(s=>
+            pointInRect(player.x,player.y,s)
+        );
+
+        if(
+            d<c.range &&
+            Math.abs(diff)<c.fov &&
+            !hidden &&
+            !lineBlocked(
+                c.x,
+                c.y,
+                player.x,
+                player.y
+            )
+        ){
+
+            alarm+=dt*7;
+
+        }
+
+    }
+
+}
+
+
+/* OBJECTIVES */
+
+function updateObjectives(){
+
+    for(const k of keys){
+
+        if(k.collected)continue;
+
+        if(
+            Math.hypot(
+                player.x-k.x,
+                player.y-k.y
+            )<24
+        ){
+
+            k.collected=true;
+
+            message.textContent=
+                "OBJECTIVE COLLECTED.";
+
+            for(let i=0;i<12;i++){
+                particle(
+                    k.x,
+                    k.y,
+                    "#ffd84a"
+                );
+            }
+
+        }
+
+    }
+
+
+    for(const t of terminals){
+
+        if(t.disabled)continue;
+
+        if(
+            Math.hypot(
+                player.x-t.x,
+                player.y-t.y
+            )<28
+        ){
+
+            t.disabled=true;
+
+            message.textContent=
+                "SECURITY TERMINAL DISABLED.";
+
+            for(let i=0;i<12;i++){
+                particle(
+                    t.x,
+                    t.y,
+                    "#49dfff"
+                );
+            }
+
+        }
+
+    }
+
+}
+
+
+/* WIN CONDITION */
+
+function checkWin(){
+
+    let keyCount=
+        keys.filter(k=>k.collected).length;
+
+    let terminalCount=
+        terminals.filter(t=>t.disabled).length;
+
+
+    if(boss && boss.hp<=0){
+
+        boss.active=false;
+
+    }
+
+
+    let objectivesComplete=
+        keyCount===keys.length &&
+        terminalCount===terminals.length;
+
+
+    if(!objectivesComplete)return;
+
+
+    if(boss && boss.active)return;
+
+
+    let exitX=W-55;
+    let exitY=70;
+
+
+    if(
+        Math.hypot(
+            player.x-exitX,
+            player.y-exitY
+        )<35
+    ){
+
+        running=false;
+        won=true;
+
+        message.textContent=
+            level===8?
+            "🏆 THE SHADOW IS DEFEATED — CAMPAIGN COMPLETE!":
+            "MISSION COMPLETE — PRESS N FOR NEXT LEVEL.";
+
+    }
+
+}
+
+
+/* UPDATE */
+
+function update(dt){
+
+    if(!running){
+
+        updateParticles(dt);
+
+        return;
+
+    }
+
+    invulnerability=
+        Math.max(
+            0,
+            invulnerability-dt
+        );
+
+    updatePlayer(dt);
+    updateGuards(dt);
+    updateBoss(dt);
+    updateCameras(dt);
+    updateBullets(dt);
+    updateObjectives();
+    updateParticles(dt);
+
+    alarm=Math.max(
+        0,
+        alarm-dt*1.8
+    );
+
+    if(alarm>=100){
+
+        running=false;
+        dead=true;
+
+        message.textContent=
+            "🚨 ALARM MAXIMUM — PRESS RESPAWN.";
+
+    }
+
+    checkWin();
+
+}
+
+
+/* DRAW */
+
+function draw(){
+
+    ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    /* BACKGROUND */
+
+    ctx.fillStyle="#080c12";
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    /* GRID */
+
+    ctx.strokeStyle="#101722";
+
+    for(let x=20;x<W;x+=40){
+
+        ctx.beginPath();
+        ctx.moveTo(x,20);
+        ctx.lineTo(x,H-20);
+        ctx.stroke();
+
+    }
+
+    for(let y=20;y<H;y+=40){
+
+        ctx.beginPath();
+        ctx.moveTo(20,y);
+        ctx.lineTo(W-20,y);
+        ctx.stroke();
+
+    }
+
+
+    /* SHADOWS */
+
+    for(const s of shadows){
+
+        ctx.fillStyle="#111a24";
+
+        ctx.fillRect(
+            s.x,
+            s.y,
+            s.w,
+            s.h
+        );
+
+        ctx.strokeStyle="#253442";
+
+        ctx.strokeRect(
+            s.x,
+            s.y,
+            s.w,
+            s.h
+        );
+
+        ctx.fillStyle="#536171";
+        ctx.font="10px Arial";
+        ctx.fillText(
+            "COVER",
+            s.x+8,
+            s.y+16
+        );
+
+    }
+
+
+    /* WALLS */
+
+    for(const w of walls){
+
+        ctx.fillStyle="#222d38";
+
+        ctx.fillRect(
+            w.x,
+            w.y,
+            w.w,
+            w.h
+        );
+
+        ctx.strokeStyle="#435261";
+
+        ctx.strokeRect(
+            w.x,
+            w.y,
+            w.w,
+            w.h
+        );
+
+    }
+
+
+    /* EXIT */
+
+    let exitX=W-55;
+    let exitY=70;
+
+    let complete=
+        keys.every(k=>k.collected) &&
+        terminals.every(t=>t.disabled) &&
+        (!boss || !boss.active);
+
+    ctx.fillStyle=
+        complete?
+        "#39e58a":
+        "#26352e";
+
+    ctx.fillRect(
+        exitX-20,
+        exitY-20,
+        40,
+        40
+    );
+
+    ctx.fillStyle="#06120b";
+    ctx.font="bold 11px Arial";
+    ctx.textAlign="center";
+
+    ctx.fillText(
+        "EXIT",
+        exitX,
+        exitY+4
+    );
+
+    ctx.textAlign="left";
+
+
+    /* KEYS */
+
+    for(const k of keys){
+
+        if(k.collected)continue;
+
+        ctx.fillStyle="#ffd84a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            k.x,
+            k.y,
+            9,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        ctx.fillRect(
+            k.x+6,
+            k.y-2,
+            17,
+            4
+        );
+
+    }
+
+
+    /* TERMINALS */
+
+    for(const t of terminals){
+
+        ctx.fillStyle=
+            t.disabled?
+            "#26343a":
+            "#36d8ff";
+
+        ctx.fillRect(
+            t.x-13,
+            t.y-16,
+            26,
+            32
+        );
+
+        ctx.fillStyle=
+            t.disabled?
+            "#4d5960":
+            "#00151c";
+
+        ctx.font="9px Arial";
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            t.disabled?"OFF":"SYS",
+            t.x,
+            t.y+3
+        );
+
+    }
+
+    ctx.textAlign="left";
+
+
+    /* CAMERAS */
+
+    for(const c of cameras){
+
+        let angle=
+            c.angle+
+            Math.sin(c.sweep*.8)*.8;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            c.x,
+            c.y
+        );
+
+        ctx.arc(
+            c.x,
+            c.y,
+            c.range,
+            angle-c.fov,
+            angle+c.fov
+        );
+
+        ctx.closePath();
+
+        ctx.fillStyle="rgba(50,210,255,.07)";
+        ctx.fill();
+
+        ctx.fillStyle="#36d9ff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            c.x,
+            c.y,
+            8,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
+
+    /* GUARDS */
+
+    for(const g of guards){
+
+        let target=g.path[g.index];
+
+        let facing=
+            Math.atan2(
+                target.y-g.y,
+                target.x-g.x
+            );
+
+        /* vision */
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            g.x,
+            g.y
+        );
+
+        ctx.arc(
+            g.x,
+            g.y,
+            390,
+            facing-.62,
+            facing+.62
+        );
+
+        ctx.closePath();
+
+        ctx.fillStyle=
+            g.alert>.4?
+            "rgba(255,50,50,.13)":
+            "rgba(255,180,40,.045)";
+
+        ctx.fill();
+
+
+        /* range */
+
+        ctx.beginPath();
+
+        ctx.arc(
+            g.x,
+            g.y,
+            320,
+            0,
+            Math.PI*2
+        );
+
+        ctx.strokeStyle=
+            g.alert>.4?
+            "rgba(255,50,50,.25)":
+            "rgba(255,180,40,.08)";
+
+        ctx.stroke();
+
+
+        /* body */
+
+        ctx.fillStyle=
+            g.alert>.4?
+            "#ff4848":
+            "#e8a63b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            g.x,
+            g.y,
+            g.r,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /* gun */
+
+        ctx.save();
+
+        ctx.translate(
+            g.x,
+            g.y
+        );
+
+        ctx.rotate(facing);
+
+        ctx.fillStyle="#111";
+
+        ctx.fillRect(
+            5,
+            -3,
+            23,
+            6
+        );
+
+        ctx.fillRect(
+            8,
+            3,
+            6,
+            9
+        );
+
+        ctx.restore();
+
+    }
+
+
+    /* BOSS */
+
+    if(boss && boss.active){
+
+        let angle=Math.atan2(
+            player.y-boss.y,
+            player.x-boss.x
+        );
+
+        /* boss aura */
+
+        ctx.beginPath();
+
+        ctx.arc(
+            boss.x,
+            boss.y,
+            80,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fillStyle=
+            boss.phase===3?
+            "rgba(255,30,80,.18)":
+            "rgba(190,50,255,.12)";
+
+        ctx.fill();
+
+
+        /* boss range */
+
+        ctx.beginPath();
+
+        ctx.arc(
+            boss.x,
+            boss.y,
+            430,
+            0,
+            Math.PI*2
+        );
+
+        ctx.strokeStyle="rgba(220,50,255,.13)";
+        ctx.stroke();
+
+
+        /* boss */
+
+        ctx.fillStyle=
+            boss.phase===3?
+            "#ff3c69":
+            "#bd46ff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            boss.x,
+            boss.y,
+            boss.r,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /* eye */
+
+        ctx.fillStyle="#fff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            boss.x+Math.cos(angle)*7,
+            boss.y+Math.sin(angle)*7,
+            4,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /* weapon */
+
+        ctx.save();
+
+        ctx.translate(
+            boss.x,
+            boss.y
+        );
+
+        ctx.rotate(angle);
+
+        ctx.fillStyle="#151015";
+
+        ctx.fillRect(
+            12,
+            -5,
+            32,
+            10
+        );
+
+        ctx.restore();
+
+
+        /* boss name */
+
+        ctx.fillStyle="#ff72ff";
+        ctx.font="bold 13px Arial";
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            boss.name+
+            " · PHASE "+
+            boss.phase,
+            boss.x,
+            boss.y-35
+        );
+
+        ctx.textAlign="left";
+
+    }
+
+
+    /* BULLETS */
+
+    for(const b of bullets){
+
+        ctx.fillStyle=
+            b.type==="boss"?
+            "#ff4cff":
+            "#ffc247";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            b.x,
+            b.y,
+            4,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
+
+    /* PARTICLES */
+
+    for(const p of particles){
+
+        ctx.globalAlpha=
+            Math.max(0,p.life*2);
+
+        ctx.fillStyle=p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            3,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
+    ctx.globalAlpha=1;
+
+
+    /* PLAYER */
+
+    ctx.save();
+
+    if(
+        invulnerability>0 &&
+        Math.floor(invulnerability*15)%2===0
+    ){
+
+        ctx.globalAlpha=.35;
+
+    }
+
+    ctx.fillStyle="#42bfff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        player.x,
+        player.y,
+        player.r,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.strokeStyle="#c4efff";
+    ctx.lineWidth=2;
+
+    ctx.stroke();
+
+
+    if(keysDown["shift"]){
+
+        ctx.beginPath();
+
+        ctx.arc(
+            player.x,
+            player.y,
+            20,
+            0,
+            Math.PI*2
+        );
+
+        ctx.strokeStyle="rgba(60,190,255,.6)";
+        ctx.stroke();
+
+    }
+
+    ctx.restore();
+
+
+    /* DEATH/WIN SCREEN */
+
+    if(!running){
+
+        ctx.fillStyle="rgba(0,0,0,.68)";
+
+        ctx.fillRect(
+            0,
+            0,
+            W,
+            H
+        );
+
+        ctx.textAlign="center";
+
+        ctx.font="bold 34px Arial";
+
+        ctx.fillStyle=
+            won?
+            "#42ee91":
+            "#ff5555";
+
+        ctx.fillText(
+            won?
+            "MISSION COMPLETE":
+            "MISSION FAILED",
+            W/2,
+            H/2-25
+        );
+
+        ctx.font="17px Arial";
+        ctx.fillStyle="#fff";
+
+        if(won){
+
+            ctx.fillText(
+                level===8?
+                "THE SHADOW CAMPAIGN IS COMPLETE":
+                "Press N for the next mission",
+                W/2,
+                H/2+15
+            );
+
+        }else{
+
+            ctx.fillText(
+                "Press RESPAWN to continue",
+                W/2,
+                H/2+15
+            );
+
+        }
+
+        ctx.textAlign="left";
+
+    }
+
+}
+
+
+/* HUD */
+
+function updateHUD(){
+
+    levelEl.textContent=level;
+
+    hpText.textContent=hp;
+
+    hpBar.style.width=
+        (hp/MAX_HP*100)+"%";
+
+    alarmText.textContent=
+        Math.round(alarm);
+
+    alarmBar.style.width=
+        Math.min(100,alarm)+"%";
+
+
+    let collected=
+        keys.filter(k=>k.collected).length;
+
+    keysText.textContent=
+        collected+"/"+keys.length;
+
+
+    if(
+        boss &&
+        boss.active
+    ){
+
+        bossHUD.style.display="block";
+
+        bossText.textContent=
+            Math.max(
+                0,
+                Math.round(
+                    boss.hp/boss.maxHp*100
+                )
+            );
+
+        bossBar.style.width=
+            Math.max(
+                0,
+                boss.hp/boss.maxHp*100
+            )+"%";
+
+    }else{
+
+        bossHUD.style.display="none";
+
+    }
+
+
+    if(!running){
+
+        statusEl.textContent=
+            won?
+            "COMPLETE":
+            "DOWN";
+
+    }else if(alarm>70){
+
+        statusEl.textContent="ALERT";
+
+    }else if(keysDown["shift"]){
+
+        statusEl.textContent="SNEAK";
+
+    }else{
+
+        statusEl.textContent="STEALTH";
+
+    }
+
+}
+
+
+/* GAME LOOP */
+
+function loop(time){
+
+    let dt=
+        Math.min(
+            .033,
+            (time-lastTime)/1000 || 0
+        );
+
+    lastTime=time;
+
+    update(dt);
+    draw();
+    updateHUD();
+
+    requestAnimationFrame(loop);
+
+}
+
+
+/* START */
+
+setup(1);
+
+requestAnimationFrame(loop);
+
+</script>
+
+</body>
+</html>
