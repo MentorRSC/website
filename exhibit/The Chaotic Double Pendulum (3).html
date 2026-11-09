@@ -1,0 +1,215 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>The Chaotic Double Pendulum</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700;800&family=Noto+Sans+Devanagari:wght@400;700;800&display=swap">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;--ink:#eaf2ff;--acc:#5fd4ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;height:100%;background:#010204;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at 50% 38%,#10224a 0%,#060d22 55%,#010204 100%);overflow:hidden;font-family:"Segoe UI","Noto Sans Malayalam","Noto Sans Devanagari","Nirmala UI","Helvetica Neue",Arial,sans-serif;color:var(--ink);cursor:pointer}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.tx{position:absolute;left:4%;right:4%;text-align:center;opacity:0;text-shadow:0 0 .6em rgba(95,212,255,.55),0 .1em .4em #000;pointer-events:none}
+#ttl{top:8%;font-size:5.2em;font-weight:700;letter-spacing:.03em;line-height:1.15}
+#cap{bottom:3%;font-size:3.6em;font-weight:500;line-height:1.2}
+#ro{bottom:14%;font-size:3.2em;color:#ffd48a;font-weight:600;line-height:1.25}
+#mid{top:36%;font-size:6.4em;font-weight:800;letter-spacing:.04em;line-height:1.1}
+#mid small{display:block;margin-top:.7em;font-size:.42em;font-weight:500;letter-spacing:.04em;color:var(--acc)}
+.lb{position:absolute;font-size:3em;font-weight:700;opacity:0;white-space:nowrap;text-shadow:0 0 .5em #000,0 0 .8em rgba(95,212,255,.6);pointer-events:none;transition:opacity .4s}
+.lb.r{transform:translate(0,-50%)}.lb.l{transform:translate(-100%,-50%)}.lb.c{transform:translate(-50%,-50%);font-size:2.6em}
+.lb.r::before,.lb.l::after{content:"";display:inline-block;width:3em;height:.1em;background:var(--acc);vertical-align:middle;box-shadow:0 0 .5em var(--acc)}
+.lb.r::before{margin-right:.4em}.lb.l::after{margin-left:.4em}
+#hud{position:absolute;left:7%;top:71%;width:86%;opacity:0;transition:opacity .6s}
+#hud div.row{margin:0 0 .9em;font-size:2.6em;font-weight:600;text-shadow:0 0 .5em #000}
+.bar{height:.8em;background:#0a152e;border:1px solid #2d4b86;border-radius:1em;position:relative;margin-top:.35em;overflow:hidden}
+.bar u{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:1em;background:#5fd4ff;box-shadow:0 0 1em #5fd4ff}
+#ke{background:#ffb454;box-shadow:0 0 1em #ffb454}#am{background:#ff5ad8;box-shadow:0 0 1em #ff5ad8}
+#dim,#fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+#go{position:absolute;inset:0;z-index:5;background:rgba(1,4,12,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2.6em;padding:0 8%}
+#bar{position:absolute;top:1.6%;left:4%;right:4%;display:none;justify-content:space-between;z-index:6}
+.ib{font:inherit;font-size:4em;line-height:1;background:rgba(10,25,60,.6);border:.03em solid #5fd4ff;border-radius:.5em;color:#eaf2ff;padding:.2em .5em;cursor:pointer}
+.venue{font-size:3.6em;font-weight:700;color:#5fd4ff;line-height:1.35;text-shadow:0 0 .6em rgba(95,212,255,.5)}
+.venue small{display:block;font-size:.62em;color:#eaf2ff;font-weight:500;text-shadow:none}
+#go h1{margin:0 0 .4em;font-size:4.2em;font-weight:700;line-height:1.5}
+#go h1 small{display:block;font-size:.55em;color:#5fd4ff;font-weight:500}
+.bt{font:inherit;font-size:5.4em;font-weight:700;color:#eaf2ff;background:rgba(15,40,90,.55);border:.03em solid #5fd4ff;border-radius:.5em;padding:.35em 1em;width:100%;box-shadow:0 0 1em rgba(95,212,255,.5);cursor:pointer}
+.bt:active{background:rgba(95,212,255,.35)}
+#end{position:absolute;left:6%;right:6%;bottom:9%;z-index:4;display:none;gap:1.6em;flex-direction:column}
+#end .bt{font-size:3.8em}
+#stage.ml .tx,#stage.hi .tx,#stage.ml .lb,#stage.hi .lb{letter-spacing:0!important}
+.ml #ttl{font-size:4.2em;line-height:1.4}.hi #ttl{font-size:4.6em;line-height:1.3}
+.ml #cap{font-size:3em;line-height:1.45}.hi #cap{font-size:3.3em;line-height:1.35}
+.ml #mid{font-size:4.8em;line-height:1.35}.hi #mid{font-size:5.4em;line-height:1.3}
+.ml #ro,.hi #ro{font-size:2.9em}.ml .lb,.hi .lb{font-size:2.4em}.ml .lb.c,.hi .lb.c{font-size:2.2em}
+.ml #hud div.row,.hi #hud div.row{font-size:2.3em}
+
+</style></head><body>
+<div id="stage"><canvas id="c"></canvas>
+<div id="dim"></div>
+<div class="tx" id="ttl"></div><div class="tx" id="mid"></div><div class="tx" id="ro"></div><div class="tx" id="cap"></div>
+<div id="hud"><div class="row"><span data-k="KINETIC ENERGY">KINETIC ENERGY</span><div class="bar"><u id="ke"></u></div></div><div class="row"><span data-k="POTENTIAL ENERGY">POTENTIAL ENERGY</span><div class="bar"><u id="pe"></u></div></div><div class="row"><span data-k="ANGULAR MOMENTUM">ANGULAR MOMENTUM</span><div class="bar"><u id="am"></u></div></div></div>
+<div id="fade"></div><div id="bar"><button class="ib" id="mu">🔊</button><button class="ib" id="hm">🏠</button></div><div id="end"><button class="bt" id="rep" data-k="Repeat">Repeat</button><button class="bt" id="nxt" data-k="Next video">Next video</button></div><div id="go"><div class="venue">Regional Science Centre and Planetarium, Calicut</div><h1>Choose your language<small>ഭാഷ തിരഞ്ഞെടുക്കുക · भाषा चुनें</small></h1><button class="bt" data-l="ml">മലയാളം</button><button class="bt" data-l="en">English</button><button class="bt" data-l="hi">हिन्दी</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const U=2,G=9.81,H=1/480,FLOOR=-4.6,B=[0,10,20,35,55,70,75,85],LOOP=85;
+const $=s=>document.querySelector(s),st=$('#stage');
+const R=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true,alpha:true});
+R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.15;
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,9/16,.1,120);sc.fog=new THREE.FogExp2(0x040a18,.011);
+function resize(){const W=Math.min(innerWidth,innerHeight*9/16),Hh=W*16/9;st.style.width=W+'px';st.style.height=Hh+'px';st.style.fontSize=W/100+'px';R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.setSize(W,Hh,false)}
+addEventListener('resize',resize);resize();
+st.onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+// environment reflections for metal
+const ec=document.createElement('canvas');ec.width=1024;ec.height=512;const x=ec.getContext('2d');
+let gr=x.createLinearGradient(0,0,0,512);gr.addColorStop(0,'#2a4a8a');gr.addColorStop(.5,'#0b1430');gr.addColorStop(1,'#02040a');x.fillStyle=gr;x.fillRect(0,0,1024,512);
+[['#fff',100,50,200,70],['#9fdcff',480,30,260,60],['#ffd7a0',800,110,140,90],['#fff',300,200,80,30]].forEach(([c,a,b,w,h])=>{x.fillStyle=c;x.fillRect(a,b,w,h)});
+const et=new THREE.CanvasTexture(ec);et.mapping=THREE.EquirectangularReflectionMapping;et.encoding=THREE.sRGBEncoding;
+sc.environment=new THREE.PMREMGenerator(R).fromEquirectangular(et).texture;
+sc.add(new THREE.HemisphereLight(0x6f8fd0,0x05080f,.5));
+let L=new THREE.DirectionalLight(0xffffff,1.3);L.position.set(-6,8,10);sc.add(L);
+L=new THREE.DirectionalLight(0x4fb8ff,1.2);L.position.set(6,3,-8);sc.add(L);
+L=new THREE.PointLight(0xffa860,.8,40);L.position.set(7,0,8);sc.add(L);
+// glow sprite texture
+const gc=document.createElement('canvas');gc.width=gc.height=128;const g2=gc.getContext('2d'),rg=g2.createRadialGradient(64,64,0,64,64,64);
+rg.addColorStop(0,'rgba(255,255,255,1)');rg.addColorStop(.25,'rgba(255,255,255,.5)');rg.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=rg;g2.fillRect(0,0,128,128);
+const GT=new THREE.CanvasTexture(gc),ADD=THREE.AdditiveBlending;
+const spr=(c,s,o)=>{const p=new THREE.Sprite(new THREE.SpriteMaterial({map:GT,color:c,blending:ADD,transparent:true,depthWrite:false,opacity:o}));p.scale.set(s,s,1);return p};
+const ease=k=>{k=Math.max(0,Math.min(1,k));return k*k*(3-2*k)};
+// floor
+const fl=new THREE.Mesh(new THREE.CircleGeometry(40,64),new THREE.MeshStandardMaterial({color:0x050a16,metalness:.6,roughness:.35}));fl.rotation.x=-Math.PI/2;fl.position.y=FLOOR;sc.add(fl);
+const gd=new THREE.GridHelper(80,80,0x1a3a70,0x0c1a38);gd.position.y=FLOOR+.01;sc.add(gd);
+// materials
+const steel=new THREE.MeshStandardMaterial({color:0xaab6c8,metalness:1,roughness:.28}),dark=new THREE.MeshStandardMaterial({color:0x2a3446,metalness:.9,roughness:.4}),chrome=new THREE.MeshStandardMaterial({color:0xe4ecf8,metalness:1,roughness:.14});
+const cyl=(a,b,h)=>new THREE.CylinderGeometry(a,b,h,24),RG=cyl(.06,.06,1).translate(0,-.5,0);
+const mesh=(g,m,x,y,z,p)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);p.add(o);return o};
+// trails
+const lm=new THREE.LineBasicMaterial({vertexColors:true,blending:ADD,transparent:true,depthWrite:false}),pmat=new THREE.PointsMaterial({size:.16,map:GT,vertexColors:true,transparent:true,depthWrite:false,blending:ADD});
+class Trail{constructor(){this.N=1600;this.n=0;this.max=400;this.on=false;this.col=new THREE.Color(0x5fd4ff);this.p=new Float32Array(this.N*3);this.c=new Float32Array(this.N*3);
+ const g=this.geo=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(this.p,3));g.setAttribute('color',new THREE.BufferAttribute(this.c,3));g.setDrawRange(0,0);
+ this.o=[new THREE.Line(g,lm),new THREE.Points(g,pmat)];this.o.forEach(o=>{o.frustumCulled=false;sc.add(o)})}
+ push(a,b){if(this.n>=this.max){const d=this.n-this.max+1;this.p.copyWithin(0,d*3,this.n*3);this.n-=d}const i=this.n*3;this.p[i]=a;this.p[i+1]=b;this.p[i+2]=.4;this.n++}
+ flush(){const n=this.n;for(let k=0;k<n;k++){const f=Math.pow((k+1)/n,2)*1.1;this.c[k*3]=this.col.r*f;this.c[k*3+1]=this.col.g*f;this.c[k*3+2]=this.col.b*f}this.geo.setDrawRange(0,n);this.geo.attributes.position.needsUpdate=this.geo.attributes.color.needsUpdate=true}
+ clear(){this.n=0;this.geo.setDrawRange(0,0)}show(v){this.o.forEach(o=>o.visible=v)}}
+// physics: equal masses 1 kg, rods 1 m, free swinging (no motor, no drive)
+function f(s,sg){const[a,b,c,d]=s;if(sg)return[b,-G*Math.sin(a),0,0];const D=a-c,sd=Math.sin(D),cd=Math.cos(D),den=3-Math.cos(2*D);
+ return[b,(-3*G*Math.sin(a)-G*Math.sin(a-2*c)-2*sd*(d*d+b*b*cd))/den,d,(2*sd*(2*b*b+2*G*Math.cos(a)+d*d*cd))/den]}
+function rk(s,sg){const h=H,f1=f(s,sg),a=s.map((v,i)=>v+h/2*f1[i]),f2=f(a,sg),b=s.map((v,i)=>v+h/2*f2[i]),f3=f(b,sg),c=s.map((v,i)=>v+h*f3[i]),f4=f(c,sg);return s.map((v,i)=>v+h/6*(f1[i]+2*f2[i]+2*f3[i]+f4[i]))}
+class Pend{constructor(){const g=this.g=new THREE.Group();sc.add(g);
+ mesh(cyl(.13,.15,5.1),steel,0,-2.55,-.9,g);mesh(cyl(.7,.75,.12),dark,0,-5.1,-.9,g);
+ mesh(cyl(.1,.1,.9),steel,0,0,-.45,g).rotation.x=Math.PI/2;mesh(cyl(.24,.24,.5),dark,0,0,0,g).rotation.x=Math.PI/2;
+ this.m1=steel.clone();this.m2=steel.clone();
+ const a1=this.a1=new THREE.Group(),a2=this.a2=new THREE.Group();g.add(a1);a1.add(a2);a2.position.y=-U;
+ mesh(RG,this.m1,0,0,0,a1).scale.y=U;mesh(new THREE.SphereGeometry(.3,32,24),chrome,0,-U,0,a1);mesh(cyl(.13,.13,.6),dark,0,-U,0,a1).rotation.x=Math.PI/2;
+ mesh(RG,this.m2,0,0,0,a2).scale.y=U;mesh(new THREE.SphereGeometry(.34,32,24),chrome,0,-U,0,a2);mesh(cyl(.12,.12,.55),dark,0,-U,0,a2).rotation.x=Math.PI/2;
+ this.gl1=spr(0x5fd4ff,1.5,.45);this.gl1.position.set(0,-U,.2);a1.add(this.gl1);this.gl2=spr(0x5fd4ff,1.7,.5);this.gl2.position.set(0,-U,.2);a2.add(this.gl2);
+ this.h1=spr(0x5fd4ff,2.2,0);g.add(this.h1);this.h2=spr(0x5fd4ff,2.2,0);this.h2.position.set(0,-U,.3);a1.add(this.h2);
+ this.t1=new Trail();this.t2=new Trail();this.s=[0,0,0,0];this.single=false;this.att=1;this.k=1;this.hold=true;this.acc=0;this.n=0}
+ col(c){this.t1.col.set(c);this.t2.col.set(c);this.gl1.material.color.set(c);this.gl2.material.color.set(c)}
+ place(x,k){this.k=k;this.g.position.set(x,FLOOR+5.1*k,0)}
+ show(v){this.g.visible=v;this.t1.show(v);this.t2.show(v)}
+ reset(){this.t1.clear();this.t2.clear();this.t1.on=this.t2.on=false;this.acc=0;this.n=0;this.hold=true;this.s=[0,0,0,0];this.h1.material.opacity=this.h2.material.opacity=0;this.m1.emissiveIntensity=this.m2.emissiveIntensity=0}
+ pull(a,c,k){this.hold=true;this.s=[a*k,0,c*k,0]}
+ bobs(){const k=this.k*U,[a,,c]=this.s,x1=this.g.position.x+k*Math.sin(a),y1=this.g.position.y-k*Math.cos(a);return[[x1,y1],[x1+k*Math.sin(c),y1-k*Math.cos(c)]]}
+ step(dt){if(this.hold)return;this.acc+=Math.min(dt,.05);while(this.acc>=H){this.s=rk(this.s,this.single);this.acc-=H;if(++this.n%4==0){const[p,q]=this.bobs();if(this.t1.on)this.t1.push(p[0],p[1]);if(this.t2.on&&!this.single)this.t2.push(q[0],q[1])}}}
+ pose(){const[a,,c]=this.s;this.a1.rotation.z=a;this.a2.rotation.z=c-a;this.a2.visible=this.att>.001;this.a2.scale.setScalar(Math.max(this.att,.001));this.g.scale.setScalar(this.k);this.t1.flush();this.t2.flush()}
+ energy(){const[a,b,c,d]=this.s,x1=Math.sin(a),y1=-Math.cos(a),x2=x1+Math.sin(c),y2=y1-Math.cos(c),u1=Math.cos(a)*b,w1=Math.sin(a)*b,u2=u1+Math.cos(c)*d,w2=w1+Math.sin(c)*d;
+  return{ke:.5*(u1*u1+w1*w1+u2*u2+w2*w2),pe:G*(y1+1+y2+2),am:x1*w1-y1*u1+x2*w2-y2*u2,v1:[u1,w1],v2:[u2,w2]}}}
+const P=[new Pend(),new Pend(),new Pend()];
+// visitor
+const vis=new THREE.Group(),vm=new THREE.MeshStandardMaterial({color:0x22304f,roughness:.55,metalness:.2,emissive:0x07101f});
+const vp=(g,x,y,z,p=vis)=>mesh(g,vm,x,y,z,p);
+vp(cyl(.2,.17,1.7),-.25,.85,0);vp(cyl(.2,.17,1.7),.25,.85,0);vp(cyl(.5,.4,1.5),0,2.45,0);vp(new THREE.SphereGeometry(.32,24,16),0,3.5,0);
+const ar=new THREE.Group();ar.position.set(.55,2.95,0);ar.rotation.z=1.25;vis.add(ar);vp(cyl(.11,.1,1.4),0,-.7,0,ar);
+const al=new THREE.Group();al.position.set(-.55,2.95,0);vis.add(al);vp(cyl(.11,.1,1.4),0,-.7,0,al);
+vis.position.set(-2.7,FLOOR,.4);vis.scale.setScalar(.7);vis.visible=false;sc.add(vis);
+// 3D arrows & arcs for scene 3
+const AH=(c)=>{const a=new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(),1,c,.35,.22);a.visible=false;sc.add(a);return a};
+const vA1=AH(0x5fd4ff),vA2=AH(0xffb454),gA=AH(0x7dffb0);
+const arcs=[0xff5ad8,0xff5ad8].map(c=>{const g=new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(new Float32Array(26*3),3));const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:c,blending:ADD,transparent:true}));l.frustumCulled=false;const k=new THREE.Mesh(new THREE.ConeGeometry(.14,.34,16),new THREE.MeshBasicMaterial({color:c}));l.visible=k.visible=false;sc.add(l,k);return{l,k}});
+function setArc(A,cx,cy,r,ph,w){const d=w>=0?1:-1,sp=Math.min(1.2,.3+.18*Math.abs(w)),pa=A.l.geometry.attributes.position;
+ for(let i=0;i<26;i++){const q=ph+d*sp*i/25;pa.setXYZ(i,cx+r*Math.sin(q),cy-r*Math.cos(q),.5)}pa.needsUpdate=true;
+ const q=ph+d*sp,tx=d*Math.cos(q),ty=d*Math.sin(q);A.k.position.set(cx+r*Math.sin(q),cy-r*Math.cos(q),.5);A.k.rotation.z=Math.atan2(ty,tx)-Math.PI/2;A.l.visible=A.k.visible=true}
+// DOM helpers
+const LB=[0,1,2,3].map(()=>{const d=document.createElement('div');d.className='lb';st.appendChild(d);return d}),LQ=[];
+const lab=(i,t,c,x,y,o=1)=>LQ.push([i,t,c,x,y,o]);
+const txt=(el,arr,t)=>{const e=arr.find(a=>t>=a[0]&&t<a[1]);if(!e){el.style.opacity=0;return}if(el._e!==e){el.innerHTML=tr(e[2])+(el.id=='mid'?'<small>'+tr(SUB)+'</small>':'');el._e=e}el.style.opacity=Math.min(1,(t-e[0])/.6,(e[1]-t)/.6)};
+let LG='en';const TR={ml:{'THE SCIENCE OF MOTION':'ചലനത്തിന്റെ ശാസ്ത്രം','TWO PENDULUMS. ONE CONNECTED SYSTEM.':'രണ്ട് പെൻഡുലങ്ങൾ. ബന്ധിപ്പിച്ച ഒരു വ്യവസ്ഥ.','A TINY CHANGE. A COMPLETELY DIFFERENT FUTURE.':'ചെറിയൊരു മാറ്റം. തികച്ചും വ്യത്യസ്തമായ ഭാവി.','THIS IS CHAOS THEORY.':'ഇതാണ് കെയോസ് സിദ്ധാന്തം.','CAN YOU PREDICT ITS NEXT MOVE?':'ഇതിന്റെ അടുത്ത ചലനം പ്രവചിക്കാമോ?','Energy flows back and forth between the two arms':'ഊർജ്ജം രണ്ട് ദണ്ഡുകൾക്കിടയിൽ മാറിമാറി ഒഴുകുന്നു','Two pendulums. Starting angles differ by only 0.01°':'രണ്ട് പെൻഡുലങ്ങൾ. തുടക്കത്തിലെ കോണുകൾ തമ്മിലുള്ള വ്യത്യാസം വെറും 0.01°','The gap grows exponentially: a chaotic system':'വിടവ് അതിവേഗം വർധിക്കുന്നു: ഇതൊരു കെയോസ് വ്യവസ്ഥയാണ്','Three starts. Three futures.':'മൂന്ന് തുടക്കങ്ങൾ. മൂന്ന് ഭാവികൾ.','OBSERVE. PREDICT. EXPERIMENT.':'നിരീക്ഷിക്കുക. പ്രവചിക്കുക. പരീക്ഷിക്കുക.','Regional Science Centre and Planetarium, Calicut':'റീജിയണൽ സയൻസ് സെന്റർ ആൻഡ് പ്ലാനറ്റേറിയം, കോഴിക്കോട്','FIRST PIVOT':'ഒന്നാം പിവറ്റ്','FIRST ARM':'ഒന്നാം ദണ്ഡ്','SECOND PIVOT':'രണ്ടാം പിവറ്റ്','SECOND ARM':'രണ്ടാം ദണ്ഡ്','GRAVITY':'ഗുരുത്വാകർഷണം','KINETIC ENERGY':'ഗതികോർജ്ജം','POTENTIAL ENERGY':'സ്ഥിതികോർജ്ജം','ANGULAR MOMENTUM':'കോണീയ ആക്കം','REGULAR · PERIODIC':'ക്രമമായ · ആവർത്തന ചലനം','CHAOTIC · NEVER REPEATS':'കെയോസ് · ആവർത്തിക്കില്ല','Start difference 0.01°':'തുടക്ക വ്യത്യാസം 0.01°','Gap now':'ഇപ്പോഴത്തെ അകലം','m':'മീ','Repeat':'വീണ്ടും കാണുക','Next video':'അടുത്ത വീഡിയോ'},hi:{'THE SCIENCE OF MOTION':'गति का विज्ञान','TWO PENDULUMS. ONE CONNECTED SYSTEM.':'दो लोलक। एक जुड़ी हुई प्रणाली।','A TINY CHANGE. A COMPLETELY DIFFERENT FUTURE.':'एक छोटा बदलाव। बिल्कुल अलग भविष्य।','THIS IS CHAOS THEORY.':'यही है केऑस (अव्यवस्था) सिद्धांत।','CAN YOU PREDICT ITS NEXT MOVE?':'क्या आप इसकी अगली चाल बता सकते हैं?','Energy flows back and forth between the two arms':'ऊर्जा दोनों भुजाओं के बीच आगे-पीछे बहती है','Two pendulums. Starting angles differ by only 0.01°':'दो लोलक। शुरुआती कोणों में केवल 0.01° का अंतर','The gap grows exponentially: a chaotic system':'अंतर तेज़ी से बढ़ता है: यह एक अव्यवस्थित प्रणाली है','Three starts. Three futures.':'तीन शुरुआतें। तीन अलग भविष्य।','OBSERVE. PREDICT. EXPERIMENT.':'निरीक्षण करें। अनुमान लगाएँ। प्रयोग करें।','Regional Science Centre and Planetarium, Calicut':'रीजनल साइंस सेंटर एवं तारामंडल, कालीकट','FIRST PIVOT':'पहला धुरी बिंदु','FIRST ARM':'पहली भुजा','SECOND PIVOT':'दूसरा धुरी बिंदु','SECOND ARM':'दूसरी भुजा','GRAVITY':'गुरुत्वाकर्षण','KINETIC ENERGY':'गतिज ऊर्जा','POTENTIAL ENERGY':'स्थितिज ऊर्जा','ANGULAR MOMENTUM':'कोणीय संवेग','REGULAR · PERIODIC':'नियमित · आवर्ती','CHAOTIC · NEVER REPEATS':'अव्यवस्थित · कभी नहीं दोहराता','Start difference 0.01°':'शुरुआती अंतर 0.01°','Gap now':'अभी अंतर','m':'मी','Repeat':'दोबारा देखें','Next video':'अगला वीडियो'}};
+const tr=s=>(TR[LG]||{})[s]||s;
+const TOP=[[.6,9.4,'THE SCIENCE OF MOTION'],[10.4,19.6,'TWO PENDULUMS. ONE CONNECTED SYSTEM.'],[35.4,54.6,'A TINY CHANGE. A COMPLETELY DIFFERENT FUTURE.'],[55.4,69.6,'THIS IS CHAOS THEORY.'],[70.5,74.6,'CAN YOU PREDICT ITS NEXT MOVE?']];
+const CAP=[[22.5,34,'Energy flows back and forth between the two arms'],[36,44.5,'Two pendulums. Starting angles differ by only 0.01°'],[45,54.5,'The gap grows exponentially: a chaotic system'],[76.5,81.5,'Three starts. Three futures.']];
+const MID=[[82,1e9,'OBSERVE. PREDICT. EXPERIMENT.']];const SUB='Regional Science Centre and Planetarium, Calicut';
+// camera
+const tgt=new THREE.Vector3(),want=new THREE.Vector3(),wt=new THREE.Vector3();let snap=true;
+const view=(px,py,pz,ty)=>{want.set(px,py,pz);wt.set(0,ty,0)};
+// scenes
+let cur=-1,E0=1;const CH=[2.0,2.5];
+function enter(i){P.forEach(p=>{p.reset();p.show(false)});vis.visible=false;snap=true;E0=1;
+ const on=(p,x,k,c)=>{p.show(true);p.place(x,k);p.col(c)};
+ if(i==0){on(P[0],0,1,0x5fd4ff);P[0].single=true;P[0].att=0;P[0].t1.on=true;P[0].t1.max=240}
+ if(i==1||i==2){on(P[0],0,1,0x5fd4ff);P[0].single=false;P[0].att=i==1?0:1;P[0].t2.on=i==2;P[0].t2.max=420}
+ if(i==3){on(P[0],-2.4,.55,0x00e5ff);on(P[1],2.4,.55,0xff3df2);[P[0],P[1]].forEach(p=>{p.att=1;p.single=false;p.t2.on=true;p.t2.max=520})}
+ if(i==4){on(P[0],-2.4,.55,0x5fd4ff);on(P[1],2.4,.55,0xffb454);[P[0],P[1]].forEach(p=>{p.att=1;p.single=false;p.t2.on=true;p.t2.max=1500})}
+ if(i==5){on(P[0],1.9,.7,0xff5ad8);P[0].att=1;P[0].single=false;P[0].t2.on=true;P[0].t2.max=300;vis.visible=true}
+ if(i==6){[[0,-3.3,0x5fd4ff],[1,0,0xffb454],[2,3.3,0xff4fd8]].forEach(([j,x,c])=>{on(P[j],x,.4,c);P[j].att=1;P[j].single=false;P[j].t2.on=true;P[j].t2.max=280})}}
+function upd(i,lt,dt,t){const p=P[0];
+ if(i==0){const k=ease(lt/2.4);if(lt<2.6)p.pull(.62,0,k);else p.hold=false;view(Math.sin(lt*.12)*1,.2,14-lt*.15,-1.0)}
+ if(i==1){p.hold=true;p.s=[0,0,0,0];p.att=ease((lt-1)/2.5);const s=lt<4?-1:Math.min(3,Math.floor((lt-4)/1.6));
+  p.h1.material.opacity=s==0?.9:0;p.h2.material.opacity=s==2?.9:0;p.m1.emissive.set(0x2cc8ff);p.m1.emissiveIntensity=s==1?.9:0;p.m2.emissive.set(0x2cc8ff);p.m2.emissiveIntensity=s==3?.9:0;
+  [['FIRST PIVOT','r',0,.5],['FIRST ARM','l',0,-.5],['SECOND PIVOT','r',0,-1.5],['SECOND ARM','l',0,-2.5]].forEach((a,j)=>{if(s>=j)lab(j,a[0],a[1],a[2]+(a[1]=='r'?.5:-.5),a[3],j==s?1:.4)});
+  view(Math.sin(lt*.1)*1,-.2,12.5,-1.4)}
+ if(i==2){const k=ease(lt/3);if(lt<3.4)p.pull(1.0,1.4,k);else{if(p.hold){p.hold=false;E0=p.energy().pe}}
+  view(Math.sin(lt*.06)*1.2,0,19,-.5);const h=$('#hud');h.style.opacity=lt>3.4?1:0;
+  gA.visible=true;gA.position.set(-3.5,6.2,0);gA.setLength(2.4,.5,.3);lab(0,'GRAVITY','c',-3.5,3.4);
+  if(lt>3.4){const e=p.energy(),[b1,b2]=p.bobs();$('#ke').style.width=Math.min(100,100*e.ke/E0)+'%';$('#pe').style.width=Math.min(100,100*e.pe/E0)+'%';
+   const am=$('#am'),v=Math.max(-1,Math.min(1,e.am/5));am.style.left=(v<0?50+v*50:50)+'%';am.style.width=Math.abs(v)*50+'%';
+   [[vA1,e.v1,b1],[vA2,e.v2,b2]].forEach(([a,v,b])=>{const m=Math.hypot(v[0],v[1])||1e-3;a.visible=true;a.position.set(b[0],b[1],.5);a.setDirection(new THREE.Vector3(v[0]/m,v[1]/m,0));a.setLength(Math.max(.5,Math.min(3,m*.3)),.35,.22)});
+   setArc(arcs[0],p.g.position.x,p.g.position.y,1.1,p.s[0],p.s[1]);setArc(arcs[1],b1[0],b1[1],1.1,p.s[2],p.s[3])}}
+ if(i==3){const q=P[1],k=ease(lt/2.2);p.pull(CH[0],CH[1],k);q.pull(CH[0]+2e-4,CH[1],k);if(lt>2.4){p.hold=q.hold=false}
+  view(Math.sin(lt*.08)*1.2,.3,22,-1);if(lt>3){const[,a]=p.bobs(),[,b]=q.bobs();$('#ro').innerHTML=tr('Start difference 0.01°')+' &nbsp;|&nbsp; '+tr('Gap now')+' '+(Math.hypot(a[0]-b[0]-(p.g.position.x-q.g.position.x),a[1]-b[1])/(U*.55)).toFixed(2)+' '+tr('m');$('#ro').style.opacity=1}}
+ if(i==4){const q=P[1],k=ease(lt/1.5);p.pull(.5,.3,k);q.pull(2.3,1.9,k);if(lt>1.7){p.hold=q.hold=false}view(Math.sin(lt*.1)*1.2,.4,22.5-lt*.04,-1);
+  lab(0,'REGULAR · PERIODIC','c',-2.4,-4.9);lab(1,'CHAOTIC · NEVER REPEATS','c',2.4,-4.9)}
+ if(i==5){p.pull(1.6,2.0,ease(lt/1.8));if(lt>2)p.hold=false;vis.position.y=FLOOR+Math.sin(lt*1.6)*.015;view(0,.5,22,-1.5)}
+ if(i==6){const S=[[.4,.4],[1.4,.5],[2.6,2.9]];P.forEach((q,j)=>{q.pull(S[j][0],S[j][1],ease(lt/1.4));if(lt>1.6)q.hold=false;lab(j,'ABC'[j],'c',[-3.3,0,3.3][j],0)});view(Math.sin(lt*.1)*1,-.8,22,-2)}
+ if(i!=2){$('#hud').style.opacity=0;[gA,vA1,vA2].forEach(a=>a.visible=false);arcs.forEach(a=>a.l.visible=a.k.visible=false)}
+ if(i!=3)$('#ro').style.opacity=0;
+ P.forEach(q=>{if(q.g.visible){q.step(dt);q.pose()}})}
+// loop
+// ambient music, synthesised live (Am-F-C-G, 16 chords = one 85 s loop)
+let AC,bus,lastCi=-1,nextArp=0,lastT=0,muted=false;
+const CHD=[[220,261.63,329.63,110],[174.61,220,261.63,87.31],[196,261.63,329.63,130.81],[196,246.94,293.66,98]];
+function tone(f,t,d,v,type,a){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.linearRampToValueAtTime(0,t+d);o.connect(g);g.connect(bus);o.start(t);o.stop(t+d+.1)}
+function startAudio(){if(AC)return;AC=new(window.AudioContext||window.webkitAudioContext)();const m=AC.createGain();m.gain.value=0;m.gain.linearRampToValueAtTime(.3,AC.currentTime+3);m.connect(AC.destination);
+ const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;bus=AC.createGain();bus.connect(lp);lp.connect(m);
+ const dl=AC.createDelay(1);dl.delayTime.value=.45;const fb=AC.createGain();fb.gain.value=.45;lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(m);window._m=m}
+function music(t,calm){if(!AC||AC.state!='running')return;if(t<lastT-1){lastCi=-1;nextArp=0}lastT=t;const n=AC.currentTime,cd=LOOP/16,ci=Math.floor(t/cd);
+ if(ci!==lastCi){lastCi=ci;const c=CHD[ci%4];c.slice(0,3).forEach(f=>{tone(f,n,cd+1.5,.07,'triangle',1.6);tone(f*1.004,n,cd+1.5,.05,'sine',1.8)});tone(c[3],n,cd+1,.16,'sine',.8);if(ci%4==0)tone(c[3]/2,n,cd*2,.12,'sine',1)}
+ if(t>=nextArp&&t>12&&t<82&&!calm){const c=CHD[ci%4],dn=t>35&&t<70;nextArp=t+(dn?.18:.45);tone(c[Math.floor(Math.random()*3)]*(dn?4:2)*(Math.random()<.3?1.5:1),n,1.4,dn?.035:.025,'sine',.01)}}
+let t0=performance.now(),last=t0,started=false,ended=false,endAt=0;
+const NEXT_URL='';// set to the next video's web address; if empty, 'Next video' returns to the language page
+const NAR=[.8,10.6,14.2,23.5,36,46,56,71,76,82.2],VL={en:'en-IN',ml:'ml-IN',hi:'hi-IN'};let spoken=-1;
+const NT={en:['A pendulum swings back and forth in a smooth, regular rhythm. This is the science of motion.','Now we attach a second arm to the first. Two pendulums, one connected system.','Here are the first pivot, the first arm, the second pivot, and the second arm.','When released, the first arm swings and the second arm responds. Gravity turns potential energy into kinetic energy, and back again.','Now watch two identical double pendulums. Their starting positions differ by just one hundredth of a degree.','At first they move together. Then their paths drift completely apart. A tiny change, a completely different future.','On the left, regular repeating motion. On the right, chaotic motion that never repeats. This is chaos theory.','Can you predict its next move?','Three different starting positions. Three different futures.','Observe. Predict. Experiment. Welcome to the Regional Science Centre and Planetarium, Calicut.'],
+ml:['ഒരു പെൻഡുലം സുഗമമായിയം ക്രമമായിയം ആടുന്നു. ഇതാണ് ചലനത്തിന്റെ ശാസ്ത്രം.','ഇനി ആദ്യത്തെ ദണ്ഡിനോട് രണ്ടാമതൊരു ദണ്ഡ് ചേർക്കുന്നു. രണ്ട് പെൻഡുലങ്ങൾ, ബന്ധിപ്പിച്ച ഒരു വ്യവസ്ഥ.','ഒന്നാം പിവറ്റ്, ഒന്നാം ദണ്ഡ്, രണ്ടാം പിവറ്റ്, രണ്ടാം ദണ്ഡ്.','വിടുമ്പോൾ ഒന്നാം ദണ്ഡ് ആടുന്നു, രണ്ടാം ദണ്ഡ് അതിനോട് പ്രതികരിക്കുന്നു. ഗുരുത്വാകർഷണം കാരണം സ്ഥിതികോർജ്ജം ഗതികോർജ്ജമായും തിരിച്ചും മാറുന്നു.','ഒരേപോലെയുള്ള രണ്ട് ഡബിൾ പെൻഡുലങ്ങളെ ശ്രദ്ധിക്കൂ. അവയുടെ തുടക്കം തമ്മിൽ വെറും നൂറിലൊരംശം ഡിഗ്രിയുടെ വ്യത്യാസം മാത്രം.','ആദ്യം അവ ഒരുപോലെ ചലിക്കുന്നു. പിന്നീട് പാതകൾ പൂർണ്ണമായി വേർപിരിയുന്നു. ചെറിയൊരു മാറ്റം, തികച്ചും വ്യത്യസ്തമായ ഭാവി.','ഇടതുവശത്ത് ക്രമമായ ആവർത്തന ചലനം, വലതുവശത്ത് ആവർത്തിക്കാത്ത അവ്യവസ്ഥിത ചലനം. ഇതാണ് കെയോസ് സിദ്ധാന്തം.','ഇതിന്റെ അടുത്ത ചലനം പ്രവചിക്കാമോ?','മൂന്ന് വ്യത്യസ്ത തുടക്കങ്ങൾ, മൂന്ന് വ്യത്യസ്ത ഭാവികൾ.','നിരീക്ഷിക്കുക. പ്രവചിക്കുക. പരീക്ഷിക്കുക. റീജിയണൽ സയൻസ് സെന്റർ ആൻഡ് പ്ലാനറ്റേറിയം, കോഴിക്കോട്.'],
+hi:['एक लोलक सहज और नियमित लय में झूलता है। यही है गति का विज्ञान।','अब पहली भुजा से दूसरी भुजा जोड़ते हैं। दो लोलक, एक जुड़ी हुई प्रणाली।','पहला धुरी बिंदु, पहली भुजा, दूसरा धुरी बिंदु और दूसरी भुजा।','छोड़ने पर पहली भुजा झूलती है और दूसरी भुजा उस पर प्रतिक्रिया करती है। गुरुत्वाकर्षण के कारण स्थितिज ऊर्जा गतिज ऊर्जा में बदलती है और फिर वापस।','अब दो एक जैसे दोहरे लोलक देखिए। उनकी शुरुआती स्थिति में केवल एक डिग्री के सौवें हिस्से का अंतर है।','पहले वे साथ-साथ चलते हैं। फिर उनके रास्ते पूरी तरह अलग हो जाते हैं। एक छोटा बदलाव, बिल्कुल अलग भविष्य।','बाईं ओर नियमित, दोहराने वाली गति है, और दाईं ओर अव्यवस्थित गति। यही है केऑस सिद्धांत।','क्या आप इसकी अगली चाल बता सकते हैं?','तीन अलग शुरुआतें, तीन अलग भविष्य।','निरीक्षण करें। अनुमान लगाएँ। प्रयोग करें। रीजनल साइंस सेंटर एवं तारामंडल, कालीकट में आपका स्वागत है।']};
+function say(s){const ss=window.speechSynthesis;if(!ss||muted)return;ss.cancel();const u=new SpeechSynthesisUtterance(s),lc=VL[LG],vc=ss.getVoices();u.lang=lc;const v=vc.find(x=>x.lang.replace('_','-')==lc)||vc.find(x=>x.lang.slice(0,2)==lc.slice(0,2));if(v)u.voice=v;u.rate=.92;ss.speak(u)}
+function narrate(t){if(!started)return;let k=-1;NAR.forEach((c,j)=>{if(t>=c)k=j});if(k!==spoken){spoken=k;if(k>=0&&t-NAR[k]<4)say(NT[LG][k])}}
+function setMute(m){muted=m;if(window._m)window._m.gain.value=m?0:.3;if(m&&window.speechSynthesis)speechSynthesis.cancel();$('#mu').textContent=m?'🔇':'🔊'}
+const apply=()=>document.querySelectorAll('[data-k]').forEach(e=>e.textContent=tr(e.dataset.k));
+function begin(){started=true;ended=false;t0=performance.now();cur=-1;lastCi=-1;nextArp=0;lastT=0;$('#end').style.display='none';spoken=-1;if(window.speechSynthesis)speechSynthesis.cancel();$('#bar').style.display='flex'}
+function goHome(){started=false;ended=false;spoken=-1;if(window.speechSynthesis)speechSynthesis.cancel();$('#bar').style.display='none';$('#end').style.display='none';$('#go').style.display='flex';t0=performance.now();cur=-1}
+function pick(l){LG=l;st.className=l;apply();['#ttl','#cap','#mid'].forEach(s=>$(s)._e=null);startAudio();AC.resume();if(muted)setMute(true);begin();$('#go').style.display='none';try{document.documentElement.requestFullscreen()}catch(x){}}
+document.querySelectorAll('#go .bt').forEach(b=>b.onclick=e=>{e.stopPropagation();pick(b.dataset.l)});
+$('#rep').onclick=e=>{e.stopPropagation();begin()};
+$('#nxt').onclick=e=>{e.stopPropagation();NEXT_URL?location.href=NEXT_URL:goHome()};
+apply();
+addEventListener('keydown',e=>{if(e.key=='m')setMute(!muted)});
+$('#mu').onclick=e=>{e.stopPropagation();setMute(!muted)};$('#hm').onclick=e=>{e.stopPropagation();goHome()};
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;let e=Math.max(0,(now-t0)/1000);if(started&&e>=LOOP-.2){if(!ended){ended=true;endAt=now;$('#end').style.display='flex'}e=LOOP-.2}const t=started?e:e%LOOP;music(ended?((now-t0)/1000)%LOOP:t,ended);if(ended&&now-endAt>45000)goHome();narrate(t);
+ let i=0;while(i<B.length-2&&t>=B[i+1])i++;if(i!==cur){enter(i);cur=i}
+ LQ.length=0;upd(i,t-B[i],dt,t);
+ const k=snap?1:1-Math.exp(-dt*2.2);cam.position.lerp(want,k);tgt.lerp(wt,k);snap=false;cam.lookAt(tgt);cam.updateMatrixWorld();
+ LB.forEach(l=>l.style.opacity=0);const v=new THREE.Vector3();
+ LQ.forEach(([j,tx,c,wx,wy,o])=>{v.set(wx,wy,0).project(cam);const l=LB[j];l.textContent=tr(tx);l.className='lb '+c;l.style.left=(v.x*.5+.5)*100+'%';l.style.top=(-v.y*.5+.5)*100+'%';l.style.opacity=o});
+ txt($('#ttl'),TOP,t);txt($('#cap'),CAP,t);txt($('#mid'),MID,t);
+ $('#dim').style.opacity=.6*ease((t-81.6)/.8);
+ const d=Math.min(...B.slice(0,-1).map(b=>Math.abs(t-b)),started?9:LOOP-t);$('#fade').style.opacity=Math.max(0,1-d/.45);
+ R.render(sc,cam)}
+requestAnimationFrame(loop);
+</script></body></html>
