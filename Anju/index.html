@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Regional Science Centre &amp; Planetarium, Calicut</title>
+<style>
+:root{--bg:#0b1d2a;--pn:#14303f;--ln:#2b5870;--fg:#e8f1f5;--mut:#9db6c2;--ac:#f2a65a;--aq:#8fc7e0;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#050e15;color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans Malayalam","Noto Sans Devanagari",sans-serif}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.app{position:relative;margin:0 auto;overflow:hidden;background:var(--bg);width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9))}
+@media(min-width:700px){.app{box-shadow:0 0 0 1px var(--ln),0 30px 80px #000;margin-top:max(0px,calc((100dvh - min(100dvh,calc(100vw*16/9)))/2))}}
+.view{position:absolute;inset:0;display:none;flex-direction:column;opacity:0}
+.app[data-view=intro] #intro,.app[data-view=home] #home,.app[data-view=gallery] #gallery{display:flex;animation:in .5s forwards}
+@keyframes in{to{opacity:1}}
+h1,h2{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Noto Serif Malayalam","Noto Serif Devanagari",serif;font-weight:600;margin:0}
+.stars{position:absolute;inset:0;background:radial-gradient(1.5px 1.5px at 20% 15%,#fff,transparent),radial-gradient(1px 1px at 70% 25%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 8%,#cfe,transparent),radial-gradient(1px 1px at 40% 40%,#fff,transparent),radial-gradient(1px 1px at 10% 55%,#fff,transparent),radial-gradient(1.5px 1.5px at 60% 60%,#fff9,transparent);animation:tw 5s ease-in-out infinite alternate;pointer-events:none}
+@keyframes tw{from{opacity:.4}to{opacity:1}}
+/* intro */
+#intro{justify-content:center;align-items:center;padding:28px;text-align:center;gap:10px}
+#intro .logo{width:84px;height:84px;margin-bottom:8px}
+#intro h1{font-size:clamp(22px,6.4vw,32px);line-height:1.2}
+#intro p{color:var(--mut);margin:4px 0 22px;font-size:15px}
+.lang{width:100%;max-width:300px;display:flex;justify-content:space-between;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:16px 20px;font-size:20px;margin-top:10px;transition:.2s}
+.lang small{color:var(--mut);font-size:13px}
+.lang:active,.lang:hover{border-color:var(--ac);transform:translateY(-1px)}
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px;position:relative;z-index:3}
+.pill{background:#14303fcc;border:1px solid var(--ln);border-radius:20px;height:36px;min-width:36px;padding:0 13px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(6px)}
+.pill.on{border-color:var(--ac);color:var(--ac)}
+.row{display:flex;gap:8px}
+/* home */
+.scroll{flex:1;overflow-y:auto;padding:0 18px calc(24px + env(safe-area-inset-bottom,0px));position:relative;z-index:2}
+.hero{text-align:center;padding:4px 0 6px}
+.hero svg{width:100%;max-width:330px;height:auto;display:block;margin:0 auto}
+.hero h1{font-size:clamp(23px,6.6vw,31px);line-height:1.2;margin-top:6px}
+.hero p{margin:8px 0 0;color:var(--aq);font-size:15px;letter-spacing:.02em}
+h2{font-size:17px;color:var(--mut);font-weight:500;margin:22px 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g{position:relative;background:linear-gradient(160deg,var(--pn),#0f2635);border:1px solid var(--ln);border-radius:18px;padding:16px 14px;text-align:left;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;transition:.2s;overflow:hidden}
+.g:last-child{grid-column:1/-1;min-height:96px}
+.g:active,.g:hover{border-color:var(--ac);transform:translateY(-2px)}
+.g .ic{font-size:30px;line-height:1}
+.g b{font-size:16px;font-weight:600;display:block}
+.g span{font-size:12.5px;color:var(--mut)}
+.g::after{content:"";position:absolute;right:-26px;top:-26px;width:80px;height:80px;border-radius:50%;background:var(--c);opacity:.18}
+/* gallery list */
+.ghead{padding:6px 20px 14px;position:relative;z-index:2}
+.ghead h1{font-size:26px;display:flex;align-items:center;gap:10px}
+.ghead p{margin:4px 0 0;color:var(--mut);font-size:14px}
+.item{margin-bottom:12px;min-height:84px}
+.card{display:flex;align-items:center;gap:14px;background:var(--pn);border:1px solid var(--ln);border-radius:16px;padding:12px;text-decoration:none;color:inherit;transition:.2s}
+.card:active,.card:hover{border-color:var(--ac)}
+.code{flex:none;width:58px;height:58px;border-radius:14px;background:var(--bg);border:1px solid var(--ln);display:grid;place-items:center;color:var(--ac);font-weight:700;font-size:15px}
+.card b{display:block;font-size:16.5px;font-weight:600}
+.card span{display:block;color:var(--mut);font-size:13px;margin-top:3px;line-height:1.35}
+.card i{margin-left:auto;color:var(--aq);font-style:normal;font-size:20px}
+.sk{display:flex;align-items:center;gap:14px;background:var(--pn);border-radius:16px;padding:12px;height:84px}
+.sk>div:first-child{width:58px;height:58px;border-radius:14px}
+.sk>div:last-child{flex:1;display:grid;gap:9px}
+.sk i{display:block;height:12px;border-radius:6px}
+.sk i:last-child{width:60%}
+.sk>div:first-child,.sk i{background:linear-gradient(90deg,#1b3e50 25%,#26536a 50%,#1b3e50 75%);background-size:200% 100%;animation:sh 1.3s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.reveal{animation:in .5s forwards;opacity:0}
+.empty{color:var(--mut);text-align:center;padding:40px 10px;line-height:1.5}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.view,.reveal{opacity:1}}
+</style></head><body>
+<div class="app" id="app" data-view="intro">
+
+<section class="view" id="intro"><div class="stars"></div>
+ <svg class="logo" viewBox="0 0 100 100" fill="none" stroke="#f2a65a" stroke-width="3"><circle cx="50" cy="50" r="34"/><ellipse cx="50" cy="50" rx="46" ry="14" transform="rotate(-22 50 50)" stroke="#8fc7e0"/><circle cx="50" cy="50" r="9" fill="#f2a65a" stroke="none"/></svg>
+ <h1>Choose your language<br>ഭാഷ തിരഞ്ഞെടുക്കുക<br>भाषा चुनें</h1>
+ <p>&nbsp;</p>
+ <button class="lang" data-l="en">English <small>EN</small></button>
+ <button class="lang" data-l="ml">മലയാളം <small>ML</small></button>
+ <button class="lang" data-l="hi">हिन्दी <small>HI</small></button>
+</section>
+
+<section class="view" id="home"><div class="stars"></div>
+ <div class="bar"><button class="pill" id="mus" aria-label="Music">♪ <span id="musT"></span></button><button class="pill" id="lg" aria-label="Language"></button></div>
+ <div class="scroll">
+  <div class="hero">
+   <svg viewBox="0 0 330 150" fill="none"><path d="M45 120a120 100 0 0 1 240 0z" fill="#14303f" stroke="#2b5870" stroke-width="2"/><path d="M85 120a80 66 0 0 1 160 0M125 120a40 36 0 0 1 80 0M165 54v66" stroke="#2b5870" stroke-width="1.5"/><circle cx="238" cy="40" r="13" fill="#f2a65a"/><ellipse cx="238" cy="40" rx="24" ry="5" stroke="#8fc7e0" stroke-width="2" transform="rotate(-20 238 40)"/><path d="M20 120h290" stroke="#2b5870" stroke-width="2"/><g fill="#fff"><circle cx="60" cy="30" r="1.8"/><circle cx="110" cy="15" r="1.3"/><circle cx="185" cy="22" r="1.6"/><circle cx="290" cy="85" r="1.3"/></g></svg>
+   <h1 id="t1"></h1><p id="t2"></p>
+  </div>
+  <h2 id="t3"></h2>
+  <div class="grid" id="grid"></div>
+ </div>
+</section>
+
+<section class="view" id="gallery">
+ <div class="bar"><button class="pill" id="back">‹ <span id="backT"></span></button><button class="pill" id="lg2"></button></div>
+ <div class="ghead"><h1 id="gt"></h1><p id="gs"></p></div>
+ <div class="scroll" id="list"></div>
+</section>
+</div>
+
+<script>
+/* ============ EDIT HERE: galleries & exhibits ============
+   Add an exhibit: copy a line into the gallery's list, make a page named file (e.g. exhibit_f02.html). */
+const GAL=[
+ {k:'f',ic:'🧪',c:'#f2a65a',n:{en:'Fun Science',ml:'ഫൺ സയൻസ്',hi:'फन साइंस'}},
+ {k:'a',ic:'🔭',c:'#8f7cf2',n:{en:'Astronomy',ml:'ജ്യോതിശാസ്ത്രം',hi:'खगोल विज्ञान'}},
+ {k:'o',ic:'🌊',c:'#4aa8d8',n:{en:'Ocean Gallery',ml:'സമുദ്ര ഗാലറി',hi:'महासागर गैलरी'}},
+ {k:'m',ic:'🪞',c:'#7fd6c2',n:{en:'Mirror Gallery',ml:'കണ്ണാടി ഗാലറി',hi:'दर्पण गैलरी'}},
+ {k:'p',ic:'🌳',c:'#8fd16a',n:{en:'Science Park',ml:'സയൻസ് പാർക്ക്',hi:'विज्ञान उद्यान'}}];
+const EX={
+ f:[{id:'f01',file:'exhibit_f01.html',n:{en:'Rising Bubbles',ml:'ഉയരുന്ന കുമിളകൾ',hi:'ऊपर उठते बुलबुले'},d:{en:'Why do bubbles grow as they climb?',ml:'കുമിളകൾ ഉയരുമ്പോൾ വലുതാകുന്നത് എന്തുകൊണ്ട്?',hi:'बुलबुले ऊपर जाते हुए बड़े क्यों होते हैं?'}}],
+ a:[],o:[],m:[],p:[]};
+/* ========================================================= */
+const TX={
+ t1:{en:'Regional Science Centre & Planetarium',ml:'റീജിയണൽ സയൻസ് സെന്റർ & പ്ലാനറ്റേറിയം',hi:'क्षेत्रीय विज्ञान केंद्र एवं तारामंडल'},
+ t2:{en:'Calicut',ml:'കോഴിക്കോട്',hi:'कालीकट'},
+ t3:{en:'Explore the galleries',ml:'ഗാലറികൾ കാണാം',hi:'गैलरियाँ देखें'},
+ back:{en:'Home',ml:'ഹോം',hi:'होम'},
+ ex:{en:'exhibits',ml:'പ്രദർശനങ്ങൾ',hi:'प्रदर्शनियाँ'},
+ soon:{en:'Exhibits for this gallery are coming soon.',ml:'ഈ ഗാലറിയിലെ പ്രദർശനങ്ങൾ ഉടൻ എത്തും.',hi:'इस गैलरी की प्रदर्शनियाँ जल्द आ रही हैं।'},
+ lg:{en:'EN',ml:'മല',hi:'हि'},
+ mus:{en:'Music',ml:'സംഗീതം',hi:'संगीत'}};
+const $=id=>document.getElementById(id),app=$('app'),LS=(()=>{try{return localStorage}catch(e){return {getItem(){},setItem(){}}}})();
+let lang=LS.getItem('lang')||'en',cur=null,musicOn=false;
+const ORDER=['en','ml','hi'];
+function view(v){app.dataset.view=v}
+function render(){
+ document.documentElement.lang=lang;
+ ['t1','t2','t3'].forEach(k=>$(k).textContent=TX[k][lang]);
+ $('lg').textContent=$('lg2').textContent=TX.lg[lang];$('backT').textContent=TX.back[lang];$('musT').textContent=TX.mus[lang];
+ $('grid').innerHTML=GAL.map(g=>`<button class="g" data-k="${g.k}" style="--c:${g.c}"><span class="ic">${g.ic}</span><div><b>${g.n[lang]}</b><span>${EX[g.k].length} ${TX.ex[lang]}</span></div></button>`).join('');
+ if(cur)openGallery(cur,true)}
+function setLang(l){lang=l;LS.setItem('lang',l);render()}
+document.querySelectorAll('.lang').forEach(b=>b.onclick=()=>{setLang(b.dataset.l);LS.setItem('seen','1');view('home');music(true)});
+[ 'lg','lg2'].forEach(i=>$(i).onclick=()=>setLang(ORDER[(ORDER.indexOf(lang)+1)%3]));
+$('grid').onclick=e=>{const b=e.target.closest('.g');if(b){openGallery(b.dataset.k);history.replaceState(null,'','#'+b.dataset.k)}};
+$('back').onclick=()=>{cur=null;view('home');history.replaceState(null,'','#home')};
+function openGallery(k,keep){
+ cur=k;const g=GAL.find(x=>x.k==k),list=EX[k];
+ $('gt').textContent=g.ic+' '+g.n[lang];$('gs').textContent=list.length+' '+TX.ex[lang];
+ const L=$('list');L.scrollTop=0;
+ if(!list.length){L.innerHTML=`<div class="empty">${TX.soon[lang]}</div>`}
+ else{L.innerHTML=list.map(()=>`<div class="item"><div class="sk"><div></div><div><i></i><i></i></div></div></div>`).join('');
+  const io=new IntersectionObserver(es=>es.forEach(en=>{if(!en.isIntersecting)return;io.unobserve(en.target);const i=[...L.children].indexOf(en.target),x=list[i];
+   setTimeout(()=>{en.target.innerHTML=`<a class="card reveal" href="${x.file}"><div class="code">${x.id}</div><div><b>${x.n[lang]}</b><span>${x.d[lang]}</span></div><i>›</i></a>`},keep?60:450+i*90)}),{root:L,threshold:.1});
+  [...L.children].forEach(c=>io.observe(c))}
+ view('gallery')}
+/* background music: soft generated pads, no audio file needed */
+let AC,master,osc=[],tm;const CH=[[220,277.2,329.6],[196,246.9,293.7],[174.6,220,261.6],[196,246.9,329.6]];
+function music(on){musicOn=on;$('mus').classList.toggle('on',on);
+ if(on){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C();master=AC.createGain();master.gain.value=0;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=900;master.connect(f);f.connect(AC.destination);
+  [0,1,2,3].forEach(i=>{const o=AC.createOscillator(),g=AC.createGain();o.type=i<3?'sine':'triangle';g.gain.value=i<3?.3:.08;o.connect(g);g.connect(master);o.start();osc.push(o)});}
+  AC.resume();let s=0;const step=()=>{const c=CH[s++%4];osc.forEach((o,i)=>o.frequency.setTargetAtTime(i<3?c[i]:c[0]*2,AC.currentTime,1.8))};step();clearInterval(tm);tm=setInterval(step,6000);master.gain.setTargetAtTime(.22,AC.currentTime,1.2)}
+ else if(AC){master.gain.setTargetAtTime(0,AC.currentTime,.4);clearInterval(tm)}
+ LS.setItem('music',on?'1':'0')}
+$('mus').onclick=()=>music(!musicOn);
+render();
+const h=location.hash.slice(1);
+if(GAL.some(g=>g.k==h))openGallery(h);else if(h=='home'||LS.getItem('seen'))view('home');
+</script></body></html>
