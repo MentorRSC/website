@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RSCP, Calicut · Rising Bubbles</title>
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="RSCP, Calicut"><meta name="apple-mobile-web-app-title" content="RSCP, Calicut"><meta name="theme-color" content="#0b1d2a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%230b1d2a%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2720%27 fill=%27%23f2a65a%27/%3E%3Cellipse cx=%2750%27 cy=%2750%27 rx=%2740%27 ry=%2712%27 fill=%27none%27 stroke=%27%238fc7e0%27 stroke-width=%275%27 transform=%27rotate(-22 50 50)%27/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0b1d2a;--pn:#14303f;--ln:#2b5870;--fg:#e8f1f5;--mut:#9db6c2;--ac:#f2a65a;--aq:#8fc7e0;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#050e15;color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans Malayalam","Noto Sans Devanagari",sans-serif}
+button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+a{color:inherit}
+.app{position:relative;margin:0 auto;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;width:100vw;height:100dvh}
+@media(min-width:700px){.app{width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));box-shadow:0 0 0 1px var(--ln),0 30px 80px #000;margin-top:max(0px,calc((100dvh - min(100dvh,calc(100vw*16/9)))/2))}}
+h1{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Noto Serif Malayalam","Noto Serif Devanagari",serif;font-weight:600;margin:0}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px;z-index:3}
+.pill{background:#14303fcc;border:1px solid var(--ln);border-radius:20px;height:38px;min-width:38px;padding:0 13px;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:opacity .6s,border-color .2s}
+.pill:active{border-color:var(--ac)}
+.code{font-weight:700;color:var(--ac);font-size:14px;letter-spacing:.04em}
+#vb{transition:opacity .8s}
+#vb.fade{opacity:.3}
+#vb.talk{border-color:var(--ac);animation:pu 1.4s infinite}
+@keyframes pu{50%{box-shadow:0 0 0 6px #f2a65a22}}
+main{flex:1;overflow-y:auto;padding:4px 18px 18px}
+.pane{display:none;animation:in .4s}
+.pane.on{display:block}
+@keyframes in{from{opacity:0}}
+.title{padding:6px 0 14px}
+.title h1{font-size:clamp(27px,8vw,36px);line-height:1.15}
+.title p{margin:8px 0 0;color:var(--aq);font-size:15.5px}
+.txt p{font-size:17px;line-height:1.65;margin:0 0 15px}
+.try{background:var(--pn);border-left:3px solid var(--ac);border-radius:0 12px 12px 0;padding:13px 15px;font-size:16px;line-height:1.55;margin-top:6px}
+.lk{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:15px 16px;margin-bottom:11px;text-decoration:none;font-size:16.5px}
+.lk small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.lk:active{border-color:var(--ac)}
+/* video */
+canvas{width:100%;display:block;border-radius:12px;background:#0b1d2a}
+.v{position:relative}
+#lb{position:absolute;left:10px;right:10px;top:8px;text-align:center;font-weight:700;font-size:clamp(11px,3.2vw,15px);color:var(--ac);text-shadow:0 2px 8px #000;pointer-events:none}
+#cap{background:var(--pn);border-radius:12px;padding:14px;margin:12px 0;min-height:128px;font-size:16.5px;line-height:1.55}
+.r{display:flex;gap:10px;align-items:center}
+#pp{background:var(--ac);color:#1a1208;border-radius:22px;padding:10px 18px;font-weight:600;white-space:nowrap}
+input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}
+small{color:var(--mut)}
+#tm{white-space:nowrap}
+/* bottom tabs */
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));background:#0a1823;border-top:1px solid var(--ln)}
+nav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;font-size:13.5px;color:var(--mut);border:1px solid transparent;transition:.2s}
+nav button span{font-size:21px;line-height:1}
+nav button.on{background:var(--pn);border-color:var(--ac);color:var(--fg)}
+.menu{position:absolute;right:0;top:46px;width:min(260px,calc(100vw - 28px));background:#0f2635f2;backdrop-filter:blur(16px);border:1px solid var(--ln);border-radius:20px;padding:14px;box-shadow:0 20px 44px #000b;display:none;transform-origin:top right;z-index:10}
+.menu.open{display:block;animation:pop .22s}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(-6px)}}
+.menu h3{margin:4px 0 8px;font-size:13px;font-weight:500;color:var(--mut)}
+.act{width:100%;background:var(--ac);color:#1a1208;border-radius:14px;padding:12px;font-weight:600;margin-bottom:14px}
+.vo{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 8px;border-radius:12px;font-size:15.5px;transition:.2s}
+.vo .d{width:34px;height:34px;border-radius:50%;border:1px solid var(--ln);display:grid;place-items:center;font-size:17px;flex:none}
+.vo.sel{background:#8fc7e01a}.vo.sel .d{background:var(--ac);border-color:var(--ac)}
+.menu .nt{display:block;margin-top:8px;font-size:12px;line-height:1.4;color:var(--mut)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script>
+const LS=(()=>{try{return localStorage}catch(e){return{getItem(){},setItem(){}}}})();
+const q=new URLSearchParams(location.search).get('lang');
+window.LANG=['en','ml','hi'].includes(q)?q:(LS.getItem('lang')||'en');
+if(q)LS.setItem('lang',q);
+const TX={
+ tabs:{en:['Explanation','Video','Links'],ml:['വിശദീകരണം','വീഡിയോ','ലിങ്കുകൾ'],hi:['व्याख्या','वीडियो','लिंक']},
+ name:{en:'Rising Bubbles',ml:'ഉയരുന്ന കുമിളകൾ',hi:'ऊपर उठते बुलबुले'},
+ tag:{en:'Why do bubbles grow as they climb?',ml:'കുമിളകൾ ഉയരുമ്പോൾ വലുതാകുന്നത് എന്തുകൊണ്ട്?',hi:'बुलबुले ऊपर जाते हुए बड़े क्यों होते हैं?'},
+ more:{en:'Read more on Wikipedia',ml:'വിക്കിപീഡിയയിൽ കൂടുതൽ വായിക്കാം',hi:'विकिपीडिया पर और पढ़ें'},
+ lg:{en:'EN',ml:'മല',hi:'हि'},
+ novoice:{en:'',ml:'No Malayalam voice found on this device. Install Malayalam text-to-speech in phone settings, or use English.',hi:'No Hindi voice found on this device. Install Hindi text-to-speech in phone settings, or use English.'},
+ nospeech:{en:'This browser has no speech support.',ml:'This browser has no speech support.',hi:'This browser has no speech support.'}};
+/* ===== EDIT HERE: explanation text (paragraphs; the last one is the "try it" note) ===== */
+const EXP={
+ en:["Bubbles rising through the liquid grow bigger as they near the top, even though the air inside them never changes.","The reason is pressure. In a liquid, pressure rises with depth: P = P₀ + ρgh. Every ten metres of water adds about one atmosphere.","As a bubble climbs, the pressure on it drops. By Boyle’s law (P₁V₁ = P₂V₂), lower pressure means larger volume. A bubble at 30 m (4 atm) becomes four times larger at the surface.","Buoyancy, the upward force ρVg from Archimedes’ principle, pushes it up. Liquid drag pulls back, so bubbles rise slowly in thick liquids.","Try it: press the lever and compare the thin and thick liquid columns. Divers use the same idea: they breathe out as they come up."],
+ ml:["ദ്രാവകത്തിലൂടെ ഉയരുന്ന കുമിളകൾ മുകളിലെത്തുമ്പോൾ വലുതാകുന്നു; ഉള്ളിലെ വായുവിന്റെ അളവ് മാറുന്നില്ലെങ്കിലും.","കാരണം മർദ്ദമാണ്. ആഴം കൂടുന്തോറും മർദ്ദം കൂടുന്നു: P = P₀ + ρgh. ഓരോ പത്ത് മീറ്റർ വെള്ളവും ഏകദേശം ഒരു അന്തരീക്ഷമർദ്ദം കൂട്ടുന്നു.","കുമിള ഉയരുമ്പോൾ മർദ്ദം കുറയുന്നു. ബോയിൽ നിയമപ്രകാരം (P₁V₁ = P₂V₂) മർദ്ദം കുറഞ്ഞാൽ വ്യാപ്തം കൂടും. 30 മീറ്ററിലെ (4 atm) കുമിള ഉപരിതലത്തിൽ നാലിരട്ടി വലുതാകും.","ആർക്കിമിഡീസ് തത്വത്തിലെ പ്ലവക്ഷമബലം (ρVg) കുമിളയെ മുകളിലേക്ക് തള്ളുന്നു. ദ്രാവകത്തിന്റെ വലിവ് പിന്നോട്ട് വലിക്കുന്നതിനാൽ കട്ടിയുള്ള ദ്രാവകത്തിൽ കുമിളകൾ പതുക്കെ ഉയരുന്നു.","പരീക്ഷിക്കൂ: ലിവർ അമർത്തി നേർത്തതും കട്ടിയുള്ളതുമായ കുഴലുകൾ താരതമ്യം ചെയ്യുക. മുങ്ങൽ വിദഗ്ധർ ഉയരുമ്പോൾ ശ്വാസം പുറത്തുവിടുന്നതും ഇതേ തത്വം കൊണ്ടാണ്."],
+ hi:["तरल में ऊपर उठते बुलबुले सतह के पास पहुँचते-पहुँचते बड़े हो जाते हैं, जबकि उनके अंदर की हवा की मात्रा नहीं बदलती।","इसका कारण दाब है। गहराई के साथ दाब बढ़ता है: P = P₀ + ρgh। हर दस मीटर पानी लगभग एक वायुमंडलीय दाब जोड़ता है।","बुलबुला ऊपर चढ़ता है तो उस पर दाब घटता है। बॉयल के नियम (P₁V₁ = P₂V₂) के अनुसार कम दाब पर आयतन बढ़ता है। 30 मीटर (4 atm) पर बना बुलबुला सतह पर चार गुना बड़ा हो जाता है।","आर्किमिडीज़ के सिद्धांत का उत्प्लावन बल (ρVg) बुलबुले को ऊपर धकेलता है। तरल का अवरोध उसे पीछे खींचता है, इसलिए गाढ़े तरल में बुलबुले धीमे उठते हैं।","आज़माइए: लीवर दबाएँ और पतले व गाढ़े तरल वाले स्तंभों की तुलना करें। गोताखोर भी ऊपर आते समय साँस छोड़ते हैं, यही सिद्धांत है।"]};
+/* ===== EDIT HERE: external links ===== */
+const LINKS=[
+ ['https://en.wikipedia.org/wiki/Boyle%27s_law',{en:"Boyle’s law",ml:'ബോയിൽ നിയമം',hi:'बॉयल का नियम'}],
+ ['https://en.wikipedia.org/wiki/Hydrostatic_pressure',{en:'Hydrostatic pressure',ml:'ദ്രവസ്ഥിത മർദ്ദം',hi:'द्रवस्थैतिक दाब'}],
+ ['https://en.wikipedia.org/wiki/Buoyancy',{en:'Buoyancy',ml:'പ്ലവക്ഷമബലം',hi:'उत्प्लावन बल'}],
+ ['https://en.wikipedia.org/wiki/Archimedes%27_principle',{en:"Archimedes’ principle",ml:'ആർക്കിമിഡീസ് തത്വം',hi:'आर्किमिडीज़ का सिद्धांत'}],
+ ['https://en.wikipedia.org/wiki/Decompression_sickness',{en:'Decompression sickness',ml:'ഡീകംപ്രഷൻ സിക്ക്നസ്',hi:'डीकंप्रेशन सिकनेस'}]];
+TX.v={h:{en:'Voice',ml:'ശബ്ദം',hi:'आवाज़'},
+ f:{en:'Female',ml:'സ്ത്രീ ശബ്ദം',hi:'महिला'},m:{en:'Male',ml:'പുരുഷ ശബ്ദം',hi:'पुरुष'},s:{en:'Standard',ml:'സാധാരണ',hi:'सामान्य'},
+ listen:{en:'🔊 Listen to explanation',ml:'🔊 വിശദീകരണം കേൾക്കുക',hi:'🔊 व्याख्या सुनें'},stop:{en:'⏹ Stop listening',ml:'⏹ നിർത്തുക',hi:'⏹ रोकें'},
+ mute:{en:'🔇 Mute narration',ml:'🔇 ശബ്ദം ഓഫ്',hi:'🔇 आवाज़ बंद'},unmute:{en:'🔊 Unmute narration',ml:'🔊 ശബ്ദം ഓൺ',hi:'🔊 आवाज़ चालू'},
+ note:{en:'Voices come from your phone, so choices vary by device.',ml:'ശബ്ദങ്ങൾ ഫോണിൽ നിന്നാണ്; ഉപകരണം അനുസരിച്ച് മാറാം.',hi:'आवाज़ें फ़ोन से आती हैं, इसलिए डिवाइस के अनुसार बदल सकती हैं।'}};
+/* voice type: picks a matching female/male voice by name; if none is found, the same voice is pitch-shifted */
+const FEM=/female|zira|heera|veena|lekha|neerja|swara|samantha|susan|hazel|priya|kalpana|aditi|karen|tessa|moira|fiona|victoria/i,MAL=/\bmale\b|ravi|hemant|prabhat|rishi|madhur|david|mark|george|james|daniel|alex|fred/i;
+function getVoice(l){const ss=window.speechSynthesis,all=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(l)):[],t=LS.getItem('vtype')||'female';
+ const re=t=='female'?FEM:t=='male'?MAL:null,hit=re?all.find(x=>re.test(x.name)):null;
+ return{v:hit||all[0],p:t=='std'||hit?1:t=='female'?1.25:.75}}
+</script></head><body>
+<div class="app">
+ <div class="bar">
+  <a class="pill" href="index.html#home" aria-label="Home">⌂</a>
+  <span class="code">EXHIBIT F01</span>
+  <div style="display:flex;gap:8px"><button class="pill" id="lg" aria-label="Language"></button><div style="position:relative"><button class="pill" id="vb" aria-label="Voice">🔊</button><div class="menu" id="vm"></div></div></div>
+ </div>
+ <main>
+  <div class="title"><h1 id="nm"></h1><p id="tg"></p></div>
+  <section class="pane on" id="p0"><div class="txt" id="ex"></div></section>
+  <section class="pane" id="p1">
+   <div class="v"><canvas id="c"></canvas><div id="lb"></div></div>
+   <div id="cap"></div>
+   <div class="r"><button id="pp">▶ Play</button><input id="sk" type="range" min="0" max="1200" value="0" aria-label="Seek"><small id="tm">0:00 / 2:00</small></div>
+   <small id="vs" style="display:block;margin-top:8px"></small>
+   <small style="display:block;margin-top:8px">Schematic 3D animation: column depth is scaled to 30 m.</small>
+  </section>
+  <section class="pane" id="p2"><div id="lk"></div></section>
+ </main>
+ <nav id="nav"><button data-t="0" class="on"><span>📖</span><i></i></button><button data-t="1"><span>▶️</span><i></i></button><button data-t="2"><span>🔗</span><i></i></button></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const S=[
+{t:0,en:"Welcome to Rising Bubbles. Press the lever and air bubbles rise through the liquid. Notice something curious: they get bigger as they climb.",ml:"ഉയരുന്ന കുമിളകളിലേക്ക് സ്വാഗതം. ലിവർ അമർത്തുമ്പോൾ ദ്രാവകത്തിലൂടെ വായുകുമിളകൾ ഉയരുന്നു. അവ മുകളിലേക്ക് പോകുമ്പോൾ വലുതാകുന്നു."},
+{t:10,en:"Near the bottom the bubbles are small. Near the top they are clearly larger. The amount of air inside has not changed, so what is making them grow? The answer is pressure.",ml:"അടിയിൽ കുമിളകൾ ചെറുതാണ്, മുകളിൽ വലുതും. ഉള്ളിലെ വായുവിന്റെ അളവ് മാറുന്നില്ല. പിന്നെ എന്താണ് വലുതാക്കുന്നത്? മർദ്ദം."},
+{t:26,en:"In a liquid, pressure increases with depth: P equals P-naught plus rho g h. Every ten metres of water adds about one atmosphere. A deep bubble is squeezed hard by all the liquid above it.",ml:"ദ്രാവകത്തിൽ ആഴം കൂടുന്തോറും മർദ്ദം കൂടുന്നു: P = P₀ + ρgh. ഓരോ പത്ത് മീറ്റർ വെള്ളവും ഏകദേശം ഒരു അന്തരീക്ഷമർദ്ദം കൂട്ടുന്നു. ആഴത്തിലെ കുമിളയെ മുകളിലെ ദ്രാവകം ശക്തമായി ഞെരുക്കുന്നു."},
+{t:46,en:"As the bubble rises, the pressure around it falls. By Boyle’s law, P1 V1 equals P2 V2, so lower pressure means larger volume. At four atmospheres the bubble has volume V. At two it is twice as big. At the surface, four times.",ml:"കുമിള ഉയരുമ്പോൾ ചുറ്റുമുള്ള മർദ്ദം കുറയുന്നു. ബോയിൽ നിയമമനുസരിച്ച് P₁V₁ = P₂V₂; മർദ്ദം കുറഞ്ഞാൽ വ്യാപ്തം കൂടും. 4 atm-ൽ വ്യാപ്തം V ആണെങ്കിൽ 2 atm-ൽ ഇരട്ടി, ഉപരിതലത്തിൽ നാലിരട്ടി."},
+{t:66,en:"The graph shows volume against depth. Notice the curve is steepest near the surface. A bubble at ten metres doubles in volume on reaching the top, because pressure drops from two atmospheres to one.",ml:"ഗ്രാഫ് ആഴത്തിനനുസരിച്ച് വ്യാപ്തം കാണിക്കുന്നു. ഉപരിതലത്തിനടുത്താണ് വളവ് ഏറ്റവും കുത്തനെ. 10 മീറ്ററിലെ കുമിള മുകളിലെത്തുമ്പോൾ 2 atm-ൽ നിന്ന് 1 atm-ലേക്ക് മർദ്ദം കുറയുന്നതിനാൽ വ്യാപ്തം ഇരട്ടിയാകും."},
+{t:84,en:"Why does it rise at all? Buoyancy. By Archimedes’ principle the upward force equals rho V g. As the bubble grows, buoyancy grows. Liquid drag pulls back, and the bubble settles at the speed where the two balance.",ml:"എന്തുകൊണ്ട് ഉയരുന്നു? പ്ലവക്ഷമബലം. ആർക്കിമിഡീസ് തത്വമനുസരിച്ച് മുകളിലേക്കുള്ള ബലം ρVg ആണ്. കുമിള വലുതാകുമ്പോൾ ബലം കൂടുന്നു. ദ്രാവകത്തിന്റെ വലിവ് പിന്നോട്ട് വലിക്കുന്നു; ഇവ സന്തുലിതമാകുന്ന വേഗതയിൽ കുമിള ഉയരുന്നു."},
+{t:100,en:"The two columns differ in density and viscosity. In a thin liquid bubbles rush upward. In a thick, viscous liquid, drag is larger and they rise slowly.",ml:"രണ്ട് കുഴലുകളിലും സാന്ദ്രതയും ശ്യാനതയും വ്യത്യസ്തമാണ്. നേർത്ത ദ്രാവകത്തിൽ കുമിളകൾ വേഗത്തിൽ ഉയരുന്നു; കട്ടിയുള്ളതിൽ വലിവ് കൂടുതലായതിനാൽ പതുക്കെ."},
+{t:110,en:"The same physics protects divers, who must exhale while ascending. It explains the bends, fizzy drinks and industrial bubble reactors. Lower pressure, bigger bubble.",ml:"ഇതേ തത്വം മുങ്ങൽ വിദഗ്ധർക്ക് ഉയരുമ്പോൾ ശ്വാസം പുറത്തുവിടേണ്ടതിന്റെ കാരണമാണ്. ഡീകംപ്രഷൻ സിക്ക്നസ്, സോഡ, വ്യവസായ ബബിൾ റിയാക്ടറുകൾ എന്നിവയിലും ഇത് കാണാം. മർദ്ദം കുറഞ്ഞാൽ കുമിള വലുതാകും."}];
+const HI=["ऊपर उठते बुलबुलों में आपका स्वागत है। लीवर दबाइए और तरल में हवा के बुलबुले ऊपर उठेंगे। ध्यान दीजिए, ऊपर जाते हुए वे बड़े होते जाते हैं।","नीचे बुलबुले छोटे हैं और ऊपर साफ़ तौर पर बड़े। अंदर की हवा की मात्रा नहीं बदली, तो उन्हें बड़ा कौन कर रहा है? उत्तर है दाब।","तरल में गहराई के साथ दाब बढ़ता है: P = P₀ + ρgh। हर दस मीटर पानी लगभग एक वायुमंडलीय दाब जोड़ता है। गहराई का बुलबुला ऊपर के सारे तरल से दबा होता है।","बुलबुला ऊपर उठता है तो उसके चारों ओर दाब घटता है। बॉयल के नियम P₁V₁ = P₂V₂ से कम दाब पर आयतन बढ़ता है। 4 atm पर आयतन V हो तो 2 atm पर दोगुना और सतह पर चार गुना।","ग्राफ़ गहराई के साथ आयतन दिखाता है। वक्र सतह के पास सबसे तेज़ चढ़ता है। दस मीटर का बुलबुला ऊपर पहुँचकर दोगुना हो जाता है, क्योंकि दाब दो से एक वायुमंडल रह जाता है।","बुलबुला ऊपर क्यों उठता है? उत्प्लावन बल। आर्किमिडीज़ के सिद्धांत से ऊपर का बल ρVg होता है। तरल का अवरोध पीछे खींचता है, और जिस गति पर दोनों संतुलित हों, बुलबुला उसी से उठता है।","दोनों स्तंभों में घनत्व और श्यानता अलग हैं। पतले तरल में बुलबुले तेज़ उठते हैं, गाढ़े में अवरोध अधिक होने से धीमे।","यही भौतिकी गोताखोरों को ऊपर आते समय साँस छोड़ने को कहती है। डीकंप्रेशन सिकनेस, सोडा और औद्योगिक बबल रिएक्टर में भी यही दिखता। कम दाब, बड़ा बुलबुला।"];HI.forEach((h,i)=>S[i].hi=h);
+const L=["RISING BUBBLES · Why do bubbles grow as they climb?","Small at the bottom → large near the top","P = P₀ + ρgh · deeper = more pressure","P₁V₁ = P₂V₂ · lower pressure → larger volume","Volume vs depth: steepest near the surface","Buoyancy ρVg ↑ vs Drag 6πηrv ↓","Thin liquid: fast · Thick liquid: slow","Lower pressure → bigger bubble"];
+const CF=[[0,1,14,-1],[-4.5,0,10,-2.5],[1,1,13,0],[1.5,.5,14,1.5],[1.5,.5,14,1.5],[0,.5,12,-.3],[0,1,15,0],[-2.5,1.5,13,-2.5]];
+const T=120,cv=document.getElementById('c'),$=id=>document.getElementById(id),P=d=>1+d/10,cb=Math.cbrt,ez=x=>Math.max(0,Math.min(1,x));
+let t=0,play=false,lang=window.LANG,voice=true,cur=-1,last=0;
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene();sc.background=new THREE.Color(0x0b1d2a);sc.fog=new THREE.Fog(0x0b1d2a,18,45);
+const cam=new THREE.PerspectiveCamera(45,16/9,.1,100);cam.position.set(0,1,14);
+sc.add(new THREE.AmbientLight(0x88aacc,.9));const dl=new THREE.DirectionalLight(0xffffff,1);dl.position.set(5,8,6);sc.add(dl);
+const pl=new THREE.PointLight(0xf2a65a,1.3,35);pl.position.set(-5,3,5);sc.add(pl);
+const fl=new THREE.Mesh(new THREE.CylinderGeometry(14,14,.2,64),new THREE.MeshStandardMaterial({color:0x12303f,roughness:.6}));fl.position.y=-4.7;sc.add(fl);
+const gr=new THREE.GridHelper(28,28,0x2b5870,0x1d4054);gr.position.y=-4.58;sc.add(gr);
+const dust=new THREE.Points(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(Array.from({length:240},(_,i)=>(Math.random()-.5)*(i%3==1?14:30)),3)),new THREE.PointsMaterial({color:0x8fc7e0,size:.06,transparent:true,opacity:.6}));sc.add(dust);
+function spr(txt,col,w){const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.font='bold 44px system-ui,sans-serif';x.textAlign='center';x.fillStyle=col;x.fillText(txt,256,62);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));s.scale.set(w||3.2,w?w*.1875:.6,1);return s}
+const bm=()=>new THREE.MeshStandardMaterial({color:0xcfefff,transparent:true,opacity:.55,roughness:.08,metalness:.1,emissive:0x3a7090,emissiveIntensity:.35});
+const bg=new THREE.SphereGeometry(1,28,18);
+function mk(liq){const g=new THREE.Group();
+g.add(new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,8,40,1,true),new THREE.MeshStandardMaterial({color:0xaee0ff,transparent:true,opacity:.18,side:THREE.DoubleSide,roughness:.05})));
+g.add(new THREE.Mesh(new THREE.CylinderGeometry(.86,.86,7.7,40),new THREE.MeshStandardMaterial({color:liq,transparent:true,opacity:.2})));
+[-4.2,4.2].forEach(y=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,.4,40),new THREE.MeshStandardMaterial({color:0x7a4b2a,roughness:.5}));m.position.y=y;g.add(m)});
+const b=[];for(let k=0;k<10;k++){const m=new THREE.Mesh(bg,bm());g.add(m);b.push(m)}sc.add(g);return{g,b}}
+const A=mk(0x4aa8d8),B=mk(0xe0b060);B.g.visible=false;
+function upd(c,sp){c.b.forEach((m,k)=>{const ph=(t*sp+k/10)%1,y=-3.7+ph*7.4,r=.22*cb(4/P(30*(1-ph))),a=k*2.3+t*1.7,o=Math.max(0,.9-r-.08)*.8;m.position.set(Math.sin(a)*o,y,Math.cos(a*.8)*o);m.scale.setScalar(r)})}
+// pressure arrows
+const gP=new THREE.Group(),arr=[];[0,10,20,30].forEach(d=>{const y=3.7-d/30*7.4,a=new THREE.ArrowHelper(new THREE.Vector3(-1,0,0),new THREE.Vector3(1,y,0),1,0xf2a65a,.3,.2);gP.add(a);arr.push([a,d]);const s=spr(d+' m · '+P(d)+' atm','#e8f1f5');s.position.set(5.2,y,0);gP.add(s)});gP.position.x=-2.5;sc.add(gP);
+// showcase bubbles
+const gV=new THREE.Group(),vb=[];[['30 m · 4 atm · V',1],['10 m · 2 atm · 2V',2],['Surface · 1 atm · 4V',4]].forEach((o,k)=>{const m=new THREE.Mesh(bg,bm());m.position.set(1+k*2.7,.3,0);m.userData.r=.55*cb(o[1]);gV.add(m);vb.push(m);const s=spr(o[0],'#8fc7e0');s.position.set(1+k*2.7,-1.7,0);gV.add(s)});sc.add(gV);
+// graph
+const gG=new THREE.Group(),pts=[];for(let k=0;k<=100;k++){const V=4/P(30*(1-k/100));pts.push(new THREE.Vector3(1+k/100*5,-2.5+(V-.5)/3.5*5,0))}
+const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),100,.07,6),new THREE.MeshStandardMaterial({color:0xf2a65a,emissive:0x7a4a10}));gG.add(tube);
+const dot=new THREE.Mesh(bg,bm());dot.scale.setScalar(.2);gG.add(dot);
+[[[1,-2.5,0],[1,3.2,0]],[[1,-2.5,0],[6.4,-2.5,0]]].forEach(p=>gG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p.map(v=>new THREE.Vector3(...v))),new THREE.LineBasicMaterial({color:0x8fc7e0}))));
+const s1=spr('Volume','#8fc7e0',2);s1.position.set(.2,3.3,0);gG.add(s1);const s2=spr('Depth → surface','#8fc7e0',3);s2.position.set(5,-3,0);gG.add(s2);sc.add(gG);
+// forces
+const gF=new THREE.Group(),fb=new THREE.Mesh(bg,bm()),fu=new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(),1,0xf2a65a,.4,.25),fd=new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(),1,0x8fc7e0,.4,.25);
+gF.add(fb,fu,fd);const l1=spr('Buoyancy ρVg','#f2a65a',3);l1.position.set(2.4,2,0);const l2=spr('Drag 6πηrv','#8fc7e0',3);l2.position.set(2.4,-2,0);gF.add(l1,l2);gF.position.x=2;sc.add(gF);
+function size(){const w=cv.parentElement.clientWidth;R.setSize(w,w*9/16,false);cv.style.height=(w*9/16)+'px'}window.sz=size;size();addEventListener('resize',size);
+const cp=new THREE.Vector3(0,1,14);let lx=0;
+function draw(){const i=S.findLastIndex(s=>s.t<=t),lt=t-S[i].t,c=CF[i];
+const tx=c[0]+Math.sin(t*.25)*(i==7?5:2),ty=c[1]+Math.sin(t*.4)*.5;cp.x+=(tx-cp.x)*.04;cp.y+=(ty-cp.y)*.04;cp.z+=(c[2]-cp.z)*.04;lx+=(c[3]-lx)*.04;cam.position.copy(cp);cam.lookAt(lx,0,0);
+const ax=i==6?-3.5:-2.5;A.g.position.x+=(ax-A.g.position.x)*.05;B.g.position.x=3.5;B.g.visible=i==6;
+A.g.rotation.y=i==7?t*.6:0;
+upd(A,i==6?.14:.06);upd(B,.035);
+gP.visible=i==2;gP.position.x=A.g.position.x;arr.forEach(([a,d],k)=>{const L=Math.max(.01,.55*P(d)*ez(lt/6-k*.12+.1));a.setLength(L,Math.min(.3,L),.2);a.position.x=1+L})
+gV.visible=i==3;vb.forEach((m,k)=>m.scale.setScalar(Math.max(.001,m.userData.r*ez((lt-k*5-.5)/2)*(1+.04*Math.sin(t*3+k)))));
+gG.visible=i==4;const pr=ez(lt/12),n=Math.floor(pr*100);tube.geometry.setDrawRange(0,n*36);dot.position.copy(pts[n]);
+gF.visible=i==5;const r=.5+.5*ez(lt/14);fb.scale.setScalar(r);fb.position.y=Math.sin(t*2)*.15;const up=.8+1.8*ez(lt/14);fu.setLength(up,.4,.25);fu.position.y=r+fb.position.y;fd.setLength(1.1,.4,.25);fd.position.y=-r+fb.position.y;l1.position.y=up+r+.2;
+dust.rotation.y=t*.03;pl.position.x=-5+Math.sin(t*.5)*3;
+$('lb').textContent=L[i];R.render(sc,cam)}
+function ui(){const i=S.findLastIndex(s=>s.t<=t);$('cap').textContent=S[i][lang];$('sk').value=t*10;const f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');$('tm').textContent=f(t)+' / 2:00';if(i!=cur){cur=i;say()}}
+function say(){const ss=window.speechSynthesis;if(!ss){$('vs').textContent=TX.nospeech[lang];return}ss.cancel();if(!voice||!play)return;const gv=getVoice(lang),v=gv.v;$('vs').textContent=(!v&&lang!='en')?TX.novoice[lang]:'';const u=new SpeechSynthesisUtterance(S[cur][lang]);u.lang={en:'en-IN',ml:'ml-IN',hi:'hi-IN'}[lang];if(v)u.voice=v;u.pitch=gv.p;u.rate=1.05;ss.resume();ss.speak(u)}
+function loop(n){const dt=(n-last)/1000;last=n;if(play){t+=Math.min(dt,.1);if(t>=T){t=T-.001;play=false;$('pp').textContent='↻ Replay';window.speechSynthesis&&speechSynthesis.cancel()}}draw();ui();requestAnimationFrame(loop)}
+$('pp').onclick=()=>{if(t>=T-.01)t=0,cur=-1;play=!play;$('pp').textContent=play?'⏸ Pause':'▶ Play';if(play)say();else if(window.speechSynthesis)speechSynthesis.cancel()};
+$('sk').oninput=e=>{t=e.target.value/10;cur=-1};
+
+window.setVidLang=l=>{lang=l;say()};
+window.setVoice=v=>{voice=v;say()};window.pauseVid=()=>{if(play)$('pp').click()};
+requestAnimationFrame(n=>{last=n;loop(n)});
+
+</script>
+<script>
+const $$=id=>document.getElementById(id);let tab=0,voiceOn=true,reading=false,fadeT;
+const ORDER=['en','ml','hi'];
+function paint(){
+ document.documentElement.lang=LANG;
+ $$('nm').textContent=TX.name[LANG];$$('tg').textContent=TX.tag[LANG];$$('lg').textContent=TX.lg[LANG];
+ $$('ex').innerHTML=EXP[LANG].map((p,i,a)=>i==a.length-1?`<div class="try">${p}</div>`:`<p>${p}</p>`).join('');
+ $$('lk').innerHTML=LINKS.map(l=>`<a class="lk" href="${l[0]}" target="_blank" rel="noopener"><div>${l[1][LANG]}<small>${TX.more[LANG]}</small></div><span>↗</span></a>`).join('');
+ document.querySelectorAll('#nav i').forEach((e,i)=>e.textContent=TX.tabs[LANG][i]);
+ window.setVidLang(LANG);vmenu()}
+function stopRead(){reading=false;if(window.vmenu)vmenu();speechSynthesis&&speechSynthesis.cancel();$$('vb').classList.remove('talk')}
+$$('lg').onclick=()=>{LANG=ORDER[(ORDER.indexOf(LANG)+1)%3];LS.setItem('lang',LANG);stopRead();paint()};
+document.getElementById('nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=+b.dataset.t;stopRead();if(tab!=1)window.pauseVid();
+ document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('.pane').forEach((p,i)=>p.classList.toggle('on',i==tab));
+ if(tab==1)window.sz();document.querySelector('main').scrollTop=0};
+/* voice button: reads the explanation aloud, or mutes/unmutes the video narration. It fades when idle. */
+function startRead(){if(!window.speechSynthesis)return;stopRead();reading=true;$$('vb').classList.add('talk');const g=getVoice(LANG),u=new SpeechSynthesisUtterance(EXP[LANG].join(' '));
+ u.lang={en:'en-IN',ml:'ml-IN',hi:'hi-IN'}[LANG];if(g.v)u.voice=g.v;u.pitch=g.p;u.onend=stopRead;speechSynthesis.speak(u)}
+function vmenu(){const V=TX.v,t=LS.getItem('vtype')||'female',ic={female:'👩',male:'👨',std:'🎙️'},nm={female:V.f,male:V.m,std:V.s};
+ const act=tab==0?(reading?V.stop:V.listen)[LANG]:tab==1?(voiceOn?V.mute:V.unmute)[LANG]:'';
+ $$('vm').innerHTML=(act?`<button class="act" data-a="1">${act}</button>`:'')+`<h3>${V.h[LANG]}</h3>`+['female','male','std'].map(k=>`<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">${ic[k]}</span>${nm[k][LANG]}</button>`).join('')+`<small class="nt">${V.note[LANG]}</small>`}
+$$('vb').onclick=e=>{e.stopPropagation();wake();vmenu();$$('vm').classList.toggle('open')};
+$$('vm').onclick=e=>{const a=e.target.closest('[data-a]'),o=e.target.closest('[data-v]');
+ if(a){if(tab==0){reading?stopRead():startRead()}else if(tab==1){voiceOn=!voiceOn;$$('vb').textContent=voiceOn?'🔊':'🔇';window.setVoice(voiceOn)}$$('vm').classList.remove('open')}
+ if(o){LS.setItem('vtype',o.dataset.v);if(reading)startRead();else if(tab==1)window.setVoice(voiceOn);vmenu()}};
+document.addEventListener('click',e=>{if(!e.target.closest('#vm'))$$('vm').classList.remove('open')});
+function wake(){$$('vb').classList.remove('fade');clearTimeout(fadeT);fadeT=setTimeout(()=>$$('vb').classList.add('fade'),3000)}
+['touchstart','pointerdown','scroll'].forEach(ev=>addEventListener(ev,wake,{capture:true,passive:true}));wake();
+paint();
+
+/* fullscreen button (hidden where the browser doesn't support it, e.g. iPhone Safari) */
+(function(){const d=document.documentElement;if(!d.requestFullscreen)return;
+ ['lg','lg2'].forEach(id=>{const l=document.getElementById(id);if(!l)return;const b=document.createElement('button');b.className='pill';b.textContent='⛶';b.setAttribute('aria-label','Fullscreen');
+  b.onclick=()=>document.fullscreenElement?document.exitFullscreen():d.requestFullscreen();l.parentNode.insertBefore(b,l)});
+ document.querySelectorAll('.bar>div[style]').forEach(x=>x.style.gap='8px')})();
+</script></body></html>
