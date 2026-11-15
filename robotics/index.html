@@ -118,7 +118,7 @@
   <header class="topbar">
     <div class="top-inner">
       <div class="brand"><div class="brand-mark">⌘</div><span>My Project Hub</span></div>
-      <div class="top-note">Your projects, discovered automatically</div>
+      <div class="top-note">A simple home for all your projects</div>
     </div>
   </header>
 
@@ -126,7 +126,7 @@
     <section class="hero">
       <div class="eyebrow">✦ Project library</div>
       <h1>Explore your files.</h1>
-      <p class="subtitle">Your HTML projects are discovered automatically from this GitHub folder. Upload a new .html file and it will appear here.</p>
+      <p class="subtitle">All your games, experiments and web projects in one place. Choose a project below to open it.</p>
     </section>
 
     <section>
@@ -145,35 +145,44 @@
   </main>
 
   <script>
+    /*
+      IMPORTANT:
+      GitHub Pages does not provide automatic folder browsing.
+      Add each project to this list. Keep the HTML files in the same
+      repository folder as this index.html, or update the file path.
+    */
+    const projects = [
+      {
+        title: "Flappy Sense",
+        description: "Control a Flappy Bird-style game using an ultrasonic sensor and Arduino/ESP32.",
+        file: "flappy_sense_github_fixed.html",
+        type: "Game · Arduino",
+        icon: "🐦"
+      }
+      // Add more projects like this:
+      // {
+      //   title: "My Next Project",
+      //   description: "A short description of the project.",
+      //   file: "my-project.html",
+      //   type: "Web project",
+      //   icon: "🎮"
+      // }
+    ];
+
     const grid = document.getElementById("projectGrid");
     const search = document.getElementById("search");
     const empty = document.getElementById("empty");
     const count = document.getElementById("count");
 
-    let projects = [];
-
-    function escapeHTML(value) {
-      return String(value).replace(/[&<>"']/g, ch => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      })[ch]);
-    }
-
-    function titleFromFilename(filename) {
-      return filename
-        .replace(/\.html?$/i, "")
-        .replace(/[_-]+/g, " ")
-        .replace(/\b\w/g, letter => letter.toUpperCase());
-    }
-
     function render(list) {
       grid.innerHTML = list.map(project => `
         <article class="project">
-          <div class="file-icon">${project.icon}</div>
+          <div class="file-icon">${project.icon || "📄"}</div>
           <h3>${escapeHTML(project.title)}</h3>
-          <p>${escapeHTML(project.description)}</p>
+          <p>${escapeHTML(project.description || "Open this project.")}</p>
           <div class="meta">
-            <span class="tag">HTML project</span>
-            <a class="open" href="${encodeURIComponent(project.file).replace(/%2F/g, "/")}">Open project ↗</a>
+            <span class="tag">${escapeHTML(project.type || "Project")}</span>
+            <a class="open" href="${encodeURI(project.file)}">Open project ↗</a>
           </div>
         </article>
       `).join("");
@@ -181,91 +190,21 @@
       empty.style.display = list.length ? "none" : "block";
     }
 
-    function showMessage(message) {
-      grid.innerHTML = `<p style="grid-column:1/-1;color:#64748b;line-height:1.7">${escapeHTML(message)}</p>`;
-      count.textContent = "";
-      empty.style.display = "none";
-    }
-
-    function getGitHubLocation() {
-      const host = window.location.hostname;
-      const parts = window.location.pathname.split("/").filter(Boolean);
-
-      if (host.endsWith(".github.io")) {
-        const owner = host.slice(0, -".github.io".length);
-        // A user/organization site uses the repository named owner.github.io.
-        // A project site uses the first URL path segment as its repository.
-        if (parts.length === 0) {
-          return { owner, repo: `${owner}.github.io`, folder: "" };
-        }
-        return { owner, repo: parts[0], folder: parts.slice(1).join("/") };
-      }
-
-      return null;
-    }
-
-    async function loadProjects() {
-      showMessage("Finding HTML projects in this GitHub repository…");
-
-      const location = getGitHubLocation();
-      if (!location) {
-        showMessage("I couldn't identify the GitHub repository from this website address. Open this page through its github.io URL to let it discover HTML files automatically.");
-        return;
-      }
-
-      try {
-        const repoResponse = await fetch(
-          `https://api.github.com/repos/${encodeURIComponent(location.owner)}/${encodeURIComponent(location.repo)}`
-        );
-        if (!repoResponse.ok) throw new Error("Repository not found or it is not publicly accessible.");
-        const repo = await repoResponse.json();
-
-        const folderPath = location.folder
-          ? `/${location.folder.split("/").map(encodeURIComponent).join("/")}`
-          : "";
-        const contentsUrl = `https://api.github.com/repos/${encodeURIComponent(location.owner)}/${encodeURIComponent(location.repo)}/contents${folderPath}?ref=${encodeURIComponent(repo.default_branch)}`;
-
-        const filesResponse = await fetch(contentsUrl);
-        if (!filesResponse.ok) throw new Error("Could not read the folder containing this index page.");
-        const files = await filesResponse.json();
-
-        if (!Array.isArray(files)) throw new Error("The project folder could not be read.");
-
-        projects = files
-          .filter(file =>
-            file.type === "file" &&
-            /\.html?$/i.test(file.name) &&
-            !/^index\.html?$/i.test(file.name) &&
-            !/^404\.html?$/i.test(file.name)
-          )
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map(file => ({
-            title: titleFromFilename(file.name),
-            description: `Open ${file.name}`,
-            file: file.name,
-            icon: "🌐"
-          }));
-
-        if (projects.length === 0) {
-          showMessage("No other .html files were found in this folder. Upload your project HTML files beside index.html and refresh this page.");
-          return;
-        }
-
-        render(projects);
-      } catch (error) {
-        showMessage(`${error.message} Make sure the repository is public, then refresh this page.`);
-      }
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[ch]);
     }
 
     search.addEventListener("input", () => {
       const term = search.value.trim().toLowerCase();
-      render(projects.filter(project =>
-        `${project.title} ${project.description} ${project.file}`.toLowerCase().includes(term)
+      render(projects.filter(p =>
+        `${p.title} ${p.description} ${p.type}`.toLowerCase().includes(term)
       ));
     });
 
     document.getElementById("year").textContent = new Date().getFullYear();
-    loadProjects();
+    render(projects);
   </script>
 </body>
 </html>
