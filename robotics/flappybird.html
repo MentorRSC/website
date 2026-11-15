@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Flappy Sense</title>
+
+<style>
+
+:root{--bg:#1b1233;--panel:#2a1f4d;--line:#4a3a85;--gold:#ffc83d;--ink:#fff4e0;--mut:#b8a9de;--ok:#4ade80;--bad:#ff6b6b;--wait:#ffc83d}
+
+*{box-sizing:border-box}
+
+html,body{margin:0;height:100%;background:radial-gradient(circle at 50% 0,#3b2a6e,var(--bg) 70%);color:var(--ink);font-family:"Trebuchet MS","Nirmala UI",system-ui,sans-serif}
+
+.s{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;padding:16px 16px 44px;overflow:auto}
+
+.s.on{display:flex;animation:fi .4s}
+
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.box{margin:auto;width:100%;max-width:760px;display:flex;flex-direction:column;gap:14px;align-items:center}
+
+h1,h2,h3{margin:0}
+
+h2{font-size:1.5rem}
+
+h3{color:var(--gold);font-size:1.05rem;margin-bottom:4px}
+
+button{font:inherit;background:var(--gold);color:#2a1a00;border:0;border-radius:10px;padding:10px 18px;font-weight:bold;cursor:pointer}
+
+button.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+
+button:disabled{opacity:.4;cursor:not-allowed}
+
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;width:100%;line-height:1.55}
+
+.card ul{margin:0;padding-left:20px}
+
+#credit{position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:.78rem;color:var(--mut);pointer-events:none;z-index:9}
+
+#gear{position:fixed;top:10px;right:12px;z-index:9;display:none;padding:8px 12px}
+
+/* welcome */
+
+.logo{font-size:clamp(2.4rem,9vw,4.6rem);font-weight:900;letter-spacing:.04em;color:var(--gold);text-shadow:0 0 30px #ffc83d88,0 4px 0 #8a5a00}
+
+.tag{color:var(--mut);font-size:1.1rem;text-align:center}
+
+.track{width:min(420px,80vw);height:14px;background:var(--panel);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+
+#bar{height:100%;width:0;background:linear-gradient(90deg,#ff9a6b,var(--gold))}
+
+.fb{position:absolute;top:22%;left:-60px;width:44px;height:34px;background:var(--gold);border-radius:50%;animation:fly 9s linear infinite}
+
+.fb:after{content:"";position:absolute;right:-12px;top:12px;border:7px solid transparent;border-left:12px solid #ff7a3d}
+
+@keyframes fly{0%{left:-60px;transform:translateY(0)}25%{transform:translateY(30px)}50%{transform:translateY(-20px)}75%{transform:translateY(25px)}100%{left:105%;transform:translateY(0)}}
+
+.cl{position:absolute;height:26px;border-radius:20px;background:#ffffff18;animation:fly 24s linear infinite}
+
+/* lang */
+
+.lc{min-width:170px;padding:22px;font-size:1.5rem;background:var(--panel);color:var(--ink);border:2px solid var(--line)}
+
+.lc.sel{border-color:var(--gold);box-shadow:0 0 0 3px #ffc83d44;background:#3a2b6a}
+
+/* hardware */
+
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;background:var(--bad)}
+
+.dot.ok{background:var(--ok)}.dot.wait{background:var(--wait)}
+
+.big{font-size:2.6rem;font-weight:bold;color:var(--gold)}
+
+.vtrack{position:relative;width:34px;height:150px;background:#0003;border-radius:10px;border:1px solid var(--line)}
+
+.vtrack i{position:absolute;left:5px;width:22px;height:22px;border-radius:50%;background:var(--gold);transition:bottom .1s}
+
+.note{color:var(--mut);font-size:.85rem}
+
+/* game */
+
+.top{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;width:100%;max-width:760px;padding-right:60px}
+
+.top b{color:var(--gold)}
+
+#s-game{padding:8px 12px 12px;overflow:hidden;justify-content:space-between}
+#s-game .box{margin:0;width:100%;max-width:none;min-height:100%;gap:8px;justify-content:space-between}
+.top{width:100%;max-width:none;justify-content:space-between;padding:4px 8px;flex-wrap:nowrap}
+canvas{display:block;width:min(calc(100vw - 32px),calc((100vh - 132px)*1.666667));height:auto;max-height:calc(100vh - 132px);aspect-ratio:5/3;border-radius:12px;box-shadow:0 10px 40px #0008;flex:0 1 auto}
+#s-game .row{gap:8px}
+#s-game .row button{padding:9px 14px}
+@media(max-width:700px){#s-game{overflow:auto;justify-content:flex-start}#s-game .box{min-height:0}.top{justify-content:center;flex-wrap:wrap;font-size:.9rem}canvas{width:min(calc(100vw - 24px),calc((100vh - 180px)*1.666667));max-height:calc(100vh - 180px)}}
+.codebox{width:100%;background:#100d20;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.codehead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:#21183d;border-bottom:1px solid var(--line)}
+.codebox pre{margin:0;padding:16px;max-height:48vh;overflow:auto;color:#d9f99d;font:13px/1.5 Consolas,Monaco,monospace;white-space:pre}
+.codehint{color:var(--mut);font-size:.9rem;line-height:1.5}
+@media(prefers-reduced-motion:reduce){.fb,.cl{animation:none}.s.on{animation:none}}
+
+/* settings */
+
+.set{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center}
+
+input[type=range]{width:170px;accent-color:var(--gold)}
+
+#modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:20}
+
+#modal.on{display:flex}
+
+#modal div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;text-align:center;display:flex;flex-direction:column;gap:14px}
+
+@media(prefers-reduced-motion:reduce){.fb,.cl{animation:none}.s.on{animation:none}}
+
+
+.trial-overlay{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(10,8,25,.78);backdrop-filter:blur(7px)}
+.trial-overlay.on{display:flex}
+.trial-panel{width:min(760px,94vw);max-height:94vh;overflow:auto;background:#17132b;border:1px solid #8066b8;border-radius:20px;padding:22px;box-shadow:0 20px 70px #000a;color:#fff;text-align:center}
+.trial-panel h2{margin:0 0 8px;font-size:clamp(1.25rem,3vw,2rem)}
+.trial-panel p{margin:7px auto;color:#d7d0ed;line-height:1.5}
+.trial-directions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.trial-directions span{background:#282044;border-radius:10px;padding:9px 13px;font-weight:700}
+#trialCanvas{display:block;width:100%;height:auto;max-height:230px;aspect-ratio:3/1;border-radius:12px;border:1px solid #59477d;background:#a9dfff;margin:12px auto}
+.trial-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+#trialCountdown{font-size:1.35rem;font-weight:900;color:#ffd166}
+#trialClose{min-width:130px}
+#s-game{position:relative}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<section class="s on" id="s-welcome" style="overflow:hidden">
+
+  <div class="fb"></div><div class="cl" style="top:12%;width:120px;animation-delay:-4s"></div><div class="cl" style="top:62%;width:170px;animation-delay:-12s"></div>
+
+  <div class="box">
+
+    <div class="logo">FLAPPY SENSE</div>
+
+    <div class="tag" data-i="tag"></div>
+
+    <div class="track"><div id="bar"></div></div>
+
+    <div><b id="pct">0%</b> &nbsp; <span id="lm" class="note"></span></div>
+
+    <div class="note">Created by NAZL AHAMMED KOTTAYIL</div>
+
+  </div>
+
+</section>
+
+
+
+<section class="s" id="s-lang"><div class="box">
+
+  <div class="logo" style="font-size:2rem">FLAPPY SENSE</div>
+
+  <h2 data-i="langTitle"></h2>
+
+  <div class="row">
+
+    <button class="lc" data-l="en">English</button>
+
+    <button class="lc" data-l="ml">മലയാളം</button>
+
+    <button class="lc" data-l="hi">हिन्दी</button>
+
+  </div>
+
+  <button data-go="s-intro" data-i="cont"></button>
+
+</div></section>
+
+
+
+<section class="s" id="s-intro"><div class="box">
+
+  <div class="card"><h3 data-i="aboutH"></h3><span data-i="aboutT"></span></div>
+
+  <div class="card"><h3 data-i="purposeH"></h3><ul><li data-i="p1"></li><li data-i="p2"></li><li data-i="p3"></li></ul></div>
+
+  <div class="card"><h3 data-i="workH"></h3><ul><li data-i="w1"></li><li data-i="w2"></li><li data-i="w3"></li><li data-i="w4"></li><li data-i="w5"></li></ul></div>
+
+  <div class="card"><h3 data-i="rulesH"></h3><ul><li data-i="r1"></li><li data-i="r2"></li><li data-i="r3"></li><li data-i="r4"></li></ul></div>
+
+  <div class="card"><h3 data-i="partsH"></h3><ul><li>Arduino UNO / ESP32</li><li>HC-SR04: VCC→5V, GND→GND, TRIG→D9, ECHO→D10</li><li>Buzzer: +→D8, −→GND</li><li>USB cable + computer</li></ul></div>
+
+  <div class="row"><button class="alt" data-go="s-lang" data-i="back"></button><button data-go="s-code" data-i="cont"></button></div>
+
+</div></section>
+
+
+
+
+<section class="s" id="s-code"><div class="box">
+  <h2>Upload this code to your Arduino</h2>
+  <div class="codehint">Wiring: HC-SR04 TRIG → D9, ECHO → D10, VCC → 5V, GND → GND. Buzzer + → D8, − → GND. Upload this sketch before connecting the board to the game.</div>
+  <div class="codebox">
+    <div class="codehead"><b>FlappySense.ino</b><button id="copyCode" class="alt">Copy code</button></div>
+    <pre id="arduinoCode"></pre>
+  </div>
+  <div class="row">
+    <button class="alt" data-go="s-intro">Back</button>
+    <button id="codeDone">Done — select USB port</button>
+  </div>
+  <div class="codehint" id="copyStatus" aria-live="polite">After uploading the sketch, click Done to choose your board's USB port.</div>
+</div></section>
+
+<section class="s" id="s-hw"><div class="box">
+
+  <h2 data-i="hwH"></h2>
+
+  <div class="card" style="text-align:center">
+
+    <div class="row">
+
+      <button id="conn" data-i="pick"></button>
+
+      <button id="disc" class="alt" data-i="disc" disabled></button>
+
+    </div>
+
+    <p><span class="dot" id="dot"></span><b id="st"></b></p>
+
+    <div class="note" id="pinfo"></div>
+
+  </div>
+
+  <div class="card row" style="justify-content:space-around">
+
+    <div style="text-align:center"><div class="note" data-i="dist"></div><div class="big"><span id="dv">--</span> cm</div></div>
+
+    <div class="vtrack"><i id="pv" style="bottom:50%"></i></div>
+
+    <button class="alt" id="bz" data-i="test"></button>
+
+  </div>
+
+  <div class="row"><button class="alt" data-go="s-intro" data-i="back"></button><button id="demo" class="alt" data-i="demo"></button><button id="enter" data-i="enter" disabled></button></div>
+
+  <div class="note" style="text-align:center;max-width:560px" data-i="note"></div>
+
+  <div class="note" id="unsup" style="color:var(--bad)"></div>
+
+</div></section>
+
+
+
+<section class="s" id="s-game"><div class="box" style="gap:10px">
+
+  <div class="top"><b>FLAPPY SENSE</b><span><span data-i="score"></span>: <b id="gs">0</b></span><span><span data-i="best"></span>: <b id="gb">0</b></span><span><span class="dot" id="dot2" style="margin:0"></span></span><button id="gameFs" class="alt" title="Fullscreen">⛶</button></div>
+
+  <canvas id="c" width="1000" height="600"></canvas>
+  <div class="trial-overlay" id="trialOverlay" role="dialog" aria-modal="true" aria-labelledby="trialTitle">
+    <div class="trial-panel">
+      <h2 id="trialTitle">10-second hand movement test</h2>
+      <p>Move your hand toward the ultrasonic sensor, then move it away. Watch how the bird follows the measured distance.</p>
+      <div class="trial-directions">
+        <span>Hand forward / closer → Bird moves DOWN</span>
+        <span>Hand backward / farther → Bird moves UP</span>
+      </div>
+      <canvas id="trialCanvas" width="900" height="300"></canvas>
+      <p id="trialStatus">Move your hand forward and backward in front of the sensor.</p>
+      <div class="trial-footer">
+        <span>Trial ends in <b id="trialCountdown">10</b> seconds</span>
+        <button id="trialClose" class="alt">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <button id="bStart" data-i="start"></button>
+
+    <button id="bPause" class="alt" data-i="pause"></button>
+
+    <button id="bResume" class="alt" data-i="resume"></button>
+
+    <button id="bRestart" class="alt" data-i="restart"></button>
+
+    <button id="bHome" class="alt" data-i="home"></button>
+
+    <button id="bSound" class="alt"></button>
+
+  </div>
+
+</div></section>
+
+
+
+<section class="s" id="s-over"><div class="box">
+
+  <h1 style="color:var(--bad);font-size:2.6rem" data-i="over"></h1>
+
+  <div class="card" style="text-align:center;font-size:1.2rem">
+
+    <div><span data-i="score"></span>: <b id="os" style="font-size:2rem;color:var(--gold)"></b></div>
+
+    <div><span data-i="best"></span>: <b id="ob"></b></div>
+
+    <div id="onew" style="color:var(--ok);font-weight:bold"></div>
+
+    <div><span data-i="medal"></span>: <b id="om"></b></div>
+
+    <div class="note"><span data-i="games"></span>: <span id="og"></span></div>
+
+  </div>
+
+  <div class="row"><button id="again" data-i="again"></button><button class="alt" data-go="s-intro" data-i="menu"></button></div>
+
+</div></section>
+
+
+
+<section class="s" id="s-set"><div class="box">
+
+  <h2 data-i="set"></h2>
+
+  <div class="card set">
+
+    <span data-i="lang"></span>
+
+    <span class="row"><button class="alt" data-l="en">EN</button><button class="alt" data-l="ml">മല</button><button class="alt" data-l="hi">हि</button></span>
+
+    <span data-i="sound"></span><button class="alt" id="setSnd"></button>
+
+    <span data-i="sens"></span><input type="range" id="rs" min="4" max="20">
+
+    <span data-i="minD"></span><span><input type="range" id="rmin" min="2" max="30"> <b id="vmin"></b></span>
+
+    <span data-i="maxD"></span><span><input type="range" id="rmax" min="20" max="100"> <b id="vmax"></b></span>
+
+    <span data-i="full"></span><button class="alt" id="fs">⛶</button>
+
+    <span data-i="reset"></span><button class="alt" id="rh">↺</button>
+
+  </div>
+
+  <div class="card note">Flappy Sense · <span data-i="ver"></span><br>Designed &amp; developed by NAZL AHAMMED KOTTAYIL<br>115200 baud · HC-SR04 · Arduino / ESP32</div>
+
+  <button id="setBack" data-i="back"></button>
+
+</div></section>
+
+
+
+<button id="gear" class="alt" aria-label="Settings">⚙</button>
+
+<div id="modal"><div><b id="mt"></b><button id="recon"></button></div></div>
+
+<div id="credit">Made by NAZL AHAMMED KOTTAYIL</div>
+
+
+
+<script>
+
+const T={
+
+en:{tag:"Control the Bird. Feel the Flight.",langTitle:"Select Your Language",cont:"Continue",back:"Back",
+
+aboutH:"About the game",aboutT:"Move your hand closer to or farther from an ultrasonic sensor to fly the bird. No keyboard needed.",
+
+purposeH:"Purpose",p1:"Learn ultrasonic distance measurement",p2:"Understand Arduino-to-computer USB communication",p3:"Explore hardware-based gaming",
+
+workH:"How it works",w1:"The sensor sends ultrasonic waves",w2:"They bounce off your hand and return",w3:"The board calculates the distance",w4:"USB sends it to the game",w5:"Distance moves the bird; the buzzer plays effects",
+
+rulesH:"Rules",r1:"Hand farther = bird up, closer = bird down",r2:"Fly through the gaps between pipes",r3:"Each pipe passed gives 1 point",r4:"Hitting a pipe, the ceiling or the ground ends the game",
+
+partsH:"Components and wiring",hwH:"Hardware connection",pick:"Select USB device",disc:"Disconnect",
+
+stNo:"Not connected",stWait:"Waiting for sensor data",stOk:"Arduino connected, sensor OK",stRange:"Out of range – move your hand within the set range",stDemo:"Demo mode (no hardware)",
+
+dist:"Distance",test:"Test buzzer",demo:"Demo mode",enter:"Enter game",
+
+note:"Browsers show a device chooser instead of a full COM port list. Use Chrome or Edge.",unsup:"Web Serial is not supported here. Use Chrome or Edge.",
+
+lost:"USB disconnected. The game is paused.",recon:"Reconnect",
+
+score:"Score",best:"Best",start:"Start",pause:"Pause",resume:"Resume",restart:"Restart",home:"Home",sound:"Sound",on:"ON",off:"OFF",
+
+over:"Game over",medal:"Medal",newBest:"New high score!",again:"Play again",menu:"Main menu",games:"Games played",Bronze:"Bronze",Silver:"Silver",Gold:"Gold",
+
+set:"Settings",lang:"Language",sens:"Sensitivity",minD:"Minimum distance (cm)",maxD:"Maximum distance (cm)",full:"Fullscreen",reset:"Reset high score",ver:"Version 1.0",
+
+ready:"Press Start",paused:"Paused",sure:"Reset the high score?"},
+
+ml:{tag:"പക്ഷിയെ നിയന്ത്രിക്കൂ. പറക്കൽ അനുഭവിക്കൂ.",langTitle:"ഭാഷ തിരഞ്ഞെടുക്കുക",cont:"തുടരുക",back:"തിരികെ",
+
+aboutH:"ഗെയിമിനെക്കുറിച്ച്",aboutT:"അൾട്രാസോണിക് സെൻസറിന് അടുത്തോ അകലെയോ കൈ ചലിപ്പിച്ച് പക്ഷിയെ പറത്തുക. കീബോർഡ് വേണ്ട.",
+
+purposeH:"ലക്ഷ്യം",p1:"അൾട്രാസോണിക് ദൂര അളവ് പഠിക്കുക",p2:"Arduino–കമ്പ്യൂട്ടർ USB ആശയവിനിമയം മനസ്സിലാക്കുക",p3:"ഹാർഡ്‌വെയർ ഗെയിമിംഗ് അറിയുക",
+
+workH:"പ്രവർത്തനം",w1:"സെൻസർ അൾട്രാസോണിക് തരംഗങ്ങൾ അയയ്ക്കുന്നു",w2:"അവ കൈയിൽ തട്ടി തിരികെ വരുന്നു",w3:"ബോർഡ് ദൂരം കണക്കാക്കുന്നു",w4:"USB വഴി ഗെയിമിലേക്ക് എത്തുന്നു",w5:"ദൂരം പക്ഷിയെ ചലിപ്പിക്കുന്നു; ബസർ ശബ്ദം നൽകുന്നു",
+
+rulesH:"നിയമങ്ങൾ",r1:"കൈ അകലെ = പക്ഷി മുകളിൽ, അടുത്ത് = താഴേക്ക്",r2:"പൈപ്പുകൾക്കിടയിലൂടെ പറക്കുക",r3:"ഓരോ പൈപ്പിനും 1 പോയിന്റ്",r4:"പൈപ്പ്, മുകൾഭാഗം, നിലം തട്ടിയാൽ ഗെയിം തീരും",
+
+partsH:"ഘടകങ്ങളും വയറിംഗും",hwH:"ഹാർഡ്‌വെയർ കണക്ഷൻ",pick:"USB ഉപകരണം തിരഞ്ഞെടുക്കുക",disc:"വിച്ഛേദിക്കുക",
+
+stNo:"കണക്റ്റ് ചെയ്തിട്ടില്ല",stWait:"സെൻസർ ഡാറ്റയ്ക്കായി കാത്തിരിക്കുന്നു",stOk:"Arduino കണക്റ്റ് ചെയ്തു, സെൻസർ ശരി",stRange:"പരിധിക്ക് പുറത്ത് – കൈ നിശ്ചിത പരിധിയിൽ വയ്ക്കുക",stDemo:"ഡെമോ മോഡ് (ഹാർഡ്‌വെയർ ഇല്ല)",
+
+dist:"ദൂരം",test:"ബസർ പരിശോധിക്കുക",demo:"ഡെമോ മോഡ്",enter:"ഗെയിമിലേക്ക്",
+
+note:"ബ്രൗസർ എല്ലാ COM പോർട്ടുകളുടെ പട്ടിക കാണിക്കില്ല, ഒരു ഉപകരണ തിരഞ്ഞെടുപ്പ് വിൻഡോ മാത്രം. Chrome അല്ലെങ്കിൽ Edge ഉപയോഗിക്കുക.",unsup:"Web Serial ഇവിടെ പിന്തുണയ്ക്കുന്നില്ല. Chrome അല്ലെങ്കിൽ Edge ഉപയോഗിക്കുക.",
+
+lost:"USB വിച്ഛേദിക്കപ്പെട്ടു. ഗെയിം നിർത്തി.",recon:"വീണ്ടും കണക്റ്റ് ചെയ്യുക",
+
+score:"സ്കോർ",best:"മികച്ചത്",start:"ആരംഭിക്കുക",pause:"നിർത്തുക",resume:"തുടരുക",restart:"വീണ്ടും",home:"ഹോം",sound:"ശബ്ദം",on:"ഓൺ",off:"ഓഫ്",
+
+over:"ഗെയിം അവസാനിച്ചു",medal:"മെഡൽ",newBest:"പുതിയ ഹൈ സ്കോർ!",again:"വീണ്ടും കളിക്കുക",menu:"പ്രധാന മെനു",games:"കളിച്ച ഗെയിമുകൾ",Bronze:"വെങ്കലം",Silver:"വെള്ളി",Gold:"സ്വർണ്ണം",
+
+set:"ക്രമീകരണങ്ങൾ",lang:"ഭാഷ",sens:"സെൻസിറ്റിവിറ്റി",minD:"കുറഞ്ഞ ദൂരം (സെ.മീ)",maxD:"കൂടിയ ദൂരം (സെ.മീ)",full:"ഫുൾസ്ക്രീൻ",reset:"ഹൈ സ്കോർ റീസെറ്റ്",ver:"പതിപ്പ് 1.0",
+
+ready:"സ്റ്റാർട്ട് അമർത്തുക",paused:"നിർത്തി",sure:"ഹൈ സ്കോർ റീസെറ്റ് ചെയ്യട്ടെ?"},
+
+hi:{tag:"पक्षी को नियंत्रित करें। उड़ान को महसूस करें।",langTitle:"अपनी भाषा चुनें",cont:"आगे बढ़ें",back:"वापस",
+
+aboutH:"गेम के बारे में",aboutT:"अल्ट्रासोनिक सेंसर के पास या दूर हाथ ले जाकर पक्षी उड़ाएँ। कीबोर्ड की ज़रूरत नहीं।",
+
+purposeH:"उद्देश्य",p1:"अल्ट्रासोनिक दूरी मापना सीखें",p2:"Arduino और कंप्यूटर के बीच USB संचार समझें",p3:"हार्डवेयर आधारित गेमिंग जानें",
+
+workH:"कैसे काम करता है",w1:"सेंसर अल्ट्रासोनिक तरंगें भेजता है",w2:"वे हाथ से टकराकर लौटती हैं",w3:"बोर्ड दूरी निकालता है",w4:"USB से यह गेम तक पहुँचती है",w5:"दूरी पक्षी को चलाती है; बज़र ध्वनि देता है",
+
+rulesH:"नियम",r1:"हाथ दूर = पक्षी ऊपर, पास = नीचे",r2:"पाइपों के बीच से निकलें",r3:"हर पाइप पर 1 अंक",r4:"पाइप, छत या ज़मीन से टकराने पर गेम खत्म",
+
+partsH:"घटक और वायरिंग",hwH:"हार्डवेयर कनेक्शन",pick:"USB डिवाइस चुनें",disc:"डिस्कनेक्ट",
+
+stNo:"कनेक्ट नहीं है",stWait:"सेंसर डेटा की प्रतीक्षा",stOk:"Arduino जुड़ गया, सेंसर ठीक",stRange:"सीमा से बाहर – हाथ तय सीमा में रखें",stDemo:"डेमो मोड (हार्डवेयर नहीं)",
+
+dist:"दूरी",test:"बज़र जाँचें",demo:"डेमो मोड",enter:"गेम में जाएँ",
+
+note:"ब्राउज़र पूरी COM पोर्ट सूची नहीं, केवल डिवाइस चयन विंडो दिखाता है। Chrome या Edge उपयोग करें।",unsup:"यहाँ Web Serial समर्थित नहीं है। Chrome या Edge उपयोग करें।",
+
+lost:"USB डिस्कनेक्ट हुआ। गेम रुका।",recon:"फिर कनेक्ट करें",
+
+score:"स्कोर",best:"सर्वश्रेष्ठ",start:"शुरू",pause:"रोकें",resume:"जारी रखें",restart:"फिर से",home:"होम",sound:"ध्वनि",on:"चालू",off:"बंद",
+
+over:"गेम समाप्त",medal:"पदक",newBest:"नया उच्चतम स्कोर!",again:"फिर खेलें",menu:"मुख्य मेनू",games:"खेले गए गेम",Bronze:"कांस्य",Silver:"रजत",Gold:"स्वर्ण",
+
+set:"सेटिंग्स",lang:"भाषा",sens:"संवेदनशीलता",minD:"न्यूनतम दूरी (सेमी)",maxD:"अधिकतम दूरी (सेमी)",full:"फ़ुलस्क्रीन",reset:"उच्चतम स्कोर रीसेट",ver:"संस्करण 1.0",
+
+ready:"स्टार्ट दबाएँ",paused:"रुका हुआ",sure:"उच्चतम स्कोर रीसेट करें?"}};
+
+
+
+const $=id=>document.getElementById(id),qa=s=>[...document.querySelectorAll(s)];
+
+const S={g(k,d){try{const v=localStorage.getItem('fs_'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},s(k,v){try{localStorage.setItem('fs_'+k,JSON.stringify(v))}catch(e){}}};
+
+const cfg={lang:S.g('lang',null),snd:S.g('snd',true),min:S.g('min',5),max:S.g('max',35),sens:S.g('sens',11),best:S.g('best',0),games:S.g('games',0)};
+
+const save=k=>S.s(k,cfg[k]);
+
+const t=k=>(T[cfg.lang||'en']||T.en)[k]||T.en[k]||k;
+
+
+
+/* ---------- navigation + language ---------- */
+
+let cur='s-welcome',prev='s-intro',state='ready',demo=false;
+
+function applyLang(){
+
+  document.documentElement.lang=cfg.lang||'en';
+
+  qa('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+
+  qa('[data-l]').forEach(b=>b.classList.toggle('sel',b.dataset.l===(cfg.lang||'en')));
+
+  $('unsup').textContent='serial' in navigator?'':t('unsup');
+
+  $('mt').textContent=t('lost');$('recon').textContent=t('recon');
+
+  sndLabel();
+
+}
+
+function sndLabel(){const x=t('sound')+': '+(cfg.snd?t('on'):t('off'));$('bSound').textContent=x;$('setSnd').textContent=cfg.snd?t('on'):t('off')}
+
+function show(id){
+
+  if(id==='s-set'&&cur!=='s-set')prev=cur;
+
+  qa('.s').forEach(s=>s.classList.toggle('on',s.id===id));
+
+  cur=id;$('gear').style.display=(id==='s-welcome'||id==='s-set')?'none':'block';
+
+  if(id!=='s-game'&&id!=='s-set'&&state==='play')state='pause';
+
+}
+
+qa('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+
+qa('[data-l]').forEach(b=>b.onclick=()=>{cfg.lang=b.dataset.l;save('lang');applyLang()});
+
+$('gear').onclick=()=>show('s-set');
+
+$('setBack').onclick=()=>show(prev);
+
+
+
+/* ---------- loading ---------- */
+
+const msgs=['Initializing application','Loading game engine','Preparing animations','Initializing audio system','Application ready'];
+
+let pr=0;applyLang();
+
+const iv=setInterval(()=>{
+
+  pr=Math.min(100,pr+1+Math.random()*2.5);
+
+  $('bar').style.width=pr+'%';$('pct').textContent=Math.floor(pr)+'%';$('lm').textContent=msgs[Math.min(4,Math.floor(pr/20))];
+
+  if(pr>=100){clearInterval(iv);setTimeout(()=>show(cfg.lang?'s-intro':'s-lang'),500)}
+
+},60);
+
+
+
+/* ---------- sound ---------- */
+
+let ac=null;
+
+function tone(f,d,ty){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=ty||'square';o.frequency.value=f;g.gain.setValueAtTime(.06,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+const seq=(a,ty,gap,d)=>a.forEach((f,i)=>setTimeout(()=>tone(f,d,ty),i*gap));
+
+const sfx={B:()=>seq([523,659,784],0,120,.12),U:()=>tone(1200,.04),D:()=>tone(450,.04),S:()=>seq([1760,2093],0,80,.09),G:()=>seq([600,400,250],'sawtooth',170,.2),R:()=>seq([784,988,1319,1568],0,120,.12)};
+
+function sound(c){if(!cfg.snd)return;if(writer)writer.write(new TextEncoder().encode(c)).catch(()=>{});else if(sfx[c])sfx[c]()}
+
+$('bz').onclick=()=>sound('S');
+
+$('bSound').onclick=$('setSnd').onclick=()=>{cfg.snd=!cfg.snd;save('snd');sndLabel()};
+
+
+
+
+/* ---------- Arduino upload guide ---------- */
+const arduinoSketch = `// Flappy Sense - Arduino UNO / ESP32
+// HC-SR04: TRIG D9, ECHO D10
+// Buzzer: D8 (passive buzzer recommended)
+// Serial format: one distance value in cm per line
+
+const int TRIG_PIN = 9;
+const int ECHO_PIN = 10;
+const int BUZZER_PIN = 8;
+
+unsigned long lastMeasure = 0;
+const unsigned long MEASURE_INTERVAL = 50;
+
+void setup() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(TRIG_PIN, LOW);
+  Serial.begin(115200);
+}
+
+void playEffect(char command) {
+  switch (command) {
+    case 'B': tone(BUZZER_PIN, 523, 100); break;
+    case 'U': tone(BUZZER_PIN, 1200, 40); break;
+    case 'D': tone(BUZZER_PIN, 450, 40); break;
+    case 'S': tone(BUZZER_PIN, 1760, 90); break;
+    case 'G': tone(BUZZER_PIN, 250, 220); break;
+    case 'R': tone(BUZZER_PIN, 1319, 120); break;
+  }
+}
+
+void loop() {
+  while (Serial.available() > 0) {
+    char command = (char)Serial.read();
+    playEffect(command);
+  }
+
+  if (millis() - lastMeasure >= MEASURE_INTERVAL) {
+    lastMeasure = millis();
+
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(3);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    unsigned long duration = pulseIn(ECHO_PIN, HIGH, 25000UL);
+    if (duration > 0) {
+      float distanceCm = duration * 0.0343f / 2.0f;
+      if (distanceCm >= 1.0f && distanceCm <= 400.0f) {
+        Serial.println(distanceCm, 1);
+      }
+    }
+  }
+}`;
+
+$('arduinoCode').textContent = arduinoSketch;
+$('copyCode').onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(arduinoSketch);
+    $('copyStatus').textContent = 'Arduino code copied! Paste it into the Arduino IDE and upload it.';
+  } catch (err) {
+    const area = document.createElement('textarea');
+    area.value = arduinoSketch;
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    area.remove();
+    $('copyStatus').textContent = ok ? 'Arduino code copied! Paste it into the Arduino IDE and upload it.' : 'Copy was blocked by the browser. Select the code and copy it manually.';
+  }
+};
+$('codeDone').onclick = () => show('s-hw');
+
+/* ---------- serial ---------- */
+
+let port=null,writer=null,reader=null,pipeDone=null,connected=false,manual=false;
+
+let lastT=0,inRange=false,target=320;
+
+const buf=[];
+
+const H=600,GROUND=70;
+
+async function connect(){
+
+  if(!('serial' in navigator)||connected)return;
+
+  try{
+
+    port=await navigator.serial.requestPort();
+
+    await port.open({baudRate:115200});
+
+    writer=port.writable.getWriter();connected=true;manual=false;demo=false;
+
+    const i=port.getInfo?port.getInfo():{};
+
+    $('pinfo').textContent=i.usbVendorId?('USB '+i.usbVendorId.toString(16)+':'+(i.usbProductId||0).toString(16)):'';
+
+    $('conn').disabled=true;$('disc').disabled=false;$('modal').classList.remove('on');
+
+    readLoop();
+
+  }catch(e){console.error(e)}
+
+}
+
+async function readLoop(){
+
+  const dec=new TextDecoderStream();
+
+  pipeDone=port.readable.pipeTo(dec.writable).catch(()=>{});
+
+  reader=dec.readable.getReader();let s='';
+
+  try{for(;;){
+
+    const{value,done}=await reader.read();if(done)break;
+
+    s+=value;const ls=s.split('\n');s=ls.pop();
+
+    for(const l of ls){
+
+      const cm=parseFloat(l);if(isNaN(cm)||cm<1||cm>400)continue;
+
+      buf.push(cm);if(buf.length>5)buf.shift();
+
+      const med=[...buf].sort((a,b)=>a-b)[buf.length>>1];
+
+      lastT=performance.now();inRange=med>=cfg.min-3&&med<=cfg.max+5;
+
+      $('dv').textContent=med.toFixed(0);
+
+      const k=Math.min(1,Math.max(0,(med-cfg.min)/(cfg.max-cfg.min)));
+
+      target=H-GROUND-20-k*(H-GROUND-40);
+
+      $('pv').style.bottom=(k*85)+'%';
+
+    }
+
+  }}catch(e){}
+
+  if(connected&&!manual)lost();
+
+}
+
+function lost(){
+
+  connected=false;writer=null;lastT=0;
+
+  $('conn').disabled=false;$('disc').disabled=true;$('dv').textContent='--';
+
+  if(state==='play')state='pause';
+
+  $('modal').classList.add('on');
+
+}
+
+async function disconnect(){
+
+  manual=true;connected=false;
+
+  try{await reader.cancel();await pipeDone;writer.releaseLock();await port.close()}catch(e){}
+
+  writer=null;lastT=0;$('conn').disabled=false;$('disc').disabled=true;$('dv').textContent='--';
+
+}
+
+$('conn').onclick=connect;$('disc').onclick=disconnect;$('recon').onclick=connect;
+
+if('serial' in navigator)navigator.serial.addEventListener('disconnect',e=>{if(e.target===port&&connected)lost()});
+
+$('demo').onclick=()=>{demo=true;show('s-game');startTrial()};
+
+$('enter').onclick=()=>{show('s-game');startTrial()};
+
+setInterval(()=>{
+
+  const fresh=lastT&&performance.now()-lastT<1500;let k='stNo',c='bad';
+
+  if(connected){if(fresh&&inRange){k='stOk';c='ok'}else{k='stWait';c='wait';if(fresh)k='stRange'}}
+
+  else if(demo){k='stDemo';c='wait'}
+
+  $('st').textContent=t(k);$('dot').className='dot '+c;$('dot2').className='dot '+c;
+
+  $('enter').disabled=!(connected&&c==='ok');
+
+},250);
+
+
+
+/* ---------- settings ---------- */
+
+function syncSet(){$('rs').value=cfg.sens;$('rmin').value=cfg.min;$('rmax').value=cfg.max;$('vmin').textContent=cfg.min;$('vmax').textContent=cfg.max}
+
+$('rs').oninput=e=>{cfg.sens=+e.target.value;save('sens')};
+
+$('rmin').oninput=e=>{cfg.min=Math.min(+e.target.value,cfg.max-10);save('min');syncSet()};
+
+$('rmax').oninput=e=>{cfg.max=Math.max(+e.target.value,cfg.min+10);save('max');syncSet()};
+
+$('fs').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})};
+$('gameFs').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>{})};
+
+$('rh').onclick=()=>{if(confirm(t('sure'))){cfg.best=0;save('best');$('gb').textContent=0}};
+
+syncSet();$('gb').textContent=cfg.best;
+
+
+
+/* ---------- game ---------- */
+
+const cv=$('c'),ctx=cv.getContext('2d'),W=cv.width,BX=190;
+
+let by=320,prevBy=320,vy=0,pipes=[],score=0,newBest=false,speed=150,last=0,flap=0,lastSnd=0;
+
+function pointer(e){if(connected)return;const r=cv.getBoundingClientRect(),p=e.touches?e.touches[0]:e;target=Math.min(H-GROUND-20,Math.max(20,(p.clientY-r.top)/r.height*H))}
+
+cv.addEventListener('mousemove',pointer);cv.addEventListener('touchmove',pointer,{passive:true});
+
+function addPipe(x){const gap=Math.max(130,175-score*1.5);pipes.push({x,top:70+Math.random()*(H-GROUND-gap-140),gap,passed:false})}
+
+function begin(){pipes=[];score=0;speed=150;newBest=false;state='play';by=prevBy=target;vy=0;addPipe(W+60);addPipe(W+290);$('gs').textContent=0;sound('B')}
+
+function die(){
+
+  state='over';cfg.games++;save('games');
+
+  if(score>cfg.best){cfg.best=score;newBest=true;save('best');sound('G');setTimeout(()=>sound('R'),900)}else sound('G');
+
+  $('gb').textContent=cfg.best;
+
+  setTimeout(()=>{if(state==='over'&&cur==='s-game')showOver()},1100);
+
+}
+
+function medal(s){return s>=30?'Gold':s>=15?'Silver':s>=5?'Bronze':''}
+
+function showOver(){
+
+  $('os').textContent=score;$('ob').textContent=cfg.best;$('og').textContent=cfg.games;
+
+  $('onew').textContent=newBest?t('newBest'):'';$('om').textContent=medal(score)?t(medal(score)):'—';
+
+  show('s-over');
+
+}
+
+function update(dt,now){
+
+  by+=(target-by)*Math.min(1,dt*cfg.sens);vy=(by-prevBy)/dt;prevBy=by;
+
+  if(Math.abs(vy)>90&&now-lastSnd>160){sound(vy<0?'U':'D');lastSnd=now}
+
+  flap+=dt*(10+Math.abs(vy)/40);speed+=dt*2.5;
+
+  for(const p of pipes){
+
+    p.x-=speed*dt;
+
+    if(!p.passed&&p.x+54<BX){p.passed=true;score++;$('gs').textContent=score;sound('S')}
+
+    if(BX+14>p.x&&BX-14<p.x+54&&(by-13<p.top||by+13>p.top+p.gap))die();
+
+  }
+
+  if(pipes[0]&&pipes[0].x<-70){pipes.shift();addPipe(pipes[pipes.length-1].x+230)}
+
+  if(by+14>H-GROUND||by-14<0)die();
+
+}
+
+function hill(x,y,w,h){ctx.beginPath();ctx.moveTo(x-w,H);ctx.quadraticCurveTo(x,y-h,x+w,H);ctx.fill()}
+
+function txt(s,x,y,sz,col){ctx.font='bold '+sz+'px "Trebuchet MS","Nirmala UI",sans-serif';ctx.textAlign='center';ctx.lineWidth=sz/6;ctx.strokeStyle='#3a1d4d';ctx.strokeText(s,x,y);ctx.fillStyle=col||'#fff';ctx.fillText(s,x,y)}
+
+function draw(){
+
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#ff9a6b');g.addColorStop(.45,'#ffcf8b');g.addColorStop(1,'#fff0c8');
+
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle='#ffe9a8';ctx.beginPath();ctx.arc(320,170,46,0,7);ctx.fill();
+
+  const o=performance.now()/40;
+
+  ctx.fillStyle='#c96f7e';for(let i=-1;i<3;i++)hill(i*300-(o*.3)%300,420,160,120);
+
+  ctx.fillStyle='#8c4a6b';for(let i=-1;i<3;i++)hill(i*240-(o*.6)%240+80,470,130,90);
+
+  for(const p of pipes){const b=p.top+p.gap;
+
+    ctx.fillStyle='#2f9e5b';ctx.fillRect(p.x,0,54,p.top);ctx.fillRect(p.x,b,54,H-b-GROUND);
+
+    ctx.fillStyle='#44c778';ctx.fillRect(p.x+6,0,8,p.top);ctx.fillRect(p.x+6,b,8,H-b-GROUND);
+
+    ctx.fillStyle='#1f7a43';ctx.fillRect(p.x-5,p.top-22,64,22);ctx.fillRect(p.x-5,b,64,22)}
+
+  ctx.fillStyle='#5b3a29';ctx.fillRect(0,H-GROUND,W,GROUND);ctx.fillStyle='#7bd06b';ctx.fillRect(0,H-GROUND,W,14);
+
+  ctx.save();ctx.translate(BX,by);ctx.rotate(Math.max(-.5,Math.min(.9,vy/500)));
+
+  ctx.fillStyle='#ffc83d';ctx.beginPath();ctx.ellipse(0,0,18,14,0,0,7);ctx.fill();
+
+  ctx.fillStyle='#ff7a3d';ctx.beginPath();ctx.moveTo(15,-2);ctx.lineTo(28,3);ctx.lineTo(15,8);ctx.fill();
+
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(7,-5,6,0,7);ctx.fill();
+
+  ctx.fillStyle='#222';ctx.beginPath();ctx.arc(9,-5,2.6,0,7);ctx.fill();
+
+  ctx.fillStyle='#e8932a';ctx.beginPath();ctx.ellipse(-5,3,10,6+Math.sin(flap)*5,-.4,0,7);ctx.fill();ctx.restore();
+
+  if(state==='play'||state==='over')txt(score,W/2,90,64);
+
+  if(state==='ready'||state==='pause'){ctx.fillStyle='rgba(30,12,50,.55)';ctx.fillRect(0,0,W,H);txt(t(state==='ready'?'ready':'paused'),W/2,H/2,34,'#ffc83d')}
+
+}
+
+
+/* ---------- 10-second hand movement test ---------- */
+let trialActive=false, trialEndsAt=0;
+const trialCanvas=$('trialCanvas');
+const trialCtx=trialCanvas.getContext('2d');
+
+function startTrial(){
+  trialActive=true;
+  trialEndsAt=performance.now()+10000;
+  $('trialOverlay').classList.add('on');
+  $('trialCountdown').textContent='10';
+  $('trialStatus').textContent=connected
+    ? 'Sensor connected — move your hand closer, then farther away.'
+    : 'Demo mode — move the mouse over the game area to move the bird.';
+  drawTrialPreview();
+}
+
+function closeTrial(){
+  trialActive=false;
+  $('trialOverlay').classList.remove('on');
+}
+
+$('trialClose').onclick=closeTrial;
+
+function drawTrialPreview(){
+  const w=trialCanvas.width,h=trialCanvas.height,c=trialCtx;
+  const grad=c.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'#86d7ff');grad.addColorStop(1,'#e8f8ff');
+  c.fillStyle=grad;c.fillRect(0,0,w,h);
+  c.fillStyle='rgba(255,255,255,.65)';
+  for(let i=0;i<5;i++){c.beginPath();c.arc(100+i*180,55+(i%2)*18,22,0,Math.PI*2);c.fill()}
+  c.fillStyle='#70bd63';c.fillRect(0,h-28,w,28);
+  c.strokeStyle='rgba(40,70,110,.35)';c.setLineDash([10,9]);c.beginPath();c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke();c.setLineDash([]);
+  const birdY=Math.max(45,Math.min(h-45,(target/H)*h));
+  c.save();c.translate(w*.5,birdY);
+  c.fillStyle='#ffc83d';c.beginPath();c.ellipse(0,0,34,25,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#ff7a3d';c.beginPath();c.moveTo(28,-4);c.lineTo(51,4);c.lineTo(28,13);c.fill();
+  c.fillStyle='#fff';c.beginPath();c.arc(13,-9,10,0,Math.PI*2);c.fill();
+  c.fillStyle='#222';c.beginPath();c.arc(16,-9,4,0,Math.PI*2);c.fill();
+  c.fillStyle='#e8932a';c.beginPath();c.ellipse(-8,9,18,10,Math.sin(performance.now()/120)*.25,0,Math.PI*2);c.fill();
+  c.restore();
+  c.fillStyle='#233';c.font='bold 20px Arial';c.textAlign='left';
+  c.fillText('FARTHER = UP',22,32);
+  c.textAlign='right';c.fillText('CLOSER = DOWN',w-22,32);
+}
+
+function loop(tm){
+
+  const dt=Math.min(.05,(tm-last)/1000)||.016;last=tm;
+
+  if(trialActive){
+    const remaining=Math.max(0,Math.ceil((trialEndsAt-tm)/1000));
+    $('trialCountdown').textContent=remaining;
+    if(connected && lastT && tm-lastT<1500){
+      $('trialStatus').textContent='Live sensor reading: '+$('dv').textContent+' cm — keep moving your hand closer and farther.';
+    }else if(connected){
+      $('trialStatus').textContent='Waiting for a fresh sensor reading… check the sensor and wiring.';
+    }
+    drawTrialPreview();
+    if(tm>=trialEndsAt)closeTrial();
+  }
+
+  if(cur==='s-game'){
+
+    if(state==='play')update(dt,tm);
+
+    else if(state==='ready'){by+=(target-by)*Math.min(1,dt*8);vy=0;flap+=dt*4}
+
+    draw();
+
+  }
+
+  requestAnimationFrame(loop);
+
+}
+
+requestAnimationFrame(tm=>{last=tm;loop(tm)});
+
+$('bStart').onclick=()=>{if(trialActive)return;if(state!=='play')begin()};
+
+$('bPause').onclick=()=>{if(state==='play')state='pause'};
+
+$('bResume').onclick=()=>{if(state==='pause')state='play'};
+
+$('bRestart').onclick=()=>{if(trialActive)return;begin()};
+
+$('bHome').onclick=()=>{state='ready';show('s-intro')};
+
+$('again').onclick=()=>{show('s-game');begin()};
+
+addEventListener('keydown',e=>{
+
+  if(cur!=='s-game')return;
+
+  if(e.code==='Space'){e.preventDefault();if(state!=='play')begin()}
+
+  if(e.code==='KeyP')state=state==='play'?'pause':state==='pause'?'play':state;
+
+});
+
+</script>
+
+</body>
+
+</html>
+
+
