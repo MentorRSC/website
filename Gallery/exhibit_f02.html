@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RSCP, Calicut · Lissajous Patterns</title>
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="RSCP, Calicut"><meta name="apple-mobile-web-app-title" content="RSCP, Calicut"><meta name="theme-color" content="#0b1d2a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%230b1d2a%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2720%27 fill=%27%23f2a65a%27/%3E%3Cellipse cx=%2750%27 cy=%2750%27 rx=%2740%27 ry=%2712%27 fill=%27none%27 stroke=%27%238fc7e0%27 stroke-width=%275%27 transform=%27rotate(-22 50 50)%27/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0b1d2a;--pn:#14303f;--ln:#2b5870;--fg:#e8f1f5;--mut:#9db6c2;--ac:#f2a65a;--aq:#8fc7e0;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#050e15;color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans Malayalam","Noto Sans Devanagari",sans-serif}
+button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+a{color:inherit}
+.app{position:relative;margin:0 auto;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;width:100vw;height:100dvh}
+@media(min-width:700px){.app{width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));box-shadow:0 0 0 1px var(--ln),0 30px 80px #000;margin-top:max(0px,calc((100dvh - min(100dvh,calc(100vw*16/9)))/2))}}
+h1{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Noto Serif Malayalam","Noto Serif Devanagari",serif;font-weight:600;margin:0}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px;z-index:3}
+.pill{background:#14303fcc;border:1px solid var(--ln);border-radius:20px;height:38px;min-width:38px;padding:0 13px;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:opacity .6s,border-color .2s}
+.pill:active{border-color:var(--ac)}
+.code{font-weight:700;color:var(--ac);font-size:14px;letter-spacing:.04em}
+#vb{transition:opacity .8s}
+#vb.fade{opacity:.3}
+#vb.talk{border-color:var(--ac);animation:pu 1.4s infinite}
+@keyframes pu{50%{box-shadow:0 0 0 6px #f2a65a22}}
+main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.vp{flex:1;min-height:0;overflow:hidden}
+.track{display:flex;width:300%;height:100%;transition:transform .9s cubic-bezier(.45,.05,.2,1)}
+.pane{display:block;width:33.3333%;flex:none;height:100%;overflow-y:auto;padding:0 18px 18px}
+@keyframes in{from{opacity:0}}
+.title{padding:6px 18px 12px}
+.title h1{font-size:clamp(27px,8vw,36px);line-height:1.15}
+.title p{margin:8px 0 0;color:var(--aq);font-size:15.5px}
+.txt p{font-size:17px;line-height:1.65;margin:0 0 15px}
+.try{background:var(--pn);border-left:3px solid var(--ac);border-radius:0 12px 12px 0;padding:13px 15px;font-size:16px;line-height:1.55;margin-top:6px}
+.lk{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:15px 16px;margin-bottom:11px;text-decoration:none;font-size:16.5px}
+.lk small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.lk:active{border-color:var(--ac)}
+/* video */
+canvas{width:100%;display:block;border-radius:12px;background:#0b1d2a}
+.v{position:relative}
+#lb{position:absolute;left:10px;right:10px;top:8px;text-align:center;font-weight:700;font-size:clamp(11px,3.2vw,15px);color:var(--ac);text-shadow:0 2px 8px #000;pointer-events:none}
+#cap{background:var(--pn);border-radius:12px;padding:14px;margin:12px 0;min-height:128px;font-size:16.5px;line-height:1.55}
+.r{display:flex;gap:10px;align-items:center}
+#pp{background:var(--ac);color:#1a1208;border-radius:22px;padding:10px 18px;font-weight:600;white-space:nowrap}
+input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}
+small{color:var(--mut)}
+#tm{white-space:nowrap}
+/* bottom tabs */
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));background:#0a1823;border-top:1px solid var(--ln)}
+nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;font-size:13.5px;color:var(--mut);border:1px solid transparent;transition:.2s}
+nav button span{font-size:21px;line-height:1}
+nav button.on{background:var(--pn);border-color:var(--ac);color:var(--fg)}
+.menu{max-height:min(75dvh,560px);overflow-y:auto;position:absolute;right:0;top:46px;width:min(260px,calc(100vw - 28px));background:#0f2635f2;backdrop-filter:blur(16px);border:1px solid var(--ln);border-radius:20px;padding:14px;box-shadow:0 20px 44px #000b;display:none;transform-origin:top right;z-index:10}
+.menu.open{display:block;animation:pop .22s}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(-6px)}}
+.menu h3{margin:4px 0 8px;font-size:13px;font-weight:500;color:var(--mut)}
+.act{width:100%;background:var(--ac);color:#1a1208;border-radius:14px;padding:12px;font-weight:600;margin-bottom:14px}
+.vo{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 8px;border-radius:12px;font-size:15.5px;transition:.2s}
+.vo .d{width:34px;height:34px;border-radius:50%;border:1px solid var(--ln);display:grid;place-items:center;font-size:17px;flex:none}
+.vo.sel{background:#8fc7e01a}.vo.sel .d{background:var(--ac);border-color:var(--ac)}
+.menu .nt{display:block;margin-top:8px;font-size:12px;line-height:1.4;color:var(--mut)}
+#intro{position:absolute;inset:0;z-index:30;background:radial-gradient(120% 80% at 50% 0,#14303f,var(--bg));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px;gap:8px;transition:opacity .9s}
+#intro.out{opacity:0;pointer-events:none}
+#intro svg{width:84px;height:84px;margin-bottom:10px}
+#intro h1{font-size:clamp(25px,7.4vw,34px);line-height:1.2}
+#intro .c{color:var(--aq);font-size:17px;margin:2px 0 26px;letter-spacing:.04em}
+#intro .ask{color:var(--mut);font-size:14px;margin-bottom:6px;line-height:1.6}
+.lang{width:100%;max-width:300px;display:flex;justify-content:space-between;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:16px 20px;font-size:20px;margin-top:8px;transition:.2s}
+.lang small{color:var(--mut);font-size:13px}
+.lang:active{border-color:var(--ac);transform:translateY(-1px)}
+.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(98px + env(safe-area-inset-bottom,0px));background:#f2a65a;color:#1a1208;font-weight:600;font-size:14px;padding:9px 16px;border-radius:20px;white-space:nowrap;z-index:5;opacity:0;pointer-events:none;transition:opacity .6s;animation:bob 1.6s infinite}
+.app.tour .hint{opacity:1}
+@keyframes bob{50%{margin-bottom:-6px}}
+.toast{position:absolute;left:16px;right:16px;top:calc(62px + env(safe-area-inset-top,0px));background:#14303ff2;border:1px solid var(--ln);border-radius:16px;padding:12px 16px;font-size:15.5px;line-height:1.45;z-index:6;opacity:0;transform:translateY(-8px);transition:.6s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:none}
+nav button{font-size:14.5px;padding:11px 4px}
+nav button span{font-size:23px}
+@keyframes nudge{50%{transform:translateY(-5px);box-shadow:0 8px 20px #f2a65a40}}
+.app.tour nav button.on{animation:nudge 1.6s infinite}
+/* friendly notification + badge on the Video button */
+.notif{position:absolute;left:14px;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,#1d4660f7,#14303ff7);border:1px solid var(--ac);border-radius:20px;padding:14px 16px;z-index:7;box-shadow:0 14px 34px #000a,0 0 0 0 #f2a65a55;opacity:0;transform:translateY(26px) scale(.96);transition:opacity .8s ease,transform .9s cubic-bezier(.2,.9,.3,1.15);pointer-events:none;cursor:pointer}
+.notif.show{opacity:1;transform:none;pointer-events:auto;animation:glow 2.2s 1s 2}
+.notif b{display:block;font-size:16px;color:var(--ac);margin-bottom:3px}
+.notif small{display:block;font-size:14.5px;line-height:1.45;color:var(--fg)}
+.bell{font-size:28px;flex:none;transform-origin:50% 0}
+.notif.show .bell{animation:ring 1.3s .7s 2}
+@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-14deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}}
+@keyframes glow{50%{box-shadow:0 14px 34px #000a,0 0 0 8px #f2a65a22}}
+nav button.ping::after{content:'';position:absolute;top:6px;left:calc(50% + 11px);width:12px;height:12px;border-radius:50%;background:#ff6b5e;border:2px solid #0a1823;animation:dot 1.5s infinite}
+@keyframes dot{0%{box-shadow:0 0 0 0 #ff6b5e99}70%,100%{box-shadow:0 0 0 9px #ff6b5e00}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script>
+const LS=(()=>{try{return localStorage}catch(e){return{getItem(){},setItem(){}}}})();
+const q=new URLSearchParams(location.search).get('lang');
+window.LANG=['en','ml','hi'].includes(q)?q:(LS.getItem('lang')||'en');
+if(q)LS.setItem('lang',q);
+const TX={
+ tabs:{en:['Explanation','Video','Links'],ml:['വിശദീകരണം','വീഡിയോ','ലിങ്കുകൾ'],hi:['व्याख्या','वीडियो','लिंक']},
+ name:{en:'Lissajous Patterns',ml:'ലിസാജൂ രൂപങ്ങൾ',hi:'लिसाजू आकृतियाँ'},
+ tag:{en:'What happens when two simple swings combine?',ml:'രണ്ട് ലളിത കമ്പനങ്ങൾ ചേർന്നാൽ എന്ത് സംഭവിക്കും?',hi:'दो सरल झूले मिल जाएँ तो क्या होता है?'},
+ more:{en:'Read more on Wikipedia',ml:'വിക്കിപീഡിയയിൽ കൂടുതൽ വായിക്കാം',hi:'विकिपीडिया पर और पढ़ें'},
+ lg:{en:'EN',ml:'മല',hi:'हि'},
+ novoice:{en:'',ml:'No Malayalam voice found on this device. Install Malayalam text-to-speech in phone settings, or use English.',hi:'No Hindi voice found on this device. Install Hindi text-to-speech in phone settings, or use English.'},
+ nospeech:{en:'This browser has no speech support.',ml:'This browser has no speech support.',hi:'This browser has no speech support.'}};
+/* ===== EDIT HERE: explanation text (paragraphs; the last one is the "try it" note) ===== */
+const EXP={
+ en:["A hanging rod carries an ultraviolet torch above a phosphorescent disk. Pull the rod gently to one side and release it, and the light draws glowing patterns.","The torch swings in two directions at right angles to each other. Each direction is a simple harmonic motion, and together they trace a curve called a Lissajous figure.","If both motions have the same frequency, the path is a line, an ellipse or a circle, depending on their timing. At a ratio of 1:2 you get a figure eight. Ratios such as 2:3 and 3:4 give more complex closed loops.","Oscilloscopes use Lissajous figures to compare two frequencies, and the same idea helps in tuning instruments. Two simple motions at right angles make complex, yet predictable, patterns.","Try it: press the switch, pull the hanging rod gently to one side and release it. Watch the UV light draw the pattern."],
+ ml:["തൂക്കിയിട്ട കമ്പിയിൽ ഒരു അൾട്രാവയലറ്റ് ടോർച്ച് ഫോസ്ഫറസൻസ് പ്രതലത്തിന് മുകളിൽ തൂങ്ങുന്നു. കമ്പി ഒരു വശത്തേക്ക് പതുക്കെ വലിച്ച് വിട്ടാൽ വെളിച്ചം തിളങ്ങുന്ന രൂപങ്ങൾ വരയ്ക്കുന്നു.","ടോർച്ച് പരസ്പരം ലംബമായ രണ്ട് ദിശകളിൽ കമ്പനം ചെയ്യുന്നു. ഓരോ ദിശയിലും ലഘുഹാർമോണിക് കമ്പനമാണ്; രണ്ടും ചേർന്ന് ലിസാജൂ രൂപം എന്ന വളവ് വരയ്ക്കുന്നു.","രണ്ട് കമ്പനങ്ങൾക്കും ഒരേ ആവൃത്തി ആണെങ്കിൽ സമയവ്യത്യാസം അനുസരിച്ച് പാത രേഖയോ ദീർഘവൃത്തമോ വൃത്തമോ ആകും. അനുപാതം 1:2 ആയാൽ എട്ടിന്റെ ആകൃതി കിട്ടും. 2:3, 3:4 തുടങ്ങിയ അനുപാതങ്ങൾ കൂടുതൽ സങ്കീർണ്ണമായ അടഞ്ഞ വളവുകൾ നൽകുന്നു.","രണ്ട് ആവൃത്തികൾ താരതമ്യം ചെയ്യാൻ ഓസിലോസ്കോപ്പുകൾ ലിസാജൂ രൂപങ്ങൾ ഉപയോഗിക്കുന്നു; ഉപകരണങ്ങൾ ട്യൂൺ ചെയ്യാനും ഈ ആശയം സഹായിക്കുന്നു. പരസ്പരം ലംബമായ രണ്ട് ലളിത കമ്പനങ്ങൾ സങ്കീർണ്ണമായി തോന്നുന്നതും എന്നാൽ പ്രവചിക്കാവുന്നതുമായ രൂപങ്ങൾ ഉണ്ടാക്കുന്നു.","പരീക്ഷിക്കൂ: സ്വിച്ച് അമർത്തി തൂക്കിയിട്ട കമ്പി ഒരു വശത്തേക്ക് പതുക്കെ വലിച്ച് വിടുക. UV പ്രകാശം രൂപം വരയ്ക്കുന്നത് നിരീക്ഷിക്കുക."],
+ hi:["एक लटकती छड़ पर पराबैंगनी टॉर्च स्फुरदीप्त चकती के ऊपर टँगी है। छड़ को धीरे से एक ओर खींचकर छोड़िए, रोशनी चमकती आकृतियाँ बनाने लगती है।","टॉर्च एक-दूसरे के लंबवत दो दिशाओं में झूलती है। हर दिशा की गति सरल आवर्त गति है, और दोनों मिलकर लिसाजू आकृति नाम का वक्र बनाती हैं।","यदि दोनों गतियों की आवृत्ति समान हो, तो समय-अंतर के अनुसार पथ रेखा, दीर्घवृत्त या वृत्त होता है। 1:2 अनुपात पर आठ का आकार बनता है। 2:3, 3:4 जैसे अनुपात अधिक जटिल बंद लूप देते हैं।","ऑसिलोस्कोप दो आवृत्तियों की तुलना के लिए लिसाजू आकृतियाँ इस्तेमाल करते हैं, और यही विचार वाद्य यंत्र ट्यून करने में भी काम आता है। लंबवत दो सरल गतियाँ जटिल दिखने वाली, पर पूर्वानुमेय आकृतियाँ बनाती हैं।","आज़माइए: स्विच दबाइए, लटकती छड़ को धीरे से एक ओर खींचकर छोड़िए। UV प्रकाश को आकृति बनाते देखिए।"]};
+/* ===== EDIT HERE: external links ===== */
+const LINKS=[
+ ['https://en.wikipedia.org/wiki/Lissajous_curve',{en:'Lissajous curve',ml:'ലിസാജൂ വക്രം',hi:'लिसाजू वक्र'}],
+ ['https://en.wikipedia.org/wiki/Simple_harmonic_motion',{en:'Simple harmonic motion',ml:'ലഘുഹാർമോണിക് ചലനം',hi:'सरल आवर्त गति'}],
+ ['https://en.wikipedia.org/wiki/Oscilloscope',{en:'Oscilloscope',ml:'ഓസിലോസ്കോപ്പ്',hi:'ऑसिलोस्कोप'}],
+ ['https://en.wikipedia.org/wiki/Phosphorescence',{en:'Phosphorescence',ml:'ഫോസ്ഫറസൻസ്',hi:'स्फुरदीप्ति'}]];
+TX.v={h:{en:'Voice',ml:'ശബ്ദം',hi:'आवाज़'},
+ f:{en:'Female',ml:'സ്ത്രീ ശബ്ദം',hi:'महिला'},m:{en:'Male',ml:'പുരുഷ ശബ്ദം',hi:'पुरुष'},s:{en:'Standard',ml:'സാധാരണ',hi:'सामान्य'},
+ listen:{en:'🔊 Listen to explanation',ml:'🔊 വിശദീകരണം കേൾക്കുക',hi:'🔊 व्याख्या सुनें'},stop:{en:'⏹ Stop listening',ml:'⏹ നിർത്തുക',hi:'⏹ रोकें'},
+ mute:{en:'🔇 Mute narration',ml:'🔇 ശബ്ദം ഓഫ്',hi:'🔇 आवाज़ बंद'},unmute:{en:'🔊 Unmute narration',ml:'🔊 ശബ്ദം ഓൺ',hi:'🔊 आवाज़ चालू'},
+ note:{en:'Voices come from your phone, so choices vary by device.',ml:'ശബ്ദങ്ങൾ ഫോണിൽ നിന്നാണ്; ഉപകരണം അനുസരിച്ച് മാറാം.',hi:'आवाज़ें फ़ोन से आती हैं, इसलिए डिवाइस के अनुसार बदल सकती हैं।'}};
+TX.v.mu={en:'Mute',ml:'ശബ്ദം ഇല്ല',hi:'म्यूट'};TX.v.o={en:'Old (elder)',ml:'വൃദ്ധ ശബ്ദം',hi:'बुज़ुर्ग'};TX.v.c={en:'Child',ml:'കുട്ടിയുടെ ശബ്ദം',hi:'बच्चा'};
+TX.v.all={en:'All voices on this device',ml:'ഈ ഉപകരണത്തിലെ എല്ലാ ശബ്ദങ്ങളും',hi:'इस डिवाइस की सभी आवाज़ें'};
+TX.v.demo={en:'Hello! I am your guide.',ml:'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ വഴികാട്ടിയാണ്.',hi:'नमस्ते! मैं आपका गाइड हूँ।'};
+TX.ntf={h:{en:'Your animation is ready',ml:'ആനിമേഷൻ തയ്യാർ',hi:'आपका एनिमेशन तैयार है'},
+  t:{en:'Press Play to watch the glowing patterns being drawn and hear the story. You can also tap here.',ml:'തിളങ്ങുന്ന രൂപങ്ങൾ വരയ്ക്കുന്നത് കാണാനും കഥ കേൾക്കാനും Play അമർത്തുക. ഇവിടെ തൊട്ടാലും മതി.',hi:'चमकती आकृतियाँ बनते देखने और कहानी सुनने के लिए Play दबाइए। यहाँ टैप भी कर सकते हैं।'}};
+TX.hint={en:'Tap the buttons below to explore',ml:'താഴെയുള്ള ബട്ടണുകൾ അമർത്തി കാണാം',hi:'नीचे के बटन दबाकर देखें'};
+TX.greet={w:{en:['Good morning','Good afternoon','Good evening'],ml:['സുപ്രഭാതം','ശുഭ ഉച്ച','ശുഭ സായാഹ്നം'],hi:['सुप्रभात','शुभ दोपहर','शुभ संध्या']},
+  t:{en:'Welcome to the Regional Science Centre and Planetarium, Calicut. Let us explore Lissajous Patterns.',ml:'കോഴിക്കോട് റീജിയണൽ സയൻസ് സെന്റർ ആൻഡ് പ്ലാനറ്റേറിയത്തിലേക്ക് സ്വാഗതം. നമുക്ക് ലിസാജൂ രൂപങ്ങൾ കാണാം.',hi:'कालीकट के क्षेत्रीय विज्ञान केंद्र एवं तारामंडल में आपका स्वागत है। आइए लिसाजू आकृतियाँ देखें।'}};
+/* voice types. Male (default) = mature, medium pitch. If the phone has no matching voice, the same voice is pitch/speed-shifted. */
+const FEM=/female|zira|heera|veena|lekha|neerja|swara|samantha|susan|hazel|priya|kalpana|aditi|karen|tessa|moira|fiona|victoria|sonia|libby|jenny|aria|emma|ava/i,
+MAL=/\bmale\b|ravi|hemant|prabhat|rishi|madhur|david|mark|george|james|daniel|alex|fred|guy|brian|eric|thomas|oliver|arthur|ryan|gordon/i;
+const PROF={male:{re:MAL,hit:{p:.95,r:.95},raw:{p:.85,r:.95}},female:{re:FEM,hit:{p:1,r:1},raw:{p:1.25,r:1}},
+ old:{re:MAL,hit:{p:.85,r:.8},raw:{p:.7,r:.8}},child:{re:FEM,hit:{p:1.5,r:1.05},raw:{p:1.8,r:1.08}},std:{re:null,hit:{p:1,r:1},raw:{p:1,r:1}}};
+function getVoice(l){const ss=window.speechSynthesis,all=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(l)):[],t=LS.getItem('vtype')||'male';
+ if(t=='mute')return{mute:1};
+ if(t.startsWith('v:')){let n='';try{n=decodeURIComponent(t.slice(2))}catch(e){}const h=all.find(x=>x.name==n);if(h)return{v:h,p:1,r:1}}
+ const f=PROF[t]||PROF.male,hit=f.re?all.find(x=>f.re.test(x.name)):null,z=hit?f.hit:f.raw;
+ return{v:hit||all[0],p:z.p,r:z.r}}
+function utt(txt,l){l=l||window.LANG;const g=getVoice(l);if(g.mute||!window.speechSynthesis)return null;
+ const u=new SpeechSynthesisUtterance(txt);u.lang={en:'en-IN',ml:'ml-IN',hi:'hi-IN'}[l];if(g.v)u.voice=g.v;u.pitch=g.p;u.rate=g.r;return u}
+</script></head><body>
+<div class="app">
+ <div id="intro"><svg viewBox="0 0 100 100" fill="none" stroke="#f2a65a" stroke-width="3"><circle cx="50" cy="50" r="34"/><ellipse cx="50" cy="50" rx="46" ry="14" transform="rotate(-22 50 50)" stroke="#8fc7e0"/><circle cx="50" cy="50" r="9" fill="#f2a65a" stroke="none"/></svg>
+  <h1>Regional Science Centre &amp; Planetarium</h1><div class="c">Calicut</div>
+  <div class="ask">Choose your language<br>ഭാഷ തിരഞ്ഞെടുക്കുക · भाषा चुनें</div>
+  <button class="lang" data-l="en">English <small>EN</small></button><button class="lang" data-l="ml">മലയാളം <small>ML</small></button><button class="lang" data-l="hi">हिन्दी <small>HI</small></button></div>
+ <div class="bar">
+   <span class="code">EXHIBIT F02</span>
+  <div style="display:flex;gap:8px"><button class="pill" id="lg" aria-label="Language"></button><div style="position:relative"><button class="pill" id="vb" aria-label="Voice">🔊</button><div class="menu" id="vm"></div></div></div>
+ </div>
+ <main>
+  <div class="title"><h1 id="nm"></h1><p id="tg"></p></div>
+  <div class="vp"><div class="track" id="trk"><section class="pane" id="p0"><div class="txt" id="ex"></div></section>
+  <section class="pane" id="p1">
+   <div class="v"><canvas id="c"></canvas><div id="lb"></div></div>
+   <div id="cap"></div>
+   <div class="r"><button id="pp">▶ Play</button><input id="sk" type="range" min="0" max="1200" value="0" aria-label="Seek"><small id="tm">0:00 / 2:00</small></div>
+   <small id="vs" style="display:block;margin-top:8px"></small>
+ <small style="display:block;margin-top:8px">Schematic 3D animation of a Lissajous pendulum.</small>
+  </section>
+  <section class="pane" id="p2"><div id="lk"></div></section>
+ </div></div></main>
+ <div class="hint" id="hint"></div><div class="toast" id="toast"></div>
+  <div class="notif" id="notif" role="status" aria-live="polite"><span class="bell">🔔</span><div><b id="ntfh"></b><small id="ntft"></small></div></div>
+ <nav id="nav"><button data-t="0" class="on"><span>📖</span><i></i></button><button data-t="1"><span>▶️</span><i></i></button><button data-t="2"><span>🔗</span><i></i></button></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const S=[
+{t:0,en:"Welcome to Lissajous Patterns. A hanging rod carries an ultraviolet torch above a glowing, phosphorescent disk. Press the switch, pull the rod gently to one side and release.",ml:"ലിസാജൂ രൂപങ്ങളിലേക്ക് സ്വാഗതം. തൂക്കിയിട്ട കമ്പിയിൽ ഒരു അൾട്രാവയലറ്റ് ടോർച്ച് ഫോസ്ഫറസൻസ് പ്രതലത്തിന് മുകളിൽ തൂങ്ങുന്നു. സ്വിച്ച് അമർത്തി കമ്പി ഒരു വശത്തേക്ക് പതുക്കെ വലിച്ച് വിടുക."},
+{t:12,en:"If it swings in just one direction, the light draws a simple straight line. This is one simple harmonic motion.",ml:"ഒരു ദിശയിൽ മാത്രം ആടിയാൽ വെളിച്ചം ഒരു നേർരേഖ വരയ്ക്കുന്നു. ഇതൊരു ലഘുഹാർമോണിക് കമ്പനമാണ്."},
+{t:30,en:"But the torch is hung so it swings in two directions at once, at right angles to each other. Each direction is its own simple harmonic motion, with its own frequency. The light follows both together.",ml:"എന്നാൽ ടോർച്ച് പരസ്പരം ലംബമായ രണ്ട് ദിശകളിൽ ഒരേസമയം കമ്പനം ചെയ്യുന്ന വിധത്തിലാണ് തൂക്കിയിരിക്കുന്നത്. ഓരോ ദിശയിലെയും കമ്പനത്തിന് സ്വന്തം ആവൃത്തിയുണ്ട്. വെളിച്ചം രണ്ടിനെയും ഒരുമിച്ച് പിന്തുടരുന്നു."},
+{t:50,en:"When both motions have the same frequency, the path depends on their timing. It can be a line, an ellipse or a circle.",ml:"രണ്ട് കമ്പനങ്ങൾക്കും ഒരേ ആവൃത്തി ആയാൽ പാത അവയുടെ സമയവ്യത്യാസത്തെ ആശ്രയിക്കും. അത് രേഖയോ ദീർഘവൃത്തമോ വൃത്തമോ ആകാം."},
+{t:70,en:"Change the ratio of the two frequencies and new shapes appear: a figure eight for one to two, then more complex loops for two to three, three to four, and three to five.",ml:"ആവൃത്തികളുടെ അനുപാതം മാറ്റിയാൽ പുതിയ രൂപങ്ങൾ വരും: 1:2-ന് എട്ടിന്റെ ആകൃതി, 2:3, 3:4, 3:5 എന്നിവയ്ക്ക് കൂടുതൽ സങ്കീർണ്ണമായ വളവുകൾ."},
+{t:92,en:"The pattern looks complex, yet it is completely predictable. Simple ratios give neat closed curves, and the shape tells you the ratio of the two frequencies.",ml:"രൂപം സങ്കീർണ്ണമായി തോന്നിയാലും പൂർണ്ണമായും പ്രവചിക്കാവുന്നതാണ്. ലളിതമായ അനുപാതങ്ങൾ വൃത്തിയുള്ള അടഞ്ഞ വളവുകൾ നൽകുന്നു, രൂപം കണ്ട് ആവൃത്തികളുടെ അനുപാതം പറയാം."},
+{t:106,en:"Engineers use Lissajous figures on oscilloscopes to compare signal frequencies and tune instruments. Two simple motions, one beautiful pattern.",ml:"ഓസിലോസ്കോപ്പിൽ സിഗ്നലുകളുടെ ആവൃത്തി താരതമ്യം ചെയ്യാനും ഉപകരണങ്ങൾ ട്യൂൺ ചെയ്യാനും ലിസാജൂ രൂപങ്ങൾ ഉപയോഗിക്കുന്നു. രണ്ട് ലളിത ചലനങ്ങൾ, ഒരു മനോഹര രൂപം."}];
+const LB={en:["Lissajous Patterns","One motion → a straight line","Two perpendicular motions","Same frequency (1:1): line · ellipse · circle","Frequency ratio ","Simple ratio → neat closed curve","Two simple motions, one pattern"],ml:["ലിസാജൂ രൂപങ്ങൾ","ഒരു കമ്പനം → നേർരേഖ","ലംബമായ രണ്ട് കമ്പനങ്ങൾ","ഒരേ ആവൃത്തി (1:1): രേഖ · ദീർഘവൃത്തം · വൃത്തം","ആവൃത്തി അനുപാതം ","ലളിത അനുപാതം → വൃത്തിയുള്ള വളവ്","രണ്ട് ലളിത കമ്പനങ്ങൾ, ഒരു രൂപം"]};
+const HI=["लिसाजू आकृतियों में आपका स्वागत है। एक लटकती छड़ पर पराबैंगनी टॉर्च स्फुरदीप्त चकती के ऊपर टँगी है। स्विच दबाइए, छड़ को धीरे से एक ओर खींचकर छोड़ दीजिए।", "अगर वह सिर्फ़ एक दिशा में झूले, तो रोशनी एक सीधी रेखा खींचती है। यह एक सरल आवर्त गति है।", "लेकिन टॉर्च इस तरह टँगी है कि वह एक-दूसरे के लंबवत दो दिशाओं में एक साथ झूलती है। हर दिशा की अपनी सरल आवर्त गति और अपनी आवृत्ति है। रोशनी दोनों का एक साथ अनुसरण करती है।", "जब दोनों गतियों की आवृत्ति समान हो, तो पथ उनके समय-अंतर पर निर्भर करता है। वह रेखा, दीर्घवृत्त या वृत्त हो सकता है।", "दोनों आवृत्तियों का अनुपात बदलिए तो नई आकृतियाँ बनती हैं: एक-दो पर आठ का आकार, फिर दो-तीन, तीन-चार और तीन-पाँच पर अधिक जटिल लूप।", "आकृति जटिल लगती है, पर पूरी तरह पूर्वानुमेय है। सरल अनुपात साफ़ बंद वक्र देते हैं, और आकृति देखकर दोनों आवृत्तियों का अनुपात बताया जा सकता है।", "इंजीनियर ऑसिलोस्कोप पर लिसाजू आकृतियों से सिग्नल की आवृत्तियों की तुलना करते हैं और वाद्य यंत्र ट्यून करते हैं। दो सरल गतियाँ, एक सुंदर आकृति।"];S.forEach((s,i)=>s.hi=HI[i]);LB.hi=["लिसाजू आकृतियाँ", "एक गति → सीधी रेखा", "दो लंबवत गतियाँ", "समान आवृत्ति (1:1): रेखा · दीर्घवृत्त · वृत्त", "आवृत्ति अनुपात ", "सरल अनुपात → साफ़ बंद वक्र", "दो सरल गतियाँ, एक आकृति"];
+const PT=[[1,2],[2,3],[3,4],[3,5],[1,1]];
+const CP=[[0,6,13],[0,7,12],[0,9,10],[0,12,6],[0,12,6],[0,11,8]];
+const T=120,cv=document.getElementById('c'),$=id=>document.getElementById(id),ez=x=>Math.max(0,Math.min(1,x));
+let t=0,play=false,lang=window.LANG,voice=true,cur=-1,last=0;
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene();sc.background=new THREE.Color(0x070f18);sc.fog=new THREE.Fog(0x070f18,20,50);
+const cam=new THREE.PerspectiveCamera(45,16/9,.1,100);
+sc.add(new THREE.AmbientLight(0x667799,.7));const dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(5,10,6);sc.add(dl);
+const uv=new THREE.PointLight(0x9a5cff,2,12);sc.add(uv);
+const disk=new THREE.Mesh(new THREE.CylinderGeometry(4.2,4.2,.15,64),new THREE.MeshStandardMaterial({color:0x1b3326,roughness:.8}));disk.position.y=-.1;sc.add(disk);
+const rim=new THREE.Mesh(new THREE.TorusGeometry(4.2,.09,8,64),new THREE.MeshStandardMaterial({color:0xcc3344}));rim.rotation.x=Math.PI/2;sc.add(rim);
+const pv=new THREE.Mesh(new THREE.SphereGeometry(.18,16,12),new THREE.MeshStandardMaterial({color:0xaaaaaa,metalness:.8}));pv.position.set(0,8.5,0);sc.add(pv);
+const bob=new THREE.Group(),bw=new THREE.MeshStandardMaterial({color:0xf2f4ff,emissive:0x8888cc,emissiveIntensity:.5}),bb=new THREE.MeshStandardMaterial({color:0x2a5cc0});
+const b1=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,1.4,24),bb);bob.add(b1);[.3,-.3].forEach(y=>{const r=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.3,24),bw);r.position.y=y;bob.add(r)});sc.add(bob);
+const rod=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,1,0)]),new THREE.LineBasicMaterial({color:0xc8d0d8}));sc.add(rod);
+const cone=new THREE.Mesh(new THREE.ConeGeometry(1.3,2.2,28,1,true),new THREE.MeshBasicMaterial({color:0x8a4cff,transparent:true,opacity:.14,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));sc.add(cone);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.2,16,12),new THREE.MeshBasicMaterial({color:0xdcc8ff}));sc.add(head);
+const N=900,DT=.01,tg=new THREE.BufferGeometry(),tp=new Float32Array(N*3),tc=new Float32Array(N*3);
+for(let j=0;j<N;j++){const f=j/N,c=new THREE.Color().setHSL(.85-.7*f,1,.5).multiplyScalar(Math.pow(f,1.6)*1.4);tc.set([c.r,c.g,c.b],j*3)}
+tg.setAttribute('position',new THREE.BufferAttribute(tp,3));tg.setAttribute('color',new THREE.BufferAttribute(tc,3));
+sc.add(new THREE.Line(tg,new THREE.LineBasicMaterial({vertexColors:true,blending:THREE.AdditiveBlending,transparent:true})));
+sc.add(new THREE.Points(tg,new THREE.PointsMaterial({size:.09,vertexColors:true,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false})));
+// projection helpers
+const rl=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([[-3,.05,4.9],[3,.05,4.9],[-4.9,.05,-3],[-4.9,.05,3]].map(a=>new THREE.Vector3(...a))),new THREE.LineBasicMaterial({color:0x8fc7e0}));sc.add(rl);
+const px=new THREE.Mesh(new THREE.SphereGeometry(.2,14,10),new THREE.MeshBasicMaterial({color:0xf2a65a})),pz=px.clone();sc.add(px,pz);
+const cg=new THREE.BufferGeometry();cg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(12),3));const cl=new THREE.LineSegments(cg,new THREE.LineBasicMaterial({color:0xf2a65a,transparent:true,opacity:.6}));sc.add(cl);
+function size(){const w=cv.parentElement.clientWidth;R.setSize(w,w*9/16,false);cv.style.height=(w*9/16)+'px'}window.sz=size;size();addEventListener('resize',size);
+function prm(i,lt){if(i==0)return[1,1,Math.PI/2];if(i==1)return[1,0,0];if(i==2)return[1,2,Math.PI/2];if(i==3)return[1,1,lt*.35];if(i==4){const p=PT[Math.min(4,Math.floor(lt/4.4))];return[p[0],p[1],Math.PI/2]}if(i==5)return[3,2,Math.PI/4];return[5,4,Math.PI/2]}
+const W0=3,A0=2.9;let cp=new THREE.Vector3(0,6,13);
+function draw(){const i=S.findLastIndex(s=>s.t<=t),lt=t-S[i].t,[a,b,f]=prm(i,lt),am=A0*(i==0?.3+.7*ez((lt-6)/4):1);
+const X=u=>am*Math.sin(a*W0*u+f),Z=u=>am*Math.sin(b*W0*u);
+for(let j=0;j<N;j++){const u=t-(N-1-j)*DT;tp[j*3]=X(u);tp[j*3+1]=.06;tp[j*3+2]=Z(u)}tg.attributes.position.needsUpdate=true;
+const x=X(t),z=Z(t),by=3.2;bob.position.set(x,by,z);head.position.set(x,.15,z);uv.position.set(x,by-1,z);cone.position.set(x,by/2-.2,z);cone.scale.set(1,by/2.2,1);cone.scale.x=cone.scale.z=1.1+.2*Math.sin(t);
+const rp=rod.geometry.attributes.position;rp.setXYZ(0,0,8.5,0);rp.setXYZ(1,x,by+.7,z);rp.needsUpdate=true;
+const sp=i==2;rl.visible=px.visible=pz.visible=cl.visible=sp;
+if(sp){px.position.set(x,.1,4.9);pz.position.set(-4.9,.1,z);const q=cg.attributes.position;q.setXYZ(0,x,.1,4.9);q.setXYZ(1,x,.1,z);q.setXYZ(2,-4.9,.1,z);q.setXYZ(3,x,.1,z);q.needsUpdate=true}
+let c=CP[i]||[0,8,12];let tx,ty,tz;if(i==6){const th=lt*.3;tx=Math.sin(th)*12;ty=8;tz=Math.cos(th)*12}else{tx=c[0]+Math.sin(t*.2)*1.5;ty=c[1];tz=c[2]}
+cp.x+=(tx-cp.x)*.04;cp.y+=(ty-cp.y)*.04;cp.z+=(tz-cp.z)*.04;cam.position.copy(cp);cam.lookAt(0,i>=3?0:2,0);
+$('lb').textContent=LB[lang][i]+(i==4?(a+':'+b):'');R.render(sc,cam)}
+function ui(){const i=S.findLastIndex(s=>s.t<=t);$('cap').textContent=S[i][lang];$('sk').value=t*10;const f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');$('tm').textContent=f(t)+' / 2:00';if(i!=cur){cur=i;say()}}
+function say(){const ss=window.speechSynthesis;if(!ss){$('vs').textContent=TX.nospeech[lang];return}ss.cancel();if(!voice||!play)return;const gv=getVoice(lang);if(gv.mute)return;$('vs').textContent=(!gv.v&&lang!='en')?TX.novoice[lang]:'';const u=utt(S[cur][lang],lang);ss.resume();ss.speak(u)}
+function loop(n){const dt=(n-last)/1000;last=n;if(play){t+=Math.min(dt,.1);if(t>=T){t=T-.001;play=false;$('pp').textContent='↻ Replay';window.speechSynthesis&&speechSynthesis.cancel()}}draw();ui();requestAnimationFrame(loop)}
+$('pp').onclick=()=>{if(t>=T-.01)t=0,cur=-1;play=!play;$('pp').textContent=play?'⏸ Pause':'▶ Play';if(play)say();else if(window.speechSynthesis)speechSynthesis.cancel()};
+$('sk').oninput=e=>{t=e.target.value/10;cur=-1};
+window.setVidLang=l=>{lang=l;say()};
+window.setVoice=v=>{voice=v;say()};window.pauseVid=()=>{if(play)$('pp').click()};
+requestAnimationFrame(n=>{last=n;loop(n)});
+
+</script>
+<script>
+const $$=id=>document.getElementById(id);let tab=0,voiceOn=true,reading=false,fadeT;
+const ORDER=['en','ml','hi'];
+function paint(){
+ document.documentElement.lang=LANG;$$('hint').textContent=TX.hint[LANG]+' ▾';
+ $$('nm').textContent=TX.name[LANG];$$('tg').textContent=TX.tag[LANG];$$('lg').textContent=TX.lg[LANG];
+ $$('ex').innerHTML=EXP[LANG].map((p,i,a)=>i==a.length-1?`<div class="try">${p}</div>`:`<p>${p}</p>`).join('');
+ $$('lk').innerHTML=LINKS.map(l=>`<a class="lk" href="${l[0]}" target="_blank" rel="noopener"><div>${l[1][LANG]}<small>${TX.more[LANG]}</small></div><span>↗</span></a>`).join('');
+ document.querySelectorAll('#nav i').forEach((e,i)=>e.textContent=TX.tabs[LANG][i]);
+ window.setVidLang(LANG);icon();vmenu()}
+function stopRead(){reading=false;if(window.vmenu)vmenu();speechSynthesis&&speechSynthesis.cancel();$$('vb').classList.remove('talk')}
+$$('lg').onclick=()=>{LANG=ORDER[(ORDER.indexOf(LANG)+1)%3];LS.setItem('lang',LANG);stopRead();paint()};
+function goTab(i){tab=i;stopRead();hideNote();if(i==1)clearPing();if(i!=1)window.pauseVid();
+ document.querySelectorAll('nav button').forEach((x,k)=>x.classList.toggle('on',k==i));
+ $$('trk').style.transform=`translateX(${-i*33.3333}%)`;if(i==1)window.sz();vmenu()}
+document.getElementById('nav').onclick=e=>{const b=e.target.closest('button');if(b)goTab(+b.dataset.t)};
+/* swipe between the three views */
+let sx=null;addEventListener('touchstart',e=>{sx=e.target.closest('input,#vm')?null:e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(sx==null)return;const d=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(d)>70)goTab(Math.max(0,Math.min(2,tab+(d<0?1:-1))))},{passive:true});
+/* intro -> language -> fullscreen + greeting -> slow auto tour of the 3 views until the visitor touches the screen */
+let tourT=null;const APP=document.querySelector('.app');
+/* after the welcome voice ends: slide to the Video button, badge it, show a friendly spoken notification */
+let noteT=null;
+function clearPing(){document.querySelectorAll('nav button.ping').forEach(x=>x.classList.remove('ping'))}
+function hideNote(){clearTimeout(noteT);$$('notif').classList.remove('show')}
+function guide(){goTab(1);setTimeout(()=>{if(tab!=1)return;
+  document.querySelectorAll('nav button')[1].classList.add('ping');
+  $$('ntfh').textContent=TX.ntf.h[LANG];$$('ntft').textContent=TX.ntf.t[LANG];$$('notif').classList.add('show');
+  const ss=window.speechSynthesis,u=(ss&&voiceOn)?utt(TX.ntf.h[LANG]+'. '+TX.ntf.t[LANG]):null;
+  noteT=setTimeout(hideNote,u?20000:8000);
+  if(u){u.onend=()=>{clearTimeout(noteT);noteT=setTimeout(hideNote,1500)};ss.cancel();ss.speak(u)}},1300)}
+$$('notif').onclick=()=>{const ss=window.speechSynthesis;ss&&ss.cancel();hideNote();clearPing();if(!play)$('pp').click()};
+$$('pp').addEventListener('click',()=>{clearPing();hideNote()});
+function tour(){stopTour();APP.classList.add('tour');tourT=setInterval(()=>goTab((tab+1)%3),3500)}
+function stopTour(){clearInterval(tourT);tourT=null;APP.classList.remove('tour')}
+addEventListener('pointerdown',()=>{if(tourT)stopTour()},{capture:true});
+function greet(cb){let fin=false;const go=()=>{if(!fin){fin=true;cb()}};setTimeout(go,16000);
+ const h=new Date().getHours(),k=h<12?0:h<17?1:2,txt=TX.greet.w[LANG][k]+'! '+TX.greet.t[LANG],tt=$$('toast');
+ tt.textContent=txt;tt.classList.add('show');setTimeout(()=>tt.classList.remove('show'),7000);
+ const ss=window.speechSynthesis,u=(ss&&voiceOn)?utt(txt):null;if(!u){setTimeout(go,2500);return}
+  u.onend=()=>setTimeout(go,600);u.onerror=go;ss.cancel();ss.speak(u)}
+document.querySelectorAll('.lang').forEach(b=>b.onclick=()=>{LANG=b.dataset.l;LS.setItem('lang',LANG);paint();
+ const d=document.documentElement;if(d.requestFullscreen)d.requestFullscreen().catch(()=>{});
+ $$('intro').classList.add('out');greet(guide)});
+/* voice button: reads the explanation aloud, or mutes/unmutes the video narration. It fades when idle. */
+function startRead(){if(!window.speechSynthesis)return;stopRead();const u=utt(EXP[LANG].join(' '));if(!u)return;reading=true;$$('vb').classList.add('talk');vmenu();u.onend=stopRead;speechSynthesis.speak(u)}
+function icon(){$$('vb').textContent=(LS.getItem('vtype')=='mute'||!voiceOn)?'🔇':'🔊'}
+function vmenu(){const V=TX.v,t=LS.getItem('vtype')||'male',ic={mute:'🔇',male:'👨',female:'👩',old:'👴',child:'🧒',std:'🎙️'},nm={mute:V.mu,male:V.m,female:V.f,old:V.o,child:V.c,std:V.s},ss=window.speechSynthesis;
+ const act=t=='mute'?'':tab==0?(reading?V.stop:V.listen)[LANG]:tab==1?(voiceOn?V.mute:V.unmute)[LANG]:'';
+ const dv=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(LANG)):[],esc=x=>x.replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+ $$('vm').innerHTML=(act?`<button class="act" data-a="1">${act}</button>`:'')+`<h3>${V.h[LANG]}</h3>`+Object.keys(nm).map(k=>`<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">${ic[k]}</span>${nm[k][LANG]}</button>`).join('')
+ +(dv.length?`<h3>${V.all[LANG]}</h3>`+dv.map(x=>{const k='v:'+encodeURIComponent(x.name);return `<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">🔈</span>${esc(x.name)}</button>`}).join(''):'')
+ +`<small class="nt">${V.note[LANG]}</small>`}
+if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>vmenu();
+$$('vb').onclick=e=>{e.stopPropagation();wake();vmenu();$$('vm').classList.toggle('open')};
+$$('vm').onclick=e=>{const a=e.target.closest('[data-a]'),o=e.target.closest('[data-v]');
+ if(a){if(tab==0){reading?stopRead():startRead()}else if(tab==1){voiceOn=!voiceOn;window.setVoice(voiceOn)}icon();$$('vm').classList.remove('open')}
+ if(o){LS.setItem('vtype',o.dataset.v);icon();const ss=window.speechSynthesis;
+  if(o.dataset.v=='mute'){if(reading)stopRead();ss&&ss.cancel();if(tab==1)window.setVoice(voiceOn)}
+  else if(reading)startRead();else if(tab==1&&play)window.setVoice(voiceOn);
+  else{const u=utt(TX.v.demo[LANG]);if(u){ss.cancel();ss.speak(u)}}
+  vmenu()}};
+document.addEventListener('click',e=>{if(!e.target.closest('#vm'))$$('vm').classList.remove('open')});
+function wake(){$$('vb').classList.remove('fade');clearTimeout(fadeT);fadeT=setTimeout(()=>$$('vb').classList.add('fade'),3000)}
+['touchstart','pointerdown','scroll'].forEach(ev=>addEventListener(ev,wake,{capture:true,passive:true}));wake();
+paint();
+
+/* fullscreen button (hidden where the browser doesn't support it, e.g. iPhone Safari) */
+(function(){const d=document.documentElement;if(!d.requestFullscreen)return;
+ ['lg','lg2'].forEach(id=>{const l=document.getElementById(id);if(!l)return;const b=document.createElement('button');b.className='pill';b.textContent='⛶';b.setAttribute('aria-label','Fullscreen');
+  b.onclick=()=>document.fullscreenElement?document.exitFullscreen():d.requestFullscreen();l.parentNode.insertBefore(b,l)});
+ document.querySelectorAll('.bar>div[style]').forEach(x=>x.style.gap='8px')})();
+</script></body></html>
