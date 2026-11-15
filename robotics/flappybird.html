@@ -426,13 +426,13 @@ function applyLang(){
 
   $('unsup').textContent='serial' in navigator?'':t('unsup');
 
-  $('$1').textContent=t('lost');$('$1').textContent=t('recon');
+  $('mt').textContent=t('lost');$('recon').textContent=t('recon');
 
   sndLabel();
 
 }
 
-function sndLabel(){const x=t('sound')+': '+(cfg.snd?t('on'):t('off'));$('$1').textContent=x;$('$1').textContent=cfg.snd?t('on'):t('off')}
+function sndLabel(){const x=t('sound')+': '+(cfg.snd?t('on'):t('off'));$('bSound').textContent=x;$('setSnd').textContent=cfg.snd?t('on'):t('off')}
 
 function show(id){
 
@@ -466,7 +466,7 @@ const iv=setInterval(()=>{
 
   pr=Math.min(100,pr+1+Math.random()*2.5);
 
-  $('$1').style.width=pr+'%';$('$1').textContent=Math.floor(pr)+'%';$('lm').textContent=msgs[Math.min(4,Math.floor(pr/20))];
+  $('bar').style.width=pr+'%';$('pct').textContent=Math.floor(pr)+'%';$('lm').textContent=msgs[Math.min(4,Math.floor(pr/20))];
 
   if(pr>=100){clearInterval(iv);setTimeout(()=>show(cfg.lang?'s-intro':'s-lang'),500)}
 
@@ -488,7 +488,7 @@ function sound(c){if(!cfg.snd)return;if(writer)writer.write(new TextEncoder().en
 
 $('bz').onclick=()=>sound('S');
 
-$('$1').onclick=$('$1').onclick=()=>{cfg.snd=!cfg.snd;save('snd');sndLabel()};
+$('bSound').onclick=$('setSnd').onclick=()=>{cfg.snd=!cfg.snd;save('snd');sndLabel()};
 
 
 
@@ -518,7 +518,7 @@ async function connect(){
 
     $('pinfo').textContent=i.usbVendorId?('USB '+i.usbVendorId.toString(16)+':'+(i.usbProductId||0).toString(16)):'';
 
-    $('$1').disabled=true;$('$1').disabled=false;$('modal').classList.remove('on');
+    $('conn').disabled=true;$('disc').disabled=false;$('modal').classList.remove('on');
 
     readLoop();
 
@@ -570,7 +570,7 @@ function lost(){
 
   connected=false;writer=null;lastT=0;
 
-  $('$1').disabled=false;$('$1').disabled=true;$('dv').textContent='--';
+  $('conn').disabled=false;$('disc').disabled=true;$('dv').textContent='--';
 
   if(state==='play')state='pause';
 
@@ -584,11 +584,11 @@ async function disconnect(){
 
   try{await reader.cancel();await pipeDone;writer.releaseLock();await port.close()}catch(e){}
 
-  writer=null;lastT=0;$('$1').disabled=false;$('$1').disabled=true;$('dv').textContent='--';
+  writer=null;lastT=0;$('conn').disabled=false;$('disc').disabled=true;$('dv').textContent='--';
 
 }
 
-$('$1').onclick=connect;$('$1').onclick=disconnect;$('recon').onclick=connect;
+$('conn').onclick=connect;$('disc').onclick=disconnect;$('recon').onclick=connect;
 
 if('serial' in navigator)navigator.serial.addEventListener('disconnect',e=>{if(e.target===port&&connected)lost()});
 
@@ -604,7 +604,7 @@ setInterval(()=>{
 
   else if(demo){k='stDemo';c='wait'}
 
-  $('$1').textContent=t(k);$('$1').className='dot '+c;$('dot2').className='dot '+c;
+  $('st').textContent=t(k);$('dot').className='dot '+c;$('dot2').className='dot '+c;
 
   $('enter').disabled=!(connected&&c==='ok');
 
@@ -614,7 +614,7 @@ setInterval(()=>{
 
 /* ---------- settings ---------- */
 
-function syncSet(){$('$1').value=cfg.sens;$('$1').value=cfg.min;$('$1').value=cfg.max;$('$1').textContent=cfg.min;$('vmax').textContent=cfg.max}
+function syncSet(){$('rs').value=cfg.sens;$('rmin').value=cfg.min;$('rmax').value=cfg.max;$('vmin').textContent=cfg.min;$('vmax').textContent=cfg.max}
 
 $('rs').oninput=e=>{cfg.sens=+e.target.value;save('sens')};
 
@@ -660,9 +660,9 @@ function medal(s){return s>=30?'Gold':s>=15?'Silver':s>=5?'Bronze':''}
 
 function showOver(){
 
-  $('$1').textContent=score;$('$1').textContent=cfg.best;$('og').textContent=cfg.games;
+  $('os').textContent=score;$('ob').textContent=cfg.best;$('og').textContent=cfg.games;
 
-  $('$1').textContent=newBest?t('newBest'):'';$('$1').textContent=medal(score)?t(medal(score)):'—';
+  $('onew').textContent=newBest?t('newBest'):'';$('om').textContent=medal(score)?t(medal(score)):'—';
 
   show('s-over');
 
