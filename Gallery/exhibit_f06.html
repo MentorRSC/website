@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RSCP, Calicut · Nodes and Antinodes</title>
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="RSCP, Calicut"><meta name="apple-mobile-web-app-title" content="RSCP, Calicut"><meta name="theme-color" content="#0b1d2a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%230b1d2a%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2720%27 fill=%27%23f2a65a%27/%3E%3Cellipse cx=%2750%27 cy=%2750%27 rx=%2740%27 ry=%2712%27 fill=%27none%27 stroke=%27%238fc7e0%27 stroke-width=%275%27 transform=%27rotate(-22 50 50)%27/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0b1d2a;--pn:#14303f;--ln:#2b5870;--fg:#e8f1f5;--mut:#9db6c2;--ac:#f2a65a;--aq:#8fc7e0;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#050e15;color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans Malayalam","Noto Sans Devanagari",sans-serif}
+button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+a{color:inherit}
+.app{position:relative;margin:0 auto;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;width:100vw;height:100dvh}
+@media(min-width:700px){.app{width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));box-shadow:0 0 0 1px var(--ln),0 30px 80px #000;margin-top:max(0px,calc((100dvh - min(100dvh,calc(100vw*16/9)))/2))}}
+h1{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Noto Serif Malayalam","Noto Serif Devanagari",serif;font-weight:600;margin:0}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px;z-index:3}
+.pill{background:#14303fcc;border:1px solid var(--ln);border-radius:20px;height:38px;min-width:38px;padding:0 13px;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:opacity .6s,border-color .2s}
+.pill:active{border-color:var(--ac)}
+.code{font-weight:700;color:var(--ac);font-size:14px;letter-spacing:.04em}
+#vb{transition:opacity .8s}
+#vb.fade{opacity:.3}
+#vb.talk{border-color:var(--ac);animation:pu 1.4s infinite}
+@keyframes pu{50%{box-shadow:0 0 0 6px #f2a65a22}}
+main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.vp{flex:1;min-height:0;overflow:hidden}
+.track{display:flex;width:300%;height:100%;transition:transform .9s cubic-bezier(.45,.05,.2,1)}
+.pane{display:block;width:33.3333%;flex:none;height:100%;overflow-y:auto;padding:0 18px 18px}
+@keyframes in{from{opacity:0}}
+.title{padding:6px 18px 12px}
+.title h1{font-size:clamp(27px,8vw,36px);line-height:1.15}
+.title p{margin:8px 0 0;color:var(--aq);font-size:15.5px}
+.txt p{font-size:17px;line-height:1.65;margin:0 0 15px}
+.try{background:var(--pn);border-left:3px solid var(--ac);border-radius:0 12px 12px 0;padding:13px 15px;font-size:16px;line-height:1.55;margin-top:6px}
+.lk{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:15px 16px;margin-bottom:11px;text-decoration:none;font-size:16.5px}
+.lk small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.lk:active{border-color:var(--ac)}
+/* video */
+canvas{width:100%;display:block;border-radius:12px;background:#0b1d2a}
+.v{position:relative}
+#lb{position:absolute;left:10px;right:10px;top:8px;text-align:center;font-weight:700;font-size:clamp(11px,3.2vw,15px);color:var(--ac);text-shadow:0 2px 8px #000;pointer-events:none}
+#cap{background:var(--pn);border-radius:12px;padding:14px;margin:12px 0;min-height:128px;font-size:16.5px;line-height:1.55}
+.r{display:flex;gap:10px;align-items:center}
+#pp{background:var(--ac);color:#1a1208;border-radius:22px;padding:10px 18px;font-weight:600;white-space:nowrap}
+input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}
+small{color:var(--mut)}
+#tm{white-space:nowrap}
+/* bottom tabs */
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));background:#0a1823;border-top:1px solid var(--ln)}
+nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;font-size:13.5px;color:var(--mut);border:1px solid transparent;transition:.2s}
+nav button span{font-size:21px;line-height:1}
+nav button.on{background:var(--pn);border-color:var(--ac);color:var(--fg)}
+.menu{max-height:min(75dvh,560px);overflow-y:auto;position:absolute;right:0;top:46px;width:min(260px,calc(100vw - 28px));background:#0f2635f2;backdrop-filter:blur(16px);border:1px solid var(--ln);border-radius:20px;padding:14px;box-shadow:0 20px 44px #000b;display:none;transform-origin:top right;z-index:10}
+.menu.open{display:block;animation:pop .22s}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(-6px)}}
+.menu h3{margin:4px 0 8px;font-size:13px;font-weight:500;color:var(--mut)}
+.act{width:100%;background:var(--ac);color:#1a1208;border-radius:14px;padding:12px;font-weight:600;margin-bottom:14px}
+.vo{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 8px;border-radius:12px;font-size:15.5px;transition:.2s}
+.vo .d{width:34px;height:34px;border-radius:50%;border:1px solid var(--ln);display:grid;place-items:center;font-size:17px;flex:none}
+.vo.sel{background:#8fc7e01a}.vo.sel .d{background:var(--ac);border-color:var(--ac)}
+.menu .nt{display:block;margin-top:8px;font-size:12px;line-height:1.4;color:var(--mut)}
+#intro{position:absolute;inset:0;z-index:30;background:radial-gradient(120% 80% at 50% 0,#14303f,var(--bg));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px;gap:8px;transition:opacity .9s}
+#intro.out{opacity:0;pointer-events:none}
+#intro svg{width:84px;height:84px;margin-bottom:10px}
+#intro h1{font-size:clamp(25px,7.4vw,34px);line-height:1.2}
+#intro .c{color:var(--aq);font-size:17px;margin:2px 0 26px;letter-spacing:.04em}
+#intro .ask{color:var(--mut);font-size:14px;margin-bottom:6px;line-height:1.6}
+.lang{width:100%;max-width:300px;display:flex;justify-content:space-between;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:16px 20px;font-size:20px;margin-top:8px;transition:.2s}
+.lang small{color:var(--mut);font-size:13px}
+.lang:active{border-color:var(--ac);transform:translateY(-1px)}
+.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(98px + env(safe-area-inset-bottom,0px));background:#f2a65a;color:#1a1208;font-weight:600;font-size:14px;padding:9px 16px;border-radius:20px;white-space:nowrap;z-index:5;opacity:0;pointer-events:none;transition:opacity .6s;animation:bob 1.6s infinite}
+.app.tour .hint{opacity:1}
+@keyframes bob{50%{margin-bottom:-6px}}
+.toast{position:absolute;left:16px;right:16px;top:calc(62px + env(safe-area-inset-top,0px));background:#14303ff2;border:1px solid var(--ln);border-radius:16px;padding:12px 16px;font-size:15.5px;line-height:1.45;z-index:6;opacity:0;transform:translateY(-8px);transition:.6s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:none}
+nav button{font-size:14.5px;padding:11px 4px}
+nav button span{font-size:23px}
+@keyframes nudge{50%{transform:translateY(-5px);box-shadow:0 8px 20px #f2a65a40}}
+.app.tour nav button.on{animation:nudge 1.6s infinite}
+/* friendly notification + badge on the Video button */
+.notif{position:absolute;left:14px;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,#1d4660f7,#14303ff7);border:1px solid var(--ac);border-radius:20px;padding:14px 16px;z-index:7;box-shadow:0 14px 34px #000a,0 0 0 0 #f2a65a55;opacity:0;transform:translateY(26px) scale(.96);transition:opacity .8s ease,transform .9s cubic-bezier(.2,.9,.3,1.15);pointer-events:none;cursor:pointer}
+.notif.show{opacity:1;transform:none;pointer-events:auto;animation:glow 2.2s 1s 2}
+.notif b{display:block;font-size:16px;color:var(--ac);margin-bottom:3px}
+.notif small{display:block;font-size:14.5px;line-height:1.45;color:var(--fg)}
+.bell{font-size:28px;flex:none;transform-origin:50% 0}
+.notif.show .bell{animation:ring 1.3s .7s 2}
+@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-14deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}}
+@keyframes glow{50%{box-shadow:0 14px 34px #000a,0 0 0 8px #f2a65a22}}
+nav button.ping::after{content:'';position:absolute;top:6px;left:calc(50% + 11px);width:12px;height:12px;border-radius:50%;background:#ff6b5e;border:2px solid #0a1823;animation:dot 1.5s infinite}
+@keyframes dot{0%{box-shadow:0 0 0 0 #ff6b5e99}70%,100%{box-shadow:0 0 0 9px #ff6b5e00}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script>
+const LS=(()=>{try{return localStorage}catch(e){return{getItem(){},setItem(){}}}})();
+const q=new URLSearchParams(location.search).get('lang');
+window.LANG=['en','ml','hi'].includes(q)?q:(LS.getItem('lang')||'en');
+if(q)LS.setItem('lang',q);
+const TX={
+ tabs:{en:['Explanation','Video','Links'],ml:['വിശദീകരണം','വീഡിയോ','ലിങ്കുകൾ'],hi:['व्याख्या','वीडियो','लिंक']},
+ name:{en:'Nodes and Antinodes',ml:'നോഡുകളും ആന്റിനോഡുകളും',hi:'निस्पंद और प्रस्पंद'},
+ tag:{en:'Why do some points on a shaking string stay still?',ml:'കുലുങ്ങുന്ന ചരടിലെ ചില ബിന്ദുക്കൾ അനങ്ങാത്തത് എന്തുകൊണ്ട്?',hi:'काँपते तार के कुछ बिंदु स्थिर क्यों रहते हैं?'},
+ more:{en:'Read more on Wikipedia',ml:'വിക്കിപീഡിയയിൽ കൂടുതൽ വായിക്കാം',hi:'विकिपीडिया पर और पढ़ें'},
+ lg:{en:'EN',ml:'മല',hi:'हि'},
+ novoice:{en:'',ml:'No Malayalam voice found on this device. Install Malayalam text-to-speech in phone settings, or use English.',hi:'No Hindi voice found on this device. Install Hindi text-to-speech in phone settings, or use English.'},
+ nospeech:{en:'This browser has no speech support.',ml:'This browser has no speech support.',hi:'This browser has no speech support.'}};
+/* ===== EDIT HERE: explanation text (paragraphs; the last one is the "try it" note) ===== */
+const EXP={
+ en:["A string stretched inside a glass case shakes when you press the switch. Instead of a blur, it splits into neat, steady loops. Change the vibration speed and the number of loops changes too.","How to use it: press the switch and watch the vibrating string. Notice the loops that form and the still points between them. Change the frequency and count how the loops increase or decrease.","Shaking the string sends a wave along it. At the fixed end the wave bounces back. Now two waves travel in opposite directions and combine. At the right speeds the combined wave stops travelling and forms a steady pattern called a standing wave.","Node: where the two waves always cancel. The string stays still. Both fixed ends are nodes.","Antinode: where the two waves always add up. The string swings the most, at the middle of each loop.","Why only certain patterns? Both ends are fixed, so each must be a node. That only works when the string length fits a whole number of half-waves. So clean loops appear only at certain frequencies, and in-between speeds look messy.","What decides the number of loops? The vibration frequency, the string’s material, and how tightly it is stretched. For the curious: f = n·v / 2L, with v = √(T/μ). A tighter string (T↑) or a higher n gives a higher frequency.","In everyday life: on a guitar or violin, pressing a string moves the nodes and changes the note. In flutes and organ pipes, air forms standing waves inside the tube. In microwave ovens, hot and cold spots come from nodes and antinodes.","Remember: two waves meeting in a string make still points (nodes) and big swings (antinodes). The number of loops depends on frequency, material and tension."],
+ ml:["ഗ്ലാസ് കെയ്സിനുള്ളിൽ വലിച്ചുകെട്ടിയ ചരട് സ്വിച്ച് അമർത്തുമ്പോൾ കമ്പനം ചെയ്യുന്നു. അവ്യക്തമായ ചലനത്തിന് പകരം അത് നിശ്ചലമായി തോന്നുന്ന ഭംഗിയുള്ള വളയങ്ങളായി (loops) മാറുന്നു. കമ്പനവേഗം മാറ്റിയാൽ വളയങ്ങളുടെ എണ്ണവും മാറും.","എങ്ങനെ ഉപയോഗിക്കാം: സ്വിച്ച് അമർത്തി കമ്പനം ചെയ്യുന്ന ചരടിനെ നോക്കുക. രൂപപ്പെടുന്ന വളയങ്ങളും അവയ്ക്കിടയിലെ അനങ്ങാത്ത ബിന്ദുക്കളും ശ്രദ്ധിക്കുക. ആവൃത്തി മാറ്റി വളയങ്ങൾ കൂടുന്നതും കുറയുന്നതും എണ്ണി നോക്കുക.","ചരട് കുലുക്കുമ്പോൾ അതിലൂടെ ഒരു തരംഗം സഞ്ചരിക്കുന്നു. ഉറപ്പിച്ച അറ്റത്ത് തരംഗം തട്ടിത്തിരിച്ചു വരുന്നു. ഇപ്പോൾ രണ്ട് തരംഗങ്ങൾ എതിർദിശകളിൽ സഞ്ചരിച്ച് കൂടിച്ചേരുന്നു. ശരിയായ വേഗത്തിൽ ഈ തരംഗം സഞ്ചരിക്കാതെ സ്ഥിരമായ ഒരു രൂപമായി മാറുന്നു. ഇതാണ് നിശ്ചല തരംഗം.","നോഡ്: രണ്ട് തരംഗങ്ങളും എപ്പോഴും പരസ്പരം റദ്ദാക്കുന്ന ബിന്ദു. ചരട് അനങ്ങില്ല. ഉറപ്പിച്ച രണ്ട് അറ്റങ്ങളും നോഡുകളാണ്.","ആന്റിനോഡ്: തരംഗങ്ങൾ എപ്പോഴും കൂടിച്ചേരുന്ന ബിന്ദു. ഓരോ വളയത്തിന്റെയും നടുവിൽ ചരട് ഏറ്റവും കൂടുതൽ ആടുന്നു.","ചില രൂപങ്ങൾ മാത്രം എന്തുകൊണ്ട്? രണ്ട് അറ്റങ്ങളും ഉറപ്പിച്ചതിനാൽ അവ നോഡുകളായിരിക്കണം. ചരടിന്റെ നീളം അർദ്ധതരംഗങ്ങളുടെ പൂർണ്ണസംഖ്യയ്ക്ക് തുല്യമാകുമ്പോൾ മാത്രമേ ഇത് സാധ്യമാകൂ. അതുകൊണ്ട് ചില ആവൃത്തികളിൽ മാത്രം വ്യക്തമായ വളയങ്ങൾ കാണാം.","വളയങ്ങളുടെ എണ്ണം തീരുമാനിക്കുന്നത്: കമ്പന ആവൃത്തി, ചരടിന്റെ നിർമ്മാണവസ്തു, അത് എത്ര മുറുക്കിയിരിക്കുന്നു എന്നിവ. കൂടുതൽ അറിയാൻ: f = n·v / 2L, v = √(T/μ).","ദൈനംദിന ജീവിതത്തിൽ: ഗിറ്റാർ, വയലിൻ എന്നിവയിൽ ചരടിൽ വിരൽ അമർത്തുമ്പോൾ നോഡുകളുടെ സ്ഥാനം മാറി സ്വരം മാറുന്നു. പുല്ലാങ്കുഴൽ, ഓർഗൻ പൈപ്പ് എന്നിവയിൽ കുഴലിനുള്ളിലെ വായുവിൽ നിശ്ചല തരംഗങ്ങൾ രൂപപ്പെടുന്നു. മൈക്രോവേവ് ഓവനിലെ ചൂടുള്ളതും തണുത്തതുമായ ഭാഗങ്ങൾ നോഡുകളും ആന്റിനോഡുകളുംകൊണ്ടാണ്.","ഓർക്കുക: ചരടിൽ രണ്ട് തരംഗങ്ങൾ ചേരുമ്പോൾ അനങ്ങാത്ത ബിന്ദുക്കളും (നോഡ്) വലിയ ആട്ടമുള്ള ബിന്ദുക്കളും (ആന്റിനോഡ്) ഉണ്ടാകുന്നു. വളയങ്ങളുടെ എണ്ണം ആവൃത്തി, വസ്തു, വലിവ് എന്നിവയെ ആശ്രയിക്കുന്നു."],
+ hi:["काँच के केस के अंदर तना हुआ एक तार स्विच दबाने पर काँपता है। धुंधली गति की जगह वह साफ़, स्थिर-से दिखते लूपों में बँट जाता है। कंपन की गति बदलिए, तो लूपों की संख्या भी बदल जाती है।","कैसे इस्तेमाल करें: स्विच दबाकर काँपते तार को देखिए। बनने वाले लूपों और उनके बीच के स्थिर बिंदुओं पर ध्यान दीजिए। आवृत्ति बदलकर गिनिए कि लूप बढ़ते या घटते हैं।","तार को हिलाने पर उसमें एक तरंग चलती है। बंधे सिरे पर तरंग लौट आती है। अब दो तरंगें विपरीत दिशाओं में चलकर आपस में मिलती हैं। सही गति पर यह मिली हुई तरंग चलना बंद कर एक स्थिर आकृति बना लेती है, जिसे अप्रगामी तरंग कहते हैं।","निस्पंद (नोड): जहाँ दोनों तरंगें हमेशा एक-दूसरे को काट देती हैं। तार स्थिर रहता है। दोनों बंधे सिरे निस्पंद हैं।","प्रस्पंद (एंटीनोड): जहाँ दोनों तरंगें हमेशा जुड़ती हैं। हर लूप के बीच में तार सबसे ज़्यादा झूलता है।","कुछ ही आकृतियाँ क्यों? दोनों सिरे बंधे हैं, इसलिए दोनों निस्पंद होने चाहिए। यह तभी संभव है जब तार की लंबाई अर्ध-तरंगों की पूर्ण संख्या के बराबर हो। इसलिए साफ़ लूप कुछ ही आवृत्तियों पर बनते हैं, और बीच की गतियाँ बेतरतीब दिखती हैं।","लूपों की संख्या कौन तय करता है? कंपन की आवृत्ति, तार का पदार्थ और वह कितना कसा है। जिज्ञासुओं के लिए: f = n·v / 2L, जहाँ v = √(T/μ)। ज़्यादा कसा तार (T↑) या बड़ा n ऊँची आवृत्ति देता है।","रोज़मर्रा में: गिटार और वायलिन में तार पर उँगली दबाने से निस्पंद खिसकते हैं और स्वर बदलता है। बाँसुरी और ऑर्गन पाइप में नली के भीतर की हवा में अप्रगामी तरंगें बनती हैं। माइक्रोवेव ओवन के गर्म और ठंडे हिस्से निस्पंद और प्रस्पंद से बनते हैं।","याद रखिए: तार में दो तरंगें मिलें तो स्थिर बिंदु (निस्पंद) और बड़े झूले (प्रस्पंद) बनते हैं। लूपों की संख्या आवृत्ति, पदार्थ और तनाव पर निर्भर करती है।"]};
+/* ===== EDIT HERE: external links ===== */
+const LINKS=[
+ ['https://en.wikipedia.org/wiki/Standing_wave',{en:'Standing wave',ml:'നിശ്ചല തരംഗം',hi:'अप्रगामी तरंग'}],
+ ['https://en.wikipedia.org/wiki/Node_(physics)',{en:'Node (physics)',ml:'നോഡ് (ഭൗതികശാസ്ത്രം)',hi:'निस्पंद बिंदु'}],
+ ['https://en.wikipedia.org/wiki/Vibrating_string',{en:'Vibrating string',ml:'കമ്പനം ചെയ്യുന്ന ചരട്',hi:'कंपित तार'}],
+ ['https://en.wikipedia.org/wiki/Resonance',{en:'Resonance',ml:'അനുനാദം',hi:'अनुनाद'}]];
+TX.v={h:{en:'Voice',ml:'ശബ്ദം',hi:'आवाज़'},
+ f:{en:'Female',ml:'സ്ത്രീ ശബ്ദം',hi:'महिला'},m:{en:'Male',ml:'പുരുഷ ശബ്ദം',hi:'पुरुष'},s:{en:'Standard',ml:'സാധാരണ',hi:'सामान्य'},
+ listen:{en:'🔊 Listen to explanation',ml:'🔊 വിശദീകരണം കേൾക്കുക',hi:'🔊 व्याख्या सुनें'},stop:{en:'⏹ Stop listening',ml:'⏹ നിർത്തുക',hi:'⏹ रोकें'},
+ mute:{en:'🔇 Mute narration',ml:'🔇 ശബ്ദം ഓഫ്',hi:'🔇 आवाज़ बंद'},unmute:{en:'🔊 Unmute narration',ml:'🔊 ശബ്ദം ഓൺ',hi:'🔊 आवाज़ चालू'},
+ note:{en:'Voices come from your phone, so choices vary by device.',ml:'ശബ്ദങ്ങൾ ഫോണിൽ നിന്നാണ്; ഉപകരണം അനുസരിച്ച് മാറാം.',hi:'आवाज़ें फ़ोन से आती हैं, इसलिए डिवाइस के अनुसार बदल सकती हैं।'}};
+TX.v.mu={en:'Mute',ml:'ശബ്ദം ഇല്ല',hi:'म्यूट'};TX.v.o={en:'Old (elder)',ml:'വൃദ്ധ ശബ്ദം',hi:'बुज़ुर्ग'};TX.v.c={en:'Child',ml:'കുട്ടിയുടെ ശബ്ദം',hi:'बच्चा'};
+TX.v.all={en:'All voices on this device',ml:'ഈ ഉപകരണത്തിലെ എല്ലാ ശബ്ദങ്ങളും',hi:'इस डिवाइस की सभी आवाज़ें'};
+TX.v.demo={en:'Hello! I am your guide.',ml:'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ വഴികാട്ടിയാണ്.',hi:'नमस्ते! मैं आपका गाइड हूँ।'};
+TX.ntf={h:{en:'Your animation is ready',ml:'ആനിമേഷൻ തയ്യാർ',hi:'आपका एनिमेशन तैयार है'},
+  t:{en:'Press Play to watch the string form steady loops and hear the story. You can also tap here.',ml:'ചരട് നിശ്ചല വളയങ്ങളായി മാറുന്നത് കാണാനും കഥ കേൾക്കാനും Play അമർത്തുക. ഇവിടെ തൊട്ടാലും മതി.',hi:'तार को स्थिर लूप बनाते देखने और कहानी सुनने के लिए Play दबाइए। यहाँ टैप भी कर सकते हैं।'}};
+TX.hint={en:'Tap the buttons below to explore',ml:'താഴെയുള്ള ബട്ടണുകൾ അമർത്തി കാണാം',hi:'नीचे के बटन दबाकर देखें'};
+TX.greet={w:{en:['Good morning','Good afternoon','Good evening'],ml:['സുപ്രഭാതം','ശുഭ ഉച്ച','ശുഭ സായാഹ്നം'],hi:['सुप्रभात','शुभ दोपहर','शुभ संध्या']},
+  t:{en:'Welcome to the Regional Science Centre and Planetarium, Calicut. Let us explore Nodes and Antinodes.',ml:'കോഴിക്കോട് റീജിയണൽ സയൻസ് സെന്റർ ആൻഡ് പ്ലാനറ്റേറിയത്തിലേക്ക് സ്വാഗതം. നമുക്ക് നോഡുകളും ആന്റിനോഡുകളും കാണാം.',hi:'कालीकट के क्षेत्रीय विज्ञान केंद्र एवं तारामंडल में आपका स्वागत है। आइए निस्पंद और प्रस्पंद देखें।'}};
+/* voice types. Male (default) = mature, medium pitch. If the phone has no matching voice, the same voice is pitch/speed-shifted. */
+const FEM=/female|zira|heera|veena|lekha|neerja|swara|samantha|susan|hazel|priya|kalpana|aditi|karen|tessa|moira|fiona|victoria|sonia|libby|jenny|aria|emma|ava/i,
+MAL=/\bmale\b|ravi|hemant|prabhat|rishi|madhur|david|mark|george|james|daniel|alex|fred|guy|brian|eric|thomas|oliver|arthur|ryan|gordon/i;
+const PROF={male:{re:MAL,hit:{p:.95,r:.95},raw:{p:.85,r:.95}},female:{re:FEM,hit:{p:1,r:1},raw:{p:1.25,r:1}},
+ old:{re:MAL,hit:{p:.85,r:.8},raw:{p:.7,r:.8}},child:{re:FEM,hit:{p:1.5,r:1.05},raw:{p:1.8,r:1.08}},std:{re:null,hit:{p:1,r:1},raw:{p:1,r:1}}};
+function getVoice(l){const ss=window.speechSynthesis,all=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(l)):[],t=LS.getItem('vtype')||'male';
+ if(t=='mute')return{mute:1};
+ if(t.startsWith('v:')){let n='';try{n=decodeURIComponent(t.slice(2))}catch(e){}const h=all.find(x=>x.name==n);if(h)return{v:h,p:1,r:1}}
+ const f=PROF[t]||PROF.male,hit=f.re?all.find(x=>f.re.test(x.name)):null,z=hit?f.hit:f.raw;
+ return{v:hit||all[0],p:z.p,r:z.r}}
+function utt(txt,l){l=l||window.LANG;const g=getVoice(l);if(g.mute||!window.speechSynthesis)return null;
+ const u=new SpeechSynthesisUtterance(txt);u.lang={en:'en-IN',ml:'ml-IN',hi:'hi-IN'}[l];if(g.v)u.voice=g.v;u.pitch=g.p;u.rate=g.r;return u}
+</script></head><body>
+<div class="app">
+ <div id="intro"><svg viewBox="0 0 100 100" fill="none" stroke-width="3"><path d="M8 50 Q29 6 50 50 T92 50" stroke="#f2a65a"/><path d="M8 50 Q29 94 50 50 T92 50" stroke="#8fc7e0"/><circle cx="8" cy="50" r="4" fill="#e8f1f5" stroke="none"/><circle cx="50" cy="50" r="4" fill="#e8f1f5" stroke="none"/><circle cx="92" cy="50" r="4" fill="#e8f1f5" stroke="none"/></svg>
+  <h1>Regional Science Centre &amp; Planetarium</h1><div class="c">Calicut</div>
+  <div class="ask">Choose your language<br>ഭാഷ തിരഞ്ഞെടുക്കുക · भाषा चुनें</div>
+  <button class="lang" data-l="en">English <small>EN</small></button><button class="lang" data-l="ml">മലയാളം <small>ML</small></button><button class="lang" data-l="hi">हिन्दी <small>HI</small></button></div>
+ <div class="bar">
+   <span class="code">EXHIBIT F06</span>
+  <div style="display:flex;gap:8px"><button class="pill" id="lg" aria-label="Language"></button><div style="position:relative"><button class="pill" id="vb" aria-label="Voice">🔊</button><div class="menu" id="vm"></div></div></div>
+ </div>
+ <main>
+  <div class="title"><h1 id="nm"></h1><p id="tg"></p></div>
+  <div class="vp"><div class="track" id="trk"><section class="pane" id="p0"><div class="txt" id="ex"></div></section>
+  <section class="pane" id="p1">
+   <div class="v"><canvas id="c"></canvas><div id="lb"></div></div>
+   <div id="cap"></div>
+   <div class="r" style="justify-content:center;margin:0 0 14px"><b id="lpl"></b><button class="pill" id="lm" aria-label="Fewer loops">−</button><b id="lv" style="min-width:24px;text-align:center;font-size:20px">1</b><button class="pill" id="lpp" aria-label="More loops">+</button></div>
+   <div class="r"><button id="pp">▶ Play</button><input id="sk" type="range" min="0" max="1200" value="0" aria-label="Seek"><small id="tm">0:00 / 2:00</small></div>
+   <small id="vs" style="display:block;margin-top:8px"></small>
+ <small id="cn" style="display:block;margin-top:8px"></small>
+  </section>
+  <section class="pane" id="p2"><div id="lk"></div></section>
+ </div></div></main>
+ <div class="hint" id="hint"></div><div class="toast" id="toast"></div>
+  <div class="notif" id="notif" role="status" aria-live="polite"><span class="bell">🔔</span><div><b id="ntfh"></b><small id="ntft"></small></div></div>
+ <nav id="nav"><button data-t="0" class="on"><span>📖</span><i></i></button><button data-t="1"><span>▶️</span><i></i></button><button data-t="2"><span>🔗</span><i></i></button></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const S=[
+{t:0,en:"Welcome to Nodes and Antinodes. A string is stretched inside a glass case. Press the switch and watch it shake.",ml:"നോഡുകളിലേക്കും ആന്റിനോഡുകളിലേക്കും സ്വാഗതം. ഗ്ലാസ് കെയ്സിനുള്ളിൽ ഒരു ചരട് വലിച്ചുകെട്ടിയിരിക്കുന്നു. സ്വിച്ച് അമർത്തി അത് കമ്പനം ചെയ്യുന്നത് നോക്കുക.",hi:"निस्पंद और प्रस्पंद में आपका स्वागत है। काँच के केस के अंदर एक तार तना हुआ है। स्विच दबाइए और उसे काँपते देखिए।"},
+{t:12,en:"At first the vibration is just a blur. The string shakes in a messy way, with no clear pattern.",ml:"ആദ്യം കമ്പനം അവ്യക്തമായ ചലനം മാത്രമാണ്. ചരട് വ്യക്തമായ രൂപമില്ലാതെ കുഴഞ്ഞുമറിഞ്ഞ് ആടുന്നു.",hi:"शुरू में कंपन बस एक धुंधली हलचल है। तार बिना किसी साफ़ आकृति के बेतरतीब काँपता है।"},
+{t:26,en:"At the right speed, the string suddenly splits into a neat, steady loop. It looks still, though it is vibrating.",ml:"ശരിയായ വേഗത്തിൽ ചരട് പെട്ടെന്ന് ഭംഗിയുള്ള നിശ്ചലമായി തോന്നുന്ന ഒരു വളയമായി മാറുന്നു. കമ്പനം ചെയ്യുന്നുണ്ടെങ്കിലും രൂപം നിശ്ചലമായി തോന്നും.",hi:"सही गति पर तार अचानक एक साफ़, स्थिर-सा लूप बना लेता है। कंपन होते हुए भी आकृति ठहरी-सी दिखती है।"},
+{t:42,en:"Shaking the string sends a wave along it, and at the fixed end it bounces back. Two waves travelling in opposite directions combine into a standing wave. The two coloured waves add up to give the shape of the string.",ml:"ചരട് കുലുക്കുമ്പോൾ അതിലൂടെ ഒരു തരംഗം സഞ്ചരിക്കുകയും ഉറപ്പിച്ച അറ്റത്ത് തട്ടിത്തിരിച്ചു വരികയും ചെയ്യുന്നു. എതിർദിശകളിലുള്ള രണ്ട് തരംഗങ്ങൾ കൂടിച്ചേർന്ന് നിശ്ചല തരംഗമാകുന്നു. നിറമുള്ള രണ്ട് തരംഗങ്ങളും ചേർന്നാണ് ചരടിന്റെ രൂപം ഉണ്ടാകുന്നത്.",hi:"तार को हिलाने पर उसमें तरंग चलती है और बंधे सिरे से लौट आती है। विपरीत दिशाओं में चलती दो तरंगें मिलकर अप्रगामी तरंग बनाती हैं। दोनों रंगीन तरंगों का जोड़ ही तार की आकृति है।"},
+{t:58,en:"Where the two waves always cancel, the string stays still. This is a node, and both fixed ends are nodes. Where they always add up, the string swings the most. This is an antinode, at the middle of each loop.",ml:"രണ്ട് തരംഗങ്ങളും എപ്പോഴും റദ്ദാക്കുന്നിടത്ത് ചരട് അനങ്ങില്ല; ഇതാണ് നോഡ്. ഉറപ്പിച്ച രണ്ട് അറ്റങ്ങളും നോഡുകളാണ്. തരംഗങ്ങൾ എപ്പോഴും കൂടിച്ചേരുന്നിടത്ത് ചരട് ഏറ്റവും കൂടുതൽ ആടുന്നു; ഇതാണ് ആന്റിനോഡ്, ഓരോ വളയത്തിന്റെയും നടുവിൽ.",hi:"जहाँ दोनों तरंगें हमेशा एक-दूसरे को काटती हैं, वहाँ तार स्थिर रहता है। यह निस्पंद (नोड) है, और दोनों बंधे सिरे निस्पंद हैं। जहाँ वे हमेशा जुड़ती हैं, वहाँ तार सबसे ज़्यादा झूलता है। यह प्रस्पंद (एंटीनोड) है, हर लूप के बीच में।"},
+{t:74,en:"Raise the vibration frequency and the number of loops grows. Clean loops appear only at certain frequencies, and in between, the motion looks messy. That is because both fixed ends must be nodes, so the string must fit a whole number of half-waves.",ml:"കമ്പന ആവൃത്തി കൂട്ടിയാൽ വളയങ്ങളുടെ എണ്ണം കൂടും. വ്യക്തമായ വളയങ്ങൾ ചില ആവൃത്തികളിൽ മാത്രം; ഇടയിലെ വേഗങ്ങളിൽ ചലനം കുഴഞ്ഞുമറിഞ്ഞിരിക്കും. രണ്ട് അറ്റങ്ങളും നോഡുകളായിരിക്കണം എന്നതിനാൽ ചരടിന്റെ നീളം അർദ്ധതരംഗങ്ങളുടെ പൂർണ്ണസംഖ്യയ്ക്ക് തുല്യമാകണം.",hi:"कंपन की आवृत्ति बढ़ाइए तो लूपों की संख्या बढ़ती है। साफ़ लूप सिर्फ़ कुछ आवृत्तियों पर बनते हैं, बीच की गतियों पर हलचल बेतरतीब दिखती है। कारण यह है कि दोनों बंधे सिरे निस्पंद होने चाहिए, इसलिए तार की लंबाई अर्ध-तरंगों की पूर्ण संख्या के बराबर होनी चाहिए।"},
+{t:92,en:"The number of loops depends on the frequency, the string's material and how tightly it is stretched. A tighter string needs a higher frequency for the same number of loops.",ml:"വളയങ്ങളുടെ എണ്ണം കമ്പന ആവൃത്തി, ചരടിന്റെ നിർമ്മാണവസ്തു, അത് എത്ര മുറുക്കിയിരിക്കുന്നു എന്നിവയെ ആശ്രയിക്കുന്നു. ചരട് കൂടുതൽ മുറുകിയാൽ അതേ എണ്ണം വളയങ്ങൾക്ക് ഉയർന്ന ആവൃത്തി വേണം.",hi:"लूपों की संख्या आवृत्ति, तार के पदार्थ और उसके कसाव पर निर्भर करती है। तार ज़्यादा कसा हो तो उतने ही लूपों के लिए ज़्यादा आवृत्ति चाहिए।"},
+{t:106,en:"You see this in everyday life. Pressing a guitar string moves its nodes and changes the note. Air in flutes and organ pipes forms standing waves, and the hot and cold spots in a microwave oven come from nodes and antinodes.",ml:"ദൈനംദിന ജീവിതത്തിലും ഇത് കാണാം. ഗിറ്റാർ ചരടിൽ വിരൽ അമർത്തുമ്പോൾ നോഡുകളുടെ സ്ഥാനം മാറി സ്വരം മാറുന്നു. പുല്ലാങ്കുഴലിലും ഓർഗൻ പൈപ്പിലും വായുവിൽ നിശ്ചല തരംഗങ്ങൾ രൂപപ്പെടുന്നു. മൈക്രോവേവ് ഓവനിലെ ചൂടും തണുപ്പുമുള്ള ഭാഗങ്ങൾ നോഡുകളും ആന്റിനോഡുകളുംകൊണ്ടാണ്.",hi:"रोज़मर्रा में भी यह दिखता है। गिटार के तार पर उँगली दबाने से निस्पंद खिसकते हैं और स्वर बदलता है। बाँसुरी और ऑर्गन पाइप की हवा में अप्रगामी तरंगें बनती हैं, और माइक्रोवेव ओवन के गर्म-ठंडे हिस्से निस्पंद और प्रस्पंद से बनते हैं।"}];
+const LB={en:["Nodes and Antinodes","A messy blur","One steady loop","Two waves → one standing wave","🔵 Node (still) · 🟠 Antinode (swings most)","More frequency → more loops","Tighter string → higher frequency","Pressing the string moves the nodes"],ml:["നോഡുകളും ആന്റിനോഡുകളും","അവ്യക്തമായ ചലനം","ഒരു നിശ്ചല വളയം","രണ്ട് തരംഗങ്ങൾ → നിശ്ചല തരംഗം","🔵 നോഡ് (അനങ്ങില്ല) · 🟠 ആന്റിനോഡ് (ഏറ്റവും ആടും)","ആവൃത്തി കൂടിയാൽ വളയങ്ങൾ കൂടും","ചരട് മുറുകിയാൽ → ആവൃത്തി കൂടും","വിരൽ അമർത്തുമ്പോൾ നോഡുകൾ മാറുന്നു"],hi:["निस्पंद और प्रस्पंद","धुंधली हलचल","एक स्थिर लूप","दो तरंगें → अप्रगामी तरंग","🔵 निस्पंद (स्थिर) · 🟠 प्रस्पंद (सबसे ज़्यादा झूले)","आवृत्ति बढ़ी → लूप बढ़े","तार कसा → आवृत्ति ऊँची","उँगली दबाने से निस्पंद खिसकते हैं"]};
+const LW={en:'loops',ml:'വളയങ്ങൾ',hi:'लूप'},LPT={en:'Try it · Loops:',ml:'പരീക്ഷിക്കൂ · വളയങ്ങൾ:',hi:'आज़माइए · लूप:'},CN={en:'A simulation of the exhibit. More loops means a higher vibration frequency.',ml:'എക്സിബിറ്റിന്റെ അനുകരണം. വളയങ്ങൾ കൂടുതൽ എന്നാൽ കമ്പനആവൃത്തി കൂടുതൽ.',hi:'प्रदर्शनी का अनुकरण। ज़्यादा लूप यानी कंपन की ऊँची आवृत्ति।'};
+const T=120,cv=document.getElementById('c'),$=id=>document.getElementById(id),ez=x=>Math.max(0,Math.min(1,x));
+let t=0,play=false,lang=window.LANG,voice=true,cur=-1,last=0,ov=null,curN=1,ph=0,lw=performance.now()/1000;
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene();sc.background=new THREE.Color(0x070f18);
+const cam=new THREE.PerspectiveCamera(45,16/9,.1,100);cam.position.set(0,.3,12.5);cam.lookAt(0,0,0);
+const NP=301,HL=6,A0=1.8,XX=s=>-HL+2*HL*s;
+function mk(col,sz){const g=new THREE.BufferGeometry(),a=new Float32Array(NP*3);for(let j=0;j<NP;j++)a[j*3]=XX(j/(NP-1));g.setAttribute('position',new THREE.BufferAttribute(a,3));const p=new THREE.Points(g,new THREE.PointsMaterial({color:col,size:sz}));p.frustumCulled=false;sc.add(p);return p}
+const gR=mk(0x5ab0ff,.1),gL=mk(0xff6b5e,.1),mP=mk(0xffe2b0,.14);
+const box=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(13,5.4,2.4)),new THREE.LineBasicMaterial({color:0x2b5870}));sc.add(box);
+[-1,1].forEach(d=>{const k=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,1.2,14),new THREE.MeshBasicMaterial({color:0x99a4ad}));k.position.x=d*(HL+.1);sc.add(k)});
+const sp=(c,r)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),new THREE.MeshBasicMaterial({color:c}));m.visible=false;sc.add(m);return m};
+const NM=[...Array(9)].map(()=>sp(0x5ad0ff,.2)),AM=[...Array(8)].map(()=>sp(0xf2a65a,.22)),FG=sp(0xff6b5e,.24);
+function draw(){const i=S.findLastIndex(s=>s.t<=t),lt=t-S[i].t;let x=1,m=0,amp=1,s0=0;
+if(ov!=null)x=ov;else if(i==0)amp=0;else if(i==1){x=1.5;m=1;amp=ez(lt/2)}else if(i==2)m=1-ez(lt/4);else if(i==3)x=2;else if(i==4||i==6)x=3;else if(i==5){x=1+ez((lt-2)/1.6)+ez((lt-6)/1.6)+ez((lt-10)/1.6)+ez((lt-14)/1.6);const d=x-Math.round(x);m=1-Math.exp(-(d/.2)*(d/.2))}else if(i==7)s0=.4*ez((lt-2)/3);
+const n=Math.max(1,Math.round(x));curN=n;
+const now=performance.now()/1000,dtw=Math.min(.05,now-lw);lw=now;ph+=2*Math.PI*(.45+.3*x)/(1-s0)*dtw;
+const P=mP.geometry.attributes.position.array,cs=Math.cos(ph),gv=i==3&&ov==null,gr=gR.geometry.attributes.position.array,gl=gL.geometry.attributes.position.array;
+for(let j=0;j<NP;j++){const s=j/(NP-1);let c=0;if(s>=s0)c=Math.sin(n*Math.PI*(s-s0)/(1-s0))*cs;let u=(1-m)*c;
+ if(m>0){const e=Math.pow(Math.sin(Math.PI*s),.7);u+=m*.7*e*(.5*Math.sin(2.9*Math.PI*s+.4)*Math.cos(1.33*ph)+.4*Math.sin(4.7*Math.PI*s)*Math.cos(1.82*ph+1))}
+ P[j*3+1]=A0*amp*u;if(gv){gr[j*3+1]=3.1+.5*A0*Math.sin(n*Math.PI*s-ph);gl[j*3+1]=-3.1+.5*A0*Math.sin(n*Math.PI*s+ph)}}
+mP.geometry.attributes.position.needsUpdate=true;gR.geometry.attributes.position.needsUpdate=gL.geometry.attributes.position.needsUpdate=true;
+gR.visible=gL.visible=gv;box.visible=!gv;
+const mk_=m<.4&&s0==0&&amp>0&&(ov!=null||i==4||i==5||i==6);
+NM.forEach((o,k)=>{o.visible=mk_&&k<=n;if(o.visible)o.position.set(XX(k/n),0,0)});
+AM.forEach((o,k)=>{o.visible=mk_&&k<n;if(o.visible)o.position.set(XX((k+.5)/n),(k%2?-1:1)*A0*cs*(1-m),0)});
+FG.visible=i==7&&ov==null&&s0>.01;FG.position.set(XX(s0),0,0);
+let lb=ov!=null?LB[lang][4]:LB[lang][i];if(ov!=null||i==5)lb+=m<.5?' · '+LW[lang]+' '+n:'';if(i==6&&ov==null)lb+=' (×'+Math.sqrt(1+1.25*ez(lt/10)).toFixed(2)+')';
+$('lb').textContent=lb;$('cn').textContent=CN[lang];$('lpl').textContent=LPT[lang];$('lv').textContent=ov!=null?ov:n;R.render(sc,cam)}
+function size(){const w=cv.parentElement.clientWidth;R.setSize(w,w*9/16,false);cv.style.height=(w*9/16)+'px'}window.sz=size;size();addEventListener('resize',size);
+$('lm').onclick=()=>{ov=Math.max(1,(ov!=null?ov:curN)-1)};$('lpp').onclick=()=>{ov=Math.min(8,(ov!=null?ov:curN)+1)};
+$('pp').addEventListener('click',()=>{ov=null});$('sk').addEventListener('input',()=>{ov=null});
+function ui(){const i=S.findLastIndex(s=>s.t<=t);$('cap').textContent=S[i][lang];$('sk').value=t*10;const f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');$('tm').textContent=f(t)+' / 2:00';if(i!=cur){cur=i;say()}}
+function say(){const ss=window.speechSynthesis;if(!ss){$('vs').textContent=TX.nospeech[lang];return}ss.cancel();if(!voice||!play)return;const gv=getVoice(lang);if(gv.mute)return;$('vs').textContent=(!gv.v&&lang!='en')?TX.novoice[lang]:'';const u=utt(S[cur][lang],lang);ss.resume();ss.speak(u)}
+function loop(n){const dt=(n-last)/1000;last=n;if(play){t+=Math.min(dt,.1);if(t>=T){t=T-.001;play=false;$('pp').textContent='↻ Replay';window.speechSynthesis&&speechSynthesis.cancel()}}draw();ui();requestAnimationFrame(loop)}
+$('pp').onclick=()=>{if(t>=T-.01)t=0,cur=-1;play=!play;$('pp').textContent=play?'⏸ Pause':'▶ Play';if(play)say();else if(window.speechSynthesis)speechSynthesis.cancel()};
+$('sk').oninput=e=>{t=e.target.value/10;cur=-1};
+window.setVidLang=l=>{lang=l;say()};
+window.setVoice=v=>{voice=v;say()};window.pauseVid=()=>{if(play)$('pp').click()};
+requestAnimationFrame(n=>{last=n;loop(n)});
+
+</script>
+<script>
+const $$=id=>document.getElementById(id);let tab=0,voiceOn=true,reading=false,fadeT;
+const ORDER=['en','ml','hi'];
+function paint(){
+ document.documentElement.lang=LANG;$$('hint').textContent=TX.hint[LANG]+' ▾';
+ $$('nm').textContent=TX.name[LANG];$$('tg').textContent=TX.tag[LANG];$$('lg').textContent=TX.lg[LANG];
+ $$('ex').innerHTML=EXP[LANG].map((p,i,a)=>i==a.length-1?`<div class="try">${p}</div>`:`<p>${p}</p>`).join('');
+ $$('lk').innerHTML=LINKS.map(l=>`<a class="lk" href="${l[0]}" target="_blank" rel="noopener"><div>${l[1][LANG]}<small>${TX.more[LANG]}</small></div><span>↗</span></a>`).join('');
+ document.querySelectorAll('#nav i').forEach((e,i)=>e.textContent=TX.tabs[LANG][i]);
+ window.setVidLang(LANG);icon();vmenu()}
+function stopRead(){reading=false;if(window.vmenu)vmenu();speechSynthesis&&speechSynthesis.cancel();$$('vb').classList.remove('talk')}
+$$('lg').onclick=()=>{LANG=ORDER[(ORDER.indexOf(LANG)+1)%3];LS.setItem('lang',LANG);stopRead();paint()};
+function goTab(i){tab=i;stopRead();hideNote();if(i==1)clearPing();if(i!=1)window.pauseVid();
+ document.querySelectorAll('nav button').forEach((x,k)=>x.classList.toggle('on',k==i));
+ $$('trk').style.transform=`translateX(${-i*33.3333}%)`;if(i==1)window.sz();vmenu()}
+document.getElementById('nav').onclick=e=>{const b=e.target.closest('button');if(b)goTab(+b.dataset.t)};
+/* swipe between the three views */
+let sx=null;addEventListener('touchstart',e=>{sx=e.target.closest('input,#vm')?null:e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(sx==null)return;const d=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(d)>70)goTab(Math.max(0,Math.min(2,tab+(d<0?1:-1))))},{passive:true});
+/* intro -> language -> fullscreen + greeting -> slow auto tour of the 3 views until the visitor touches the screen */
+let tourT=null;const APP=document.querySelector('.app');
+/* after the welcome voice ends: slide to the Video button, badge it, show a friendly spoken notification */
+let noteT=null;
+function clearPing(){document.querySelectorAll('nav button.ping').forEach(x=>x.classList.remove('ping'))}
+function hideNote(){clearTimeout(noteT);$$('notif').classList.remove('show')}
+function guide(){goTab(1);setTimeout(()=>{if(tab!=1)return;
+  document.querySelectorAll('nav button')[1].classList.add('ping');
+  $$('ntfh').textContent=TX.ntf.h[LANG];$$('ntft').textContent=TX.ntf.t[LANG];$$('notif').classList.add('show');
+  const ss=window.speechSynthesis,u=(ss&&voiceOn)?utt(TX.ntf.h[LANG]+'. '+TX.ntf.t[LANG]):null;
+  noteT=setTimeout(hideNote,u?20000:8000);
+  if(u){u.onend=()=>{clearTimeout(noteT);noteT=setTimeout(hideNote,1500)};ss.cancel();ss.speak(u)}},1300)}
+$$('notif').onclick=()=>{const ss=window.speechSynthesis;ss&&ss.cancel();hideNote();clearPing();if(!play)$('pp').click()};
+$$('pp').addEventListener('click',()=>{clearPing();hideNote()});
+function tour(){stopTour();APP.classList.add('tour');tourT=setInterval(()=>goTab((tab+1)%3),3500)}
+function stopTour(){clearInterval(tourT);tourT=null;APP.classList.remove('tour')}
+addEventListener('pointerdown',()=>{if(tourT)stopTour()},{capture:true});
+function greet(cb){let fin=false;const go=()=>{if(!fin){fin=true;cb()}};setTimeout(go,16000);
+ const h=new Date().getHours(),k=h<12?0:h<17?1:2,txt=TX.greet.w[LANG][k]+'! '+TX.greet.t[LANG],tt=$$('toast');
+ tt.textContent=txt;tt.classList.add('show');setTimeout(()=>tt.classList.remove('show'),7000);
+ const ss=window.speechSynthesis,u=(ss&&voiceOn)?utt(txt):null;if(!u){setTimeout(go,2500);return}
+  u.onend=()=>setTimeout(go,600);u.onerror=go;ss.cancel();ss.speak(u)}
+document.querySelectorAll('.lang').forEach(b=>b.onclick=()=>{LANG=b.dataset.l;LS.setItem('lang',LANG);paint();
+ const d=document.documentElement;if(d.requestFullscreen)d.requestFullscreen().catch(()=>{});
+ $$('intro').classList.add('out');greet(guide)});
+/* voice button: reads the explanation aloud, or mutes/unmutes the video narration. It fades when idle. */
+function startRead(){if(!window.speechSynthesis)return;stopRead();const u=utt(EXP[LANG].join(' '));if(!u)return;reading=true;$$('vb').classList.add('talk');vmenu();u.onend=stopRead;speechSynthesis.speak(u)}
+function icon(){$$('vb').textContent=(LS.getItem('vtype')=='mute'||!voiceOn)?'🔇':'🔊'}
+function vmenu(){const V=TX.v,t=LS.getItem('vtype')||'male',ic={mute:'🔇',male:'👨',female:'👩',old:'👴',child:'🧒',std:'🎙️'},nm={mute:V.mu,male:V.m,female:V.f,old:V.o,child:V.c,std:V.s},ss=window.speechSynthesis;
+ const act=t=='mute'?'':tab==0?(reading?V.stop:V.listen)[LANG]:tab==1?(voiceOn?V.mute:V.unmute)[LANG]:'';
+ const dv=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(LANG)):[],esc=x=>x.replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+ $$('vm').innerHTML=(act?`<button class="act" data-a="1">${act}</button>`:'')+`<h3>${V.h[LANG]}</h3>`+Object.keys(nm).map(k=>`<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">${ic[k]}</span>${nm[k][LANG]}</button>`).join('')
+ +(dv.length?`<h3>${V.all[LANG]}</h3>`+dv.map(x=>{const k='v:'+encodeURIComponent(x.name);return `<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">🔈</span>${esc(x.name)}</button>`}).join(''):'')
+ +`<small class="nt">${V.note[LANG]}</small>`}
+if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>vmenu();
+$$('vb').onclick=e=>{e.stopPropagation();wake();vmenu();$$('vm').classList.toggle('open')};
+$$('vm').onclick=e=>{const a=e.target.closest('[data-a]'),o=e.target.closest('[data-v]');
+ if(a){if(tab==0){reading?stopRead():startRead()}else if(tab==1){voiceOn=!voiceOn;window.setVoice(voiceOn)}icon();$$('vm').classList.remove('open')}
+ if(o){LS.setItem('vtype',o.dataset.v);icon();const ss=window.speechSynthesis;
+  if(o.dataset.v=='mute'){if(reading)stopRead();ss&&ss.cancel();if(tab==1)window.setVoice(voiceOn)}
+  else if(reading)startRead();else if(tab==1&&play)window.setVoice(voiceOn);
+  else{const u=utt(TX.v.demo[LANG]);if(u){ss.cancel();ss.speak(u)}}
+  vmenu()}};
+document.addEventListener('click',e=>{if(!e.target.closest('#vm'))$$('vm').classList.remove('open')});
+function wake(){$$('vb').classList.remove('fade');clearTimeout(fadeT);fadeT=setTimeout(()=>$$('vb').classList.add('fade'),3000)}
+['touchstart','pointerdown','scroll'].forEach(ev=>addEventListener(ev,wake,{capture:true,passive:true}));wake();
+paint();
+
+/* fullscreen button (hidden where the browser doesn't support it, e.g. iPhone Safari) */
+(function(){const d=document.documentElement;if(!d.requestFullscreen)return;
+ ['lg','lg2'].forEach(id=>{const l=document.getElementById(id);if(!l)return;const b=document.createElement('button');b.className='pill';b.textContent='⛶';b.setAttribute('aria-label','Fullscreen');
+  b.onclick=()=>document.fullscreenElement?document.exitFullscreen():d.requestFullscreen();l.parentNode.insertBefore(b,l)});
+ document.querySelectorAll('.bar>div[style]').forEach(x=>x.style.gap='8px')})();
+</script></body></html>
