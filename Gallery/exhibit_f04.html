@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RSCP, Calicut · 3D Zoetrope</title>
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="RSCP, Calicut"><meta name="apple-mobile-web-app-title" content="RSCP, Calicut"><meta name="theme-color" content="#0b1d2a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%230b1d2a%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2720%27 fill=%27%23f2a65a%27/%3E%3Cellipse cx=%2750%27 cy=%2750%27 rx=%2740%27 ry=%2712%27 fill=%27none%27 stroke=%27%238fc7e0%27 stroke-width=%275%27 transform=%27rotate(-22 50 50)%27/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0b1d2a;--pn:#14303f;--ln:#2b5870;--fg:#e8f1f5;--mut:#9db6c2;--ac:#f2a65a;--aq:#8fc7e0;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#050e15;color:var(--fg);font-family:system-ui,-apple-system,"Noto Sans Malayalam","Noto Sans Devanagari",sans-serif}
+button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+a{color:inherit}
+.app{position:relative;margin:0 auto;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;width:100vw;height:100dvh}
+@media(min-width:700px){.app{width:min(100vw,calc(100dvh*9/16));height:min(100dvh,calc(100vw*16/9));box-shadow:0 0 0 1px var(--ln),0 30px 80px #000;margin-top:max(0px,calc((100dvh - min(100dvh,calc(100vw*16/9)))/2))}}
+h1{font-family:"Iowan Old Style","Palatino Linotype",Georgia,"Noto Serif Malayalam","Noto Serif Devanagari",serif;font-weight:600;margin:0}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px;z-index:3}
+.pill{background:#14303fcc;border:1px solid var(--ln);border-radius:20px;height:38px;min-width:38px;padding:0 13px;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:opacity .6s,border-color .2s}
+.pill:active{border-color:var(--ac)}
+.code{font-weight:700;color:var(--ac);font-size:14px;letter-spacing:.04em}
+#vb{transition:opacity .8s}
+#vb.fade{opacity:.3}
+#vb.talk{border-color:var(--ac);animation:pu 1.4s infinite}
+@keyframes pu{50%{box-shadow:0 0 0 6px #f2a65a22}}
+main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.vp{flex:1;min-height:0;overflow:hidden}
+.track{display:flex;width:300%;height:100%;transition:transform .9s cubic-bezier(.45,.05,.2,1)}
+.pane{display:block;width:33.3333%;flex:none;height:100%;overflow-y:auto;padding:0 18px 18px}
+@keyframes in{from{opacity:0}}
+.title{padding:6px 18px 12px}
+.title h1{font-size:clamp(27px,8vw,36px);line-height:1.15}
+.title p{margin:8px 0 0;color:var(--aq);font-size:15.5px}
+.txt p{font-size:17px;line-height:1.65;margin:0 0 15px}
+.try{background:var(--pn);border-left:3px solid var(--ac);border-radius:0 12px 12px 0;padding:13px 15px;font-size:16px;line-height:1.55;margin-top:6px}
+.lk{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:15px 16px;margin-bottom:11px;text-decoration:none;font-size:16.5px}
+.lk small{display:block;color:var(--mut);font-size:12.5px;margin-top:3px}
+.lk:active{border-color:var(--ac)}
+/* video */
+canvas{width:100%;display:block;border-radius:12px;background:#0b1d2a}
+.v{position:relative}
+#lb{position:absolute;left:10px;right:10px;top:8px;text-align:center;font-weight:700;font-size:clamp(11px,3.2vw,15px);color:var(--ac);text-shadow:0 2px 8px #000;pointer-events:none}
+#cap{background:var(--pn);border-radius:12px;padding:14px;margin:12px 0;min-height:128px;font-size:16.5px;line-height:1.55}
+.r{display:flex;gap:10px;align-items:center}
+#pp{background:var(--ac);color:#1a1208;border-radius:22px;padding:10px 18px;font-weight:600;white-space:nowrap}
+input[type=range]{flex:1;min-width:0;accent-color:var(--ac)}
+small{color:var(--mut)}
+#tm{white-space:nowrap}
+/* bottom tabs */
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));background:#0a1823;border-top:1px solid var(--ln)}
+nav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;font-size:13.5px;color:var(--mut);border:1px solid transparent;transition:.2s}
+nav button span{font-size:21px;line-height:1}
+nav button.on{background:var(--pn);border-color:var(--ac);color:var(--fg)}
+.menu{max-height:min(75dvh,560px);overflow-y:auto;position:absolute;right:0;top:46px;width:min(260px,calc(100vw - 28px));background:#0f2635f2;backdrop-filter:blur(16px);border:1px solid var(--ln);border-radius:20px;padding:14px;box-shadow:0 20px 44px #000b;display:none;transform-origin:top right;z-index:10}
+.menu.open{display:block;animation:pop .22s}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(-6px)}}
+.menu h3{margin:4px 0 8px;font-size:13px;font-weight:500;color:var(--mut)}
+.act{width:100%;background:var(--ac);color:#1a1208;border-radius:14px;padding:12px;font-weight:600;margin-bottom:14px}
+.vo{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 8px;border-radius:12px;font-size:15.5px;transition:.2s}
+.vo .d{width:34px;height:34px;border-radius:50%;border:1px solid var(--ln);display:grid;place-items:center;font-size:17px;flex:none}
+.vo.sel{background:#8fc7e01a}.vo.sel .d{background:var(--ac);border-color:var(--ac)}
+.menu .nt{display:block;margin-top:8px;font-size:12px;line-height:1.4;color:var(--mut)}
+#intro{position:absolute;inset:0;z-index:30;background:radial-gradient(120% 80% at 50% 0,#14303f,var(--bg));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px;gap:8px;transition:opacity .9s}
+#intro.out{opacity:0;pointer-events:none}
+#intro svg{width:84px;height:84px;margin-bottom:10px}
+#intro h1{font-size:clamp(25px,7.4vw,34px);line-height:1.2}
+#intro .c{color:var(--aq);font-size:17px;margin:2px 0 26px;letter-spacing:.04em}
+#intro .ask{color:var(--mut);font-size:14px;margin-bottom:6px;line-height:1.6}
+.lang{width:100%;max-width:300px;display:flex;justify-content:space-between;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:16px 20px;font-size:20px;margin-top:8px;transition:.2s}
+.lang small{color:var(--mut);font-size:13px}
+.lang:active{border-color:var(--ac);transform:translateY(-1px)}
+.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(98px + env(safe-area-inset-bottom,0px));background:#f2a65a;color:#1a1208;font-weight:600;font-size:14px;padding:9px 16px;border-radius:20px;white-space:nowrap;z-index:5;opacity:0;pointer-events:none;transition:opacity .6s;animation:bob 1.6s infinite}
+.app.tour .hint{opacity:1}
+@keyframes bob{50%{margin-bottom:-6px}}
+.toast{position:absolute;left:16px;right:16px;top:calc(62px + env(safe-area-inset-top,0px));background:#14303ff2;border:1px solid var(--ln);border-radius:16px;padding:12px 16px;font-size:15.5px;line-height:1.45;z-index:6;opacity:0;transform:translateY(-8px);transition:.6s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:none}
+nav button{font-size:14.5px;padding:11px 4px}
+nav button span{font-size:23px}
+@keyframes nudge{50%{transform:translateY(-5px);box-shadow:0 8px 20px #f2a65a40}}
+.app.tour nav button.on{animation:nudge 1.6s infinite}
+/* friendly notification + badge on the Video button */
+.notif{position:absolute;left:14px;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,#1d4660f7,#14303ff7);border:1px solid var(--ac);border-radius:20px;padding:14px 16px;z-index:7;box-shadow:0 14px 34px #000a,0 0 0 0 #f2a65a55;opacity:0;transform:translateY(26px) scale(.96);transition:opacity .8s ease,transform .9s cubic-bezier(.2,.9,.3,1.15);pointer-events:none;cursor:pointer}
+.notif.show{opacity:1;transform:none;pointer-events:auto;animation:glow 2.2s 1s 2}
+.notif b{display:block;font-size:16px;color:var(--ac);margin-bottom:3px}
+.notif small{display:block;font-size:14.5px;line-height:1.45;color:var(--fg)}
+.bell{font-size:28px;flex:none;transform-origin:50% 0}
+.notif.show .bell{animation:ring 1.3s .7s 2}
+@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-14deg)}45%{transform:rotate(10deg)}60%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}}
+@keyframes glow{50%{box-shadow:0 14px 34px #000a,0 0 0 8px #f2a65a22}}
+nav button.ping::after{content:'';position:absolute;top:6px;left:calc(50% + 11px);width:12px;height:12px;border-radius:50%;background:#ff6b5e;border:2px solid #0a1823;animation:dot 1.5s infinite}
+@keyframes dot{0%{box-shadow:0 0 0 0 #ff6b5e99}70%,100%{box-shadow:0 0 0 9px #ff6b5e00}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script>
+const LS=(()=>{try{return localStorage}catch(e){return{getItem(){},setItem(){}}}})();
+const q=new URLSearchParams(location.search).get('lang');
+window.LANG=['en','ml','hi'].includes(q)?q:(LS.getItem('lang')||'en');
+if(q)LS.setItem('lang',q);
+const TX={
+ tabs:{en:['Explanation','Video','Links'],ml:['വിശദീകരണം','വീഡിയോ','ലിങ്കുകൾ'],hi:['व्याख्या','वीडियो','लिंक']},
+ name:{en:'3D Zoetrope',ml:'3D സോയെട്രോപ്പ്',hi:'3D ज़ोएट्रोप'},
+ tag:{en:'How do still images become motion?',ml:'നിശ്ചല ചിത്രങ്ങൾ എങ്ങനെ ചലനമാകുന്നു?',hi:'स्थिर चित्र गति कैसे बन जाते हैं?'},
+ more:{en:'Read more on Wikipedia',ml:'വിക്കിപീഡിയയിൽ കൂടുതൽ വായിക്കാം',hi:'विकिपीडिया पर और पढ़ें'},
+ lg:{en:'EN',ml:'മല',hi:'हि'},
+ novoice:{en:'',ml:'No Malayalam voice found on this device. Install Malayalam text-to-speech in phone settings, or use English.',hi:'No Hindi voice found on this device. Install Hindi text-to-speech in phone settings, or use English.'},
+ nospeech:{en:'This browser has no speech support.',ml:'This browser has no speech support.',hi:'This browser has no speech support.'}};
+/* ===== EDIT HERE: explanation text (paragraphs; the last one is the "try it" note) ===== */
+const EXP={
+ en:["Look at the horses on the disc. Press the switch to spin it and watch the horses seem to gallop forward, one after another.","How it works: a strobe light flashes at set intervals, freezing each horse’s position for an instant. Your brain blends these still images into smooth motion.","Persistence of vision: the eye holds an image for a fraction of a second.","Flash rate: each flash catches the next horse in the same spot, so each spot shows the next pose. Slightly slower or faster, and the herd drifts forward or backward.","Same idea in films, cartoons and animations.","Remember: nothing is moving on its own. It is an optical illusion made by light, timing and your brain."],
+ ml:["ഡിസ്കിലെ കുതിരകളെ നോക്കുക. സ്വിച്ച് അമർത്തി കറക്കുമ്പോൾ കുതിരകൾ ഒന്നിനു പിന്നാലെ ഒന്നായി ഓടുന്നതുപോലെ തോന്നും.","എങ്ങനെ: സ്ട്രോബ് ലൈറ്റ് നിശ്ചിത ഇടവേളകളിൽ മിന്നി ഓരോ കുതിരയുടെയും സ്ഥാനം ഒരു നിമിഷം നിശ്ചലമാക്കുന്നു. തലച്ചോർ ഈ ചിത്രങ്ങളെ തുടർച്ചയായ ചലനമായി ചേർക്കുന്നു.","ദൃഷ്ടിസ്ഥിരത: കണ്ണ് ഒരു ചിത്രത്തെ ഒരു നിമിഷത്തിന്റെ അംശം നിലനിർത്തുന്നു.","മിന്നൽ നിരക്ക്: ഓരോ മിന്നലിലും അതേ സ്ഥാനത്ത് അടുത്ത കുതിരയുടെ ഘട്ടം കാണും. അല്പം പതുക്കെയോ വേഗത്തിലോ ആയാൽ കുതിരകൾ മുന്നോട്ടോ പിന്നോട്ടോ നീങ്ങും.","ഇതേ തത്വം സിനിമ, കാർട്ടൂൺ, ആനിമേഷൻ എന്നിവയിലും.","ഓർക്കുക: ഒന്നും സ്വയം ചലിക്കുന്നില്ല. വെളിച്ചം, സമയം, തലച്ചോർ എന്നിവ ചേർന്ന ഒരു ദൃശ്യഭ്രമമാണിത്."],
+ hi:["चकती पर बने घोड़ों को देखिए। स्विच दबाकर उसे घुमाइए और देखिए कि घोड़े एक के पीछे एक आगे दौड़ते-से लगते हैं।","कैसे काम करता है: स्ट्रोब लाइट तय अंतराल पर चमककर हर घोड़े की स्थिति को पल भर के लिए रोक देती है। आपका दिमाग इन स्थिर चित्रों को मिलाकर सहज गति बना देता है।","दृष्टि स्थिरता: आँख किसी चित्र को सेकंड के एक छोटे-से अंश तक थामे रखती है।","चमक दर: हर चमक उसी जगह अगले घोड़े को पकड़ती है, इसलिए हर जगह अगली मुद्रा दिखती है। चमक दर थोड़ी धीमी या तेज़ हो, तो झुंड आगे या पीछे खिसकने लगता है।","यही विचार फ़िल्मों, कार्टूनों और एनिमेशन में भी है।","याद रखिए: कुछ भी अपने आप नहीं चल रहा। यह रोशनी, समय और आपके दिमाग से बना दृष्टि-भ्रम है।"]};
+/* ===== EDIT HERE: external links ===== */
+const LINKS=[
+ ['https://en.wikipedia.org/wiki/Zoetrope',{en:'Zoetrope',ml:'സോയെട്രോപ്പ്',hi:'ज़ोएट्रोप'}],
+ ['https://en.wikipedia.org/wiki/Persistence_of_vision',{en:'Persistence of vision',ml:'ദൃഷ്ടിസ്ഥിരത',hi:'दृष्टि स्थिरता'}],
+ ['https://en.wikipedia.org/wiki/Stroboscope',{en:'Stroboscope',ml:'സ്ട്രോബോസ്കോപ്പ്',hi:'स्ट्रोबोस्कोप'}],
+ ['https://en.wikipedia.org/wiki/Animation',{en:'Animation',ml:'ആനിമേഷൻ',hi:'एनिमेशन'}]];
+TX.v={h:{en:'Voice',ml:'ശബ്ദം',hi:'आवाज़'},
+ f:{en:'Female',ml:'സ്ത്രീ ശബ്ദം',hi:'महिला'},m:{en:'Male',ml:'പുരുഷ ശബ്ദം',hi:'पुरुष'},s:{en:'Standard',ml:'സാധാരണ',hi:'सामान्य'},
+ listen:{en:'🔊 Listen to explanation',ml:'🔊 വിശദീകരണം കേൾക്കുക',hi:'🔊 व्याख्या सुनें'},stop:{en:'⏹ Stop listening',ml:'⏹ നിർത്തുക',hi:'⏹ रोकें'},
+ mute:{en:'🔇 Mute narration',ml:'🔇 ശബ്ദം ഓഫ്',hi:'🔇 आवाज़ बंद'},unmute:{en:'🔊 Unmute narration',ml:'🔊 ശബ്ദം ഓൺ',hi:'🔊 आवाज़ चालू'},
+ note:{en:'Voices come from your phone, so choices vary by device.',ml:'ശബ്ദങ്ങൾ ഫോണിൽ നിന്നാണ്; ഉപകരണം അനുസരിച്ച് മാറാം.',hi:'आवाज़ें फ़ोन से आती हैं, इसलिए डिवाइस के अनुसार बदल सकती हैं।'}};
+TX.v.mu={en:'Mute',ml:'ശബ്ദം ഇല്ല',hi:'म्यूट'};TX.v.o={en:'Old (elder)',ml:'വൃദ്ധ ശബ്ദം',hi:'बुज़ुर्ग'};TX.v.c={en:'Child',ml:'കുട്ടിയുടെ ശബ്ദം',hi:'बच्चा'};
+TX.v.all={en:'All voices on this device',ml:'ഈ ഉപകരണത്തിലെ എല്ലാ ശബ്ദങ്ങളും',hi:'इस डिवाइस की सभी आवाज़ें'};
+TX.v.demo={en:'Hello! I am your guide.',ml:'നമസ്കാരം! ഞാൻ നിങ്ങളുടെ വഴികാട്ടിയാണ്.',hi:'नमस्ते! मैं आपका गाइड हूँ।'};
+TX.ntf={h:{en:'Your animation is ready',ml:'ആനിമേഷൻ തയ്യാർ',hi:'आपका एनिमेशन तैयार है'},
+  t:{en:'Press Play to watch the horses gallop under the strobe light and hear the story. You can also tap here.',ml:'കുതിരകൾ സ്ട്രോബ് വെളിച്ചത്തിൽ ഓടുന്നത് കാണാനും കഥ കേൾക്കാനും Play അമർത്തുക. ഇവിടെ തൊട്ടാലും മതി.',hi:'स्ट्रोब लाइट में घोड़ों को दौड़ते देखने और कहानी सुनने के लिए Play दबाइए। यहाँ टैप भी कर सकते हैं।'}};
+TX.hint={en:'Tap the buttons below to explore',ml:'താഴെയുള്ള ബട്ടണുകൾ അമർത്തി കാണാം',hi:'नीचे के बटन दबाकर देखें'};
+TX.greet={w:{en:['Good morning','Good afternoon','Good evening'],ml:['സുപ്രഭാതം','ശുഭ ഉച്ച','ശുഭ സായാഹ്നം'],hi:['सुप्रभात','शुभ दोपहर','शुभ संध्या']},
+  t:{en:'Welcome to the Regional Science Centre and Planetarium, Calicut. Let us explore the 3D Zoetrope.',ml:'കോഴിക്കോട് റീജിയണൽ സയൻസ് സെന്റർ ആൻഡ് പ്ലാനറ്റേറിയത്തിലേക്ക് സ്വാഗതം. നമുക്ക് 3D സോയെട്രോപ്പ് കാണാം.',hi:'कालीकट के क्षेत्रीय विज्ञान केंद्र एवं तारामंडल में आपका स्वागत है। आइए 3D ज़ोएट्रोप देखें।'}};
+/* voice types. Male (default) = mature, medium pitch. If the phone has no matching voice, the same voice is pitch/speed-shifted. */
+const FEM=/female|zira|heera|veena|lekha|neerja|swara|samantha|susan|hazel|priya|kalpana|aditi|karen|tessa|moira|fiona|victoria|sonia|libby|jenny|aria|emma|ava/i,
+MAL=/\bmale\b|ravi|hemant|prabhat|rishi|madhur|david|mark|george|james|daniel|alex|fred|guy|brian|eric|thomas|oliver|arthur|ryan|gordon/i;
+const PROF={male:{re:MAL,hit:{p:.95,r:.95},raw:{p:.85,r:.95}},female:{re:FEM,hit:{p:1,r:1},raw:{p:1.25,r:1}},
+ old:{re:MAL,hit:{p:.85,r:.8},raw:{p:.7,r:.8}},child:{re:FEM,hit:{p:1.5,r:1.05},raw:{p:1.8,r:1.08}},std:{re:null,hit:{p:1,r:1},raw:{p:1,r:1}}};
+function getVoice(l){const ss=window.speechSynthesis,all=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(l)):[],t=LS.getItem('vtype')||'male';
+ if(t=='mute')return{mute:1};
+ if(t.startsWith('v:')){let n='';try{n=decodeURIComponent(t.slice(2))}catch(e){}const h=all.find(x=>x.name==n);if(h)return{v:h,p:1,r:1}}
+ const f=PROF[t]||PROF.male,hit=f.re?all.find(x=>f.re.test(x.name)):null,z=hit?f.hit:f.raw;
+ return{v:hit||all[0],p:z.p,r:z.r}}
+function utt(txt,l){l=l||window.LANG;const g=getVoice(l);if(g.mute||!window.speechSynthesis)return null;
+ const u=new SpeechSynthesisUtterance(txt);u.lang={en:'en-IN',ml:'ml-IN',hi:'hi-IN'}[l];if(g.v)u.voice=g.v;u.pitch=g.p;u.rate=g.r;return u}
+</script></head><body>
+<div class="app">
+ <div id="intro"><svg viewBox="0 0 100 100" fill="none" stroke="#f2a65a" stroke-width="3"><circle cx="50" cy="50" r="34"/><ellipse cx="50" cy="50" rx="46" ry="14" transform="rotate(-22 50 50)" stroke="#8fc7e0"/><circle cx="50" cy="50" r="9" fill="#f2a65a" stroke="none"/></svg>
+  <h1>Regional Science Centre &amp; Planetarium</h1><div class="c">Calicut</div>
+  <div class="ask">Choose your language<br>ഭാഷ തിരഞ്ഞെടുക്കുക · भाषा चुनें</div>
+  <button class="lang" data-l="en">English <small>EN</small></button><button class="lang" data-l="ml">മലയാളം <small>ML</small></button><button class="lang" data-l="hi">हिन्दी <small>HI</small></button></div>
+ <div class="bar">
+   <span class="code">EXHIBIT F04</span>
+  <div style="display:flex;gap:8px"><button class="pill" id="lg" aria-label="Language"></button><div style="position:relative"><button class="pill" id="vb" aria-label="Voice">🔊</button><div class="menu" id="vm"></div></div></div>
+ </div>
+ <main>
+  <div class="title"><h1 id="nm"></h1><p id="tg"></p></div>
+  <div class="vp"><div class="track" id="trk"><section class="pane" id="p0"><div class="txt" id="ex"></div></section>
+  <section class="pane" id="p1">
+   <div class="v"><canvas id="c"></canvas><div id="lb"></div></div>
+   <div id="cap"></div>
+   <div class="r"><button id="pp">▶ Play</button><input id="sk" type="range" min="0" max="1200" value="0" aria-label="Seek"><small id="tm">0:00 / 2:00</small></div>
+   <small id="vs" style="display:block;margin-top:8px"></small>
+ <small style="display:block;margin-top:8px">Schematic 3D animation of a zoetrope.</small>
+  </section>
+  <section class="pane" id="p2"><div id="lk"></div></section>
+ </div></div></main>
+ <div class="hint" id="hint"></div><div class="toast" id="toast"></div>
+  <div class="notif" id="notif" role="status" aria-live="polite"><span class="bell">🔔</span><div><b id="ntfh"></b><small id="ntft"></small></div></div>
+ <nav id="nav"><button data-t="0" class="on"><span>📖</span><i></i></button><button data-t="1"><span>▶️</span><i></i></button><button data-t="2"><span>🔗</span><i></i></button></nav>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const S=[
+{t:0,en:"Welcome to the 3D Zoetrope. Look at the horses on the disc. Press the switch to spin it.",ml:"3D സോയെട്രോപ്പിലേക്ക് സ്വാഗതം. ഡിസ്കിലെ കുതിരകളെ നോക്കുക. സ്വിച്ച് അമർത്തി കറക്കുക.",hi:"3D ज़ोएट्रोप में आपका स्वागत है। चकती पर बने घोड़ों को देखिए। स्विच दबाकर उसे घुमाइए।"},
+{t:12,en:"As the disc spins, the horses are only a blur. Nothing seems to gallop yet.",ml:"ഡിസ്ക് കറങ്ങുമ്പോൾ കുതിരകൾ വെറുമൊരു മങ്ങിയ രൂപമായി മാത്രം തോന്നുന്നു. ഇതുവരെ ഒന്നും ഓടുന്നതായി തോന്നുന്നില്ല.",hi:"चकती घूमते समय घोड़े बस एक धुंधली आकृति दिखते हैं। अभी कुछ दौड़ता नहीं दिखता।"},
+{t:30,en:"Now a strobe light flashes at set intervals, freezing each horse's position for an instant. Your brain blends these still images into smooth motion, and the horses seem to gallop.",ml:"ഇപ്പോൾ സ്ട്രോബ് ലൈറ്റ് നിശ്ചിത ഇടവേളകളിൽ മിന്നി ഓരോ കുതിരയുടെയും സ്ഥാനം ഒരു നിമിഷം നിശ്ചലമാക്കുന്നു. തലച്ചോർ ഈ ചിത്രങ്ങളെ തുടർച്ചയായ ചലനമായി ചേർക്കുന്നു; കുതിരകൾ ഓടുന്നതുപോലെ തോന്നുന്നു.",hi:"अब स्ट्रोब लाइट तय अंतराल पर चमककर हर घोड़े की स्थिति को पल भर के लिए रोक देती है। आपका दिमाग इन स्थिर चित्रों को जोड़कर सहज गति बना देता है, और घोड़े दौड़ते लगते हैं।"},
+{t:50,en:"Persistence of vision: the eye holds an image for a fraction of a second. Here the flashes are slowed down so you can see each frozen position.",ml:"ദൃഷ്ടിസ്ഥിരത: കണ്ണ് ഒരു ചിത്രത്തെ ഒരു നിമിഷത്തിന്റെ അംശം നിലനിർത്തുന്നു. ഇവിടെ മിന്നലുകൾ പതുക്കെയാക്കിയിരിക്കുന്നു, അതിനാൽ ഓരോ നിശ്ചല സ്ഥാനവും കാണാം.",hi:"दृष्टि स्थिरता: आँख किसी चित्र को सेकंड के एक छोटे-से अंश तक थामे रखती है। यहाँ चमक को धीमा किया गया है ताकि आप हर रुकी हुई स्थिति देख सकें।"},
+{t:70,en:"Flash rate: each flash catches the next horse in the same spot, so each spot shows the next pose. The horses seem to gallop on the spot.",ml:"മിന്നൽ നിരക്ക്: ഓരോ മിന്നലിലും അതേ സ്ഥാനത്ത് അടുത്ത കുതിരയുടെ ഘട്ടം കാണും. അതിനാൽ കുതിരകൾ ഒരേ സ്ഥലത്ത് ഓടുന്നതുപോലെ തോന്നും.",hi:"चमक दर: हर चमक उसी जगह अगले घोड़े को पकड़ती है, इसलिए हर जगह अगली मुद्रा दिखती है। घोड़े एक ही जगह दौड़ते लगते हैं।"},
+{t:90,en:"Make the flashes slightly slower or faster, and the herd drifts forward or backward.",ml:"അല്പം പതുക്കെയോ വേഗത്തിലോ ആയാൽ കുതിരകൾ മുന്നോട്ടോ പിന്നോട്ടോ നീങ്ങും.",hi:"चमक दर थोड़ी धीमी या तेज़ हो जाए, तो झुंड आगे या पीछे खिसकने लगता है।"},
+{t:106,en:"The same idea works in films, cartoons and animations. Nothing is moving on its own. It is an optical illusion made by light, timing and your brain.",ml:"സിനിമ, കാർട്ടൂൺ, ആനിമേഷൻ എന്നിവയിലും ഇതേ തത്വമാണ്. ഒന്നും സ്വയം ചലിക്കുന്നില്ല. വെളിച്ചം, സമയം, തലച്ചോർ എന്നിവ ചേർന്ന ഒരു ദൃശ്യഭ്രമമാണിത്.",hi:"फ़िल्मों, कार्टूनों और एनिमेशन में भी यही सिद्धांत है। कुछ भी अपने आप नहीं चल रहा। यह रोशनी, समय और आपके दिमाग से बना दृष्टि-भ्रम है।"}];
+const LB={en:["3D Zoetrope","Spinning: just a blur","Strobe light flashes","Persistence of vision","Flash rate: same spot, next pose","Flash rate slightly off","Light, timing and your brain"],ml:["3D സോയെട്രോപ്പ്","കറക്കം: വെറും മങ്ങിയ രൂപം","സ്ട്രോബ് ലൈറ്റ് മിന്നുന്നു","ദൃഷ്ടിസ്ഥിരത","മിന്നൽ നിരക്ക്: അതേ സ്ഥാനം, അടുത്ത ഘട്ടം","മിന്നൽ നിരക്ക് അല്പം തെറ്റിയാൽ","വെളിച്ചം, സമയം, തലച്ചോർ"],hi:["3D ज़ोएट्रोप","घूमना: बस एक धुंधलापन","स्ट्रोब लाइट की चमक","दृष्टि स्थिरता","चमक दर: वही जगह, अगली मुद्रा","चमक दर थोड़ी अलग","रोशनी, समय और आपका दिमाग"]};
+const SUF={en:[" · slower → forward"," · faster → backward"],ml:[" · പതുക്കെ → മുന്നോട്ട്"," · വേഗത്തിൽ → പിന്നോട്ട്"],hi:[" · धीमी → आगे"," · तेज़ → पीछे"]};
+const SC=[{m:0,w:0},{m:0,w:12},{m:1,fr:8},{m:1,fr:2},{m:1,fr:8},{m:1,fr:8},{m:1,fr:8}];
+const T=120,N=12,K=240,cv=document.getElementById('c'),$=id=>document.getElementById(id);
+let t=0,play=false,lang=window.LANG,voice=true,cur=-1,last=0;
+/* precomputed disc angle as the eye sees it: continuous when lit steadily, held between flashes under the strobe */
+const SA=new Float32Array(T*K+1),SL=new Float32Array(T*K+1);
+(function(){let th=0,w=0,held=0,ph=0,since=0;const st=2*Math.PI/N,dt=1/K;
+ for(let k=0;k<=T*K;k++){const tt=k/K,i=S.findLastIndex(s=>s.t<=tt),lt=tt-S[i].t,c=SC[i];let e=0;if(i==5)e=lt<8?.07:-.07;
+  const wt=c.m?st*(1+e)*c.fr:c.w;w+=(wt-w)*Math.min(1,dt*2.5);th+=w*dt;
+  if(c.m){ph+=c.fr*dt;if(ph>=1){ph-=1;held=th;since=0}since+=dt;SA[k]=held;SL[k]=since}else{SA[k]=th;SL[k]=0;held=th}}})();
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc=new THREE.Scene();sc.background=new THREE.Color(0x070f18);
+const cam=new THREE.PerspectiveCamera(45,16/9,.1,100);
+const amb=new THREE.AmbientLight(0xffffff,.9),dl=new THREE.DirectionalLight(0xffffff,1.6);dl.position.set(3,9,5);sc.add(amb,dl);
+const disc=new THREE.Group();sc.add(disc);
+const dk=new THREE.Mesh(new THREE.CylinderGeometry(4.7,4.7,.2,64),new THREE.MeshStandardMaterial({color:0x1b3a52,roughness:.7}));disc.add(dk);
+const rm=new THREE.Mesh(new THREE.TorusGeometry(4.7,.09,8,64),new THREE.MeshStandardMaterial({color:0xf2a65a}));rm.rotation.x=Math.PI/2;rm.position.y=.1;disc.add(rm);
+const pole=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,7,12),new THREE.MeshStandardMaterial({color:0x99a4ad,metalness:.6}));pole.position.y=3.5;sc.add(pole);
+const lamp=new THREE.Mesh(new THREE.SphereGeometry(.45,20,14),new THREE.MeshBasicMaterial({color:0xffffff}));lamp.position.y=7.2;sc.add(lamp);
+const hm=new THREE.MeshStandardMaterial({color:0xe9b27a,roughness:.6,transparent:true}),dm=new THREE.MeshStandardMaterial({color:0x5a3a22,roughness:.8,transparent:true});
+function bx(w,h,d,m,x,y,z,rz){const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);b.position.set(x,y,z);if(rz)b.rotation.z=rz;return b}
+for(let i=0;i<N;i++){const pv=new THREE.Group(),h=new THREE.Group(),ph=-i*2*Math.PI/N;pv.rotation.y=i*2*Math.PI/N;h.position.set(0,.1,3.4);
+ h.add(bx(1.3,.5,.5,hm,0,1.05,0),bx(.4,.75,.35,hm,.7,1.5,0,-.5),bx(.6,.28,.3,hm,1.05,1.9,0,-.4),bx(.1,.6,.1,dm,-.72,1.05,0,.5));
+ [[.5,.17,0],[.5,-.17,.5],[-.5,.17,Math.PI],[-.5,-.17,Math.PI+.5]].forEach(a=>{const l=new THREE.Group();l.position.set(a[0],.85,a[1]);l.add(bx(.14,.85,.14,dm,0,-.42,0));l.rotation.z=.75*Math.sin(ph+a[2]);h.add(l)});
+ h.position.y=.1+.1*Math.abs(Math.sin(ph));pv.add(h);disc.add(pv)}
+function size(){const w=cv.parentElement.clientWidth;R.setSize(w,w*9/16,false);cv.style.height=(w*9/16)+'px'}window.sz=size;size();addEventListener('resize',size);
+const CP=[[0,7,12],[0,7,12],[0,6,10.5],[0,5.5,9.5],[0,5,9.5],[0,5.5,10.5],[0,7,12]];let cp=new THREE.Vector3(0,7,12);
+function draw(){const i=S.findLastIndex(s=>s.t<=t),lt=t-S[i].t,k=Math.min(T*K,Math.round(t*K)),c=SC[i];
+disc.rotation.y=SA[k];const L=c.m?Math.max(.3,Math.exp(-SL[k]/(c.fr<4?.2:.06))):1;
+amb.intensity=.2+.7*L;dl.intensity=.3+1.4*L;lamp.material.color.setRGB(.35+.65*L,.35+.65*L,.3+.6*L);lamp.scale.setScalar(.7+.5*L);
+hm.opacity=dm.opacity=i==1?.5:1;
+let tx,ty,tz;if(i==6){const th=lt*.25;tx=Math.sin(th)*12;ty=7;tz=Math.cos(th)*12}else[tx,ty,tz]=CP[i];
+cp.x+=(tx-cp.x)*.04;cp.y+=(ty-cp.y)*.04;cp.z+=(tz-cp.z)*.04;cam.position.copy(cp);cam.lookAt(0,1.6,0);
+$('lb').textContent=LB[lang][i]+(i==5?SUF[lang][lt<8?0:1]:'');R.render(sc,cam)}
+function ui(){const i=S.findLastIndex(s=>s.t<=t);$('cap').textContent=S[i][lang];$('sk').value=t*10;const f=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');$('tm').textContent=f(t)+' / 2:00';if(i!=cur){cur=i;say()}}
+function say(){const ss=window.speechSynthesis;if(!ss){$('vs').textContent=TX.nospeech[lang];return}ss.cancel();if(!voice||!play)return;const gv=getVoice(lang);if(gv.mute)return;$('vs').textContent=(!gv.v&&lang!='en')?TX.novoice[lang]:'';const u=utt(S[cur][lang],lang);ss.resume();ss.speak(u)}
+function loop(n){const dt=(n-last)/1000;last=n;if(play){t+=Math.min(dt,.1);if(t>=T){t=T-.001;play=false;$('pp').textContent='↻ Replay';window.speechSynthesis&&speechSynthesis.cancel()}}draw();ui();requestAnimationFrame(loop)}
+$('pp').onclick=()=>{if(t>=T-.01)t=0,cur=-1;play=!play;$('pp').textContent=play?'⏸ Pause':'▶ Play';if(play)say();else if(window.speechSynthesis)speechSynthesis.cancel()};
+$('sk').oninput=e=>{t=e.target.value/10;cur=-1};
+window.setVidLang=l=>{lang=l;say()};
+window.setVoice=v=>{voice=v;say()};window.pauseVid=()=>{if(play)$('pp').click()};
+requestAnimationFrame(n=>{last=n;loop(n)});
+
+</script>
+<script>
+const $$=id=>document.getElementById(id);let tab=0,voiceOn=true,reading=false,fadeT;
+const ORDER=['en','ml','hi'];
+function paint(){
+ document.documentElement.lang=LANG;$$('hint').textContent=TX.hint[LANG]+' ▾';
+ $$('nm').textContent=TX.name[LANG];$$('tg').textContent=TX.tag[LANG];$$('lg').textContent=TX.lg[LANG];
+ $$('ex').innerHTML=EXP[LANG].map((p,i,a)=>i==a.length-1?`<div class="try">${p}</div>`:`<p>${p}</p>`).join('');
+ $$('lk').innerHTML=LINKS.map(l=>`<a class="lk" href="${l[0]}" target="_blank" rel="noopener"><div>${l[1][LANG]}<small>${TX.more[LANG]}</small></div><span>↗</span></a>`).join('');
+ document.querySelectorAll('#nav i').forEach((e,i)=>e.textContent=TX.tabs[LANG][i]);
+ window.setVidLang(LANG);icon();vmenu()}
+function stopRead(){reading=false;if(window.vmenu)vmenu();speechSynthesis&&speechSynthesis.cancel();$$('vb').classList.remove('talk')}
+$$('lg').onclick=()=>{LANG=ORDER[(ORDER.indexOf(LANG)+1)%3];LS.setItem('lang',LANG);stopRead();paint()};
+function goTab(i){tab=i;stopRead();hideNote();if(i==1)clearPing();if(i!=1)window.pauseVid();
+ document.querySelectorAll('nav button').forEach((x,k)=>x.classList.toggle('on',k==i));
+ $$('trk').style.transform=`translateX(${-i*33.3333}%)`;if(i==1)window.sz();vmenu()}
+document.getElementById('nav').onclick=e=>{const b=e.target.closest('button');if(b)goTab(+b.dataset.t)};
+/* swipe between the three views */
+let sx=null;addEventListener('touchstart',e=>{sx=e.target.closest('input,#vm')?null:e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(sx==null)return;const d=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(d)>70)goTab(Math.max(0,Math.min(2,tab+(d<0?1:-1))))},{passive:true});
+/* intro -> language -> fullscreen + greeting -> slow auto tour of the 3 views until the visitor touches the screen */
+let tourT=null;const APP=document.querySelector('.app');
+/* after the welcome voice ends: slide to the Video button, badge it, show a friendly spoken notification */
+let noteT=null;
+function clearPing(){document.querySelectorAll('nav button.ping').forEach(x=>x.classList.remove('ping'))}
+function hideNote(){clearTimeout(noteT);$$('notif').classList.remove('show')}
+function guide(){goTab(1);setTimeout(()=>{if(tab!=1)return;
+  document.querySelectorAll('nav button')[1].classList.add('ping');
+  $$('ntfh').textContent=TX.ntf.h[LANG];$$('ntft').textContent=TX.ntf.t[LANG];$$('notif').classList.add('show');
+  const ss=window.speechSynthesis,u=(ss&&voiceOn)?utt(TX.ntf.h[LANG]+'. '+TX.ntf.t[LANG]):null;
+  noteT=setTimeout(hideNote,u?20000:8000);
+  if(u){u.onend=()=>{clearTimeout(noteT);noteT=setTimeout(hideNote,1500)};ss.cancel();ss.speak(u)}},1300)}
+$$('notif').onclick=()=>{const ss=window.speechSynthesis;ss&&ss.cancel();hideNote();clearPing();if(!play)$('pp').click()};
+$$('pp').addEventListener('click',()=>{clearPing();hideNote()});
+function tour(){stopTour();APP.classList.add('tour');tourT=setInterval(()=>goTab((tab+1)%3),3500)}
+function stopTour(){clearInterval(tourT);tourT=null;APP.classList.remove('tour')}
+addEventListener('pointerdown',()=>{if(tourT)stopTour()},{capture:true});
+function greet(cb){let fin=false;const go=()=>{if(!fin){fin=true;cb()}};setTimeout(go,16000);
+ const h=new Date().getHours(),k=h<12?0:h<17?1:2,txt=TX.greet.w[LANG][k]+'! '+TX.greet.t[LANG],tt=$$('toast');
+ tt.textContent=txt;tt.classList.add('show');setTimeout(()=>tt.classList.remove('show'),7000);
+ const ss=window.speechSynthesis,u=(ss&&voiceOn)?utt(txt):null;if(!u){setTimeout(go,2500);return}
+  u.onend=()=>setTimeout(go,600);u.onerror=go;ss.cancel();ss.speak(u)}
+document.querySelectorAll('.lang').forEach(b=>b.onclick=()=>{LANG=b.dataset.l;LS.setItem('lang',LANG);paint();
+ const d=document.documentElement;if(d.requestFullscreen)d.requestFullscreen().catch(()=>{});
+ $$('intro').classList.add('out');greet(guide)});
+/* voice button: reads the explanation aloud, or mutes/unmutes the video narration. It fades when idle. */
+function startRead(){if(!window.speechSynthesis)return;stopRead();const u=utt(EXP[LANG].join(' '));if(!u)return;reading=true;$$('vb').classList.add('talk');vmenu();u.onend=stopRead;speechSynthesis.speak(u)}
+function icon(){$$('vb').textContent=(LS.getItem('vtype')=='mute'||!voiceOn)?'🔇':'🔊'}
+function vmenu(){const V=TX.v,t=LS.getItem('vtype')||'male',ic={mute:'🔇',male:'👨',female:'👩',old:'👴',child:'🧒',std:'🎙️'},nm={mute:V.mu,male:V.m,female:V.f,old:V.o,child:V.c,std:V.s},ss=window.speechSynthesis;
+ const act=t=='mute'?'':tab==0?(reading?V.stop:V.listen)[LANG]:tab==1?(voiceOn?V.mute:V.unmute)[LANG]:'';
+ const dv=ss?ss.getVoices().filter(x=>x.lang.toLowerCase().startsWith(LANG)):[],esc=x=>x.replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+ $$('vm').innerHTML=(act?`<button class="act" data-a="1">${act}</button>`:'')+`<h3>${V.h[LANG]}</h3>`+Object.keys(nm).map(k=>`<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">${ic[k]}</span>${nm[k][LANG]}</button>`).join('')
+ +(dv.length?`<h3>${V.all[LANG]}</h3>`+dv.map(x=>{const k='v:'+encodeURIComponent(x.name);return `<button class="vo ${t==k?'sel':''}" data-v="${k}"><span class="d">🔈</span>${esc(x.name)}</button>`}).join(''):'')
+ +`<small class="nt">${V.note[LANG]}</small>`}
+if(window.speechSynthesis)speechSynthesis.onvoiceschanged=()=>vmenu();
+$$('vb').onclick=e=>{e.stopPropagation();wake();vmenu();$$('vm').classList.toggle('open')};
+$$('vm').onclick=e=>{const a=e.target.closest('[data-a]'),o=e.target.closest('[data-v]');
+ if(a){if(tab==0){reading?stopRead():startRead()}else if(tab==1){voiceOn=!voiceOn;window.setVoice(voiceOn)}icon();$$('vm').classList.remove('open')}
+ if(o){LS.setItem('vtype',o.dataset.v);icon();const ss=window.speechSynthesis;
+  if(o.dataset.v=='mute'){if(reading)stopRead();ss&&ss.cancel();if(tab==1)window.setVoice(voiceOn)}
+  else if(reading)startRead();else if(tab==1&&play)window.setVoice(voiceOn);
+  else{const u=utt(TX.v.demo[LANG]);if(u){ss.cancel();ss.speak(u)}}
+  vmenu()}};
+document.addEventListener('click',e=>{if(!e.target.closest('#vm'))$$('vm').classList.remove('open')});
+function wake(){$$('vb').classList.remove('fade');clearTimeout(fadeT);fadeT=setTimeout(()=>$$('vb').classList.add('fade'),3000)}
+['touchstart','pointerdown','scroll'].forEach(ev=>addEventListener(ev,wake,{capture:true,passive:true}));wake();
+paint();
+
+/* fullscreen button (hidden where the browser doesn't support it, e.g. iPhone Safari) */
+(function(){const d=document.documentElement;if(!d.requestFullscreen)return;
+ ['lg','lg2'].forEach(id=>{const l=document.getElementById(id);if(!l)return;const b=document.createElement('button');b.className='pill';b.textContent='⛶';b.setAttribute('aria-label','Fullscreen');
+  b.onclick=()=>document.fullscreenElement?document.exitFullscreen():d.requestFullscreen();l.parentNode.insertBefore(b,l)});
+ document.querySelectorAll('.bar>div[style]').forEach(x=>x.style.gap='8px')})();
+</script></body></html>
